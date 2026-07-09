@@ -79,14 +79,14 @@ export default function Home() {
           <p className="text-xs font-bold uppercase tracking-[0.3em] mb-3 text-center" style={{ color: '#2D9E4E' }}>How it works</p>
           <h2 className="text-2xl sm:text-3xl font-black text-white text-center mb-16">Four steps. Zero cost.</h2>
 
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto">
             {[
-              { n: '01', t: 'Register', d: 'Scan a QR code at the ground or sign up online. Free, always.' },
+              { n: '01', t: 'Register', d: 'Register free via a code from your Team Manager or Club, and sign up online.' },
               { n: '02', t: 'Open your pack', d: '12 player cards land instantly — your starting squad, ready to go.' },
               { n: '03', t: 'Set your lineup', d: 'Pick your best 15 each week before Friday 4pm lock.' },
               { n: '04', t: 'Score points', d: 'Real NFS results drive your score. Climb the ladder all season.' },
             ].map((step) => (
-              <div key={step.n} className="rounded-2xl border border-white/8 bg-white/[0.03] p-7 flex flex-col gap-4">
+              <div key={step.n} className="rounded-2xl border border-white/8 bg-white/[0.03] p-7 flex flex-col gap-4 items-center text-center">
                 <span className="text-xs font-black text-white/20">{step.n}</span>
                 <div className="h-px w-8" style={{ backgroundColor: '#2D9E4E80' }} />
                 <h3 className="text-base font-black text-white">{step.t}</h3>
@@ -102,7 +102,7 @@ export default function Home() {
         <div className="max-w-5xl mx-auto text-center">
           <p className="text-xs font-bold uppercase tracking-[0.3em] mb-3" style={{ color: '#2D9E4E' }}>The Cards</p>
           <h2 className="text-2xl sm:text-3xl font-black text-white mb-6">Every player. Every stat. <span className="shimmer-ice">Every card.</span></h2>
-          <p className="text-sm text-white/40 max-w-lg mx-auto mb-16">
+          <p className="text-sm text-white/40 max-w-lg mx-auto mb-16 text-center">
             Every NFS Premier player has a digital card — club colours, career stats, longevity badges, and rarity tiers earned on the field. Rare two-way players. Elite performers. The backbone Commons. Collect them all through packs across the season.
           </p>
 
@@ -134,7 +134,7 @@ export default function Home() {
           <p className="text-xs font-bold uppercase tracking-[0.3em] mb-3" style={{ color: '#2D9E4E' }}>Season launch</p>
           <h2 className="text-2xl sm:text-3xl font-black text-white mb-4">Be first in when packs drop.</h2>
           <p className="text-sm text-white/40 mb-10">
-            Registration opens with the season. Leave your email and you'll get your Starter Pack link the moment we go live.
+            Registration opens with the season. Get your access code from your Team Manager or Club — or leave your email and we'll send your Starter Pack link the moment we go live.
           </p>
           <a href="mailto:info@blackdiamondlabs.co.nz?subject=Grassroots%20Fantasy%20—%20Register%20my%20interest"
             className="inline-block rounded-xl px-12 py-4 text-sm font-bold uppercase tracking-widest text-white transition-all hover:opacity-90"
