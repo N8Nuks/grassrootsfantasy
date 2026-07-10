@@ -7,7 +7,7 @@ export default function How() {
       <Nav />
 
       {/* Hero */}
-      <section className="relative pt-56 pb-24 px-6 sm:px-12 overflow-hidden grain">
+      <section className="relative pt-72 pb-24 px-6 sm:px-12 overflow-hidden grain">
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
         <div className="relative z-10 max-w-3xl mx-auto text-center">
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-4" style={{ color: '#2D9E4E' }}>How it works</p>
@@ -22,7 +22,7 @@ export default function How() {
 
       {/* Step 1 — Register */}
       <section className="py-20 px-6 sm:px-12" style={{ borderTop: '1px solid #ffffff08' }}>
-        <div className="max-w-4xl mx-auto grid sm:grid-cols-[80px_1fr] gap-8 items-start">
+        <div className="grid sm:grid-cols-[90px_1fr] gap-8 items-start px-6" style={{ maxWidth: "860px", marginLeft: "auto", marginRight: "auto" }}>
           <div className="text-5xl font-black" style={{ color: '#2D9E4E', fontFamily: 'var(--font-heading)' }}>01</div>
           <div>
             <h2 className="text-2xl font-black text-[#F5F1E8] mb-4" style={{ fontFamily: 'var(--font-heading)' }}>Register your team</h2>
@@ -38,7 +38,7 @@ export default function How() {
 
       {/* Step 2 — First Tranche */}
       <section className="py-20 px-6 sm:px-12" style={{ background: '#181510', borderTop: '1px solid #ffffff08' }}>
-        <div className="max-w-4xl mx-auto grid sm:grid-cols-[80px_1fr] gap-8 items-start">
+        <div className="grid sm:grid-cols-[90px_1fr] gap-8 items-start px-6" style={{ maxWidth: "860px", marginLeft: "auto", marginRight: "auto" }}>
           <div className="text-5xl font-black" style={{ color: '#2D9E4E', fontFamily: 'var(--font-heading)' }}>02</div>
           <div>
             <h2 className="text-2xl font-black text-[#F5F1E8] mb-4" style={{ fontFamily: 'var(--font-heading)' }}>Open your Starter Pack</h2>
@@ -54,7 +54,7 @@ export default function How() {
 
       {/* Step 3 — Set your team */}
       <section className="py-20 px-6 sm:px-12" style={{ borderTop: '1px solid #ffffff08' }}>
-        <div className="max-w-4xl mx-auto grid sm:grid-cols-[80px_1fr] gap-8 items-start">
+        <div className="grid sm:grid-cols-[90px_1fr] gap-8 items-start px-6" style={{ maxWidth: "860px", marginLeft: "auto", marginRight: "auto" }}>
           <div className="text-5xl font-black" style={{ color: '#2D9E4E', fontFamily: 'var(--font-heading)' }}>03</div>
           <div>
             <h2 className="text-2xl font-black text-[#F5F1E8] mb-4" style={{ fontFamily: 'var(--font-heading)' }}>Set your lineup, your way</h2>
@@ -73,7 +73,7 @@ export default function How() {
 
       {/* Step 4 — Packs keep coming */}
       <section className="py-20 px-6 sm:px-12" style={{ background: '#181510', borderTop: '1px solid #ffffff08' }}>
-        <div className="max-w-4xl mx-auto grid sm:grid-cols-[80px_1fr] gap-8 items-start">
+        <div className="grid sm:grid-cols-[90px_1fr] gap-8 items-start px-6" style={{ maxWidth: "860px", marginLeft: "auto", marginRight: "auto" }}>
           <div className="text-5xl font-black" style={{ color: '#2D9E4E', fontFamily: 'var(--font-heading)' }}>04</div>
           <div>
             <h2 className="text-2xl font-black text-[#F5F1E8] mb-4" style={{ fontFamily: 'var(--font-heading)' }}>New cards, all season</h2>
@@ -89,7 +89,7 @@ export default function How() {
 
       {/* Step 5 — Score & compete */}
       <section className="py-20 px-6 sm:px-12" style={{ borderTop: '1px solid #ffffff08' }}>
-        <div className="max-w-4xl mx-auto grid sm:grid-cols-[80px_1fr] gap-8 items-start">
+        <div className="grid sm:grid-cols-[90px_1fr] gap-8 items-start px-6" style={{ maxWidth: "860px", marginLeft: "auto", marginRight: "auto" }}>
           <div className="text-5xl font-black" style={{ color: '#2D9E4E', fontFamily: 'var(--font-heading)' }}>05</div>
           <div>
             <h2 className="text-2xl font-black text-[#F5F1E8] mb-4" style={{ fontFamily: 'var(--font-heading)' }}>Score points. Chase titles.</h2>
