@@ -7,7 +7,7 @@ export default function How() {
       <Nav />
 
       {/* Hero */}
-      <section className="relative pt-72 pb-24 px-6 sm:px-12 overflow-hidden grain">
+      <section className="relative px-6 sm:px-12 overflow-hidden grain" style={{ paddingTop: "220px", paddingBottom: "90px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
         <div className="relative z-10 max-w-3xl mx-auto text-center">
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-4" style={{ color: '#2D9E4E' }}>How it works</p>

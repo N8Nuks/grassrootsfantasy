@@ -6,7 +6,7 @@ export default function Leagues() {
     <main className="min-h-screen w-full" style={{ background: '#141210' }}>
       <Nav />
 
-      <section className="relative pt-72 pb-20 px-6 overflow-hidden">
+      <section className="relative px-6 overflow-hidden" style={{ paddingTop: "220px", paddingBottom: "80px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
         <div className="relative z-10 w-full flex flex-col items-center text-center" style={{ maxWidth: '820px', marginLeft: 'auto', marginRight: 'auto' }}>
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-4" style={{ color: '#2D9E4E' }}>Leagues</p>
