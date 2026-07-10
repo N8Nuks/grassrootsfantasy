@@ -44,7 +44,7 @@ export default function Home() {
 
           <div className="opacity-0 animate-fade-up delay-3 w-full max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-5">
             <a href="/nfs" className="px-12 py-5 text-base font-black uppercase tracking-widest text-[#F5F1E8] transition-all hover:opacity-90" style={{ background: '#1338BE' }}>
-              Explore NFS Edition
+              Explore NFS League
             </a>
             <a href="/how" className="px-12 py-5 text-base font-black uppercase tracking-widest text-[#F5F1E8]/80 hover:text-[#F5F1E8] transition-colors border border-[#F5F1E8]/25 hover:border-[#F5F1E8]/60">
               How it works →
@@ -90,13 +90,13 @@ export default function Home() {
               <p className="text-xs font-black uppercase tracking-[0.3em]" style={{ color: '#E8D5A3' }}>Now Live</p>
             </div>
             <h2 className="text-3xl sm:text-5xl font-black text-[#F5F1E8] mb-8 leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
-              NFS Premier Softball Edition
+              NFS Premier Softball League
             </h2>
             <p className="text-sm sm:text-base text-[#F5F1E8]/45 max-w-lg mx-auto mb-12 leading-relaxed">
-              Our first edition — built for the Northern Fastpitch Series with the Auckland Softball Association. Men's competition launching this season.
+              Our first league — built for the Northern Fastpitch Series with the Auckland Softball Association. Men's competition launching this season.
             </p>
             <a href="/nfs" className="inline-block px-14 py-5 text-base font-black uppercase tracking-widest text-[#F5F1E8] transition-all hover:opacity-90" style={{ background: '#1338BE' }}>
-              Enter NFS Edition
+              Enter NFS League
             </a>
           </div>
         </div>

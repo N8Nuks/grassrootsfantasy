@@ -108,7 +108,7 @@ export default function How() {
         <div className="max-w-xl mx-auto">
           <h2 className="text-3xl font-black text-[#F5F1E8] mb-6" style={{ fontFamily: 'var(--font-heading)' }}>Ready to play along?</h2>
           <a href="/nfs" className="inline-block rounded-full px-10 py-4 text-sm font-black uppercase tracking-widest text-[#141210] transition-all hover:opacity-90" style={{ background: '#E8D5A3' }}>
-            Enter NFS Edition
+            Enter NFS League
           </a>
         </div>
       </section>

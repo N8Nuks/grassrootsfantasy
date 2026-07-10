@@ -7,7 +7,7 @@ export default function Nav() {
   const links = [
     { label: 'How it works', href: '/how' },
     { label: 'Cards', href: '/cards' },
-    { label: 'NFS Edition', href: '/nfs' },
+    { label: 'Leagues', href: '/leagues' },
     { label: 'FAQ', href: '/faq' },
   ]
 

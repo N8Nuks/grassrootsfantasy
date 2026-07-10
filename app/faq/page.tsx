@@ -4,7 +4,7 @@ import Footer from '@/components/Footer'
 const faqs = [
   {
     q: 'What is Grassroots Fantasy?',
-    a: 'A fantasy league built on real local competitions. You collect digital player cards, build a squad, set a weekly lineup, and score points from real game results. The NFS Premier Softball Edition is our first live edition, endorsed by the Auckland Softball Association.',
+    a: 'A fantasy league built on real local competitions. You collect digital player cards, build a squad, set a weekly lineup, and score points from real game results. The NFS Premier Softball League is our first live edition, endorsed by the Auckland Softball Association.',
   },
   {
     q: 'How do I register?',
@@ -48,7 +48,7 @@ const faqs = [
   },
   {
     q: 'Who runs Grassroots Fantasy?',
-    a: 'Grassroots Fantasy is a Black Diamond Labs platform, built in Auckland. The NFS Edition runs in partnership with the Auckland Softball Association, whose scorers provide the official statistics that power the game.',
+    a: 'Grassroots Fantasy is a Black Diamond Labs platform, built in Auckland. The NFS League runs in partnership with the Auckland Softball Association, whose scorers provide the official statistics that power the game.',
   },
 ]
 

@@ -29,11 +29,11 @@ export default function Home() {
             Grassroots Fantasy turns real local competitions into fantasy leagues. Collect player cards, build your squad, and score points from real results — built for the players, clubs, and communities of grassroots sport.
           </p>
 
-          <div className="opacity-0 animate-fade-up delay-3 flex flex-col sm:flex-row items-center justify-center gap-6">
-            <a href="/nfs" className="px-12 py-5 text-base font-black uppercase tracking-widest text-[#F5F1E8] transition-all hover:opacity-90" style={{ background: '#1338BE' }}>
-              Explore NFS Edition
+          <div className="opacity-0 animate-fade-up delay-3 flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-14 mt-6">
+            <a href="/nfs" className="px-14 py-6 text-lg font-black uppercase tracking-widest text-[#F5F1E8] transition-all hover:scale-[1.03] hover:opacity-95" style={{ background: 'linear-gradient(180deg, #2B54D6 0%, #1338BE 100%)', boxShadow: '0 8px 32px #1338BE50' }}>
+              Explore NFS League
             </a>
-            <a href="/how" className="px-12 py-5 text-base font-black uppercase tracking-widest text-[#F5F1E8]/80 hover:text-[#F5F1E8] transition-colors border border-[#F5F1E8]/25 hover:border-[#F5F1E8]/60">
+            <a href="/how" className="px-14 py-6 text-lg font-black uppercase tracking-widest text-[#F5F1E8]/85 hover:text-[#F5F1E8] transition-all hover:scale-[1.03] border-2 border-[#F5F1E8]/30 hover:border-[#F5F1E8]/70" style={{ background: '#FFFFFF08', backdropFilter: 'blur(4px)' }}>
               How it works →
             </a>
           </div>
@@ -77,13 +77,13 @@ export default function Home() {
               <p className="text-xs font-black uppercase tracking-[0.3em]" style={{ color: '#E8D5A3' }}>Now Live</p>
             </div>
             <h2 className="text-3xl sm:text-5xl font-black text-[#F5F1E8] mb-8 leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
-              NFS Premier Softball Edition
+              NFS Premier Softball League
             </h2>
             <p className="text-sm sm:text-base text-[#F5F1E8]/45 max-w-lg mx-auto mb-12 leading-relaxed">
-              Our first edition — built for the Northern Fastpitch Series with the Auckland Softball Association. Men&apos;s competition launching this season.
+              Our first league — built for the Northern Fastpitch Series with the Auckland Softball Association. Men&apos;s competition launching this season.
             </p>
-            <a href="/nfs" className="inline-block px-14 py-5 text-base font-black uppercase tracking-widest text-[#141210] transition-all hover:opacity-90" style={{ background: 'linear-gradient(180deg, #6FD98A 0%, #2D9E4E 100%)' }}>
-              Enter NFS Edition
+            <a href="/nfs" className="inline-block px-16 py-6 text-lg font-black uppercase tracking-widest text-[#F5F1E8] transition-all hover:opacity-90" style={{ background: 'linear-gradient(180deg, #2B54D6 0%, #1338BE 100%)', minWidth: '340px' }}>
+              Enter NFS League
             </a>
           </div>
         </div>
