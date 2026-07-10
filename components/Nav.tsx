@@ -5,11 +5,11 @@ export default function Nav() {
   const [open, setOpen] = useState(false)
 
   const links = [
-    { label: 'Leagues', href: '/leagues', color: '#39FF6A' },
+    { label: 'Leagues', href: '/leagues', color: '#39FF6A', glow: '0 0 10px #39FF6A60' },
     { label: 'How it works', href: '/how' },
     { label: 'Cards', href: '/cards' },
     { label: 'FAQ', href: '/faq' },
-    { label: 'Join GF', href: '/join' },
+    { label: 'Join GF', href: '/join', color: '#E8C15A' },
   ]
 
   return (
@@ -28,9 +28,11 @@ export default function Nav() {
           {links.map(l => (
             <a key={l.label} href={l.href}
               className="text-xs font-bold uppercase tracking-widest transition-colors"
-              style={l.color
-                ? { color: l.color, textShadow: '0 0 10px #39FF6A60', fontFamily: 'var(--font-label)' }
-                : { color: '#F5F1E880', fontFamily: 'var(--font-label)' }}>
+              style={{
+                fontFamily: 'var(--font-label)',
+                color: l.color || '#F5F1E880',
+                textShadow: l.glow || 'none',
+              }}>
               {l.label}
             </a>
           ))}
@@ -52,7 +54,7 @@ export default function Nav() {
           {links.map(l => (
             <a key={l.label} href={l.href}
               className="text-2xl font-black uppercase tracking-widest"
-              style={{ fontFamily: 'var(--font-label)', color: l.color || '#F5F1E8', textShadow: l.color ? '0 0 12px #39FF6A60' : 'none' }}
+              style={{ fontFamily: 'var(--font-label)', color: l.color || '#F5F1E8', textShadow: l.glow || 'none' }}
               onClick={() => setOpen(false)}>
               {l.label}
             </a>
