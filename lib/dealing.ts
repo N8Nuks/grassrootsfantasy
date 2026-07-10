@@ -2,6 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
 
 type Player = { id: string; full_name: string; tier: string; positions: string[] }
 
+const TOP_2WPA = ['Thomas Enoka','Jack Besgrove','Floyd Nola','Traye Wildbore','Liam Twigden']
 const STARTER_SLOTS = ['C','P','PB','SS','B2','B3','B1','LF','CF','RF','DP','DR']
 
 function eligible(card: Player, slot: string): boolean {
@@ -49,7 +50,7 @@ export function dealT1(pool: Player[]): { cards: Player[]; lineup: Map<string, P
   for (let attempt = 0; attempt < 200; attempt++) {
     const flexTier = Math.random() < 0.5 ? 'elite' : 'common'
     const picks = [
-      ...sample(byTier('rare_2wp_a'), 1),
+      ...sample(byTier('rare_2wp_a').filter(p => TOP_2WPA.includes(p.full_name)), 1),
       ...sample(byTier('rare_2wp_b'), 1),
       ...sample(byTier('elite'), flexTier === 'elite' ? 6 : 5),
       ...sample(byTier('common'), flexTier === 'common' ? 5 : 4),
