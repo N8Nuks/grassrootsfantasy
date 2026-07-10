@@ -25,7 +25,7 @@ export default function Home() {
 
         <div className="relative z-10 flex flex-col items-center max-w-3xl mx-auto pt-24 pb-16">
           <div className="opacity-0 animate-fade-up">
-            <img src="/gf-logo.jpg" alt="Grassroots Fantasy" className="w-64 sm:w-80 rounded-2xl mb-10 shadow-2xl" />
+            <img src="/gf-logo-transparent.png" alt="Grassroots Fantasy" className="w-72 sm:w-96 mb-10" style={{ filter: "drop-shadow(0 8px 24px #00000090)" }} />
           </div>
 
           <div className="opacity-0 animate-fade-up delay-1">
@@ -40,11 +40,11 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="opacity-0 animate-fade-up delay-3 flex flex-col sm:flex-row items-center gap-4">
-            <a href="/nfs" className="rounded-full px-10 py-4 text-sm font-black uppercase tracking-widest text-[#141210] transition-all hover:opacity-90" style={{ background: '#E8D5A3' }}>
+          <div className="opacity-0 animate-fade-up delay-3 w-full max-w-2xl flex flex-col sm:flex-row items-center sm:justify-between gap-5">
+            <a href="/nfs" className="px-12 py-5 text-base font-black uppercase tracking-widest text-[#F5F1E8] transition-all hover:opacity-90" style={{ background: '#1338BE' }}>
               Explore NFS Edition
             </a>
-            <a href="/how" className="text-sm font-semibold text-[#F5F1E8]/40 hover:text-[#F5F1E8] transition-colors">
+            <a href="/how" className="px-12 py-5 text-base font-black uppercase tracking-widest text-[#F5F1E8]/80 hover:text-[#F5F1E8] transition-colors border border-[#F5F1E8]/25 hover:border-[#F5F1E8]/60">
               How it works →
             </a>
           </div>

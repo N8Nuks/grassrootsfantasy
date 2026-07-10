@@ -2,7 +2,7 @@ export default function Footer() {
   return (
     <footer className="px-6 sm:px-12 py-10" style={{ borderTop: '1px solid #ffffff0a', background: '#100E0C' }}>
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-5">
-        <img src="/gf-logo.jpg" alt="Grassroots Fantasy" className="h-8 w-auto rounded" />
+        <img src="/gf-logo-transparent.png" alt="Grassroots Fantasy" className="h-8 w-auto" />
         <p className="text-xs text-[#F5F1E8]/30 text-center" style={{ fontFamily: 'var(--font-body)' }}>
           Play along with your favourite players.
         </p>
