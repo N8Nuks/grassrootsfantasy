@@ -15,7 +15,7 @@ export default function Footer() {
           animation: bdl-shimmer 4s linear infinite;
         }
       `}</style>
-      <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-5">
+      <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-5">
         <div className="flex items-center gap-2.5">
           <img src="/gf-mark.png" alt="" className="h-8 w-auto" />
           <span className="flex flex-col leading-none" style={{ fontFamily: 'var(--font-heading)' }}>
