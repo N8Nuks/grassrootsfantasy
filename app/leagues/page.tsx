@@ -69,8 +69,8 @@ export default function Leagues() {
             <p className="text-sm text-[#F5F1E8]/45 leading-relaxed">
               The Northern Fastpitch Series — Auckland premier softball, endorsed by the Auckland Softball Association. Men&apos;s launching this season.
             </p>
-            <a href="/nfs" className="mt-auto rounded-full text-center font-black uppercase tracking-widest text-white transition-all hover:opacity-90" style={{ background: '#0047AB', boxShadow: '0 6px 24px #0047AB50', padding: "20px 24px", fontSize: "14px", lineHeight: "1.4" }}>
-              Enter the NFS Premier League
+            <a href="/nfs" className="mt-auto text-center text-base font-bold tracking-wide transition-all hover:scale-[1.02]" style={{ color: '#4D7FFF', border: '1px solid #4D7FFF', background: 'transparent', padding: "22px 24px" }}>
+              Enter Leagues
             </a>
           </div>
 
