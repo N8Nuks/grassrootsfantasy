@@ -4,8 +4,8 @@ import { useState } from 'react'
 export default function Nav() {
   const [open, setOpen] = useState(false)
 
-  const links = [
-    { label: 'Leagues', href: '/leagues' },
+ const links = [
+    { label: 'Leagues', href: '/leagues', color: '#39FF6A' },
     { label: 'How it works', href: '/how' },
     { label: 'Cards', href: '/cards' },
     { label: 'FAQ', href: '/faq' },
@@ -27,7 +27,8 @@ export default function Nav() {
         <div className="hidden md:flex items-center gap-12 lg:gap-16">
           {links.map(l => (
             <a key={l.label} href={l.href}
-              className="text-xs font-bold uppercase tracking-widest text-[#F5F1E8]/50 hover:text-[#F5F1E8] transition-colors">
+              className="text-xs font-bold uppercase tracking-widest transition-colors"
+              style={l.color ? { color: l.color, textShadow: '0 0 10px #39FF6A60' } : { color: '#F5F1E880' }}>
               {l.label}
             </a>
           ))}
@@ -48,8 +49,8 @@ export default function Nav() {
           onClick={() => setOpen(false)}>
           {links.map(l => (
             <a key={l.label} href={l.href}
-              className="text-2xl font-black text-[#F5F1E8] uppercase tracking-widest"
-              style={{ fontFamily: 'var(--font-heading)' }}
+              className="text-2xl font-black uppercase tracking-widest"
+              style={{ fontFamily: 'var(--font-heading)', color: l.color || '#F5F1E8', textShadow: l.color ? '0 0 12px #39FF6A60' : 'none' }}
               onClick={() => setOpen(false)}>
               {l.label}
             </a>

@@ -129,9 +129,9 @@ export default function How() {
 
         <div className="relative z-10" style={{ maxWidth: "576px", marginLeft: "auto", marginRight: "auto" }}>
           <h2 className="text-3xl font-black text-[#F5F1E8] mb-8" style={{ fontFamily: 'var(--font-heading)' }}>Ready to play along?</h2>
-          <a href="/leagues" className="inline-block rounded-full px-14 py-5 text-base font-black uppercase tracking-widest text-white transition-all hover:opacity-90" style={{ background: '#0047AB', boxShadow: '0 8px 32px #0047AB50' }}>
+          <a href="/leagues" className="inline-block text-base font-bold tracking-wide transition-all hover:scale-[1.02]" style={{ color: '#39FF6A', border: '1px solid #39FF6A', background: 'transparent', padding: "22px 64px", textShadow: '0 0 12px #39FF6A80', boxShadow: '0 0 16px #39FF6A30, inset 0 0 16px #39FF6A15' }}>
             Enter Leagues Now
-          </a>
+          </a>  
         </div>
       </section>
 
