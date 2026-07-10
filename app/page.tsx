@@ -78,7 +78,7 @@ export default function Home() {
             <p className="text-sm sm:text-base text-[#F5F1E8]/45 leading-relaxed" style={{ maxWidth: "420px", marginLeft: "auto", marginRight: "auto", marginBottom: "56px", textAlign: "center" }}>
               Our first league — built for the Northern Fastpitch Series with the Auckland Softball Association. Men&apos;s competition launching this season.
             </p>
-            <a href="/nfs" className="inline-block rounded-full px-16 py-6 text-lg font-black uppercase tracking-widest text-white transition-all hover:opacity-90" style={{ background: '#0047AB', boxShadow: '0 8px 32px #0047AB50' }}>
+            <a href="/nfs" className="inline-block text-base font-bold tracking-wide transition-all hover:scale-[1.02]" style={{ color: '#4D7FFF', border: '1px solid #4D7FFF', background: 'transparent', padding: "22px 64px" }}>
               Enter NFS League
             </a>
           </div>
