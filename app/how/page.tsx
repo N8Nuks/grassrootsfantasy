@@ -9,6 +9,23 @@ export default function How() {
       {/* Hero */}
       <section className="relative px-6 sm:px-12 overflow-hidden grain" style={{ paddingTop: "140px", paddingBottom: "80px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
+
+        {/* Field-line motif */}
+        <svg className="absolute inset-0 w-full h-full" style={{ opacity: 0.06 }} xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1200 600" fill="none">
+          <g stroke="#3FBF63" strokeWidth="2">
+            <path d="M100 520 L400 220 L700 520" />
+            <path d="M400 220 L400 520" strokeDasharray="8 8" />
+            <circle cx="400" cy="400" r="50" />
+          </g>
+          <g stroke="#E8D5A3" strokeWidth="2">
+            <path d="M850 480 L1050 280 L1250 480" />
+            <circle cx="1050" cy="420" r="34" strokeDasharray="6 6" />
+          </g>
+          <g stroke="#F5F1E8" strokeWidth="1.5">
+            <path d="M60 120 h180 M60 150 h140 M60 180 h160" />
+          </g>
+        </svg>
+
         <div className="relative z-10" style={{ maxWidth: "720px", marginLeft: "auto", marginRight: "auto", textAlign: "center" }}>
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-4" style={{ color: '#2D9E4E' }}>How it works</p>
           <h1 className="text-4xl sm:text-5xl font-black text-[#F5F1E8] mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
@@ -104,11 +121,16 @@ export default function How() {
       </section>
 
       {/* CTA */}
-      <section className="px-6 sm:px-12" style={{ background: '#1A2E1F', borderTop: '1px solid #ffffff08', paddingTop: "110px", paddingBottom: "120px", textAlign: "center" }}>
-        <div style={{ maxWidth: "576px", marginLeft: "auto", marginRight: "auto" }}>
+      <section className="relative px-6 sm:px-12 overflow-hidden" style={{ background: 'linear-gradient(180deg, #16261C 0%, #1A2E1F 100%)', borderTop: '1px solid #ffffff08', paddingTop: "130px", paddingBottom: "120px", textAlign: "center" }}>
+        {/* Grass blade strip along the top */}
+        <svg className="absolute top-0 left-0 w-full" height="60" preserveAspectRatio="none" viewBox="0 0 1200 60" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0 0 L0 12 Q10 4 14 22 Q22 6 28 26 Q34 2 42 20 Q50 8 56 28 Q64 4 70 18 Q78 10 86 30 Q92 2 100 22 Q108 8 114 26 Q122 4 130 20 Q138 12 144 32 Q152 6 160 24 Q168 10 174 28 Q182 2 190 18 Q198 8 206 26 Q214 4 222 22 Q230 12 236 30 Q244 6 252 20 Q260 10 266 28 Q274 2 282 24 Q290 8 298 18 Q306 4 314 26 Q322 12 330 22 Q338 6 346 30 Q354 10 360 20 Q368 2 376 28 Q384 8 392 24 Q400 4 408 18 Q416 12 424 26 Q432 6 440 22 Q448 10 456 30 Q464 2 472 20 Q480 8 488 28 Q496 4 504 24 Q512 12 520 18 Q528 6 536 26 Q544 10 552 22 Q560 2 568 30 Q576 8 584 20 Q592 4 600 28 Q608 12 616 24 Q624 6 632 18 Q640 10 648 26 Q656 2 664 22 Q672 8 680 30 Q688 4 696 20 Q704 12 712 28 Q720 6 728 24 Q736 10 744 18 Q752 2 760 26 Q768 8 776 22 Q784 4 792 30 Q800 12 808 20 Q816 6 824 28 Q832 10 840 24 Q848 2 856 18 Q864 8 872 26 Q880 4 888 22 Q896 12 904 30 Q912 6 920 20 Q928 10 936 28 Q944 2 952 24 Q960 8 968 18 Q976 4 984 26 Q992 12 1000 22 Q1008 6 1016 30 Q1024 10 1032 20 Q1040 2 1048 28 Q1056 8 1064 24 Q1072 4 1080 18 Q1088 12 1096 26 Q1104 6 1112 22 Q1120 10 1128 30 Q1136 2 1144 20 Q1152 8 1160 28 Q1168 4 1176 24 Q1184 12 1192 18 L1200 26 L1200 0 Z" fill="#141210" />
+        </svg>
+
+        <div className="relative z-10" style={{ maxWidth: "576px", marginLeft: "auto", marginRight: "auto" }}>
           <h2 className="text-3xl font-black text-[#F5F1E8] mb-8" style={{ fontFamily: 'var(--font-heading)' }}>Ready to play along?</h2>
-          <a href="/nfs" className="inline-block rounded-full px-14 py-5 text-base font-black uppercase tracking-widest text-white transition-all hover:opacity-90" style={{ background: '#0047AB' }}>
-            Enter NFS League
+          <a href="/leagues" className="inline-block rounded-full px-14 py-5 text-base font-black uppercase tracking-widest text-white transition-all hover:opacity-90" style={{ background: '#0047AB', boxShadow: '0 8px 32px #0047AB50' }}>
+            Enter Leagues Now
           </a>
         </div>
       </section>
