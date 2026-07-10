@@ -5,10 +5,11 @@ export default function Nav() {
   const [open, setOpen] = useState(false)
 
   const links = [
+    { label: 'Leagues', href: '/leagues' },
     { label: 'How it works', href: '/how' },
     { label: 'Cards', href: '/cards' },
-    { label: 'Leagues', href: '/leagues' },
     { label: 'FAQ', href: '/faq' },
+    { label: 'Join GF', href: '/join' },
   ]
 
   return (
@@ -30,11 +31,6 @@ export default function Nav() {
               {l.label}
             </a>
           ))}
-          <a href="/nfs#register"
-            className="rounded-full px-6 py-2.5 text-xs font-black uppercase tracking-widest text-[#141210] transition-all hover:opacity-90"
-            style={{ background: '#E8D5A3' }}>
-            Register
-          </a>
         </div>
 
         {/* Mobile hamburger */}
@@ -58,12 +54,6 @@ export default function Nav() {
               {l.label}
             </a>
           ))}
-          <a href="/nfs#register"
-            className="rounded-full px-8 py-3 text-sm font-black uppercase tracking-widest text-[#141210] mt-4"
-            style={{ background: '#E8D5A3' }}
-            onClick={() => setOpen(false)}>
-            Register
-          </a>
         </div>
       )}
     </>

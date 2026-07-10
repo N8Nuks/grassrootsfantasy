@@ -29,21 +29,17 @@ export default function Home() {
             Grassroots Fantasy turns real local competitions into fantasy leagues. Collect player cards, build your squad, and score points from real results — built for the players, clubs, and communities of grassroots sport.
           </p>
 
-          <div className="opacity-0 animate-fade-up delay-3 flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-14 mt-6">
-            <a href="/nfs" className="px-14 py-6 text-lg font-black uppercase tracking-widest text-[#F5F1E8] transition-all hover:scale-[1.03] hover:opacity-95" style={{ background: 'linear-gradient(180deg, #2B54D6 0%, #1338BE 100%)', boxShadow: '0 8px 32px #1338BE50' }}>
-              Explore NFS League
-            </a>
-            <a href="/how" className="px-14 py-6 text-lg font-black uppercase tracking-widest text-[#F5F1E8]/85 hover:text-[#F5F1E8] transition-all hover:scale-[1.03] border-2 border-[#F5F1E8]/30 hover:border-[#F5F1E8]/70" style={{ background: '#FFFFFF08', backdropFilter: 'blur(4px)' }}>
+          <div className="opacity-0 animate-fade-up delay-3 flex items-center justify-center" style={{ marginTop: "72px" }}>
+            <a href="/how" className="rounded-full px-14 py-6 text-lg font-black uppercase tracking-widest text-white transition-all hover:scale-[1.03] hover:opacity-95" style={{ background: '#0047AB', boxShadow: '0 8px 32px #0047AB50' }}>
               How it works →
             </a>
           </div>
         </div>
       </section>
 
-      {/* THE PLATFORM */}
+      {/* PLATFORM VALUE */}
       <section className="w-full py-32 sm:py-40" style={{ background: '#181510', borderTop: '1px solid #ffffff08' }}>
         <div className="w-full flex flex-col items-center text-center px-6" style={{ maxWidth: "1000px", marginLeft: "auto", marginRight: "auto" }}>
-          <p className="text-xs font-black uppercase tracking-[0.3em] mb-5" style={{ color: '#2D9E4E' }}>The Platform</p>
           <h2 className="text-3xl sm:text-5xl font-black text-[#F5F1E8] mb-8 leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
             Any sport. Any league.<br />Any number of teams.
           </h2>
@@ -70,19 +66,19 @@ export default function Home() {
       {/* NOW LIVE */}
       <section className="w-full py-32 sm:py-40" style={{ borderTop: '1px solid #ffffff08', marginTop: '4rem' }}>
         <div className="w-full px-6" style={{ maxWidth: "820px", marginLeft: "auto", marginRight: "auto" }}>
-          <div className="relative overflow-hidden rounded-[2.5rem] px-8 sm:px-16 py-16 sm:py-20 text-center" style={{ background: 'linear-gradient(160deg, #1A2E1F 0%, #141210 100%)', border: '1px solid #2D9E4E30' }}>
+          <div className="relative overflow-hidden rounded-[2.5rem] px-8 sm:px-16 text-center" style={{ background: 'linear-gradient(160deg, #1A2E1F 0%, #141210 100%)', border: '1px solid #2D9E4E30', paddingTop: "88px", paddingBottom: "88px" }}>
             <div className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-40 rounded-b-full" style={{ background: '#2D9E4E' }} />
-            <div className="flex items-center justify-center gap-2 mb-6">
+            <div className="flex items-center justify-center gap-2 mb-8">
               <span className="h-2.5 w-2.5 rounded-full animate-pulse" style={{ background: '#2D9E4E' }} />
               <p className="text-xs font-black uppercase tracking-[0.3em]" style={{ color: '#E8D5A3' }}>Now Live</p>
             </div>
             <h2 className="text-3xl sm:text-5xl font-black text-[#F5F1E8] mb-8 leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
               NFS Premier Softball League
             </h2>
-            <p className="text-sm sm:text-base text-[#F5F1E8]/45 max-w-lg mx-auto mb-12 leading-relaxed">
+            <p className="text-sm sm:text-base text-[#F5F1E8]/45 leading-relaxed" style={{ maxWidth: "420px", marginLeft: "auto", marginRight: "auto", marginBottom: "56px", textAlign: "center" }}>
               Our first league — built for the Northern Fastpitch Series with the Auckland Softball Association. Men&apos;s competition launching this season.
             </p>
-            <a href="/nfs" className="inline-block px-16 py-6 text-lg font-black uppercase tracking-widest text-[#F5F1E8] transition-all hover:opacity-90" style={{ background: 'linear-gradient(180deg, #2B54D6 0%, #1338BE 100%)', minWidth: '340px' }}>
+            <a href="/nfs" className="inline-block rounded-full px-16 py-6 text-lg font-black uppercase tracking-widest text-white transition-all hover:opacity-90" style={{ background: '#0047AB', boxShadow: '0 8px 32px #0047AB50' }}>
               Enter NFS League
             </a>
           </div>
