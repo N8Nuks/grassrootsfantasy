@@ -25,7 +25,13 @@ export default function Home() {
 
         <div className="relative z-10 flex flex-col items-center max-w-3xl mx-auto pt-24 pb-16">
           <div className="opacity-0 animate-fade-up">
-            <img src="/gf-logo-transparent.png" alt="Grassroots Fantasy" className="w-72 sm:w-96 mb-10" style={{ filter: "drop-shadow(0 8px 24px #00000090)" }} />
+            <div className="flex flex-col items-center gap-5 mb-10">
+              <img src="/gf-mark.png" alt="" className="w-28 sm:w-36" style={{ filter: "drop-shadow(0 8px 24px #00000090)" }} />
+              <div className="text-center" style={{ fontFamily: 'var(--font-heading)' }}>
+                <span className="block text-3xl sm:text-4xl font-black tracking-wide" style={{ color: '#3FBF63', textShadow: '0 2px 12px #00000080' }}>GRASSROOTS</span>
+                <span className="block text-3xl sm:text-4xl font-black tracking-[0.28em]" style={{ color: '#F5F1E8', textShadow: '0 2px 12px #00000080' }}>FANTASY</span>
+              </div>
+            </div>
           </div>
 
           <div className="opacity-0 animate-fade-up delay-1">

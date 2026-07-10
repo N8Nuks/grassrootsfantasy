@@ -14,8 +14,12 @@ export default function Nav() {
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 sm:px-12 py-4 bg-[#141210]/90 backdrop-blur-md border-b border-white/5">
-        <a href="/" className="flex items-center">
-          <img src="/gf-logo-transparent.png" alt="Grassroots Fantasy" className="h-9 w-auto" />
+        <a href="/" className="flex items-center gap-2.5">
+          <img src="/gf-mark.png" alt="" className="h-9 w-auto" />
+          <span className="hidden sm:flex flex-col leading-none" style={{ fontFamily: 'var(--font-heading)' }}>
+            <span className="text-[13px] font-black tracking-wide" style={{ color: '#3FBF63' }}>GRASSROOTS</span>
+            <span className="text-[13px] font-black tracking-[0.22em] text-[#F5F1E8]">FANTASY</span>
+          </span>
         </a>
 
         {/* Desktop links — spread out */}
