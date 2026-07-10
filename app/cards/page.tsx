@@ -9,6 +9,39 @@ export default function Cards() {
       {/* Hero */}
       <section className="relative pt-36 pb-20 px-6 sm:px-12 overflow-hidden grain">
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
+        {/* Grass silhouette layers */}
+        <div className="grass-layer" style={{ zIndex: 1 }}>
+          <svg viewBox="0 0 1440 160" preserveAspectRatio="none" style={{ width: '100%', height: '160px', display: 'block' }}>
+            <g fill="#0E1B12" opacity="0.9">
+              {Array.from({ length: 48 }).map((_, i) => {
+                const x = i * 30 + (i % 3) * 8
+                const h = 60 + ((i * 37) % 70)
+                const lean = ((i * 13) % 14) - 7
+                return <path key={i} className={i % 2 ? 'grass-blade' : 'grass-blade-alt'} style={{ animationDelay: `${(i % 7) * 0.4}s` }} d={`M${x} 160 Q ${x + lean} ${160 - h * 0.6} ${x + lean * 1.6} ${160 - h} Q ${x + lean + 4} ${160 - h * 0.55} ${x + 7} 160 Z`} />
+              })}
+            </g>
+            <g fill="#16261A" opacity="0.95">
+              {Array.from({ length: 36 }).map((_, i) => {
+                const x = i * 40 + 12 + (i % 4) * 5
+                const h = 40 + ((i * 53) % 50)
+                const lean = ((i * 17) % 12) - 6
+                return <path key={i} className={i % 2 ? 'grass-blade-alt' : 'grass-blade'} style={{ animationDelay: `${(i % 5) * 0.6}s` }} d={`M${x} 160 Q ${x + lean} ${160 - h * 0.6} ${x + lean * 1.5} ${160 - h} Q ${x + lean + 3} ${160 - h * 0.5} ${x + 6} 160 Z`} />
+              })}
+            </g>
+          </svg>
+        </div>
+
+        {/* Drifting motes */}
+        {[
+          { left: '12%', size: 3, delay: '0s' },
+          { left: '28%', size: 2, delay: '3.5s' },
+          { left: '47%', size: 3, delay: '7s' },
+          { left: '63%', size: 2, delay: '1.8s' },
+          { left: '78%', size: 3, delay: '5.2s' },
+          { left: '90%', size: 2, delay: '8.6s' },
+        ].map((m, i) => (
+          <span key={i} className="mote" style={{ left: m.left, width: m.size, height: m.size, animationDelay: m.delay }} />
+        ))}
         <div className="relative z-10 max-w-3xl mx-auto text-center">
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-4" style={{ color: '#2D9E4E' }}>The Cards</p>
           <h1 className="text-4xl sm:text-5xl font-black text-[#F5F1E8] mb-6" style={{ fontFamily: 'var(--font-heading)' }}>

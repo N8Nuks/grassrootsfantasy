@@ -16,8 +16,18 @@ a { color: inherit; text-decoration: none; }
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes sway {
-  0%, 100% { transform: rotate(-2deg); }
-  50% { transform: rotate(2deg); }
+  0%, 100% { transform: rotate(-1.5deg); }
+  50% { transform: rotate(1.5deg); }
+}
+@keyframes sway-alt {
+  0%, 100% { transform: rotate(2deg); }
+  50% { transform: rotate(-2deg); }
+}
+@keyframes drift {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 0.7; }
+  90% { opacity: 0.5; }
+  100% { transform: translateY(-45vh) translateX(24px); opacity: 0; }
 }
 .animate-fade-up { animation: fade-up 0.9s ease-out forwards; }
 .delay-1 { animation-delay: 0.15s; }
@@ -26,4 +36,26 @@ a { color: inherit; text-decoration: none; }
 .grain {
   background-image: radial-gradient(#ffffff08 1px, transparent 1px);
   background-size: 24px 24px;
+}
+.grass-layer {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  pointer-events: none;
+}
+.grass-blade {
+  transform-origin: bottom center;
+  animation: sway 5s ease-in-out infinite;
+}
+.grass-blade-alt {
+  transform-origin: bottom center;
+  animation: sway-alt 7s ease-in-out infinite;
+}
+.mote {
+  position: absolute;
+  bottom: 12%;
+  border-radius: 9999px;
+  background: #E8D5A3;
+  filter: blur(1px);
+  animation: drift 11s linear infinite;
+  pointer-events: none;
 }
