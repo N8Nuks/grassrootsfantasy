@@ -1,25 +1,47 @@
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/server'
+import TeamClient, { TeamCard } from './TeamClient'
 
 export default async function Team() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase.from('profiles').select('team_name, clubs(name)').eq('id', user!.id).single()
+
+  const { data: profile } = await supabase
+    .from('profiles').select('team_name, clubs(name)').eq('id', user!.id).single()
+
+  const { data: cards } = await supabase
+    .from('cards')
+    .select('id, players(full_name, tier, positions, stats, clubs(name))')
+    .eq('owner_id', user!.id).eq('grade', 'mens')
+
+  const { data: lineup } = await supabase
+    .from('lineups').select('id, lineup_slots(slot, card_id, batting_order)')
+    .eq('owner_id', user!.id).eq('grade', 'mens')
+    .order('submitted_at', { ascending: false }).limit(1).maybeSingle()
+
+  type Raw = { id: string; players: { full_name: string; tier: string; positions: string[]; stats: Record<string, number>; clubs: { name: string } | null } | null }
+  const teamCards: TeamCard[] = ((cards ?? []) as unknown as Raw[]).map(c => ({
+    id: c.id,
+    name: c.players?.full_name ?? '',
+    club: c.players?.clubs?.name ?? '',
+    tier: c.players?.tier ?? 'common',
+    positions: c.players?.positions ?? [],
+    stats: c.players?.stats ?? {},
+  }))
+
+  const slots = (lineup?.lineup_slots ?? []) as { slot: string; card_id: string; batting_order: number | null }[]
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#141210' }}>
       <Nav />
-      <section className="relative flex-1 px-6" style={{ paddingTop: "160px", paddingBottom: "120px" }}>
-        <div className="text-center" style={{ maxWidth: "600px", marginLeft: "auto", marginRight: "auto" }}>
-          <p className="text-xs font-black uppercase tracking-[0.3em] mb-4" style={{ color: '#2D9E4E' }}>My Team</p>
-          <h1 className="text-3xl sm:text-4xl font-black text-[#F5F1E8] mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
-            {profile?.team_name || 'Your team'}
-          </h1>
-          <p className="text-sm text-[#F5F1E8]/45">
-            You're in. Squad, lineup card, and packs land here next.
-          </p>
-        </div>
+      <section className="flex-1 px-4 sm:px-6" style={{ paddingTop: "120px", paddingBottom: "100px" }}>
+        <TeamClient
+          teamName={profile?.team_name ?? 'Your team'}
+          clubName={(profile as unknown as { clubs: { name: string } | null })?.clubs?.name ?? ''}
+          cards={teamCards}
+          initialSlots={slots}
+        />
       </section>
       <Footer />
     </main>

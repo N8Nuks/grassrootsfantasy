@@ -50,6 +50,7 @@ export default function Register() {
       return
     }
 
+   await fetch('/api/deal-t1', { method: 'POST' })
     window.location.href = '/team'
   }
 
