@@ -30,8 +30,8 @@ export default function Home() {
           </p>
 
           <div className="opacity-0 animate-fade-up delay-3 flex items-center justify-center" style={{ marginTop: "72px" }}>
-            <a href="/how" className="px-14 py-5 text-base font-bold tracking-wide transition-all hover:scale-[1.02]" style={{ color: '#E8D5A3', border: '1px solid #E8D5A3', background: 'transparent' }}>
-              How it works →
+            <a href="/how" className="text-base font-bold tracking-wide transition-all hover:scale-[1.02]" style={{ color: '#E8D5A3', border: '1px solid #E8D5A3', background: 'transparent', padding: "22px 64px" }}>
+              How it works
             </a>
           </div>
         </div>
