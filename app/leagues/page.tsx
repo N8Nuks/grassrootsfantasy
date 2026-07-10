@@ -3,7 +3,7 @@ import Footer from '@/components/Footer'
 
 export default function Leagues() {
   return (
-    <main className="min-h-screen w-full" style={{ background: '#141210' }}>
+    <main className="min-h-screen w-full flex flex-col" style={{ background: '#141210' }}>
       <Nav />
 
       <section className="relative px-6 overflow-hidden" style={{ paddingTop: "140px", paddingBottom: "80px" }}>
@@ -54,14 +54,14 @@ export default function Leagues() {
         </div>
       </section>
 
-      <section className="w-full pb-32 px-6">
+      <section className="w-full pb-32 px-6 flex-1">
         <div className="w-full grid gap-8 sm:grid-cols-2" style={{ maxWidth: '900px', marginLeft: 'auto', marginRight: 'auto' }}>
 
           {/* NFS League — live */}
-          <div className="group relative overflow-hidden rounded-[2rem] p-10 flex flex-col gap-5 transition-all hover:scale-[1.01]" style={{ background: 'linear-gradient(160deg, #1A2E1F 0%, #141210 100%)', border: '1px solid #2D9E4E40' }}>
+          <div className="group relative rounded-[2rem] p-10 flex flex-col gap-5 transition-all hover:scale-[1.01]" style={{ background: 'linear-gradient(160deg, #1A2E1F 0%, #141210 100%)', border: '1px solid #2D9E4E40', paddingTop: "48px" }}>
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full animate-pulse" style={{ background: '#2D9E4E' }} />
-              <span className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: '#E8D5A3' }}>Now Live</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: '#E8D5A3', lineHeight: "1.6" }}>Now Live</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-[#F5F1E8] leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
               NFS Premier<br/>Softball League
@@ -75,8 +75,8 @@ export default function Leagues() {
           </div>
 
           {/* Your competition — invitation */}
-          <div className="relative overflow-hidden rounded-[2rem] p-10 flex flex-col gap-5" style={{ background: '#18151080', border: '1px dashed #F5F1E830' }}>
-            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#F5F1E8]/40">Coming Soon</span>
+          <div className="relative rounded-[2rem] p-10 flex flex-col gap-5" style={{ background: '#18151080', border: '1px dashed #F5F1E830', paddingTop: "48px" }}>
+            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#F5F1E8]/40" style={{ lineHeight: "1.6" }}>Coming Soon</span>
             <h2 className="text-2xl sm:text-3xl font-black text-[#F5F1E8]/70 leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
               Your competition<br/>here
             </h2>
