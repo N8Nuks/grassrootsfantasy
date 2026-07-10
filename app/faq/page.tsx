@@ -20,7 +20,8 @@ const faqs = [
   },
   {
     q: 'How does scoring work?',
-    a: 'Every hit, run, RBI, steal, strikeout, win, and inning pitched in the real competition earns points for the managers who hold that player\'s card. Starters score full points, bench players score at a reduced rate, and reserves don\'t score. Provisional scores appear after the weekend\'s games; confirmed scores follow once official stats are reviewed — usually Tuesday.',
+    a: 'Every hit, run, RBI, steal, strikeout, win, and inning pitched in the real competition earns points for the managers who hold that player\'s card. Starters score full points, bench players score at a reduced rate, and reserves don\'t score. The full breakdown — point values, leaderboards, and how confirmed scores work — lives on the Scoring & Leaderboard page inside the NFS Premier Softball League.',
+    link: { href: '/nfs/scoring', label: 'Scoring & Leaderboard →' },
   },
   {
     q: 'When do lineups lock?',
@@ -57,11 +58,11 @@ export default function FAQ() {
     <main className="min-h-screen" style={{ background: '#141210' }}>
       <Nav />
 
-      <section className="relative px-6 sm:px-12 overflow-hidden grain" style={{ paddingTop: "220px", paddingBottom: "80px" }}>
+      <section className="relative px-6 sm:px-12 overflow-hidden grain" style={{ paddingTop: "130px", paddingBottom: "70px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
         <div className="relative z-10 max-w-3xl mx-auto text-center">
-          <p className="text-xs font-black uppercase tracking-[0.3em] mb-4" style={{ color: '#2D9E4E' }}>FAQ</p>
-          <h1 className="text-4xl sm:text-5xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>
+          <p className="text-sm font-black uppercase tracking-[0.35em] mb-5" style={{ color: '#2D9E4E' }}>FAQ</p>
+          <h1 className="text-5xl sm:text-7xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>
             Good questions.<br/>Straight answers.
           </h1>
         </div>
@@ -75,17 +76,24 @@ export default function FAQ() {
                 <span className="text-sm font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>{f.q}</span>
                 <span className="text-[#2D9E4E] font-black text-lg transition-transform group-open:rotate-45">+</span>
               </summary>
-              <p className="px-6 pb-6 text-sm text-[#F5F1E8]/45 leading-relaxed">{f.a}</p>
+              <div className="px-6 pb-6">
+                <p className="text-sm text-[#F5F1E8]/45 leading-relaxed">{f.a}</p>
+                {f.link && (
+                  <a href={f.link.href} className="inline-block mt-3 text-sm font-black uppercase tracking-widest" style={{ color: '#3FBF63' }}>
+                    {f.link.label}
+                  </a>
+                )}
+              </div>
             </details>
           ))}
         </div>
       </section>
 
-      <section className="py-20 px-6 sm:px-12 text-center" style={{ background: '#1A2E1F', borderTop: '1px solid #ffffff08' }}>
-        <div className="max-w-xl mx-auto">
-          <h2 className="text-2xl font-black text-[#F5F1E8] mb-3" style={{ fontFamily: 'var(--font-heading)' }}>Still curious?</h2>
-          <a href="mailto:info@blackdiamondlabs.co.nz?subject=Grassroots%20Fantasy%20question" className="text-sm font-semibold" style={{ color: '#E8D5A3' }}>
-            info@blackdiamondlabs.co.nz →
+      <section className="px-6 sm:px-12" style={{ background: '#1A2E1F', borderTop: '1px solid #ffffff08', paddingTop: "90px", paddingBottom: "100px", textAlign: "center" }}>
+        <div style={{ maxWidth: "576px", marginLeft: "auto", marginRight: "auto" }}>
+          <h2 className="text-2xl font-black text-[#F5F1E8] mb-4" style={{ fontFamily: 'var(--font-heading)' }}>Still curious?</h2>
+          <a href="mailto:info@grassrootsfantasy.co.nz?subject=Grassroots%20Fantasy%20question" className="text-sm font-semibold" style={{ color: '#E8D5A3' }}>
+            info@grassrootsfantasy.co.nz →
           </a>
         </div>
       </section>
