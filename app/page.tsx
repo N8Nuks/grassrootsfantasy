@@ -29,7 +29,7 @@ export default function Home() {
               <img src="/gf-mark.png" alt="" className="w-28 sm:w-36" style={{ filter: "drop-shadow(0 8px 24px #00000090)" }} />
               <div className="text-center" style={{ fontFamily: 'var(--font-heading)' }}>
                 <span className="block text-3xl sm:text-4xl font-black tracking-wide" style={{ color: '#3FBF63', textShadow: '0 2px 12px #00000080' }}>GRASSROOTS</span>
-                <span className="block text-3xl sm:text-4xl font-black tracking-[0.28em]" style={{ color: '#F5F1E8', textShadow: '0 2px 12px #00000080' }}>FANTASY</span>
+                <span className="block text-4xl sm:text-5xl" style={{ fontFamily: 'var(--font-script)', color: '#F5F1E8', textShadow: '0 2px 12px #00000080', marginTop: '2px' }}>Fantasy</span>
               </div>
             </div>
           </div>

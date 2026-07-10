@@ -18,7 +18,7 @@ export default function Nav() {
           <img src="/gf-mark.png" alt="" className="h-9 w-auto" />
           <span className="hidden sm:flex flex-col leading-none" style={{ fontFamily: 'var(--font-heading)' }}>
             <span className="text-[13px] font-black tracking-wide" style={{ color: '#3FBF63' }}>GRASSROOTS</span>
-            <span className="text-[13px] font-black tracking-[0.22em] text-[#F5F1E8]">FANTASY</span>
+            <span className="text-[17px] text-[#F5F1E8]" style={{ fontFamily: 'var(--font-script)' }}>Fantasy</span>
           </span>
         </a>
 

@@ -6,7 +6,7 @@ export default function Footer() {
           <img src="/gf-mark.png" alt="" className="h-8 w-auto" />
           <span className="flex flex-col leading-none" style={{ fontFamily: 'var(--font-heading)' }}>
             <span className="text-[12px] font-black tracking-wide" style={{ color: '#3FBF63' }}>GRASSROOTS</span>
-            <span className="text-[12px] font-black tracking-[0.22em] text-[#F5F1E8]">FANTASY</span>
+            <span className="text-[15px] text-[#F5F1E8]" style={{ fontFamily: 'var(--font-script)' }}>Fantasy</span>
           </span>
         </div>
         <p className="text-xs text-[#F5F1E8]/30 text-center" style={{ fontFamily: 'var(--font-body)' }}>
