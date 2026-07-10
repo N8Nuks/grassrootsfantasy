@@ -17,6 +17,17 @@ const TIER_META: Record<string, { label: string; accent: string }> = {
   common: { label: 'COMMON', accent: '#2D9E4E' },
 }
 
+const THEMES = {
+  mens: {
+    accent: '#3FBF63', accentBright: '#39FF6A', headerBg: '#1A2E1F',
+    glow: '0 0 12px #39FF6A80', boxGlow: '0 0 16px #39FF6A30, inset 0 0 16px #39FF6A15',
+  },
+  womens: {
+    accent: '#4D7FFF', accentBright: '#4D7FFF', headerBg: '#10214D',
+    glow: '0 0 12px #4D7FFF80', boxGlow: '0 0 16px #4D7FFF30, inset 0 0 16px #4D7FFF15',
+  },
+}
+
 const SLOT_LABELS: Record<string, string> = {
   P: 'P', C: 'C', B1: '1B', B2: '2B', B3: '3B', SS: 'SS',
   LF: 'LF', CF: 'CF', RF: 'RF', DP: 'DP', PB: 'P(B)', DR: 'DR',
@@ -42,6 +53,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   initialSlots: SlotState[]
   grade: 'mens' | 'womens'
 }) {
+  const T = THEMES[grade]
   const [view, setView] = useState<'lineup' | 'collection'>('lineup')
   const [slots, setSlots] = useState<SlotState[]>(() => {
     const withOrder = [...initialSlots]
@@ -65,7 +77,6 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     .filter(s => BATTING_SLOTS.includes(s.slot))
     .sort((a, b) => (a.batting_order ?? 99) - (b.batting_order ?? 99))
 
-  // ── Batting order swap (tap two numbers) ──
   function swapOrder(order: number) {
     if (swapTarget === null) { setSwapTarget(order); return }
     if (swapTarget === order) { setSwapTarget(null); return }
@@ -77,23 +88,18 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     setSwapTarget(null)
   }
 
-  // ── Slot picker: put a card into a fielding slot ──
   function assignToSlot(slot: string, cardId: string) {
     setSlots(prev => {
       const next = [...prev]
       const target = next.find(s => s.slot === slot)
       const cardCurrent = next.find(s => s.card_id === cardId)
-
       if (target && cardCurrent && target !== cardCurrent) {
-        // Swap the two cards between slots — batting order stays with the SLOT
         const tmp = target.card_id
         target.card_id = cardCurrent.card_id
         cardCurrent.card_id = tmp
       } else if (target && !cardCurrent) {
-        // Incoming card was unassigned; outgoing card becomes unassigned
         target.card_id = cardId
       } else if (!target) {
-        // Slot was empty (bench/reserve): move card here, vacating its old slot
         if (cardCurrent) {
           const idx = next.indexOf(cardCurrent)
           next.splice(idx, 1)
@@ -122,7 +128,6 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     setSaving(false)
   }
 
-  // ── Team stats ──
   function statBlock(cardList: TeamCard[]) {
     const withBA = cardList.filter(c => c.stats.career_ba != null)
     const avg = withBA.length ? withBA.reduce((a, c) => a + Number(c.stats.career_ba), 0) / withBA.length : 0
@@ -146,7 +151,6 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     return order.indexOf(a.tier) - order.indexOf(b.tier)
   })
 
-  // Picker candidates: eligible for the slot, not already in another starter slot (swaps allowed via list anyway)
   const pickerCandidates = pickerSlot
     ? cards.filter(c => isEligible(c, pickerSlot))
     : []
@@ -154,7 +158,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   return (
     <div style={{ maxWidth: "820px", marginLeft: "auto", marginRight: "auto" }}>
       <div className="text-center" style={{ marginBottom: "40px" }}>
-        <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: '#2D9E4E' }}>My Team</p>
+        <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: T.accent }}>My Team</p>
         <h1 className="text-3xl sm:text-4xl font-black text-[#F5F1E8] mb-2" style={{ fontFamily: 'var(--font-heading)' }}>{teamName}</h1>
         <p className="text-sm text-[#F5F1E8]/40">{clubName} · {cards.length} cards</p>
         <div className="flex justify-center gap-2 mt-4">
@@ -191,7 +195,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           <button key={v} onClick={() => setView(v)}
             className="text-xs font-bold uppercase tracking-widest px-6 py-3 transition-all"
             style={view === v
-              ? { color: '#141210', background: '#3FBF63' }
+              ? { color: '#141210', background: T.accent }
               : { color: '#F5F1E880', border: '1px solid #ffffff20', background: 'transparent' }}>
             {v === 'lineup' ? 'Lineup Card' : 'Collection'}
           </button>
@@ -201,7 +205,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
       {view === 'lineup' && (
         <div>
           <div className="rounded-2xl overflow-hidden" style={{ background: '#181510', border: '1px solid #ffffff12' }}>
-            <div className="px-6 py-4 flex items-center justify-between flex-wrap gap-2" style={{ background: '#1A2E1F', borderBottom: '1px solid #ffffff0a' }}>
+            <div className="px-6 py-4 flex items-center justify-between flex-wrap gap-2" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a' }}>
               <span className="text-xs font-black uppercase tracking-[0.25em] text-[#F5F1E8]">Official Lineup Card</span>
               <span className="text-[10px] text-[#F5F1E8]/40 uppercase tracking-wider">Numbers swap batting order · positions swap players</span>
             </div>
@@ -216,13 +220,13 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                   <button onClick={() => swapOrder(s.batting_order!)}
                     className="w-9 h-9 rounded-full text-sm font-black flex items-center justify-center transition-all"
                     style={selected
-                      ? { background: '#39FF6A', color: '#141210', boxShadow: '0 0 12px #39FF6A60' }
+                      ? { background: T.accentBright, color: '#141210', boxShadow: T.glow }
                       : { background: '#ffffff10', color: '#F5F1E8' }}>
                     {s.batting_order}
                   </button>
                   <button onClick={() => setPickerSlot(s.slot)}
                     className="w-11 text-xs font-black text-center px-2 py-1 rounded transition-all hover:scale-105"
-                    style={{ color: '#141210', background: '#3FBF63' }}>
+                    style={{ color: '#141210', background: T.accent }}>
                     {SLOT_LABELS[s.slot]}
                   </button>
                   <div className="flex-1 min-w-0">
@@ -248,7 +252,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                     <span className="w-9" />
                     <button onClick={() => setPickerSlot(slotName)}
                       className="w-11 text-xs font-black text-center px-2 py-1 rounded transition-all hover:scale-105"
-                      style={{ color: '#141210', background: '#E8D5A3' }}>
+                      style={{ color: '#141210', background: '#E8C15A' }}>
                       {SLOT_LABELS[slotName]}
                     </button>
                     <p className="text-sm text-[#F5F1E8]/70 font-bold">{c?.name ?? 'Tap to select'}</p>
@@ -258,11 +262,10 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               })}
             </div>
 
-            {/* Team stats footer */}
-            <div className="px-6 py-5" style={{ background: '#1A2E1F', borderTop: '1px solid #ffffff0a' }}>
+            <div className="px-6 py-5" style={{ background: T.headerBg, borderTop: '1px solid #ffffff0a' }}>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-2">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] mb-2" style={{ color: '#3FBF63' }}>Starting Card</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.25em] mb-2" style={{ color: T.accentBright }}>Starting Card</p>
                   <div className="flex gap-5 text-xs text-[#F5F1E8]/70 flex-wrap">
                     <span>TEAM BA <b className="text-[#F5F1E8]">{starterStats.avg.toFixed(3)}</b></span>
                     <span>HR <b className="text-[#F5F1E8]">{starterStats.hr}</b></span>
@@ -271,7 +274,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                   </div>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] mb-2" style={{ color: '#E8D5A3' }}>Full Squad</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.25em] mb-2" style={{ color: '#E8C15A' }}>Full Squad</p>
                   <div className="flex gap-5 text-xs text-[#F5F1E8]/70 flex-wrap">
                     <span>TEAM BA <b className="text-[#F5F1E8]">{squadStats.avg.toFixed(3)}</b></span>
                     <span>HR <b className="text-[#F5F1E8]">{squadStats.hr}</b></span>
@@ -283,7 +286,6 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
             </div>
           </div>
 
-          {/* Bench & reserve — tappable */}
           <div className="grid sm:grid-cols-2 gap-4" style={{ marginTop: "24px" }}>
             <div className="rounded-2xl p-5" style={{ background: '#18151080', border: '1px dashed #ffffff20' }}>
               <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#F5F1E8]/40 mb-3">Bench · 0.75× (4 slots)</p>
@@ -291,7 +293,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                 const s = slots.find(x => x.slot === b)
                 const c = s ? cardById.get(s.card_id) : null
                 return (
-                  <button key={b} onClick={() => setPickerSlot(b)} className="block w-full text-left text-sm py-1.5 hover:text-[#3FBF63] transition-colors"
+                  <button key={b} onClick={() => setPickerSlot(b)} className="block w-full text-left text-sm py-1.5 transition-colors"
                     style={{ color: c ? '#F5F1E8' : '#F5F1E830', borderBottom: '1px solid #ffffff08' }}>
                     {c?.name ?? 'Empty — tap to assign'}
                   </button>
@@ -304,7 +306,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                 const s = slots.find(x => x.slot === r)
                 const c = s ? cardById.get(s.card_id) : null
                 return (
-                  <button key={r} onClick={() => setPickerSlot(r)} className="block w-full text-left text-sm py-1.5 hover:text-[#3FBF63] transition-colors"
+                  <button key={r} onClick={() => setPickerSlot(r)} className="block w-full text-left text-sm py-1.5 transition-colors"
                     style={{ color: c ? '#F5F1E8' : '#F5F1E830', borderBottom: '1px solid #ffffff08' }}>
                     {c?.name ?? 'Empty — tap to assign'}
                   </button>
@@ -316,10 +318,10 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           <div className="text-center" style={{ marginTop: "32px" }}>
             <button onClick={save} disabled={saving}
               className="text-base font-bold tracking-wide transition-all hover:scale-[1.02] disabled:opacity-50"
-              style={{ color: '#39FF6A', border: '1px solid #39FF6A', background: 'transparent', padding: "18px 64px", textShadow: '0 0 12px #39FF6A80', boxShadow: '0 0 16px #39FF6A30, inset 0 0 16px #39FF6A15' }}>
+              style={{ color: T.accentBright, border: `1px solid ${T.accentBright}`, background: 'transparent', padding: "18px 64px", textShadow: T.glow, boxShadow: T.boxGlow }}>
               {saving ? 'Saving…' : 'Save Lineup Card'}
             </button>
-            {message && <p className="text-sm mt-4" style={{ color: message.includes('saved') ? '#3FBF63' : '#FF6B6B' }}>{message}</p>}
+            {message && <p className="text-sm mt-4" style={{ color: message.includes('saved') ? T.accent : '#FF6B6B' }}>{message}</p>}
           </div>
         </div>
       )}
@@ -343,7 +345,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                 <div key={c.id} className="rounded-2xl p-5 flex flex-col gap-2" style={{ background: '#181510', border: `1px solid ${meta.accent}30`, opacity: inLineup ? 1 : 0.75 }}>
                   <div className="flex justify-between">
                     <span className="text-[9px] font-black tracking-widest px-2.5 py-1 rounded-full" style={{ color: meta.accent, background: meta.accent + '15' }}>{meta.label}</span>
-                    {inLineup && <span className="text-[9px] font-black px-2 py-1 rounded-full" style={{ color: '#141210', background: '#3FBF63' }}>IN LINEUP</span>}
+                    {inLineup && <span className="text-[9px] font-black px-2 py-1 rounded-full" style={{ color: '#141210', background: T.accent }}>IN LINEUP</span>}
                   </div>
                   <h3 className="text-base font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>{c.name}</h3>
                   <p className="text-[10px] text-[#F5F1E8]/35">{c.club} · {c.positions.map(p => SLOT_LABELS[p] ?? p).join(' ')}</p>
@@ -359,11 +361,10 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         </div>
       )}
 
-      {/* Picker sheet */}
       {pickerSlot && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ background: '#000000B3' }} onClick={() => setPickerSlot(null)}>
           <div className="w-full rounded-2xl overflow-hidden" style={{ maxWidth: "480px", maxHeight: "70vh", background: '#181510', border: '1px solid #ffffff20' }} onClick={e => e.stopPropagation()}>
-            <div className="px-5 py-4 flex items-center justify-between" style={{ background: '#1A2E1F', borderBottom: '1px solid #ffffff0a' }}>
+            <div className="px-5 py-4 flex items-center justify-between" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a' }}>
               <span className="text-sm font-black text-[#F5F1E8]">Select for {SLOT_LABELS[pickerSlot] ?? pickerSlot}</span>
               <button onClick={() => setPickerSlot(null)} className="text-[#F5F1E8]/50 text-xl font-black">×</button>
             </div>
