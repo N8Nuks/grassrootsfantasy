@@ -8,29 +8,8 @@ export default function Home() {
 
       {/* Hero — the brand */}
       <section className="relative flex min-h-screen flex-col items-center justify-center px-6 text-center overflow-hidden grain">
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 35%, #1A2E1F 0%, #141210 70%)' }} />
-
-        {/* Grass silhouette layers */}
-        <div className="grass-layer" style={{ zIndex: 1 }}>
-          <svg viewBox="0 0 1440 160" preserveAspectRatio="none" style={{ width: '100%', height: '160px', display: 'block' }}>
-            <g fill="#0E1B12" opacity="0.9">
-              {Array.from({ length: 48 }).map((_, i) => {
-                const x = i * 30 + (i % 3) * 8
-                const h = 60 + ((i * 37) % 70)
-                const lean = ((i * 13) % 14) - 7
-                return <path key={i} className={i % 2 ? 'grass-blade' : 'grass-blade-alt'} style={{ animationDelay: `${(i % 7) * 0.4}s` }} d={`M${x} 160 Q ${x + lean} ${160 - h * 0.6} ${x + lean * 1.6} ${160 - h} Q ${x + lean + 4} ${160 - h * 0.55} ${x + 7} 160 Z`} />
-              })}
-            </g>
-            <g fill="#16261A" opacity="0.95">
-              {Array.from({ length: 36 }).map((_, i) => {
-                const x = i * 40 + 12 + (i % 4) * 5
-                const h = 40 + ((i * 53) % 50)
-                const lean = ((i * 17) % 12) - 6
-                return <path key={i} className={i % 2 ? 'grass-blade-alt' : 'grass-blade'} style={{ animationDelay: `${(i % 5) * 0.6}s` }} d={`M${x} 160 Q ${x + lean} ${160 - h * 0.6} ${x + lean * 1.5} ${160 - h} Q ${x + lean + 3} ${160 - h * 0.5} ${x + 6} 160 Z`} />
-              })}
-            </g>
-          </svg>
-        </div>
+        <div className="absolute inset-0" style={{ backgroundImage: "url('/hero-grass.jpg')", backgroundSize: 'cover', backgroundPosition: 'center 65%' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #141210E6 0%, #14121080 40%, #141210B3 75%, #141210 100%)' }} />
 
         {/* Drifting motes */}
         {[
