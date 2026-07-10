@@ -68,7 +68,7 @@ export default function Home() {
       </section>
 
       {/* NOW LIVE */}
-      <section className="w-full py-32 sm:py-40" style={{ borderTop: '1px solid #ffffff08' }}>
+      <section className="w-full py-32 sm:py-40" style={{ borderTop: '1px solid #ffffff08', marginTop: '4rem' }}>
         <div className="w-full px-6" style={{ maxWidth: "820px", marginLeft: "auto", marginRight: "auto" }}>
           <div className="relative overflow-hidden rounded-[2.5rem] px-8 sm:px-16 py-16 sm:py-20 text-center" style={{ background: 'linear-gradient(160deg, #1A2E1F 0%, #141210 100%)', border: '1px solid #2D9E4E30' }}>
             <div className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-40 rounded-b-full" style={{ background: '#2D9E4E' }} />
@@ -82,7 +82,7 @@ export default function Home() {
             <p className="text-sm sm:text-base text-[#F5F1E8]/45 max-w-lg mx-auto mb-12 leading-relaxed">
               Our first edition — built for the Northern Fastpitch Series with the Auckland Softball Association. Men&apos;s competition launching this season.
             </p>
-            <a href="/nfs" className="inline-block px-14 py-5 text-base font-black uppercase tracking-widest text-[#F5F1E8] transition-all hover:opacity-90" style={{ background: '#1338BE' }}>
+            <a href="/nfs" className="inline-block px-14 py-5 text-base font-black uppercase tracking-widest text-[#141210] transition-all hover:opacity-90" style={{ background: 'linear-gradient(180deg, #6FD98A 0%, #2D9E4E 100%)' }}>
               Enter NFS Edition
             </a>
           </div>
