@@ -9,13 +9,12 @@ export default function Footer() {
             <span className="text-[15px] text-[#F5F1E8]" style={{ fontFamily: 'var(--font-script)' }}>Fantasy</span>
           </span>
         </div>
-        <p className="text-xs text-[#F5F1E8]/30 text-center" style={{ fontFamily: 'var(--font-body)' }}>
-          Play along with your favourite players.
-        </p>
-        <div className="flex items-center gap-5">
-          <a href="https://blackdiamondlabs.co.nz" className="text-xs text-[#F5F1E8]/30 hover:text-[#F5F1E8]/60 transition-colors">A Black Diamond Labs platform</a>
-          <a href="mailto:info@blackdiamondlabs.co.nz" className="text-xs text-[#F5F1E8]/30 hover:text-[#F5F1E8]/60 transition-colors">Contact</a>
-        </div>
+        <a href="https://blackdiamondlabs.co.nz" className="text-xs text-[#F5F1E8]/30 hover:text-[#F5F1E8]/60 transition-colors text-center">
+          A Black Diamond Labs Ltd Platform
+        </a>
+        <a href="mailto:info@grassrootsfantasy.co.nz" className="text-xs text-[#F5F1E8]/30 hover:text-[#F5F1E8]/60 transition-colors">
+          Contact
+        </a>
       </div>
     </footer>
   )

@@ -7,14 +7,14 @@ export default function How() {
       <Nav />
 
       {/* Hero */}
-      <section className="relative px-6 sm:px-12 overflow-hidden grain" style={{ paddingTop: "220px", paddingBottom: "90px" }}>
+      <section className="relative px-6 sm:px-12 overflow-hidden grain" style={{ paddingTop: "140px", paddingBottom: "80px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
-        <div className="relative z-10 max-w-3xl mx-auto text-center">
+        <div className="relative z-10" style={{ maxWidth: "720px", marginLeft: "auto", marginRight: "auto", textAlign: "center" }}>
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-4" style={{ color: '#2D9E4E' }}>How it works</p>
           <h1 className="text-4xl sm:text-5xl font-black text-[#F5F1E8] mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
             Your squad. Your calls.<br/>Real results.
           </h1>
-          <p className="text-sm text-[#F5F1E8]/45 max-w-lg mx-auto leading-relaxed">
+          <p className="text-sm text-[#F5F1E8]/45 leading-relaxed" style={{ maxWidth: "480px", marginLeft: "auto", marginRight: "auto" }}>
             Grassroots Fantasy is simple to start and rewarding to master. Here's the full journey — from signup to the top of the ladder.
           </p>
         </div>
@@ -104,10 +104,10 @@ export default function How() {
       </section>
 
       {/* CTA */}
-      <section className="py-24 px-6 sm:px-12 text-center" style={{ background: '#1A2E1F', borderTop: '1px solid #ffffff08' }}>
-        <div className="max-w-xl mx-auto">
-          <h2 className="text-3xl font-black text-[#F5F1E8] mb-6" style={{ fontFamily: 'var(--font-heading)' }}>Ready to play along?</h2>
-          <a href="/nfs" className="inline-block rounded-full px-10 py-4 text-sm font-black uppercase tracking-widest text-[#141210] transition-all hover:opacity-90" style={{ background: '#E8D5A3' }}>
+      <section className="px-6 sm:px-12" style={{ background: '#1A2E1F', borderTop: '1px solid #ffffff08', paddingTop: "110px", paddingBottom: "120px", textAlign: "center" }}>
+        <div style={{ maxWidth: "576px", marginLeft: "auto", marginRight: "auto" }}>
+          <h2 className="text-3xl font-black text-[#F5F1E8] mb-8" style={{ fontFamily: 'var(--font-heading)' }}>Ready to play along?</h2>
+          <a href="/nfs" className="inline-block rounded-full px-14 py-5 text-base font-black uppercase tracking-widest text-white transition-all hover:opacity-90" style={{ background: '#0047AB' }}>
             Enter NFS League
           </a>
         </div>

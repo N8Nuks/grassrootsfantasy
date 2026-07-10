@@ -6,7 +6,7 @@ export default function Cards() {
     <main className="min-h-screen w-full" style={{ background: '#141210' }}>
       <Nav />
 
-      <section className="relative px-6 overflow-hidden" style={{ paddingTop: "220px", paddingBottom: "90px" }}>
+      <section className="relative px-6 overflow-hidden" style={{ paddingTop: "140px", paddingBottom: "80px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
         <div className="relative z-10 w-full flex flex-col items-center text-center" style={{ maxWidth: '820px', marginLeft: 'auto', marginRight: 'auto' }}>
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-4" style={{ color: '#2D9E4E' }}>The Cards</p>
@@ -67,10 +67,10 @@ export default function Cards() {
         </div>
       </section>
 
-      <section className="w-full py-24 text-center" style={{ background: '#1A2E1F', borderTop: '1px solid #ffffff08' }}>
+      <section className="w-full text-center" style={{ background: '#1A2E1F', borderTop: '1px solid #ffffff08', paddingTop: "110px", paddingBottom: "120px" }}>
         <div className="w-full px-6" style={{ maxWidth: '600px', marginLeft: 'auto', marginRight: 'auto' }}>
           <h2 className="text-3xl font-black text-[#F5F1E8] mb-8" style={{ fontFamily: 'var(--font-heading)' }}>Start your collection.</h2>
-          <a href="/nfs" className="inline-block px-14 py-5 text-base font-black uppercase tracking-widest text-[#F5F1E8] transition-all hover:opacity-90" style={{ background: 'linear-gradient(180deg, #2B54D6 0%, #1338BE 100%)' }}>
+          <a href="/nfs" className="inline-block rounded-full px-14 py-5 text-base font-black uppercase tracking-widest text-white transition-all hover:opacity-90" style={{ background: '#0047AB' }}>
             Enter NFS League
           </a>
         </div>
