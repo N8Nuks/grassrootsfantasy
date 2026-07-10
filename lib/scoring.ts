@@ -38,7 +38,7 @@ export function slotPoints(slot: string, s: StatLine, v: PointValues): number {
   switch (slot) {
     case 'P': return bat + pit          // 2WP A slot: both sides
     case 'PB': return pit               // pitching only
-    case 'DP': return bat               // offence only (batting incl. SB/CS already)
+    case 'DP': return bat               // offence only
     case 'C': return bat                // hitting only
     case 'DR': {                        // SB/CS only
       return (Number(s.sb) || 0) * (v['sb'] ?? 0) + (Number(s.cs) || 0) * (v['cs'] ?? 0)
@@ -63,4 +63,42 @@ export function updateSeasonTotals(prevTrue: number, prevFloor: number, roundPoi
   }
   const displayed = Math.max(newTrue, floor, 0)
   return { true_total: newTrue, floor_locked: floor, displayed_total: displayed }
+}
+
+// ── Bench auto-substitution ──
+// A bench card steps into a starter slot when the starter has no stats (didn't play).
+// First eligible bench card that played subs in at FULL points (promoted = 1.0x).
+// Remaining bench cards score at bench_mult as usual.
+export type SlotAssignment = { slot: string; player_id: string; positions: string[] }
+
+export function resolveSubs(
+  starters: SlotAssignment[],
+  bench: SlotAssignment[],
+  played: Set<string>,
+): { scored: { slot: string; player_id: string; promoted: boolean }[] } {
+  const scored: { slot: string; player_id: string; promoted: boolean }[] = []
+  const benchUsed = new Set<string>()
+
+  for (const s of starters) {
+    if (played.has(s.player_id)) {
+      scored.push({ slot: s.slot, player_id: s.player_id, promoted: false })
+      continue
+    }
+    const sub = bench.find(b =>
+      !benchUsed.has(b.player_id) &&
+      played.has(b.player_id) &&
+      (s.slot === 'DP' || s.slot === 'DR' || b.positions.includes(s.slot))
+    )
+    if (sub) {
+      benchUsed.add(sub.player_id)
+      scored.push({ slot: s.slot, player_id: sub.player_id, promoted: true })
+    }
+  }
+
+  for (const b of bench) {
+    if (!benchUsed.has(b.player_id) && played.has(b.player_id)) {
+      scored.push({ slot: 'BENCH', player_id: b.player_id, promoted: false })
+    }
+  }
+  return { scored }
 }

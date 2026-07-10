@@ -3,13 +3,13 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { slotPoints, applyBench, updateSeasonTotals, battingPoints, pitchingPoints, StatLine, PointValues } from '@/lib/scoring'
 
-const ADMIN_EMAILS = ['yessir@test.com'] // adjust to your real login email
-
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user || !ADMIN_EMAILS.includes(user.email ?? '')) {
-    return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+  if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+  const adminCheck = createAdminClient()
+  const { data: profile } = await adminCheck.from('profiles').select('is_admin').eq('id', user.id).single()
+  if (!profile?.is_admin) {
   }
 
   const { round_id } = await request.json() as { round_id: string }
