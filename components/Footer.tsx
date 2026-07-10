@@ -24,7 +24,7 @@ export default function Footer() {
           </span>
         </div>
         <a href="https://blackdiamondlabs.co.nz" className="bdl-shimmer text-xs font-semibold text-center hover:opacity-80 transition-opacity">
-          Platform delivery by Black Diamond Labs Ltd
+          Platform delivered by Black Diamond Labs Ltd
         </a>
         <a href="mailto:info@grassrootsfantasy.co.nz" className="text-xs text-[#F5F1E8]/40 hover:text-[#F5F1E8]/70 transition-colors">
           info@grassrootsfantasy.co.nz

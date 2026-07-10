@@ -3,15 +3,28 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { dealAndPersistT1 } from '@/lib/dealing'
 
-export async function POST() {
+export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
+  let grades: ('mens' | 'womens')[] = ['mens']
   try {
-    const result = await dealAndPersistT1(createAdminClient(), user.id, 'mens')
-    return NextResponse.json(result)
-  } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 400 })
+    const body = await request.json()
+    if (Array.isArray(body?.grades) && body.grades.length > 0) {
+      grades = body.grades.filter((g: string) => g === 'mens' || g === 'womens')
+    }
+  } catch { /* no body: default mens */ }
+
+  const admin = createAdminClient()
+  const results: Record<string, number | string> = {}
+  for (const grade of grades) {
+    try {
+      const r = await dealAndPersistT1(admin, user.id, grade)
+      results[grade] = r.dealt
+    } catch (e) {
+      results[grade] = (e as Error).message
+    }
   }
+  return NextResponse.json(results)
 }

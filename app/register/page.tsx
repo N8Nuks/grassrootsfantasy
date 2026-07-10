@@ -11,6 +11,7 @@ export default function Register() {
   const [clubCode, setClubCode] = useState('')
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
+  const [grades, setGrades] = useState<('mens'|'womens')[]>(['mens'])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -50,7 +51,7 @@ export default function Register() {
       return
     }
 
-   await fetch('/api/deal-t1', { method: 'POST' })
+   await fetch('/api/deal-t1', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grades }) })
     window.location.href = '/team'
   }
 
@@ -77,7 +78,18 @@ export default function Register() {
             <input className={field} style={fieldStyle} type="text" placeholder="Club code *" value={clubCode} onChange={e => setClubCode(e.target.value)} />
             <input className={field} style={fieldStyle} type="text" placeholder="Your name (optional)" value={fullName} onChange={e => setFullName(e.target.value)} />
             <input className={field} style={fieldStyle} type="tel" placeholder="Phone (optional)" value={phone} onChange={e => setPhone(e.target.value)} />
-
+<div className="flex gap-3">
+              {(['mens','womens'] as const).map(g => (
+                <button key={g} type="button"
+                  onClick={() => setGrades(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])}
+                  className="flex-1 rounded-lg px-4 py-3.5 text-sm font-bold transition-all"
+                  style={grades.includes(g)
+                    ? { color: '#141210', background: g === 'mens' ? '#3FBF63' : '#4D7FFF' }
+                    : { color: '#F5F1E860', background: '#181510', border: '1px solid #ffffff15' }}>
+                  {g === 'mens' ? "Men's League" : "Women's League"}
+                </button>
+              ))}
+            </div>
             {error && <p className="text-sm" style={{ color: '#FF6B6B' }}>{error}</p>}
 
             <button onClick={handleRegister} disabled={busy}

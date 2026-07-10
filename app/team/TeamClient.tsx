@@ -35,11 +35,12 @@ function isEligible(card: TeamCard, slot: string): boolean {
   return card.positions.includes(slot)
 }
 
-export default function TeamClient({ teamName, clubName, cards, initialSlots }: {
+export default function TeamClient({ teamName, clubName, cards, initialSlots, grade }: {
   teamName: string
   clubName: string
   cards: TeamCard[]
   initialSlots: SlotState[]
+  grade: 'mens' | 'womens'
 }) {
   const [view, setView] = useState<'lineup' | 'collection'>('lineup')
   const [slots, setSlots] = useState<SlotState[]>(() => {
@@ -56,7 +57,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots }: 
   const [pickerSlot, setPickerSlot] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
-  const [sortBy, setSortBy] = useState<'tier' | 'ba' | 'position'>('tier')
+  const [sortBy, setSortBy] = useState<'tier' | 'ba' | 'points'>('tier')
 
   const cardById = new Map(cards.map(c => [c.id, c]))
   const assignedIds = new Set(slots.map(s => s.card_id))
@@ -92,8 +93,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots }: 
         // Incoming card was unassigned; outgoing card becomes unassigned
         target.card_id = cardId
       } else if (!target) {
-        // Slot was empty (bench/reserve)
-        // Remove card from any current slot first
+        // Slot was empty (bench/reserve): move card here, vacating its old slot
         if (cardCurrent) {
           const idx = next.indexOf(cardCurrent)
           next.splice(idx, 1)
@@ -115,7 +115,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots }: 
     const res = await fetch('/api/save-lineup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ grade: 'mens', slots }),
+      body: JSON.stringify({ grade, slots }),
     })
     const data = await res.json()
     setMessage(res.ok ? 'Lineup card saved.' : (data.error ?? 'Save failed'))
@@ -135,9 +135,13 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots }: 
   const starterStats = statBlock(starterCards)
   const squadStats = statBlock(cards)
 
+  const surname = (n: string) => n.trim().split(' ').slice(-1)[0].toLowerCase()
   const sortedCollection = [...cards].sort((a, b) => {
     if (sortBy === 'ba') return (b.stats.career_ba ?? 0) - (a.stats.career_ba ?? 0)
-    if (sortBy === 'position') return (a.positions[0] ?? '').localeCompare(b.positions[0] ?? '')
+    if (sortBy === 'points') {
+      const diff = (b.stats.season_points ?? 0) - (a.stats.season_points ?? 0)
+      return diff !== 0 ? diff : surname(a.name).localeCompare(surname(b.name))
+    }
     const order = ['rare_2wp_a','rare_2wp_b','elite','common']
     return order.indexOf(a.tier) - order.indexOf(b.tier)
   })
@@ -153,6 +157,33 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots }: 
         <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: '#2D9E4E' }}>My Team</p>
         <h1 className="text-3xl sm:text-4xl font-black text-[#F5F1E8] mb-2" style={{ fontFamily: 'var(--font-heading)' }}>{teamName}</h1>
         <p className="text-sm text-[#F5F1E8]/40">{clubName} · {cards.length} cards</p>
+        <div className="flex justify-center gap-2 mt-4">
+          <a href="/team?grade=mens"
+            className="text-xs font-bold uppercase tracking-widest px-5 py-2.5 transition-all"
+            style={grade === 'mens'
+              ? { color: '#141210', background: '#3FBF63' }
+              : { color: '#F5F1E860', border: '1px solid #ffffff20' }}>
+            Men&apos;s
+          </a>
+          <a href="/team?grade=womens"
+            className="text-xs font-bold uppercase tracking-widest px-5 py-2.5 transition-all"
+            style={grade === 'womens'
+              ? { color: '#141210', background: '#4D7FFF' }
+              : { color: '#F5F1E860', border: '1px solid #ffffff20' }}>
+            Women&apos;s
+          </a>
+        </div>
+        {cards.length === 12 && (
+          <button onClick={async () => {
+            const r = await fetch('/api/deal-t2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade }) })
+            if (r.ok) window.location.reload()
+            else alert((await r.json()).error)
+          }}
+            className="mt-4 text-sm font-bold tracking-wide transition-all hover:scale-[1.02]"
+            style={{ color: '#E8C15A', border: '1px solid #E8C15A', background: 'transparent', padding: "14px 40px" }}>
+            Open Pre-Season Pack (9 cards)
+          </button>
+        )}
       </div>
 
       <div className="flex justify-center gap-3" style={{ marginBottom: "36px" }}>
@@ -296,7 +327,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots }: 
       {view === 'collection' && (
         <div>
           <div className="flex justify-center gap-2 mb-8">
-            {(['tier','ba','position'] as const).map(s => (
+            {(['tier','ba','points'] as const).map(s => (
               <button key={s} onClick={() => setSortBy(s)}
                 className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full transition-all"
                 style={sortBy === s ? { color: '#141210', background: '#E8D5A3' } : { color: '#F5F1E860', border: '1px solid #ffffff15' }}>

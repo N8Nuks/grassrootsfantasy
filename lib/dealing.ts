@@ -1,8 +1,13 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 
 type Player = { id: string; full_name: string; tier: string; positions: string[] }
+type Grade = 'mens' | 'womens'
 
-const TOP_2WPA = ['Thomas Enoka','Jack Besgrove','Floyd Nola','Traye Wildbore','Liam Twigden']
+const TOP_2WPA: Record<Grade, string[]> = {
+  mens: ['Thomas Enoka','Jack Besgrove','Floyd Nola','Traye Wildbore','Liam Twigden'],
+  womens: ['Alexia Lacatena','Lauren Heijnsdijk','Kamryn Coleman','Shyah Hale','Tyneesha Houkamau'],
+}
+
 const STARTER_SLOTS = ['C','P','PB','SS','B2','B3','B1','LF','CF','RF','DP','DR']
 
 function eligible(card: Player, slot: string): boolean {
@@ -45,12 +50,13 @@ function sample<T>(arr: T[], n: number): T[] {
   return out
 }
 
-export function dealT1(pool: Player[]): { cards: Player[]; lineup: Map<string, Player> } {
+export function dealT1(pool: Player[], grade: Grade): { cards: Player[]; lineup: Map<string, Player> } {
   const byTier = (t: string) => pool.filter(p => p.tier === t)
+  const topA = TOP_2WPA[grade]
   for (let attempt = 0; attempt < 200; attempt++) {
     const flexTier = Math.random() < 0.5 ? 'elite' : 'common'
     const picks = [
-      ...sample(byTier('rare_2wp_a').filter(p => TOP_2WPA.includes(p.full_name)), 1),
+      ...sample(byTier('rare_2wp_a').filter(p => topA.includes(p.full_name)), 1),
       ...sample(byTier('rare_2wp_b'), 1),
       ...sample(byTier('elite'), flexTier === 'elite' ? 6 : 5),
       ...sample(byTier('common'), flexTier === 'common' ? 5 : 4),
@@ -69,7 +75,7 @@ export function dealT1(pool: Player[]): { cards: Player[]; lineup: Map<string, P
   throw new Error('Could not deal a legal T1 pack after 200 attempts')
 }
 
-export async function dealAndPersistT1(admin: SupabaseClient, userId: string, grade: 'mens' | 'womens') {
+export async function dealAndPersistT1(admin: SupabaseClient, userId: string, grade: Grade) {
   // Guard: already dealt?
   const { count } = await admin.from('cards').select('id', { count: 'exact', head: true })
     .eq('owner_id', userId).eq('grade', grade).eq('source', 't1')
@@ -79,7 +85,7 @@ export async function dealAndPersistT1(admin: SupabaseClient, userId: string, gr
     .select('id, full_name, tier, positions').eq('grade', grade).eq('active', true)
   if (poolError || !pool || pool.length === 0) throw new Error('Player pool unavailable')
 
-  const { cards, lineup } = dealT1(pool as Player[])
+  const { cards, lineup } = dealT1(pool as Player[], grade)
 
   const { data: inserted, error: cardError } = await admin.from('cards')
     .insert(cards.map(p => ({ owner_id: userId, player_id: p.id, grade, source: 't1' })))
