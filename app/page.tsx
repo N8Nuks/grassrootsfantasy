@@ -25,11 +25,11 @@ export default function Home() {
 
         <div className="relative z-10 flex flex-col items-center max-w-3xl mx-auto pt-24 pb-16">
           <div className="opacity-0 animate-fade-up">
-            <div className="flex flex-col items-center gap-5 mb-10">
-              <img src="/gf-mark.png" alt="" className="w-28 sm:w-36" style={{ filter: "drop-shadow(0 8px 24px #00000090)" }} />
-              <div className="text-center" style={{ fontFamily: 'var(--font-heading)' }}>
-                <span className="block text-3xl sm:text-4xl font-black tracking-wide" style={{ color: '#3FBF63', textShadow: '0 2px 12px #00000080' }}>GRASSROOTS</span>
-                <span className="block text-4xl sm:text-5xl" style={{ fontFamily: 'var(--font-script)', color: '#F5F1E8', textShadow: '0 2px 12px #00000080', marginTop: '2px' }}>Fantasy</span>
+            <div className="flex items-center justify-center gap-4 sm:gap-6 mb-12">
+              <img src="/gf-mark.png" alt="" className="w-20 sm:w-28" style={{ filter: "drop-shadow(0 8px 24px #00000090)" }} />
+              <div className="text-left" style={{ fontFamily: 'var(--font-heading)' }}>
+                <span className="block text-3xl sm:text-5xl font-black tracking-wide leading-none" style={{ color: '#3FBF63', textShadow: '0 2px 12px #00000080' }}>GRASSROOTS</span>
+                <span className="block text-4xl sm:text-6xl leading-none" style={{ fontFamily: 'var(--font-script)', color: '#F5F1E8', textShadow: '0 2px 12px #00000080', marginTop: '4px' }}>Fantasy</span>
               </div>
             </div>
           </div>
@@ -58,13 +58,13 @@ export default function Home() {
       </section>
 
       {/* Any sport, any league */}
-      <section className="py-28 px-6 sm:px-12" style={{ background: '#181510', borderTop: '1px solid #ffffff08' }}>
-        <div className="max-w-5xl mx-auto text-center">
-          <p className="text-xs font-black uppercase tracking-[0.3em] mb-4" style={{ color: '#2D9E4E' }}>The Platform</p>
-          <h2 className="text-3xl sm:text-4xl font-black text-[#F5F1E8] mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
+      <section className="py-32 sm:py-40 px-6 sm:px-12" style={{ background: '#181510', borderTop: '1px solid #ffffff08' }}>
+        <div className="max-w-5xl mx-auto text-center px-4">
+          <p className="text-xs font-black uppercase tracking-[0.3em] mb-5" style={{ color: '#2D9E4E' }}>The Platform</p>
+          <h2 className="text-3xl sm:text-5xl font-black text-[#F5F1E8] mb-8 leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
             Any sport. Any league.<br/>Any number of teams.
           </h2>
-          <p className="text-sm text-[#F5F1E8]/45 max-w-xl mx-auto mb-16 leading-relaxed">
+          <p className="text-sm sm:text-base text-[#F5F1E8]/45 max-w-2xl mx-auto mb-20 leading-relaxed text-center">
             If a competition keeps score, Grassroots Fantasy can run a league on it. Softball, rugby, netball, cricket, football — the platform adapts to any sport's stats, any season format, and any number of teams or grades.
           </p>
 
@@ -74,10 +74,10 @@ export default function Home() {
               { t: 'Made for communities', d: 'Clubs, supporters, families, and old teammates playing along together — everyone gets closer to the game.' },
               { t: 'Players celebrated', d: 'Every player gets a card. Careers, milestones, and big weeks are recognised — not just the stars.' },
             ].map((f) => (
-              <div key={f.t} className="rounded-3xl p-8 flex flex-col gap-4 items-center text-center" style={{ background: '#1A2E1F40', border: '1px solid #2D9E4E25' }}>
-                <div className="h-1.5 w-10 rounded-full" style={{ background: '#2D9E4E' }} />
-                <h3 className="text-lg font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>{f.t}</h3>
-                <p className="text-xs text-[#F5F1E8]/40 leading-relaxed">{f.d}</p>
+              <div key={f.t} className="rounded-3xl p-10 flex flex-col gap-5 items-center text-center" style={{ background: '#1A2E1F40', border: '1px solid #2D9E4E25' }}>
+                <div className="h-1.5 w-12 rounded-full" style={{ background: '#2D9E4E' }} />
+                <h3 className="text-xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>{f.t}</h3>
+                <p className="text-sm text-[#F5F1E8]/45 leading-relaxed">{f.d}</p>
               </div>
             ))}
           </div>
@@ -85,18 +85,24 @@ export default function Home() {
       </section>
 
       {/* Live edition strip */}
-      <section className="py-28 px-6 sm:px-12" style={{ borderTop: '1px solid #ffffff08' }}>
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-xs font-black uppercase tracking-[0.3em] mb-4" style={{ color: '#E8D5A3' }}>Now Live</p>
-          <h2 className="text-3xl sm:text-4xl font-black text-[#F5F1E8] mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
-            NFS Premier Softball Edition
-          </h2>
-          <p className="text-sm text-[#F5F1E8]/45 max-w-lg mx-auto mb-10 leading-relaxed">
-            Our first edition — built for the Northern Fastpitch Series with the Auckland Softball Association. Men's competition launching this season.
-          </p>
-          <a href="/nfs" className="inline-block rounded-full px-10 py-4 text-sm font-black uppercase tracking-widest transition-all hover:opacity-90" style={{ background: '#2D9E4E', color: '#F5F1E8' }}>
-            Enter NFS Edition
-          </a>
+      <section className="py-32 sm:py-40 px-6 sm:px-12" style={{ borderTop: '1px solid #ffffff08' }}>
+        <div className="max-w-4xl mx-auto">
+          <div className="rounded-[2.5rem] px-8 sm:px-16 py-16 sm:py-20 text-center relative overflow-hidden" style={{ background: 'linear-gradient(160deg, #1A2E1F 0%, #141210 100%)', border: '1px solid #2D9E4E30' }}>
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-40 rounded-b-full" style={{ background: '#2D9E4E' }} />
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <span className="h-2.5 w-2.5 rounded-full animate-pulse" style={{ background: '#2D9E4E' }} />
+              <p className="text-xs font-black uppercase tracking-[0.3em]" style={{ color: '#E8D5A3' }}>Now Live</p>
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-black text-[#F5F1E8] mb-8 leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
+              NFS Premier<br className="sm:hidden"/> Softball Edition
+            </h2>
+            <p className="text-sm sm:text-base text-[#F5F1E8]/45 max-w-lg mx-auto mb-12 leading-relaxed">
+              Our first edition — built for the Northern Fastpitch Series with the Auckland Softball Association. Men's competition launching this season.
+            </p>
+            <a href="/nfs" className="inline-block px-14 py-5 text-base font-black uppercase tracking-widest text-[#F5F1E8] transition-all hover:opacity-90" style={{ background: '#1338BE' }}>
+              Enter NFS Edition
+            </a>
+          </div>
         </div>
       </section>
 
