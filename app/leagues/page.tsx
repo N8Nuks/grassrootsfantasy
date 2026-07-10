@@ -70,7 +70,7 @@ export default function Leagues() {
               The Northern Fastpitch Series — Auckland premier softball, endorsed by the Auckland Softball Association. Men&apos;s launching this season.
             </p>
             <a href="/nfs" className="mt-auto text-center text-base font-bold tracking-wide transition-all hover:scale-[1.02]" style={{ color: '#4D7FFF', border: '1px solid #4D7FFF', background: 'transparent', padding: "22px 24px" }}>
-              Enter Leagues
+              Enter NFS Premier Softball League
             </a>
           </div>
 
