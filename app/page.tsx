@@ -11,7 +11,7 @@ export default function Home() {
         <div className="absolute inset-0" style={{ backgroundImage: "url('/hero-grass.jpg')", backgroundSize: 'cover', backgroundPosition: 'center 65%' }} />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #141210E6 0%, #14121080 40%, #141210B3 75%, #141210 100%)' }} />
 
-        <div className="relative z-10 w-full max-w-4xl mx-auto flex flex-col items-center px-6 pt-24 pb-16 text-center">
+        <div className="relative z-10 w-full flex flex-col items-center px-6 pt-24 pb-16 text-center" style={{ maxWidth: "880px", marginLeft: "auto", marginRight: "auto" }}>
 
           <div className="opacity-0 animate-fade-up flex items-center justify-center gap-4 sm:gap-6 mb-12">
             <img src="/gf-mark.png" alt="" className="w-20 sm:w-28" style={{ filter: 'drop-shadow(0 8px 24px #00000090)' }} />
@@ -29,7 +29,7 @@ export default function Home() {
             Grassroots Fantasy turns real local competitions into fantasy leagues. Collect player cards, build your squad, and score points from real results — built for the players, clubs, and communities of grassroots sport.
           </p>
 
-          <div className="opacity-0 animate-fade-up delay-3 w-full max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-5">
+          <div className="opacity-0 animate-fade-up delay-3 flex flex-col sm:flex-row items-center justify-center gap-6">
             <a href="/nfs" className="px-12 py-5 text-base font-black uppercase tracking-widest text-[#F5F1E8] transition-all hover:opacity-90" style={{ background: '#1338BE' }}>
               Explore NFS Edition
             </a>
@@ -42,7 +42,7 @@ export default function Home() {
 
       {/* THE PLATFORM */}
       <section className="w-full py-32 sm:py-40" style={{ background: '#181510', borderTop: '1px solid #ffffff08' }}>
-        <div className="w-full max-w-6xl mx-auto px-6 sm:px-12 flex flex-col items-center text-center">
+        <div className="w-full flex flex-col items-center text-center px-6" style={{ maxWidth: "1000px", marginLeft: "auto", marginRight: "auto" }}>
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-5" style={{ color: '#2D9E4E' }}>The Platform</p>
           <h2 className="text-3xl sm:text-5xl font-black text-[#F5F1E8] mb-8 leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
             Any sport. Any league.<br />Any number of teams.
@@ -51,7 +51,7 @@ export default function Home() {
             If a competition keeps score, Grassroots Fantasy can run a league on it. Softball, rugby, netball, cricket, football — the platform adapts to any sport&apos;s stats, any season format, and any number of teams or grades.
           </p>
 
-          <div className="grid w-full gap-8 sm:grid-cols-3">
+          <div className="grid gap-8 sm:grid-cols-3" style={{ maxWidth: "960px", marginLeft: "auto", marginRight: "auto", width: "100%" }}>
             {[
               { t: 'Built on real games', d: 'Every point scored comes from real results in your competition — nothing invented, nothing simulated.' },
               { t: 'Made for communities', d: 'Clubs, supporters, families, and old teammates playing along together — everyone gets closer to the game.' },
@@ -69,7 +69,7 @@ export default function Home() {
 
       {/* NOW LIVE */}
       <section className="w-full py-32 sm:py-40" style={{ borderTop: '1px solid #ffffff08' }}>
-        <div className="w-full max-w-4xl mx-auto px-6 sm:px-12">
+        <div className="w-full px-6" style={{ maxWidth: "820px", marginLeft: "auto", marginRight: "auto" }}>
           <div className="relative overflow-hidden rounded-[2.5rem] px-8 sm:px-16 py-16 sm:py-20 text-center" style={{ background: 'linear-gradient(160deg, #1A2E1F 0%, #141210 100%)', border: '1px solid #2D9E4E30' }}>
             <div className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-40 rounded-b-full" style={{ background: '#2D9E4E' }} />
             <div className="flex items-center justify-center gap-2 mb-6">
