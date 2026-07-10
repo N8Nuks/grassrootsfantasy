@@ -18,9 +18,9 @@ export default function Footer() {
       <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-5">
         <div className="flex items-center gap-2.5">
           <img src="/gf-mark.png" alt="" className="h-8 w-auto" />
-          <span className="flex flex-col leading-none" style={{ fontFamily: 'var(--font-heading)' }}>
-            <span className="text-[12px] font-black tracking-wide" style={{ color: '#3FBF63' }}>GRASSROOTS</span>
-            <span className="text-[15px] text-[#F5F1E8]" style={{ fontFamily: 'var(--font-script)' }}>Fantasy</span>
+          <span className="flex flex-col leading-none gap-0.5">
+            <span className="text-[12px] font-bold tracking-wide" style={{ color: '#3FBF63', fontFamily: 'var(--font-heading)' }}>GRASSROOTS</span>
+            <span className="text-[12px] font-black tracking-wider" style={{ color: '#F5F1E8', fontFamily: 'var(--font-wordmark)', fontStretch: '125%' }}>FANTASY</span>
           </span>
         </div>
         <a href="https://blackdiamondlabs.co.nz" className="bdl-shimmer text-xs font-semibold text-center hover:opacity-80 transition-opacity">

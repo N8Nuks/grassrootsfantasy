@@ -4,7 +4,7 @@ import { useState } from 'react'
 export default function Nav() {
   const [open, setOpen] = useState(false)
 
- const links = [
+  const links = [
     { label: 'Leagues', href: '/leagues', color: '#39FF6A' },
     { label: 'How it works', href: '/how' },
     { label: 'Cards', href: '/cards' },
@@ -17,9 +17,9 @@ export default function Nav() {
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 sm:px-12 py-4 bg-[#141210]/90 backdrop-blur-md border-b border-white/5">
         <a href="/" className="flex items-center gap-2.5">
           <img src="/gf-mark.png" alt="" className="h-9 w-auto" />
-          <span className="hidden sm:flex flex-col leading-none" style={{ fontFamily: 'var(--font-heading)' }}>
-            <span className="text-[13px] font-black tracking-wide" style={{ color: '#3FBF63' }}>GRASSROOTS</span>
-            <span className="text-[17px] text-[#F5F1E8]" style={{ fontFamily: 'var(--font-script)' }}>Fantasy</span>
+          <span className="hidden sm:flex flex-col leading-none gap-0.5">
+            <span className="text-[13px] font-bold tracking-wide" style={{ color: '#3FBF63', fontFamily: 'var(--font-heading)' }}>GRASSROOTS</span>
+            <span className="text-[13px] font-black tracking-wider" style={{ color: '#F5F1E8', fontFamily: 'var(--font-wordmark)', fontStretch: '125%' }}>FANTASY</span>
           </span>
         </a>
 
@@ -28,7 +28,9 @@ export default function Nav() {
           {links.map(l => (
             <a key={l.label} href={l.href}
               className="text-xs font-bold uppercase tracking-widest transition-colors"
-              style={l.color ? { color: l.color, textShadow: '0 0 10px #39FF6A60' } : { color: '#F5F1E880' }}>
+              style={l.color
+                ? { color: l.color, textShadow: '0 0 10px #39FF6A60', fontFamily: 'var(--font-label)' }
+                : { color: '#F5F1E880', fontFamily: 'var(--font-label)' }}>
               {l.label}
             </a>
           ))}
@@ -50,7 +52,7 @@ export default function Nav() {
           {links.map(l => (
             <a key={l.label} href={l.href}
               className="text-2xl font-black uppercase tracking-widest"
-              style={{ fontFamily: 'var(--font-heading)', color: l.color || '#F5F1E8', textShadow: l.color ? '0 0 12px #39FF6A60' : 'none' }}
+              style={{ fontFamily: 'var(--font-label)', color: l.color || '#F5F1E8', textShadow: l.color ? '0 0 12px #39FF6A60' : 'none' }}
               onClick={() => setOpen(false)}>
               {l.label}
             </a>

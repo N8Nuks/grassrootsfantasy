@@ -15,9 +15,9 @@ export default function Home() {
 
           <div className="opacity-0 animate-fade-up flex items-center justify-center gap-4 sm:gap-6 mb-12">
             <img src="/gf-mark.png" alt="" className="w-20 sm:w-28" style={{ filter: 'drop-shadow(0 8px 24px #00000090)' }} />
-            <div className="text-left" style={{ fontFamily: 'var(--font-heading)' }}>
-              <span className="block text-3xl sm:text-5xl font-black tracking-wide leading-none" style={{ color: '#3FBF63', textShadow: '0 2px 12px #00000080' }}>GRASSROOTS</span>
-              <span className="block text-4xl sm:text-6xl leading-none" style={{ fontFamily: 'var(--font-script)', color: '#F5F1E8', textShadow: '0 2px 12px #00000080', marginTop: '4px' }}>Fantasy</span>
+            <div className="text-left">
+              <span className="block text-3xl sm:text-5xl font-bold tracking-wide leading-none" style={{ color: '#3FBF63', fontFamily: 'var(--font-heading)', textShadow: '0 2px 12px #00000080' }}>GRASSROOTS</span>
+              <span className="block text-3xl sm:text-5xl font-black tracking-wider leading-none" style={{ color: '#F5F1E8', fontFamily: 'var(--font-wordmark)', fontStretch: '125%', textShadow: '0 2px 12px #00000080', marginTop: '6px' }}>FANTASY</span>
             </div>
           </div>
 

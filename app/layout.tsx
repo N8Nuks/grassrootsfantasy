@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
-import { Bricolage_Grotesque, Nunito, Lobster_Two } from 'next/font/google'
+import { Oxanium, Rajdhani, Archivo, Nunito } from 'next/font/google'
 import './globals.css'
 
-const heading = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-heading' })
+const heading = Oxanium({ subsets: ['latin'], weight: ['600', '700', '800'], variable: '--font-heading' })
+const label = Rajdhani({ subsets: ['latin'], weight: ['500', '600', '700'], variable: '--font-label' })
+const wordmark = Archivo({ subsets: ['latin'], weight: ['900'], axes: ['wdth'], variable: '--font-wordmark' })
 const body = Nunito({ subsets: ['latin'], variable: '--font-body' })
-const script = Lobster_Two({ subsets: ['latin'], weight: ['700'], variable: '--font-script' })
 
 export const metadata: Metadata = {
   title: 'Grassroots Fantasy — Play along with your favourite players',
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${heading.variable} ${body.variable} ${script.variable}`}>
+    <html lang="en" className={`${heading.variable} ${label.variable} ${wordmark.variable} ${body.variable}`}>
       <body style={{ fontFamily: 'var(--font-body)' }}>{children}</body>
     </html>
   )
