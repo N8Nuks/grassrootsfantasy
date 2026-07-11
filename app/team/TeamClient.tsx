@@ -460,7 +460,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               <div className="overflow-y-auto px-6 py-5" style={{ maxHeight: "55vh" }}>
                 {seasonRow.length > 0 && (
                   <div className="mb-5">
-                    <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#F5F1E8]/40 mb-2">Last Season</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#F5F1E8]/40 mb-2">2025/26 Season</p>
                     <div className="flex gap-5 text-sm text-[#F5F1E8]/80">
                       {seasonRow.map(([k, v]) => <span key={k}>{k} <b className="text-[#F5F1E8]">{v}</b></span>)}
                     </div>
@@ -468,7 +468,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                 )}
                 {careerRow.length > 0 && (
                   <div className="mb-6">
-                    <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#F5F1E8]/40 mb-2">Career</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#F5F1E8]/40 mb-2">Last 2 Seasons</p>
                     <div className="flex gap-5 text-sm text-[#F5F1E8]/80 flex-wrap">
                       {careerRow.map(([k, v]) => <span key={k}>{k} <b className="text-[#F5F1E8]">{v}</b></span>)}
                     </div>
