@@ -31,6 +31,7 @@ export default function Nav() {
     { label: 'Join GF', href: '/join', color: '#E8C15A' },
     ...(loggedIn ? [
       { label: 'My Team', href: '/team', color: '#39FF6A', glow: '0 0 10px #39FF6A60' },
+      { label: 'Matchups', href: '/matchups' },
       { label: 'Ladder', href: '/ladder' },
     ] : []),
     ...(isAdmin ? [{ label: 'Admin', href: '/admin', color: '#E8C15A' }] : []),
