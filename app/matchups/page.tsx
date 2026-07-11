@@ -7,11 +7,14 @@ const THEMES = {
   womens: { accent: '#4D7FFF', headerBg: '#10214D' },
 }
 
-const SLOT_ORDER = ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'DP', 'PB', 'DR']
+const SLOT_ORDER = ['P', 'C', 'B1', 'B2', 'B3', 'SS', 'LF', 'CF', 'RF', 'DP', 'PB', 'DR',
+  'BENCH1', 'BENCH2', 'BENCH3', 'BENCH4', 'RES1', 'RES2', 'RES3', 'RES4', 'RES5']
+const SLOT_LABELS: Record<string, string> = { B1: '1B', B2: '2B', B3: '3B' }
 const slotRank = (s: string) => {
   const i = SLOT_ORDER.indexOf(s)
-  return i === -1 ? 100 + s.charCodeAt(0) : i
+  return i === -1 ? 999 : i
 }
+const slotLabel = (s: string) => SLOT_LABELS[s] ?? s
 
 type SlotRow = {
   slot: string
@@ -35,7 +38,7 @@ function TeamCard({ title, slots, accent, carried }: { title: string; slots: Slo
       </div>
       {sorted.map((s, i) => (
         <div key={i} className="flex items-center gap-3 px-5 py-2.5" style={{ borderBottom: '1px solid #ffffff08' }}>
-          <span className="w-8 text-[10px] font-black uppercase" style={{ color: '#F5F1E850' }}>{s.slot}</span>
+          <span className="w-14 text-[10px] font-black uppercase" style={{ color: '#F5F1E850' }}>{slotLabel(s.slot)}</span>
           <span className="flex-1 text-sm font-bold text-[#F5F1E8] truncate">
             {s.cards?.players?.full_name ?? '—'}
           </span>
@@ -78,7 +81,6 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
     if (user) myMatchup = allMatchups.find(m => m.user_a === user.id || m.user_b === user.id) ?? null
 
     if (myMatchup) {
-      // Carry-forward display: most recent locked lineup per owner, up to this round
       const { data: lineups } = await supabase
         .from('lineups')
         .select('id, owner_id, rounds!inner(round_number), lineup_slots(slot, batting_order, cards(player_id, players(full_name)))')
