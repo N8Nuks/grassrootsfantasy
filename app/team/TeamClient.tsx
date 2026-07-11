@@ -141,6 +141,19 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     setSaving(false)
   }
 
+  async function claimT3() {
+    const r = await fetch('/api/deal-t3', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade }) })
+    const data = await r.json()
+    if (r.ok) { alert('New cards: ' + data.players.join(', ')); window.location.reload() }
+    else alert(data.error)
+  }
+
+  async function openT2() {
+    const r = await fetch('/api/deal-t2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade }) })
+    if (r.ok) window.location.reload()
+    else alert((await r.json()).error)
+  }
+
   function statBlock(cardList: TeamCard[]) {
     const withBA = cardList.filter(c => c.stats.career_ba != null)
     const avg = withBA.length ? withBA.reduce((a, c) => a + Number(c.stats.career_ba), 0) / withBA.length : 0
@@ -166,7 +179,6 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
 
   const pickerCandidates = pickerSlot ? cards.filter(c => isEligible(c, pickerSlot)) : []
 
-  // ── Row renderer for starters & bench (full banner treatment) ──
   function PlayerRow({ s, showOrder }: { s: SlotState; showOrder: boolean }) {
     const c = cardById.get(s.card_id)
     if (!c) return null
@@ -225,14 +237,17 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
             style={grade === 'womens' ? { color: '#141210', background: '#4D7FFF' } : { color: '#F5F1E860', border: '1px solid #ffffff20' }}>Women&apos;s</a>
         </div>
         {cards.length === 12 && (
-          <button onClick={async () => {
-            const r = await fetch('/api/deal-t2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade }) })
-            if (r.ok) window.location.reload()
-            else alert((await r.json()).error)
-          }}
+          <button onClick={openT2}
             className="mt-4 text-sm font-bold tracking-wide transition-all hover:scale-[1.02]"
             style={{ color: '#E8C15A', border: '1px solid #E8C15A', background: 'transparent', padding: "14px 40px" }}>
             Open Pre-Season Pack (9 cards)
+          </button>
+        )}
+        {cards.length >= 21 && (
+          <button onClick={claimT3}
+            className="mt-4 text-sm font-bold tracking-wide transition-all hover:scale-[1.02]"
+            style={{ color: T.accent, border: `1px solid ${T.accent}`, background: 'transparent', padding: "14px 40px" }}>
+            Claim Weekly Pack (2 cards)
           </button>
         )}
       </div>
@@ -385,7 +400,6 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         </div>
       )}
 
-      {/* ── Slot-first picker ── */}
       {pickerSlot && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ background: '#000000B3' }} onClick={() => setPickerSlot(null)}>
           <div className="w-full rounded-2xl overflow-hidden" style={{ maxWidth: "480px", maxHeight: "70vh", background: '#181510', border: '1px solid #ffffff20' }} onClick={e => e.stopPropagation()}>
@@ -421,7 +435,6 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         </div>
       )}
 
-      {/* ── Player detail card (player-first placement) ── */}
       {detailCard && (() => {
         const c = detailCard
         const meta = TIER_META[c.tier] ?? TIER_META.common
