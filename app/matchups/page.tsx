@@ -18,14 +18,20 @@ type SlotRow = {
   batting_order: number | null
   cards: { players: { full_name: string } | null } | null
 }
-type LineupRow = { id: string; owner_id: string; lineup_slots: SlotRow[] }
+type LineupRec = {
+  id: string
+  owner_id: string
+  rounds: { round_number: number }
+  lineup_slots: SlotRow[]
+}
 
-function TeamCard({ title, slots, accent }: { title: string; slots: SlotRow[]; accent: string }) {
+function TeamCard({ title, slots, accent, carried }: { title: string; slots: SlotRow[]; accent: string; carried: boolean }) {
   const sorted = [...slots].sort((a, b) => slotRank(a.slot) - slotRank(b.slot))
   return (
     <div className="flex-1 rounded-2xl overflow-hidden" style={{ background: '#181510', border: '1px solid #ffffff12' }}>
-      <div className="px-5 py-3" style={{ borderBottom: '1px solid #ffffff0a' }}>
+      <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #ffffff0a' }}>
         <p className="text-xs font-black uppercase tracking-[0.25em] truncate" style={{ color: accent }}>{title}</p>
+        {carried && <span className="text-[9px] uppercase tracking-widest" style={{ color: '#F5F1E840' }}>Carried forward</span>}
       </div>
       {sorted.map((s, i) => (
         <div key={i} className="flex items-center gap-3 px-5 py-2.5" style={{ borderBottom: '1px solid #ffffff08' }}>
@@ -38,7 +44,7 @@ function TeamCard({ title, slots, accent }: { title: string; slots: SlotRow[]; a
           )}
         </div>
       ))}
-      {sorted.length === 0 && <p className="px-5 py-8 text-sm text-center text-[#F5F1E8]/40">No lineup submitted.</p>}
+      {sorted.length === 0 && <p className="px-5 py-8 text-sm text-center text-[#F5F1E8]/40">No team yet.</p>}
     </div>
   )
 }
@@ -56,10 +62,11 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
     .eq('grade', grade).lte('lock_at', new Date().toISOString())
     .order('round_number', { ascending: false }).limit(1).maybeSingle()
 
-  let myMatchup: { user_a: string; user_b: string; score_a: number | null; score_b: number | null } | null = null
-  let allMatchups: { user_a: string; user_b: string; score_a: number | null; score_b: number | null }[] = []
-  let lineupA: LineupRow | null = null
-  let lineupB: LineupRow | null = null
+  type Matchup = { user_a: string; user_b: string; score_a: number | null; score_b: number | null }
+  let myMatchup: Matchup | null = null
+  let allMatchups: Matchup[] = []
+  let lineupA: LineupRec | null = null
+  let lineupB: LineupRec | null = null
 
   if (round) {
     await supabase.rpc('pair_round', { p_round_id: round.id })
@@ -71,20 +78,27 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
     if (user) myMatchup = allMatchups.find(m => m.user_a === user.id || m.user_b === user.id) ?? null
 
     if (myMatchup) {
+      // Carry-forward display: most recent locked lineup per owner, up to this round
       const { data: lineups } = await supabase
         .from('lineups')
-        .select('id, owner_id, lineup_slots(slot, batting_order, cards(player_id, players(full_name)))')
-        .eq('round_id', round.id).eq('grade', grade)
+        .select('id, owner_id, rounds!inner(round_number), lineup_slots(slot, batting_order, cards(player_id, players(full_name)))')
+        .eq('grade', grade)
         .in('owner_id', [myMatchup.user_a, myMatchup.user_b])
-      const rows = (lineups ?? []) as unknown as LineupRow[]
-      lineupA = rows.find(l => l.owner_id === myMatchup!.user_a) ?? null
-      lineupB = rows.find(l => l.owner_id === myMatchup!.user_b) ?? null
+      const rows = ((lineups ?? []) as unknown as LineupRec[])
+        .filter(l => l.rounds.round_number <= round.round_number)
+      const latest = (owner: string) =>
+        rows.filter(l => l.owner_id === owner)
+          .sort((a, b) => b.rounds.round_number - a.rounds.round_number)[0] ?? null
+      lineupA = latest(myMatchup.user_a)
+      lineupB = latest(myMatchup.user_b)
     }
   }
 
   const { data: teams } = await supabase.from('public_teams').select('id, team_name')
   const nameOf = (id: string) =>
     (teams ?? []).find(t => t.id === id)?.team_name ?? 'Unknown team'
+  const isCarried = (l: LineupRec | null) =>
+    !!l && !!round && l.rounds.round_number < round.round_number
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#141210' }}>
@@ -127,8 +141,8 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
                 <p className="text-lg font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>{nameOf(myMatchup.user_b)}</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-6 mb-12">
-                <TeamCard title={nameOf(myMatchup.user_a)} slots={lineupA?.lineup_slots ?? []} accent={T.accent} />
-                <TeamCard title={nameOf(myMatchup.user_b)} slots={lineupB?.lineup_slots ?? []} accent={T.accent} />
+                <TeamCard title={nameOf(myMatchup.user_a)} slots={lineupA?.lineup_slots ?? []} accent={T.accent} carried={isCarried(lineupA)} />
+                <TeamCard title={nameOf(myMatchup.user_b)} slots={lineupB?.lineup_slots ?? []} accent={T.accent} carried={isCarried(lineupB)} />
               </div>
             </>
           )}
@@ -143,9 +157,9 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
                 <span className="text-xs font-black uppercase tracking-[0.25em] text-[#F5F1E8]">All Matchups</span>
               </div>
               {allMatchups.map((m, i) => (
-                <div key={i} className="flex items-center px-6 py-4" style={{ borderBottom: '1px solid #ffffff08' }}>
+                <div key={i} className="flex items-center gap-4 px-6 py-4" style={{ borderBottom: '1px solid #ffffff08' }}>
                   <p className="flex-1 text-sm font-bold text-[#F5F1E8] text-right truncate">{nameOf(m.user_a)}</p>
-                  <span className="px-4 text-xs font-black" style={{ color: T.accent }}>
+                  <span className="px-3 text-xs font-black whitespace-nowrap" style={{ color: T.accent }}>
                     {m.score_a != null && m.score_b != null ? `${m.score_a} – ${m.score_b}` : 'vs'}
                   </span>
                   <p className="flex-1 text-sm font-bold text-[#F5F1E8] truncate">{nameOf(m.user_b)}</p>
