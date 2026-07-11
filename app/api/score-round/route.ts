@@ -13,7 +13,7 @@ export async function POST(request: Request) {
 
   const { round_id } = await request.json() as { round_id: string }
 
-  const { data: round } = await admin.from('rounds').select('id, grade').eq('id', round_id).single()
+  const { data: round } = await admin.from('rounds').select('id, grade, round_number').eq('id', round_id).single()
   if (!round) return NextResponse.json({ error: 'Round not found' }, { status: 404 })
 
   const { data: config } = await admin.from('scoring_config').select('values').eq('grade', round.grade).single()
@@ -45,18 +45,31 @@ export async function POST(request: Request) {
   }
 
   // 3. Team scores with full substitution cascade
+  //    Lineup carry-forward: users are scored on their lineup for THIS round if it
+  //    exists, otherwise their most recent lineup from any earlier round.
   const statByPlayer = new Map(stats.map(s => [s.player_id, s.raw as StatLine]))
   const played = new Set(stats.map(s => s.player_id))
 
-  const { data: lineups } = await admin.from('lineups')
-    .select('id, owner_id, lineup_slots(slot, card_id, cards(player_id, players(positions)))')
-    .eq('round_id', round_id)
+  const { data: allLineups } = await admin.from('lineups')
+    .select('id, owner_id, grade, rounds!inner(round_number), lineup_slots(slot, card_id, cards(player_id, players(positions)))')
+    .eq('grade', round.grade)
+
+  type SlotRow = { slot: string; cards: { player_id: string; players: { positions: string[] } | null } | null }
+  type LineupRec = { id: string; owner_id: string; rounds: { round_number: number }; lineup_slots: SlotRow[] }
+
+  const latestByOwner = new Map<string, LineupRec>()
+  for (const lu of (allLineups ?? []) as unknown as LineupRec[]) {
+    if (lu.rounds.round_number > round.round_number) continue
+    const cur = latestByOwner.get(lu.owner_id)
+    if (!cur || lu.rounds.round_number > cur.rounds.round_number) {
+      latestByOwner.set(lu.owner_id, lu)
+    }
+  }
 
   const userScores: { owner_id: string; round_id: string; grade: string; points: number }[] = []
-  type SlotRow = { slot: string; cards: { player_id: string; players: { positions: string[] } | null } | null }
 
-  for (const lu of lineups ?? []) {
-    const rows = ((lu.lineup_slots ?? []) as unknown as SlotRow[])
+  for (const lu of latestByOwner.values()) {
+    const rows = ((lu.lineup_slots ?? []) as SlotRow[])
       .filter(r => r.cards?.player_id)
       .map(r => ({
         slot: r.slot,
