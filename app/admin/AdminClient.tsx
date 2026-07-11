@@ -10,6 +10,12 @@ export default function AdminClient() {
   const [log, setLog] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
 
+  // Score-only
+  const [scoreRound, setScoreRound] = useState('0')
+  const [scoreGrade, setScoreGrade] = useState<'mens' | 'womens'>('mens')
+  const [scoreLog, setScoreLog] = useState<string[]>([])
+  const [scoreBusy, setScoreBusy] = useState(false)
+
   // Availability
   const [availNames, setAvailNames] = useState('')
   const [availRound, setAvailRound] = useState('0')
@@ -39,8 +45,21 @@ export default function AdminClient() {
     })
     const sdata = await score.json()
     if (!score.ok) { addLog('SCORING ERROR: ' + sdata.error); setBusy(false); return }
-    addLog(`Scored: ${sdata.players_scored} players, ${sdata.teams_scored} teams. Done.`)
+    addLog(`Scored: ${sdata.players_scored} players, ${sdata.teams_scored} teams, ${sdata.matchups_resolved ?? 0} matchups. Done.`)
     setBusy(false)
+  }
+
+  async function scoreOnly() {
+    setScoreBusy(true); setScoreLog([])
+    const res = await fetch('/api/score-round-by-number', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ grade: scoreGrade, round_number: Number(scoreRound) }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setScoreLog(['ERROR: ' + data.error]); setScoreBusy(false); return }
+    setScoreLog([`Scored: ${data.players_scored} players, ${data.teams_scored} teams, ${data.matchups_resolved ?? 0} matchups. Done.`])
+    setScoreBusy(false)
   }
 
   async function setAvailability(unavailable: boolean) {
@@ -100,6 +119,36 @@ export default function AdminClient() {
           {log.length > 0 && (
             <pre className="mt-8 rounded-lg p-5 text-xs leading-relaxed whitespace-pre-wrap" style={{ background: '#181510', border: '1px solid #ffffff10', color: '#3FBF63' }}>
               {log.join('\n')}
+            </pre>
+          )}
+
+          {/* ── Score Round Only ── */}
+          <div className="text-center mt-16 mb-8">
+            <h2 className="text-2xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>Score Round Only</h2>
+            <p className="text-xs text-[#F5F1E8]/40 mt-2">Re-run scoring on a round whose stats are already uploaded. Resolves H2H matchups too.</p>
+          </div>
+
+          <div className="flex gap-4 mb-4">
+            <select value={scoreGrade} onChange={e => setScoreGrade(e.target.value as 'mens' | 'womens')}
+              className="rounded-lg px-4 py-3 text-sm flex-1" style={field}>
+              <option value="mens">Men&apos;s</option>
+              <option value="womens">Women&apos;s</option>
+            </select>
+            <input type="number" value={scoreRound} onChange={e => setScoreRound(e.target.value)}
+              placeholder="Round #" className="rounded-lg px-4 py-3 text-sm w-32" style={field} />
+          </div>
+
+          <div className="text-center mt-6">
+            <button onClick={scoreOnly} disabled={scoreBusy}
+              className="text-base font-bold tracking-wide transition-all hover:scale-[1.02] disabled:opacity-40"
+              style={{ color: '#E8C15A', border: '1px solid #E8C15A', background: 'transparent', padding: "16px 56px" }}>
+              {scoreBusy ? 'Scoring…' : 'Score Round'}
+            </button>
+          </div>
+
+          {scoreLog.length > 0 && (
+            <pre className="mt-8 rounded-lg p-5 text-xs leading-relaxed whitespace-pre-wrap" style={{ background: '#181510', border: '1px solid #ffffff10', color: '#3FBF63' }}>
+              {scoreLog.join('\n')}
             </pre>
           )}
 
