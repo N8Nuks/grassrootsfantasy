@@ -37,9 +37,12 @@ export async function POST(request: Request) {
   const { data: players } = await admin.from('players').select('id, full_name').eq('grade', grade)
   const byName = new Map((players ?? []).map(p => [p.full_name.toLowerCase().trim(), p.id]))
 
-  // Parse CSV
+  // Parse: commas, tabs, or runs of 2+ spaces (clipboard artifacts) as delimiters
   const lines = csv.trim().split('\n').map(l => l.trim()).filter(Boolean)
-  const header = lines[0].split(',').map(h => h.trim().toLowerCase())
+  const splitLine = (l: string) => l.includes(',')
+    ? l.split(',').map(c => c.trim())
+    : l.split(/\t+|\s{2,}/).map(c => c.trim()).filter(Boolean)
+  const header = splitLine(lines[0]).map(h => h.toLowerCase())
   const nameIdx = header.indexOf('player')
   if (nameIdx === -1) return NextResponse.json({ error: 'CSV must have a "player" column' }, { status: 400 })
 
@@ -47,7 +50,7 @@ export async function POST(request: Request) {
   const unmatched: string[] = []
 
   for (const line of lines.slice(1)) {
-    const cells = line.split(',').map(c => c.trim())
+    const cells = splitLine(line)
     const name = cells[nameIdx]
     if (!name) continue
     const playerId = byName.get(name.toLowerCase())

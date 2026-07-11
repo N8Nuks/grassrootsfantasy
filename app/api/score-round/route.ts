@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   const { data: stats } = await admin.from('player_stats').select('player_id, raw').eq('round_id', round_id)
   if (!stats || stats.length === 0) return NextResponse.json({ error: 'No stats uploaded for round' }, { status: 400 })
 
-  // 1. Player scores (player's own full round score)
+  // 1. Player scores
   const playerScores = stats.map(s => {
     const line = s.raw as StatLine
     return {
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       { onConflict: 'player_id,grade' })
   }
 
-  // 3. Team scores with bench auto-substitution
+  // 3. Team scores with full substitution cascade
   const statByPlayer = new Map(stats.map(s => [s.player_id, s.raw as StatLine]))
   const played = new Set(stats.map(s => s.player_id))
 
@@ -66,14 +66,14 @@ export async function POST(request: Request) {
 
     const starters = rows.filter(r => !r.slot.startsWith('BENCH') && !r.slot.startsWith('RES'))
     const bench = rows.filter(r => r.slot.startsWith('BENCH'))
+    const reserves = rows.filter(r => r.slot.startsWith('RES'))
 
-    const { scored } = resolveSubs(starters, bench, played)
+    const { scored } = resolveSubs(starters, bench, reserves, played)
 
     let total = 0
     for (const sc of scored) {
       const line = statByPlayer.get(sc.player_id)
       if (!line) continue
-      // Promoted bench scores the SLOT it filled at full value; unpromoted bench scores as a bat at bench_mult
       const effectiveSlot = sc.slot === 'BENCH' ? 'DP' : sc.slot
       const raw = slotPoints(effectiveSlot, line, v)
       total += sc.slot === 'BENCH' ? applyBench(raw, 'BENCH1', v, false) : raw

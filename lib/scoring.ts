@@ -65,38 +65,60 @@ export function updateSeasonTotals(prevTrue: number, prevFloor: number, roundPoi
   return { true_total: newTrue, floor_locked: floor, displayed_total: displayed }
 }
 
-// ── Bench auto-substitution ──
-// A bench card steps into a starter slot when the starter has no stats (didn't play).
-// First eligible bench card that played subs in at FULL points (promoted = 1.0x).
-// Remaining bench cards score at bench_mult as usual.
+// ── Bench auto-substitution cascade ──
+// Locked spec: starter absent -> first bench player covering the position promotes
+// at FULL points -> bench compresses up one -> first reserve promotes to last bench
+// spot. Chain repeats to keep 16 scoring slots filled. No eligible cover = slot
+// scores nothing (byes are roster construction, not the system's problem).
 export type SlotAssignment = { slot: string; player_id: string; positions: string[] }
 
 export function resolveSubs(
   starters: SlotAssignment[],
   bench: SlotAssignment[],
+  reserves: SlotAssignment[],
   played: Set<string>,
 ): { scored: { slot: string; player_id: string; promoted: boolean }[] } {
   const scored: { slot: string; player_id: string; promoted: boolean }[] = []
-  const benchUsed = new Set<string>()
+  // Working copies, in slot order (BENCH1..4, RES1..5)
+  const benchQ = [...bench].sort((a, b) => a.slot.localeCompare(b.slot))
+  const resQ = [...reserves].sort((a, b) => a.slot.localeCompare(b.slot))
 
-  for (const s of starters) {
+  const coversSlot = (p: SlotAssignment, slot: string) =>
+    slot === 'DP' || slot === 'DR' || p.positions.includes(slot)
+
+  const SLOT_PRIORITY = ['P','C','B1','B2','B3','SS','LF','CF','RF','DP','PB','DR']
+  const orderedStarters = [...starters].sort((a, b) =>
+    SLOT_PRIORITY.indexOf(a.slot) - SLOT_PRIORITY.indexOf(b.slot))
+
+  for (const s of orderedStarters) {
     if (played.has(s.player_id)) {
       scored.push({ slot: s.slot, player_id: s.player_id, promoted: false })
       continue
     }
-    const sub = bench.find(b =>
-      !benchUsed.has(b.player_id) &&
-      played.has(b.player_id) &&
-      (s.slot === 'DP' || s.slot === 'DR' || b.positions.includes(s.slot))
-    )
-    if (sub) {
-      benchUsed.add(sub.player_id)
+    // Starter absent: first bench player (in order) who played and covers the slot
+    const idx = benchQ.findIndex(b => played.has(b.player_id) && coversSlot(b, s.slot))
+    if (idx !== -1) {
+      const sub = benchQ[idx]
       scored.push({ slot: s.slot, player_id: sub.player_id, promoted: true })
+      benchQ.splice(idx, 1)
+      // First played reserve backfills the vacated bench spot
+      const rIdx = resQ.findIndex(r => played.has(r.player_id))
+      if (rIdx !== -1) {
+        benchQ.push(resQ[rIdx])
+        resQ.splice(rIdx, 1)
+      }
+      continue
     }
+    // Bench can't cover: first played reserve who covers the slot promotes through
+    const dIdx = resQ.findIndex(r => played.has(r.player_id) && coversSlot(r, s.slot))
+    if (dIdx === -1) continue // genuinely no cover -> slot scores nothing
+    scored.push({ slot: s.slot, player_id: resQ[dIdx].player_id, promoted: true })
+    resQ.splice(dIdx, 1)
   }
 
-  for (const b of bench) {
-    if (!benchUsed.has(b.player_id) && played.has(b.player_id)) {
+  // Remaining bench players who played score at bench multiplier
+  for (const b of benchQ) {
+    if (played.has(b.player_id)) {
       scored.push({ slot: 'BENCH', player_id: b.player_id, promoted: false })
     }
   }
