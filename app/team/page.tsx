@@ -29,7 +29,12 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
     .eq('grade', grade).order('round_number', { ascending: false }).limit(1).maybeSingle()
 
   let unavailableIds: string[] = []
+  let t3Claimed = false
   if (latestRound) {
+    const { data: claim } = await supabase
+      .from('t3_claims').select('id')
+      .eq('owner_id', user!.id).eq('grade', grade).eq('round_id', latestRound.id).maybeSingle()
+    t3Claimed = !!claim
     const { data: avail } = await supabase
       .from('player_availability').select('player_id')
       .eq('round_id', latestRound.id).eq('unavailable', true)
@@ -60,6 +65,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
           initialSlots={slots}
           grade={grade}
           unavailableIds={unavailableIds}
+          t3Claimed={t3Claimed}
           roundNumber={latestRound?.round_number ?? null}
         />
       </section>

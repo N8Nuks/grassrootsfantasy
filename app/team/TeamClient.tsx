@@ -42,7 +42,7 @@ function isEligible(card: TeamCard, slot: string): boolean {
   return card.positions.includes(slot)
 }
 
-export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, unavailableIds, roundNumber }: {
+export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, unavailableIds, roundNumber, t3Claimed }: {
   teamName: string
   clubName: string
   cards: TeamCard[]
@@ -50,6 +50,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   grade: 'mens' | 'womens'
   unavailableIds: string[]
   roundNumber: number | null
+  t3Claimed: boolean
 }) {
   const T = THEMES[grade]
   const unavailable = new Set(unavailableIds)
@@ -236,21 +237,14 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           <a href="/team?grade=womens" className="text-xs font-bold uppercase tracking-widest px-5 py-2.5 transition-all"
             style={grade === 'womens' ? { color: '#141210', background: '#4D7FFF' } : { color: '#F5F1E860', border: '1px solid #ffffff20' }}>Women&apos;s</a>
         </div>
-        {cards.length === 12 && (
-          <button onClick={openT2}
-            className="mt-4 text-sm font-bold tracking-wide transition-all hover:scale-[1.02]"
-            style={{ color: '#E8C15A', border: '1px solid #E8C15A', background: 'transparent', padding: "14px 40px" }}>
-            Open Pre-Season Pack (9 cards)
-          </button>
-        )}
         {cards.length >= 21 && (
-          <button onClick={claimT3}
-            className="mt-4 text-sm font-bold tracking-wide transition-all hover:scale-[1.02]"
+          <button onClick={t3Claimed ? undefined : claimT3} disabled={t3Claimed}
+            className="mt-4 text-sm font-bold tracking-wide transition-all hover:scale-[1.02] disabled:opacity-40 disabled:hover:scale-100"
             style={{ color: T.accent, border: `1px solid ${T.accent}`, background: 'transparent', padding: "14px 40px" }}>
-            Claim Weekly Pack (2 cards)
+            {t3Claimed ? 'Weekly Pack Claimed ✓' : 'Claim Weekly Pack (2 cards)'}
           </button>
         )}
-      </div>
+        </div>
 
       {unavailableRostered.length > 0 && view === 'lineup' && (
         <div className="rounded-xl px-5 py-4 mb-6 text-sm" style={{ background: '#FF6B6B15', border: '1px solid #FF6B6B50', color: '#FF9B9B' }}>
