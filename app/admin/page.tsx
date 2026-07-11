@@ -43,7 +43,7 @@ export default function Admin() {
     setBusy(false)
   }
 
-  async function markUnavailable() {
+  async function setAvailability(unavailable: boolean) {
     setAvailBusy(true); setAvailLog([])
     const res = await fetch('/api/availability', {
       method: 'POST',
@@ -52,11 +52,12 @@ export default function Admin() {
         names: availNames.split('\n').map(n => n.trim()).filter(Boolean),
         grade: availGrade,
         round_number: Number(availRound),
+        unavailable,
       }),
     })
     const data = await res.json()
     if (!res.ok) { setAvailLog(['ERROR: ' + data.error]); setAvailBusy(false); return }
-    const lines = [`Marked unavailable: ${data.marked}`]
+    const lines = [`${unavailable ? 'Marked unavailable' : 'Marked available'}: ${data.marked}`]
     if (data.unmatched?.length) data.unmatched.forEach((n: string) => lines.push('  ⚠ no player match: ' + n))
     setAvailLog(lines)
     setAvailBusy(false)
@@ -123,10 +124,15 @@ export default function Admin() {
             rows={5} className="w-full rounded-lg px-4 py-3 text-xs font-mono" style={field} />
 
           <div className="text-center mt-6">
-            <button onClick={markUnavailable} disabled={availBusy || !availNames.trim()}
+            <button onClick={() => setAvailability(true)} disabled={availBusy || !availNames.trim()}
               className="text-base font-bold tracking-wide transition-all hover:scale-[1.02] disabled:opacity-40"
-              style={{ color: '#FF6B6B', border: '1px solid #FF6B6B', background: 'transparent', padding: "16px 56px" }}>
-              {availBusy ? 'Marking…' : 'Mark Unavailable'}
+              style={{ color: '#FF6B6B', border: '1px solid #FF6B6B', background: 'transparent', padding: "16px 56px", marginRight: "16px" }}>
+              {availBusy ? 'Working…' : 'Mark Unavailable'}
+            </button>
+            <button onClick={() => setAvailability(false)} disabled={availBusy || !availNames.trim()}
+              className="text-base font-bold tracking-wide transition-all hover:scale-[1.02] disabled:opacity-40"
+              style={{ color: '#3FBF63', border: '1px solid #3FBF63', background: 'transparent', padding: "16px 56px" }}>
+              {availBusy ? 'Working…' : 'Mark Available'}
             </button>
           </div>
 

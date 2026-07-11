@@ -11,14 +11,13 @@ export async function POST(request: Request) {
   const { data: profile } = await admin.from('profiles').select('is_admin').eq('id', user.id).single()
   if (!profile?.is_admin) return NextResponse.json({ error: 'Admin only' }, { status: 403 })
 
-  const { names, grade, round_number } = await request.json() as {
-    names: string[]; grade: 'mens' | 'womens'; round_number: number
+  const { names, grade, round_number, unavailable = true } = await request.json() as {
+    names: string[]; grade: 'mens' | 'womens'; round_number: number; unavailable?: boolean
   }
   if (!Array.isArray(names) || names.length === 0) {
     return NextResponse.json({ error: 'No names provided' }, { status: 400 })
   }
 
-  // Round must exist (availability is meaningless without a round to be unavailable for)
   const { data: round } = await admin.from('rounds')
     .select('id').eq('grade', grade).eq('round_number', round_number).maybeSingle()
   if (!round) return NextResponse.json({ error: `Round ${round_number} (${grade}) does not exist yet` }, { status: 400 })
@@ -31,7 +30,7 @@ export async function POST(request: Request) {
   for (const raw of names) {
     const id = byName.get(raw.toLowerCase().trim())
     if (!id) { unmatched.push(raw); continue }
-    rows.push({ player_id: id, round_id: round.id, unavailable: true })
+    rows.push({ player_id: id, round_id: round.id, unavailable })
   }
 
   if (rows.length) {
