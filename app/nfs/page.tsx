@@ -130,7 +130,55 @@ export default function NFS() {
           <p className="text-[11px] text-white/35 mt-7">Launch date announced soon. Be first in when packs drop.</p>
         </div>
       </section>
-
+      
+{/* ── NFS League FAQ ── */}
+      <section className="px-6 sm:px-12" style={{ background: '#101013', borderTop: '1px solid #ffffff0a', paddingTop: "80px", paddingBottom: "90px" }}>
+        <div style={{ maxWidth: "700px", marginLeft: "auto", marginRight: "auto" }}>
+          <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "48px" }}>NFS League questions.</h2>
+          <div className="flex flex-col gap-3">
+            {[
+              {
+                q: 'What\u2019s in my Starter Pack?',
+                a: 'Twelve cards when you register: two two-way players (one full 2WP who scores batting and pitching, one pitching-only), a spread of Elite and Common players, and always enough position coverage to field a legal lineup from day one.',
+              },
+              {
+                q: 'How big is my squad?',
+                a: 'Twenty-one cards once your Pre-Season Pack lands: 12 starters, 4 bench (scoring at 0.75\u00d7, stepping in at full value when a starter misses), and 5 reserves. Free packs each week grow your collection from there.',
+              },
+              {
+                q: 'When do lineups lock?',
+                a: 'Lineups open each Tuesday once the previous round\u2019s stats are confirmed, and lock Friday at 4pm ahead of Saturday\u2019s games. Provisional scores land over the weekend; confirmed scores follow official stats on Tuesday.',
+              },
+              {
+                q: 'What are the card tiers?',
+                a: 'Rare two-way players, Elite, and Common \u2014 rarity reflects on-field production and honours across recent seasons. Every tier scores from the same point table; a Common having a big Saturday outscores a quiet Elite.',
+              },
+              {
+                q: 'Where\u2019s the full point table?',
+                a: 'On the Scoring & Leaderboards page \u2014 every batting and pitching event and exactly what it\u2019s worth, plus how each lineup slot scores.',
+              },
+              {
+                q: 'Men\u2019s and Women\u2019s \u2014 can I play both?',
+                a: 'Yes. One account can hold a team in each grade, with separate squads, separate packs, and separate ladders all season.',
+              },
+            ].map(item => (
+              <details key={item.q} className="group rounded-xl overflow-hidden" style={{ background: '#121215', border: '1px solid #2456E630' }}>
+                <summary className="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4">
+                  <span className="text-sm font-bold text-white">{item.q}</span>
+                  <span className="text-lg font-black shrink-0 transition-transform group-open:rotate-45" style={{ color: '#2456E6' }}>+</span>
+                </summary>
+                <p className="px-6 pb-5 text-sm leading-relaxed text-white/50">{item.a}</p>
+              </details>
+            ))}
+          </div>
+          <div className="text-center" style={{ marginTop: "40px" }}>
+            <a href="/nfs/scoring" className="inline-block text-sm font-bold tracking-wide transition-all hover:scale-[1.02]"
+              style={{ color: '#4D7FFF', border: '1px solid #4D7FFF', background: 'transparent', padding: "16px 48px" }}>
+              Scoring &amp; Leaderboards →
+            </a>
+          </div>
+        </div>
+      </section>
       <Footer />
     </main>
   )

@@ -51,7 +51,7 @@ export default function Register() {
       return
     }
 
-   await fetch('/api/deal-t1', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grades }) })
+    await fetch('/api/deal-t1', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grades }) })
     window.location.href = '/team'
   }
 
@@ -76,9 +76,12 @@ export default function Register() {
             <input className={field} style={fieldStyle} type="password" placeholder="Password *" value={password} onChange={e => setPassword(e.target.value)} />
             <input className={field} style={fieldStyle} type="text" placeholder="Team name *" value={teamName} onChange={e => setTeamName(e.target.value)} />
             <input className={field} style={fieldStyle} type="text" placeholder="Club code *" value={clubCode} onChange={e => setClubCode(e.target.value)} />
+            <p className="text-[11px] text-[#F5F1E8]/35" style={{ marginTop: "-8px" }}>
+              No club code? Use <b style={{ color: '#E8C15A' }}>GFNFS26</b> to join as a general supporter.
+            </p>
             <input className={field} style={fieldStyle} type="text" placeholder="Your name (optional)" value={fullName} onChange={e => setFullName(e.target.value)} />
             <input className={field} style={fieldStyle} type="tel" placeholder="Phone (optional)" value={phone} onChange={e => setPhone(e.target.value)} />
-<div className="flex gap-3">
+            <div className="flex gap-3">
               {(['mens','womens'] as const).map(g => (
                 <button key={g} type="button"
                   onClick={() => setGrades(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])}
