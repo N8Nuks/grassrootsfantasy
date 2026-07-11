@@ -15,7 +15,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
 
   const { data: cards } = await supabase
     .from('cards')
-    .select('id, players(full_name, tier, positions, stats, clubs(name))')
+    .select('id, players(id, full_name, tier, positions, stats, clubs(name))')
     .eq('owner_id', user!.id).eq('grade', grade)
 
   const { data: lineup } = await supabase
@@ -23,9 +23,23 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
     .eq('owner_id', user!.id).eq('grade', grade)
     .order('submitted_at', { ascending: false }).limit(1).maybeSingle()
 
-  type Raw = { id: string; players: { full_name: string; tier: string; positions: string[]; stats: Record<string, number>; clubs: { name: string } | null } | null }
+  // Latest round for this grade + its availability flags
+  const { data: latestRound } = await supabase
+    .from('rounds').select('id, round_number')
+    .eq('grade', grade).order('round_number', { ascending: false }).limit(1).maybeSingle()
+
+  let unavailableIds: string[] = []
+  if (latestRound) {
+    const { data: avail } = await supabase
+      .from('player_availability').select('player_id')
+      .eq('round_id', latestRound.id).eq('unavailable', true)
+    unavailableIds = (avail ?? []).map(a => a.player_id)
+  }
+
+  type Raw = { id: string; players: { id: string; full_name: string; tier: string; positions: string[]; stats: Record<string, number>; clubs: { name: string } | null } | null }
   const teamCards: TeamCard[] = ((cards ?? []) as unknown as Raw[]).map(c => ({
     id: c.id,
+    playerId: c.players?.id ?? '',
     name: c.players?.full_name ?? '',
     club: c.players?.clubs?.name ?? '',
     tier: c.players?.tier ?? 'common',
@@ -45,6 +59,8 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
           cards={teamCards}
           initialSlots={slots}
           grade={grade}
+          unavailableIds={unavailableIds}
+          roundNumber={latestRound?.round_number ?? null}
         />
       </section>
       <Footer />

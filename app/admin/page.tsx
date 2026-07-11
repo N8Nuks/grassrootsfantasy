@@ -10,6 +10,13 @@ export default function Admin() {
   const [log, setLog] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
 
+  // Availability
+  const [availNames, setAvailNames] = useState('')
+  const [availRound, setAvailRound] = useState('0')
+  const [availGrade, setAvailGrade] = useState<'mens' | 'womens'>('mens')
+  const [availLog, setAvailLog] = useState<string[]>([])
+  const [availBusy, setAvailBusy] = useState(false)
+
   function addLog(s: string) { setLog(prev => [...prev, s]) }
 
   async function upload() {
@@ -34,6 +41,25 @@ export default function Admin() {
     if (!score.ok) { addLog('SCORING ERROR: ' + sdata.error); setBusy(false); return }
     addLog(`Scored: ${sdata.players_scored} players, ${sdata.teams_scored} teams. Done.`)
     setBusy(false)
+  }
+
+  async function markUnavailable() {
+    setAvailBusy(true); setAvailLog([])
+    const res = await fetch('/api/availability', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        names: availNames.split('\n').map(n => n.trim()).filter(Boolean),
+        grade: availGrade,
+        round_number: Number(availRound),
+      }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setAvailLog(['ERROR: ' + data.error]); setAvailBusy(false); return }
+    const lines = [`Marked unavailable: ${data.marked}`]
+    if (data.unmatched?.length) data.unmatched.forEach((n: string) => lines.push('  ⚠ no player match: ' + n))
+    setAvailLog(lines)
+    setAvailBusy(false)
   }
 
   const field = { background: '#181510', border: '1px solid #ffffff15', color: '#F5F1E8' }
@@ -73,6 +99,40 @@ export default function Admin() {
           {log.length > 0 && (
             <pre className="mt-8 rounded-lg p-5 text-xs leading-relaxed whitespace-pre-wrap" style={{ background: '#181510', border: '1px solid #ffffff10', color: '#3FBF63' }}>
               {log.join('\n')}
+            </pre>
+          )}
+
+          {/* ── Availability ── */}
+          <div className="text-center mt-16 mb-8">
+            <h2 className="text-2xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>Player Availability</h2>
+            <p className="text-xs text-[#F5F1E8]/40 mt-2">Mark players unavailable for a round — users see it on their team cards immediately.</p>
+          </div>
+
+          <div className="flex gap-4 mb-4">
+            <select value={availGrade} onChange={e => setAvailGrade(e.target.value as 'mens' | 'womens')}
+              className="rounded-lg px-4 py-3 text-sm flex-1" style={field}>
+              <option value="mens">Men&apos;s</option>
+              <option value="womens">Women&apos;s</option>
+            </select>
+            <input type="number" value={availRound} onChange={e => setAvailRound(e.target.value)}
+              placeholder="Round #" className="rounded-lg px-4 py-3 text-sm w-32" style={field} />
+          </div>
+
+          <textarea value={availNames} onChange={e => setAvailNames(e.target.value)}
+            placeholder={"One player name per line:\nJack Besgrove\nHarrison Wildbore"}
+            rows={5} className="w-full rounded-lg px-4 py-3 text-xs font-mono" style={field} />
+
+          <div className="text-center mt-6">
+            <button onClick={markUnavailable} disabled={availBusy || !availNames.trim()}
+              className="text-base font-bold tracking-wide transition-all hover:scale-[1.02] disabled:opacity-40"
+              style={{ color: '#FF6B6B', border: '1px solid #FF6B6B', background: 'transparent', padding: "16px 56px" }}>
+              {availBusy ? 'Marking…' : 'Mark Unavailable'}
+            </button>
+          </div>
+
+          {availLog.length > 0 && (
+            <pre className="mt-8 rounded-lg p-5 text-xs leading-relaxed whitespace-pre-wrap" style={{ background: '#181510', border: '1px solid #ffffff10', color: '#FF6B6B' }}>
+              {availLog.join('\n')}
             </pre>
           )}
         </div>
