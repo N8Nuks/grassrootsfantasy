@@ -72,6 +72,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [sortBy, setSortBy] = useState<'tier' | 'ba' | 'points'>('tier')
+  const [t4Code, setT4Code] = useState('')
 
   const cardById = new Map(cards.map(c => [c.id, c]))
   const assignedIds = new Set(slots.map(s => s.card_id))
@@ -141,7 +142,15 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     setMessage(res.ok ? 'Lineup card saved.' : (data.error ?? 'Save failed'))
     setSaving(false)
   }
-
+  async function redeemT4() {
+    const r = await fetch('/api/redeem-t4', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: t4Code }) })
+    const data = await r.json()
+    if (r.ok) {
+      const names = data.players.map((p: { name: string; tier: string }) => p.tier.startsWith('rare') ? `⭐ ${p.name} (RARE)` : p.name).join(', ')
+      alert((data.rare_hit ? 'RARE PULL! ' : '') + 'New cards: ' + names)
+      window.location.reload()
+    } else alert(data.error)
+  }
   async function claimT3() {
     const r = await fetch('/api/deal-t3', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade }) })
     const data = await r.json()
@@ -244,6 +253,20 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
             {t3Claimed ? 'Weekly Pack Claimed ✓' : 'Claim Weekly Pack (2 cards)'}
           </button>
         )}
+        <div className="flex justify-center gap-2 mt-4">
+          <input
+            value={t4Code}
+            onChange={e => setT4Code(e.target.value)}
+            placeholder="Bonus pack code"
+            className="rounded-lg px-4 py-2.5 text-sm text-[#F5F1E8] outline-none w-48"
+            style={{ background: '#181510', border: '1px solid #ffffff15', caretColor: '#F5F1E8' }}
+          />
+          <button onClick={redeemT4} disabled={!t4Code.trim()}
+            className="text-xs font-bold uppercase tracking-widest px-5 transition-all hover:scale-[1.02] disabled:opacity-40"
+            style={{ color: '#E8C15A', border: '1px solid #E8C15A', background: 'transparent' }}>
+            Redeem
+          </button>
+        </div>
         </div>
 
       {unavailableRostered.length > 0 && view === 'lineup' && (

@@ -84,5 +84,23 @@ export async function POST(request: Request) {
     await admin.from('user_scores').upsert(userScores, { onConflict: 'owner_id,round_id' })
   }
 
-  return NextResponse.json({ players_scored: playerScores.length, teams_scored: userScores.length })
+  // 4. Resolve H2H matchups (pair first if lock passed but nobody visited the page)
+  await admin.rpc('pair_round', { p_round_id: round_id })
+
+  const scoreByOwner = new Map(userScores.map(us => [us.owner_id, us.points]))
+  const { data: matchups } = await admin.from('matchups')
+    .select('id, user_a, user_b').eq('round_id', round_id)
+
+  let resolved = 0
+  for (const m of matchups ?? []) {
+    const a = scoreByOwner.get(m.user_a) ?? 0
+    const b = scoreByOwner.get(m.user_b) ?? 0
+    const pa = a > b ? 1 : a < b ? 0 : 0.5
+    await admin.from('matchups').update({
+      score_a: a, score_b: b, points_a: pa, points_b: 1 - pa,
+    }).eq('id', m.id)
+    resolved++
+  }
+
+  return NextResponse.json({ players_scored: playerScores.length, teams_scored: userScores.length, matchups_resolved: resolved })
 }
