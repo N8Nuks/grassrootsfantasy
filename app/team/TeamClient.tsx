@@ -51,7 +51,7 @@ function isEligible(card: TeamCard, slot: string): boolean {
   return card.positions.includes(slot)
 }
 
-export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, unavailableIds, roundNumber, t3Claimed }: {
+export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, unavailableIds, roundNumber, t3Claimed, t2Available }: {
   teamName: string
   clubName: string
   cards: TeamCard[]
@@ -60,6 +60,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   unavailableIds: string[]
   roundNumber: number | null
   t3Claimed: boolean
+  t2Available: boolean
 }) {
   const T = theme(grade)
   const isW = grade === 'womens'
@@ -159,6 +160,13 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     setMessage(res.ok ? 'Lineup card saved.' : (data.error ?? 'Save failed'))
     setSaving(false)
   }
+  async function openT2() {
+    const r = await fetch('/api/deal-t2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade }) })
+    const data = await r.json()
+    if (r.ok && data.cards?.length) {
+      setReveal({ packName: 'Pre-Season Pack', cards: data.cards })
+    } else alert(data.error ?? 'Could not open the pack')
+  }
   async function redeemT4() {
     const r = await fetch('/api/redeem-t4', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: t4Code }) })
     const data = await r.json()
@@ -252,14 +260,6 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         <span className="hidden sm:block w-12 text-right text-[11px] shrink-0" style={{ color: T.textDim }}>
           {c.stats.career_sb ?? 0}
         </span>
-      {reveal && (
-        <PackReveal
-          grade={grade}
-          packName={reveal.packName}
-          cards={reveal.cards}
-          onDone={() => window.location.reload()}
-        />
-      )}
       </div>
     )
   }
@@ -301,6 +301,13 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
 
       {/* Packs strip */}
       <div className="flex items-center justify-center gap-4 flex-wrap" style={{ margin: '32px 0' }}>
+        {t2Available && (
+          <button onClick={openT2}
+            className="text-xs font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] flex items-center gf-pulse"
+            style={{ padding: '14px 32px', minHeight: '48px', color: '#141210', background: '#FFD700', boxShadow: '0 0 24px #FFD70060' }}>
+            Open Pre-Season Pack · 9 cards
+          </button>
+        )}
         {cards.length >= 21 && (
           <button onClick={t3Claimed ? undefined : claimT3} disabled={t3Claimed}
             className="text-xs font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.02] disabled:hover:scale-100 flex items-center"
@@ -563,6 +570,15 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           </div>
         )
       })()}
+
+      {reveal && (
+        <PackReveal
+          grade={grade}
+          packName={reveal.packName}
+          cards={reveal.cards}
+          onDone={() => window.location.reload()}
+        />
+      )}
     </div>
   )
 }

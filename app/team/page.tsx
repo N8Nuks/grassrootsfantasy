@@ -32,6 +32,17 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
 
   let unavailableIds: string[] = []
   let t3Claimed = false
+
+  // Pre-Season Pack: released for this grade AND not yet opened by this user?
+  const { data: t2Config } = await supabase
+    .from('scoring_config').select('t2_released').eq('grade', grade).single()
+  let t2Available = false
+  if (t2Config?.t2_released) {
+    const { count: t2Count } = await supabase
+      .from('cards').select('id', { count: 'exact', head: true })
+      .eq('owner_id', user!.id).eq('grade', grade).eq('source', 't2')
+    t2Available = !t2Count
+  }
   if (latestRound) {
     const { data: claim } = await supabase
       .from('t3_claims').select('id')
@@ -68,6 +79,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
           grade={grade}
           unavailableIds={unavailableIds}
           t3Claimed={t3Claimed}
+          t2Available={t2Available}
           roundNumber={latestRound?.round_number ?? null}
         />
       </section>
