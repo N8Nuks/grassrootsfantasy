@@ -1,11 +1,14 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { ADMIN_RED, JOIN_GOLD } from '@/lib/clubhouse'
 
 export default function Nav() {
   const [open, setOpen] = useState(false)
   const [loggedIn, setLoggedIn] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
     const supabase = createClient()
@@ -23,30 +26,65 @@ export default function Nav() {
     window.location.href = '/'
   }
 
+  const isActive = (href: string) =>
+    href === '/' ? pathname === '/' : pathname.startsWith(href)
+
+  // Right-side nav links
   const links = [
     { label: 'Leagues', href: '/leagues', color: '#39FF6A', glow: '0 0 10px #39FF6A60' },
-    { label: 'How it works', href: '/how' },
-    { label: 'Join GF', href: '/join', color: '#E8C15A' },
+    ...(!loggedIn ? [{ label: 'How it works', href: '/how' }] : []),
     ...(loggedIn ? [
       { label: 'My Team', href: '/team', color: '#39FF6A', glow: '0 0 10px #39FF6A60' },
       { label: 'Matchups', href: '/matchups' },
       { label: 'Ladder', href: '/ladder' },
     ] : []),
-    ...(isAdmin ? [{ label: 'Admin', href: '/admin', color: '#E8C15A' }] : []),
   ]
+
+  const underline = (href: string, color?: string) =>
+    isActive(href)
+      ? { borderBottom: `2px solid ${color ?? '#F5F1E8'}`, paddingBottom: '3px' }
+      : { borderBottom: '2px solid transparent', paddingBottom: '3px' }
 
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 sm:px-12 py-4 bg-[#141210]/90 backdrop-blur-md border-b border-white/5">
-        <a href="/" className="flex items-center gap-2.5">
-          <img src="/gf-mark.png" alt="" className="h-9 w-auto" />
-          <span className="hidden sm:flex flex-col leading-none gap-0.5">
-            <span className="text-[13px] font-bold tracking-wide" style={{ color: '#3FBF63', fontFamily: 'var(--font-heading)' }}>GRASSROOTS</span>
-            <span className="text-[13px] font-black tracking-wider" style={{ color: '#F5F1E8', fontFamily: 'var(--font-wordmark)', fontStretch: '125%' }}>FANTASY</span>
-          </span>
-        </a>
+        {/* Left: logo + Join GF + Admin */}
+        <div className="flex items-center gap-6">
+          <a href="/" className="flex items-center gap-2.5">
+            <img src="/gf-mark.png" alt="" className="h-9 w-auto" />
+            <span className="hidden sm:flex flex-col leading-none gap-0.5">
+              <span className="text-[13px] font-bold tracking-wide" style={{ color: '#3FBF63', fontFamily: 'var(--font-heading)' }}>GRASSROOTS</span>
+              <span className="text-[13px] font-black tracking-wider" style={{ color: '#F5F1E8', fontFamily: 'var(--font-wordmark)', fontStretch: '125%' }}>FANTASY</span>
+            </span>
+          </a>
 
-        {/* Desktop links */}
+          <div className="hidden md:flex items-center gap-3">
+            <a href="/join"
+              className="text-xs font-bold uppercase tracking-widest px-4 py-2 transition-all hover:scale-[1.03]"
+              style={{
+                fontFamily: 'var(--font-label)',
+                color: JOIN_GOLD,
+                border: `1px solid ${JOIN_GOLD}`,
+                ...(isActive('/join') ? { background: `${JOIN_GOLD}18` } : {}),
+              }}>
+              Join GF
+            </a>
+            {isAdmin && (
+              <a href="/admin"
+                className="text-xs font-bold uppercase tracking-widest px-4 py-2 transition-all hover:scale-[1.03]"
+                style={{
+                  fontFamily: 'var(--font-label)',
+                  color: ADMIN_RED,
+                  border: `1px solid ${ADMIN_RED}`,
+                  ...(isActive('/admin') ? { background: `${ADMIN_RED}18` } : {}),
+                }}>
+                Admin
+              </a>
+            )}
+          </div>
+        </div>
+
+        {/* Right: page links + auth */}
         <div className="hidden md:flex items-center gap-10 lg:gap-14">
           {links.map(l => (
             <a key={l.label} href={l.href}
@@ -55,6 +93,7 @@ export default function Nav() {
                 fontFamily: 'var(--font-label)',
                 color: l.color || '#F5F1E880',
                 textShadow: l.glow || 'none',
+                ...underline(l.href, l.color),
               }}>
               {l.label}
             </a>
@@ -79,10 +118,29 @@ export default function Nav() {
         <div className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 md:hidden"
           style={{ background: '#141210F5' }}
           onClick={() => setOpen(false)}>
+          <a href="/join"
+            className="text-2xl font-black uppercase tracking-widest"
+            style={{ fontFamily: 'var(--font-label)', color: JOIN_GOLD }}
+            onClick={() => setOpen(false)}>
+            Join GF
+          </a>
+          {isAdmin && (
+            <a href="/admin"
+              className="text-2xl font-black uppercase tracking-widest"
+              style={{ fontFamily: 'var(--font-label)', color: ADMIN_RED }}
+              onClick={() => setOpen(false)}>
+              Admin
+            </a>
+          )}
           {links.map(l => (
             <a key={l.label} href={l.href}
               className="text-2xl font-black uppercase tracking-widest"
-              style={{ fontFamily: 'var(--font-label)', color: l.color || '#F5F1E8', textShadow: l.glow || 'none' }}
+              style={{
+                fontFamily: 'var(--font-label)',
+                color: l.color || '#F5F1E8',
+                textShadow: l.glow || 'none',
+                ...(isActive(l.href) ? { borderBottom: `2px solid ${l.color ?? '#F5F1E8'}` } : {}),
+              }}
               onClick={() => setOpen(false)}>
               {l.label}
             </a>
