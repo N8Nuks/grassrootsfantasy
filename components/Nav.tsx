@@ -42,6 +42,7 @@ export default function Nav() {
     ...(loggedIn ? [
       { label: 'My Team', href: '/team', color: '#C8CDD4', glow: '0 0 10px #E6EAF080, 0 0 20px #C8CDD440' },
       { label: 'Matchups', href: '/matchups' },
+      { label: 'Athlete Hall', href: '/hall' },
       { label: 'Ladder', href: '/ladder' },
     ] : []),
   ]
