@@ -242,7 +242,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
             {meta.label}
           </span>
         </span>
-        <span className="hidden sm:block w-20 text-right text-[11px] shrink-0" style={{ color: T.textDim }}>
+        <span className="hidden sm:block w-20 text-center text-[11px] shrink-0" style={{ color: T.textDim }}>
           {c.stats.career_ba != null ? Number(c.stats.career_ba).toFixed(3) : '—'}
         </span>
         <span className="hidden sm:block w-12 text-right text-[11px] shrink-0" style={{ color: T.textDim }}>
@@ -347,7 +347,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               <span className="w-11 shrink-0" />
               <span className="flex-1" />
               <span className="w-20 text-center text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Tier</span>
-              <span className="w-20 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Bat Ave.</span>
+              <span className="w-20 text-center text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Bat Ave.</span>
               <span className="w-12 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>SB</span>
             </div>
 
