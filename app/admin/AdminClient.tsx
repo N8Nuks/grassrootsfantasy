@@ -82,7 +82,24 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
     setAvailLog(lines)
     setAvailBusy(false)
   }
+const [t2Log, setT2Log] = useState<string[]>([])
+  const [t2Busy, setT2Busy] = useState(false)
 
+  async function releaseT2(g: 'mens' | 'womens') {
+    setT2Busy(true)
+    const r = await fetch('/api/release-t2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade: g }) })
+    const data = await r.json()
+    setT2Log(prev => [...prev, r.ok ? `Released Pre-Season Packs: ${g}` : 'ERROR: ' + data.error])
+    setT2Busy(false)
+  }
+  async function forceOpenT2(g: 'mens' | 'womens') {
+    if (!confirm(`Force-open ALL remaining ${g} Pre-Season Packs? Users won't get the reveal.`)) return
+    setT2Busy(true)
+    const r = await fetch('/api/force-open-t2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade: g }) })
+    const data = await r.json()
+    setT2Log(prev => [...prev, r.ok ? `Force-opened ${data.forced}/${data.pending} (${g}), failures: ${data.failures}` : 'ERROR: ' + data.error])
+    setT2Busy(false)
+  }
   const field = { background: '#181510', border: '1px solid #ffffff15', color: '#F5F1E8' }
 
   return (
@@ -194,7 +211,30 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
               {scoreLog.join('\n')}
             </pre>
           )}
-
+          {/* ── Pre-Season Packs ── */}
+          <div className="text-center mt-16 mb-8">
+            <h2 className="text-2xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>Pre-Season Packs</h2>
+            <p className="text-xs text-[#F5F1E8]/40 mt-2">Release lets users open their T2 with the full reveal. Force-open bulk-deals any still unopened — run it 12 hours before Round 1 lock.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button onClick={() => releaseT2('mens')} disabled={t2Busy}
+              className="text-sm font-bold py-4 transition-all hover:scale-[1.01] disabled:opacity-40"
+              style={{ color: '#E8C15A', border: '1px solid #E8C15A' }}>Release Men&apos;s</button>
+            <button onClick={() => releaseT2('womens')} disabled={t2Busy}
+              className="text-sm font-bold py-4 transition-all hover:scale-[1.01] disabled:opacity-40"
+              style={{ color: '#4D7FFF', border: '1px solid #4D7FFF' }}>Release Women&apos;s</button>
+            <button onClick={() => forceOpenT2('mens')} disabled={t2Busy}
+              className="text-sm font-bold py-4 transition-all hover:scale-[1.01] disabled:opacity-40"
+              style={{ color: '#FF6B6B', border: '1px solid #FF6B6B' }}>Force-open Men&apos;s</button>
+            <button onClick={() => forceOpenT2('womens')} disabled={t2Busy}
+              className="text-sm font-bold py-4 transition-all hover:scale-[1.01] disabled:opacity-40"
+              style={{ color: '#FF6B6B', border: '1px solid #FF6B6B' }}>Force-open Women&apos;s</button>
+          </div>
+          {t2Log.length > 0 && (
+            <pre className="mt-6 rounded-lg p-5 text-xs leading-relaxed whitespace-pre-wrap" style={{ background: '#181510', border: '1px solid #ffffff10', color: '#3FBF63' }}>
+              {t2Log.join('\n')}
+            </pre>
+          )}
           {/* ── Availability ── */}
           <div className="text-center mt-16 mb-8">
             <h2 className="text-2xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>Player Availability</h2>
