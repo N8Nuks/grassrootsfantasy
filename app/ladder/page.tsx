@@ -133,10 +133,6 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
     }
   }
 
-  const gradeTab = (active: boolean, accent: string) =>
-    active
-      ? { color: '#0E0B08', background: accent }
-      : { color: T.textDim, border: '1px solid #ffffff20' }
   
 
   const titles: Record<string, string> = {
@@ -266,13 +262,21 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
           )}
 
           {rows.length === 0 && (
-            <div className="rounded-2xl overflow-hidden" style={{ background: T.surface, border: '1px solid #ffffff12' }}>
-              <p className="text-sm text-center" style={{ color: T.textDim, padding: '40px 28px' }}>
-                {view === 'points' && 'No rounds scored yet — the ladder starts with Round 1.'}
-                {view === 'h2h' && 'No matchups resolved yet — H2H standings start with Round 1.'}
-                {view === 'weekly' && 'No rounds scored yet — the first High Score lands after Round 1.'}
-                {view === 'clubs' && 'No club scores yet — the Club Champion race starts with Round 1.'}
-              </p>
+            <div className="rounded-2xl overflow-hidden pinstripe" style={{ background: T.surface, border: '1px solid #ffffff12' }}>
+              <div style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a', padding: '16px 28px' }}>
+                <span className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: T.text }}>{titles[view]}</span>
+              </div>
+              <div className="text-center" style={{ padding: '48px 28px' }}>
+                <p className="text-2xl font-black mb-3" style={{ fontFamily: 'var(--font-heading)', color: T.accent }}>
+                  {view === 'weekly' ? 'The board awaits its first champion.' : view === 'clubs' ? 'The club race hasn\u2019t started.' : 'The season hasn\u2019t started.'}
+                </p>
+                <p className="text-sm" style={{ color: T.textDim, maxWidth: '380px', margin: '0 auto' }}>
+                  {view === 'points' && 'Every team starts level. The ladder comes alive when Round 1 is scored — first pitch October 3.'}
+                  {view === 'h2h' && 'Every team starts 0–0–0. Your first head-to-head opponent is drawn when Round 1 locks.'}
+                  {view === 'weekly' && 'One team tops the league every single week. The first honour board is crowned after Round 1.'}
+                  {view === 'clubs' && 'Every point your team scores counts toward your club. Five teams from a club opens their campaign.'}
+                </p>
+              </div>
             </div>
           )}
 
