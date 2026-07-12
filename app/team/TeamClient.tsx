@@ -288,10 +288,10 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
       </div>
 
       {/* Packs strip */}
-      <div className="flex items-center justify-center gap-3 flex-wrap mb-8">
+      <div className="flex items-center justify-center gap-4 flex-wrap" style={{ margin: '32px 0' }}>
         {cards.length >= 21 && (
           <button onClick={t3Claimed ? undefined : claimT3} disabled={t3Claimed}
-            className="text-xs font-bold uppercase tracking-widest px-5 py-2.5 rounded-full transition-all hover:scale-[1.02] disabled:hover:scale-100"
+            className="text-xs font-bold uppercase tracking-widest px-6 py-3.5 rounded-full transition-all hover:scale-[1.02] disabled:hover:scale-100"
             style={t3Claimed
               ? { color: T.textDim, border: '1px solid #ffffff20', background: 'transparent' }
               : { color: '#141210', background: T.accent, boxShadow: T.glow }}>
@@ -320,16 +320,22 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         </div>
       )}
 
-      <div className="flex justify-center gap-3" style={{ marginBottom: "32px" }}>
-        {(['lineup','collection'] as const).map(v => (
-          <button key={v} onClick={() => setView(v)}
-            className="text-xs font-bold uppercase tracking-widest px-6 py-3 transition-all"
-            style={view === v
-              ? { color: '#141210', background: T.accent }
-              : { color: T.textDim, border: '1px solid #ffffff20', background: 'transparent' }}>
-            {v === 'lineup' ? 'Lineup Card' : 'Collection'}
-          </button>
-        ))}
+      <div className="flex justify-center" style={{ margin: '40px 0' }}>
+        <div className="inline-flex rounded-full overflow-hidden" style={{ border: '1px solid #ffffff25' }}>
+          {(['lineup','collection'] as const).map((v, i) => (
+            <button key={v} onClick={() => setView(v)}
+              className="text-xs font-black uppercase tracking-widest transition-all flex items-center"
+              style={{
+                color: view === v ? '#141210' : T.textDim,
+                background: view === v ? T.accent : 'transparent',
+                padding: '14px 32px',
+                minHeight: '44px',
+                ...(i > 0 ? { borderLeft: '1px solid #ffffff15' } : {}),
+              }}>
+              {v === 'lineup' ? 'Lineup Card' : 'Collection'}
+            </button>
+          ))}
+        </div>
       </div>
 
       {view === 'lineup' && (
