@@ -14,7 +14,7 @@ const CLUB_TINTS: Record<string, string> = {
   'Bandits': '#5B2D8E', 'Howick': '#8A1E41', 'Marist': '#2456E6',
   'Otahuhu': '#2B5C9E', 'Patriots': '#B49759', 'Pukekohe': '#2D9E4E',
   'Ramblers': '#C41E3A', 'Roosters': '#C8102E', 'United': '#E03A3E',
-  'United-Marist': '#2456E6', 'Waitakere': '#FFB81C',
+  'United-Marist': '#C8102E', 'Waitakere': '#FFB81C',
 }
 const clubSlug = (name: string) => name.toLowerCase().replace(/\s+/g, '-')
 
