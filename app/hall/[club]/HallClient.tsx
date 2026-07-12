@@ -48,7 +48,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
       <Nav />
-      <section className="flex-1 px-6" style={{ paddingTop: '130px', paddingBottom: '100px' }}>
+      <section className="flex-1 px-6" style={{ paddingTop: '70px', paddingBottom: '80px' }}>
         <div style={{ maxWidth: '980px', marginLeft: 'auto', marginRight: 'auto' }}>
           <div className="text-center" style={{ marginBottom: '48px' }}>
             <a href="/hall" className="text-[11px] font-bold uppercase tracking-widest" style={{ color: T.textDim }}>← Back to the Hall</a>

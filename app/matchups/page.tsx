@@ -26,11 +26,10 @@ type LineupRec = {
 }
 type Palette = ReturnType<typeof theme>
 
-function TeamCard({ title, slots, T, carried, winner, pointsByPlayer }: {
+function TeamCard({ title, slots, T, winner, pointsByPlayer }: {
   title: string
   slots: SlotRow[]
   T: Palette
-  carried: boolean
   winner: boolean
   pointsByPlayer: Map<string, number> | null
 }) {
@@ -42,11 +41,13 @@ function TeamCard({ title, slots, T, carried, winner, pointsByPlayer }: {
       <div className="flex items-center justify-between gap-3" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a', padding: '12px 24px' }}>
         <div className="flex items-center gap-2 min-w-0">
           {winner && (
-            <span className="text-[10px] font-black px-2 py-0.5 rounded-full shrink-0" style={{ color: '#141210', background: T.accent }}>W</span>
+            <span className="text-[10px] font-black px-2 py-0.5 rounded-full shrink-0" style={{ color: '#141210', background: '#3FBF63' }}>W</span>
           )}
           <p className="text-xs font-black uppercase tracking-[0.2em] truncate" style={{ color: T.accent }}>{title}</p>
         </div>
-        {carried && <span className="text-[9px] uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Carried forward</span>}
+        {pointsByPlayer && (
+          <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim, paddingRight: '16px' }}>Points</span>
+        )}
       </div>
       {sorted.map((s, i) => {
         const pid = s.cards?.player_id
@@ -61,7 +62,7 @@ function TeamCard({ title, slots, T, carried, winner, pointsByPlayer }: {
               {s.cards?.players?.full_name ?? '—'}
             </span>
             {pts != null && (
-              <span className="w-14 text-right text-sm font-black shrink-0" style={{ color: T.accent }}>{pts}</span>
+              <span className="w-14 text-right text-sm font-black shrink-0" style={{ color: T.accent, paddingRight: '16px' }}>{pts}</span>
             )}
           </div>
         )
@@ -115,7 +116,6 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
       lineupA = latest(myMatchup.user_a)
       lineupB = latest(myMatchup.user_b)
 
-      // Per-slot round points once the round is scored
       if (myMatchup.score_a != null) {
         const ids = [...(lineupA?.lineup_slots ?? []), ...(lineupB?.lineup_slots ?? [])]
           .map(s => s.cards?.player_id).filter(Boolean) as string[]
@@ -134,8 +134,6 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
   const { data: teams } = await supabase.from('public_teams').select('id, team_name')
   const nameOf = (id: string) =>
     (teams ?? []).find(t => t.id === id)?.team_name ?? 'Unknown team'
-  const isCarried = (l: LineupRec | null) =>
-    !!l && !!round && l.rounds.round_number < round.round_number
 
   const scored = myMatchup?.score_a != null && myMatchup?.score_b != null
   const aWins = scored && Number(myMatchup!.score_a) > Number(myMatchup!.score_b)
@@ -146,7 +144,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
   return (
     <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
       <Nav />
-      <section className="flex-1 px-6" style={{ paddingTop: '80px', paddingBottom: '100px' }}>
+      <section className="flex-1 px-6" style={{ paddingTop: '80px', paddingBottom: '90px' }}>
         <div style={{ maxWidth: '980px', marginLeft: 'auto', marginRight: 'auto' }}>
           <div className="text-center" style={{ marginBottom: '40px' }}>
             <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: T.accent }}>
@@ -172,7 +170,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
                 <div className="relative z-10 grid grid-cols-3 items-center" style={{ padding: '32px 24px' }}>
                   <div className="text-center" style={{ opacity: scored && !aWins ? 0.55 : 1 }}>
                     <p className="text-lg sm:text-2xl font-black truncate px-2" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{nameOf(myMatchup.user_a)}</p>
-                    {aWins && <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-1" style={{ color: T.accent }}>Winner</p>}
+                    {aWins && <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-1" style={{ color: '#3FBF63' }}>Winner</p>}
                   </div>
                   <div className="text-center">
                     <p className={`text-3xl sm:text-5xl font-black whitespace-nowrap ${isW && scored ? 'electric' : ''}`}
@@ -183,14 +181,14 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
                   </div>
                   <div className="text-center" style={{ opacity: scored && !bWins ? 0.55 : 1 }}>
                     <p className="text-lg sm:text-2xl font-black truncate px-2" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{nameOf(myMatchup.user_b)}</p>
-                    {bWins && <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-1" style={{ color: T.accent }}>Winner</p>}
+                    {bWins && <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-1" style={{ color: '#3FBF63' }}>Winner</p>}
                   </div>
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-6 mb-12">
-                <TeamCard title={nameOf(myMatchup.user_a)} slots={lineupA?.lineup_slots ?? []} T={T} carried={isCarried(lineupA)} winner={!!aWins} pointsByPlayer={pointsByPlayer} />
-                <TeamCard title={nameOf(myMatchup.user_b)} slots={lineupB?.lineup_slots ?? []} T={T} carried={isCarried(lineupB)} winner={!!bWins} pointsByPlayer={pointsByPlayer} />
+                <TeamCard title={nameOf(myMatchup.user_a)} slots={lineupA?.lineup_slots ?? []} T={T} winner={!!aWins} pointsByPlayer={pointsByPlayer} />
+                <TeamCard title={nameOf(myMatchup.user_b)} slots={lineupB?.lineup_slots ?? []} T={T} winner={!!bWins} pointsByPlayer={pointsByPlayer} />
               </div>
             </>
           )}
