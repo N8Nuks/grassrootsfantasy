@@ -6,7 +6,7 @@ import GradeSwitch from '@/components/GradeSwitch'
 
 const SLOT_ORDER = ['P', 'C', 'B1', 'B2', 'B3', 'SS', 'LF', 'CF', 'RF', 'DP', 'PB', 'DR',
   'BENCH1', 'BENCH2', 'BENCH3', 'BENCH4']
-const SLOT_LABELS: Record<string, string> = { B1: '1B', B2: '2B', B3: '3B' }
+const SLOT_LABELS: Record<string, string> = { B1: '1B', B2: '2B', B3: '3B', PB: 'P(B)' }
 const slotRank = (s: string) => {
   const i = SLOT_ORDER.indexOf(s)
   return i === -1 ? 999 : i
@@ -16,7 +16,7 @@ const slotLabel = (s: string) => SLOT_LABELS[s] ?? s
 type SlotRow = {
   slot: string
   batting_order: number | null
-  cards: { players: { full_name: string } | null } | null
+  cards: { player_id: string; players: { full_name: string } | null } | null
 }
 type LineupRec = {
   id: string
@@ -26,26 +26,46 @@ type LineupRec = {
 }
 type Palette = ReturnType<typeof theme>
 
-function TeamCard({ title, slots, T, carried }: { title: string; slots: SlotRow[]; T: Palette; carried: boolean }) {
+function TeamCard({ title, slots, T, carried, winner, pointsByPlayer }: {
+  title: string
+  slots: SlotRow[]
+  T: Palette
+  carried: boolean
+  winner: boolean
+  pointsByPlayer: Map<string, number> | null
+}) {
   const sorted = slots.filter(s => !s.slot.startsWith('RES'))
     .sort((a, b) => slotRank(a.slot) - slotRank(b.slot))
   return (
-    <div className="flex-1 rounded-2xl overflow-hidden pinstripe" style={{ background: T.surface, border: '1px solid #ffffff12' }}>
-      <div className="flex items-center justify-between" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a', padding: '12px 24px' }}>
-        <p className="text-xs font-black uppercase tracking-[0.2em] truncate" style={{ color: T.accent }}>{title}</p>
+    <div className="flex-1 rounded-2xl overflow-hidden pinstripe"
+      style={{ background: T.surface, border: winner ? `1px solid ${T.accent}70` : '1px solid #ffffff12' }}>
+      <div className="flex items-center justify-between gap-3" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a', padding: '12px 24px' }}>
+        <div className="flex items-center gap-2 min-w-0">
+          {winner && (
+            <span className="text-[10px] font-black px-2 py-0.5 rounded-full shrink-0" style={{ color: '#141210', background: T.accent }}>W</span>
+          )}
+          <p className="text-xs font-black uppercase tracking-[0.2em] truncate" style={{ color: T.accent }}>{title}</p>
+        </div>
         {carried && <span className="text-[9px] uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Carried forward</span>}
       </div>
-      {sorted.map((s, i) => (
-        <div key={i} className="flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff08', padding: '10px 24px' }}>
-          <span className="w-14 text-[10px] font-black uppercase shrink-0" style={{ color: T.textDim }}>{slotLabel(s.slot)}</span>
-          <span className="flex-1 text-sm font-bold truncate" style={{ color: T.text }}>
-            {s.cards?.players?.full_name ?? '—'}
-          </span>
-          {s.batting_order != null && (
-            <span className="text-[10px] font-black shrink-0" style={{ color: T.textDim }}>#{s.batting_order}</span>
-          )}
-        </div>
-      ))}
+      {sorted.map((s, i) => {
+        const pid = s.cards?.player_id
+        const pts = pointsByPlayer && pid ? pointsByPlayer.get(pid) : undefined
+        return (
+          <div key={i} className="flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff08', padding: '10px 24px' }}>
+            <span className="w-12 text-[10px] font-black uppercase shrink-0" style={{ color: T.textDim }}>{slotLabel(s.slot)}</span>
+            <span className="flex-1 min-w-0 text-sm font-bold truncate" style={{ color: T.text }}>
+              {s.batting_order != null && (
+                <span className="text-[10px] font-black mr-2" style={{ color: T.textDim }}>{s.batting_order}.</span>
+              )}
+              {s.cards?.players?.full_name ?? '—'}
+            </span>
+            {pts != null && (
+              <span className="w-14 text-right text-sm font-black shrink-0" style={{ color: T.accent }}>{pts}</span>
+            )}
+          </div>
+        )
+      })}
       {sorted.length === 0 && <p className="text-sm text-center" style={{ color: T.textDim, padding: '32px 24px' }}>No team yet.</p>}
     </div>
   )
@@ -70,6 +90,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
   let allMatchups: Matchup[] = []
   let lineupA: LineupRec | null = null
   let lineupB: LineupRec | null = null
+  let pointsByPlayer: Map<string, number> | null = null
 
   if (round) {
     await supabase.rpc('pair_round', { p_round_id: round.id })
@@ -93,6 +114,20 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
           .sort((a, b) => b.rounds.round_number - a.rounds.round_number)[0] ?? null
       lineupA = latest(myMatchup.user_a)
       lineupB = latest(myMatchup.user_b)
+
+      // Per-slot round points once the round is scored
+      if (myMatchup.score_a != null) {
+        const ids = [...(lineupA?.lineup_slots ?? []), ...(lineupB?.lineup_slots ?? [])]
+          .map(s => s.cards?.player_id).filter(Boolean) as string[]
+        if (ids.length) {
+          const { data: pscores } = await supabase
+            .from('player_scores').select('player_id, points')
+            .eq('round_id', round.id).in('player_id', ids)
+          if (pscores?.length) {
+            pointsByPlayer = new Map(pscores.map(p => [p.player_id, Number(p.points)]))
+          }
+        }
+      }
     }
   }
 
@@ -102,10 +137,11 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
   const isCarried = (l: LineupRec | null) =>
     !!l && !!round && l.rounds.round_number < round.round_number
 
-  const gradeTab = (active: boolean, accent: string) =>
-    active
-      ? { color: '#0E0B08', background: accent }
-      : { color: T.textDim, border: '1px solid #ffffff20' }
+  const scored = myMatchup?.score_a != null && myMatchup?.score_b != null
+  const aWins = scored && Number(myMatchup!.score_a) > Number(myMatchup!.score_b)
+  const bWins = scored && Number(myMatchup!.score_b) > Number(myMatchup!.score_a)
+
+  const otherMatchups = allMatchups.filter(m => !myMatchup || m.user_a !== myMatchup.user_a || m.user_b !== myMatchup.user_b)
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
@@ -130,18 +166,31 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
 
           {round && myMatchup && (
             <>
-              <div className="flex items-center justify-center gap-5 mb-8 flex-wrap">
-                <p className="text-lg font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{nameOf(myMatchup.user_a)}</p>
-                <span className={`text-2xl font-black ${isW && myMatchup.score_a != null ? 'electric' : ''}`}
-                  style={{ color: T.accent, textShadow: isW ? undefined : T.glow }}>
-                  {myMatchup.score_a != null && myMatchup.score_b != null
-                    ? `${myMatchup.score_a} – ${myMatchup.score_b}` : 'vs'}
-                </span>
-                <p className="text-lg font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{nameOf(myMatchup.user_b)}</p>
+              {/* Scoreboard banner */}
+              <div className="relative rounded-2xl overflow-hidden pinstripe-fine mb-8"
+                style={{ background: `linear-gradient(180deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`, border: `1px solid ${T.accent}45` }}>
+                <div className="relative z-10 grid grid-cols-3 items-center" style={{ padding: '32px 24px' }}>
+                  <div className="text-center" style={{ opacity: scored && !aWins ? 0.55 : 1 }}>
+                    <p className="text-lg sm:text-2xl font-black truncate px-2" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{nameOf(myMatchup.user_a)}</p>
+                    {aWins && <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-1" style={{ color: T.accent }}>Winner</p>}
+                  </div>
+                  <div className="text-center">
+                    <p className={`text-3xl sm:text-5xl font-black whitespace-nowrap ${isW && scored ? 'electric' : ''}`}
+                      style={{ color: T.accent, textShadow: isW ? undefined : T.glow }}>
+                      {scored ? `${myMatchup.score_a} – ${myMatchup.score_b}` : 'VS'}
+                    </p>
+                    {!scored && <p className="text-[10px] uppercase tracking-[0.3em] mt-1" style={{ color: T.textDim }}>locks in — good luck</p>}
+                  </div>
+                  <div className="text-center" style={{ opacity: scored && !bWins ? 0.55 : 1 }}>
+                    <p className="text-lg sm:text-2xl font-black truncate px-2" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{nameOf(myMatchup.user_b)}</p>
+                    {bWins && <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-1" style={{ color: T.accent }}>Winner</p>}
+                  </div>
+                </div>
               </div>
+
               <div className="flex flex-col sm:flex-row gap-6 mb-12">
-                <TeamCard title={nameOf(myMatchup.user_a)} slots={lineupA?.lineup_slots ?? []} T={T} carried={isCarried(lineupA)} />
-                <TeamCard title={nameOf(myMatchup.user_b)} slots={lineupB?.lineup_slots ?? []} T={T} carried={isCarried(lineupB)} />
+                <TeamCard title={nameOf(myMatchup.user_a)} slots={lineupA?.lineup_slots ?? []} T={T} carried={isCarried(lineupA)} winner={!!aWins} pointsByPlayer={pointsByPlayer} />
+                <TeamCard title={nameOf(myMatchup.user_b)} slots={lineupB?.lineup_slots ?? []} T={T} carried={isCarried(lineupB)} winner={!!bWins} pointsByPlayer={pointsByPlayer} />
               </div>
             </>
           )}
@@ -150,12 +199,14 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
             <p className="text-sm text-center mb-12" style={{ color: T.textDim }}>No matchup for your team this round.</p>
           )}
 
-          {round && allMatchups.length > 0 && (
+          {round && otherMatchups.length > 0 && (
             <div className="rounded-2xl overflow-hidden" style={{ background: T.surface, border: '1px solid #ffffff12' }}>
               <div style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a', padding: '16px 28px' }}>
-                <span className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: T.text }}>All Matchups</span>
+                <span className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: T.text }}>
+                  {myMatchup ? 'Around the Grounds' : 'All Matchups'}
+                </span>
               </div>
-              {allMatchups.map((m, i) => (
+              {otherMatchups.map((m, i) => (
                 <div key={i} className="flex items-center gap-4" style={{ borderBottom: '1px solid #ffffff08', padding: '16px 28px' }}>
                   <p className="flex-1 text-sm font-bold text-right truncate" style={{ color: T.text }}>{nameOf(m.user_a)}</p>
                   <span className="px-3 text-xs font-black whitespace-nowrap shrink-0" style={{ color: T.accent }}>

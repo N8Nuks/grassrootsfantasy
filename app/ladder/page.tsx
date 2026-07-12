@@ -137,10 +137,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
     active
       ? { color: '#0E0B08', background: accent }
       : { color: T.textDim, border: '1px solid #ffffff20' }
-  const tabStyle = (active: boolean) =>
-    active
-      ? { color: '#0E0B08', background: T.accent }
-      : { color: T.textDim, border: '1px solid #ffffff20' }
+  
 
   const titles: Record<string, string> = {
     points: 'Season Ladder', h2h: 'H2H Standings', weekly: 'Weekly High Score', clubs: 'Club Champion',
@@ -161,27 +158,22 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
             <div className="flex justify-center mb-4">
               <GradeSwitch grade={grade} mensHref={`/ladder?grade=mens&view=${view}`} womensHref={`/ladder?grade=womens&view=${view}`} />
             </div>
-            <div className="flex justify-center gap-2 flex-wrap">
-              <a href={`/ladder?grade=${grade}&view=points`}
-                className="text-xs font-bold uppercase tracking-widest px-5 py-2.5 transition-all"
-                style={tabStyle(view === 'points')}>
-                Ladder
-              </a>
-              <a href={`/ladder?grade=${grade}&view=h2h`}
-                className="text-xs font-bold uppercase tracking-widest px-5 py-2.5 transition-all"
-                style={tabStyle(view === 'h2h')}>
-                H2H
-              </a>
-              <a href={`/ladder?grade=${grade}&view=weekly`}
-                className="text-xs font-bold uppercase tracking-widest px-5 py-2.5 transition-all"
-                style={tabStyle(view === 'weekly')}>
-                Weekly
-              </a>
-              <a href={`/ladder?grade=${grade}&view=clubs`}
-                className="text-xs font-bold uppercase tracking-widest px-5 py-2.5 transition-all"
-                style={tabStyle(view === 'clubs')}>
-                Clubs
-              </a>
+            <div className="flex justify-center">
+              <div className="inline-flex rounded-full overflow-hidden flex-wrap justify-center" style={{ border: '1px solid #ffffff25' }}>
+                {([['points','Ladder'],['h2h','H2H'],['weekly','Weekly'],['clubs','Clubs']] as const).map(([v, label], i) => (
+                  <a key={v} href={`/ladder?grade=${grade}&view=${v}`}
+                    className="text-xs font-black uppercase tracking-widest transition-all flex items-center"
+                    style={{
+                      color: view === v ? '#141210' : T.textDim,
+                      background: view === v ? T.accent : 'transparent',
+                      padding: '12px 24px',
+                      minHeight: '44px',
+                      ...(i > 0 ? { borderLeft: '1px solid #ffffff15' } : {}),
+                    }}>
+                    {label}
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
 
