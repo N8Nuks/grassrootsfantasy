@@ -1,18 +1,15 @@
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/server'
-
-const THEMES = {
-  mens: { accent: '#3FBF63', headerBg: '#1A2E1F' },
-  womens: { accent: '#4D7FFF', headerBg: '#10214D' },
-}
+import { theme, type Grade } from '@/lib/clubhouse'
 
 export default async function Ladder({ searchParams }: { searchParams: Promise<{ grade?: string; view?: string }> }) {
   const params = await searchParams
-  const grade = params.grade === 'womens' ? 'womens' : 'mens'
+  const grade: Grade = params.grade === 'womens' ? 'womens' : 'mens'
   const validViews = ['points', 'h2h', 'weekly', 'clubs']
   const view = validViews.includes(params.view ?? '') ? (params.view as string) : 'points'
-  const T = THEMES[grade]
+  const T = theme(grade)
+  const isW = grade === 'womens'
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -119,7 +116,6 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
 
   const champion = view === 'weekly' && rows.length > 0 ? rows[0] : null
 
-  // Row caps + pinned own rank
   const CAP = view === 'weekly' ? 10 : 20
   let listRows: Row[]
   let pinned: { row: Row; rank: number } | null = null
@@ -136,10 +132,14 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
     }
   }
 
+  const gradeTab = (active: boolean, accent: string) =>
+    active
+      ? { color: '#0E0B08', background: accent }
+      : { color: T.textDim, border: '1px solid #ffffff20' }
   const tabStyle = (active: boolean) =>
     active
-      ? { color: '#141210', background: T.accent }
-      : { color: '#F5F1E860', border: '1px solid #ffffff20' }
+      ? { color: '#0E0B08', background: T.accent }
+      : { color: T.textDim, border: '1px solid #ffffff20' }
 
   const titles: Record<string, string> = {
     points: 'Season Ladder', h2h: 'H2H Standings', weekly: 'Weekly High Score', clubs: 'Club Champion',
@@ -148,24 +148,24 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
   let rankCounter = 0
 
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: '#141210' }}>
+    <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
       <Nav />
       <section className="flex-1 px-6" style={{ paddingTop: '130px', paddingBottom: '100px' }}>
         <div style={{ maxWidth: '680px', marginLeft: 'auto', marginRight: 'auto' }}>
           <div className="text-center" style={{ marginBottom: '40px' }}>
             <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: T.accent }}>{titles[view]}</p>
-            <h1 className="text-3xl sm:text-4xl font-black text-[#F5F1E8] mb-4" style={{ fontFamily: 'var(--font-heading)' }}>
+            <h1 className="text-3xl sm:text-4xl font-black mb-4" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
               {grade === 'mens' ? "Men's" : "Women's"} Standings
             </h1>
             <div className="flex justify-center gap-2 mb-3">
               <a href={`/ladder?grade=mens&view=${view}`}
                 className="text-xs font-bold uppercase tracking-widest px-5 py-2.5 transition-all"
-                style={grade === 'mens' ? { color: '#141210', background: '#3FBF63' } : { color: '#F5F1E860', border: '1px solid #ffffff20' }}>
+                style={gradeTab(grade === 'mens', '#FFC425')}>
                 Men&apos;s
               </a>
               <a href={`/ladder?grade=womens&view=${view}`}
                 className="text-xs font-bold uppercase tracking-widest px-5 py-2.5 transition-all"
-                style={grade === 'womens' ? { color: '#141210', background: '#4D7FFF' } : { color: '#F5F1E860', border: '1px solid #ffffff20' }}>
+                style={gradeTab(grade === 'womens', '#4D7FFF')}>
                 Women&apos;s
               </a>
             </div>
@@ -195,36 +195,34 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
 
           {/* Weekly champion honour board */}
           {champion && (
-            <div className="relative rounded-2xl overflow-hidden text-center mb-8"
-              style={{ background: `linear-gradient(180deg, ${T.headerBg} 0%, #181510 100%)`, border: `1px solid ${T.accent}40` }}>
-              <div className="absolute inset-0" style={{
-                background: `repeating-linear-gradient(90deg, transparent, transparent 26px, #F5F1E806 26px, #F5F1E806 27px)`,
-              }} />
-              <div className="relative z-10" style={{ padding: '48px 24px 40px' }}>
+            <div className="relative rounded-2xl overflow-hidden text-center mb-8 pinstripe-fine"
+              style={{ background: `linear-gradient(180deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`, border: `1px solid ${T.accent}45` }}>
+              <div className="relative z-10" style={{ padding: '48px 32px 40px' }}>
                 <p className="text-[10px] font-black uppercase tracking-[0.4em] mb-4" style={{ color: T.accent }}>
                   Round {weeklyRoundNumber} · High Score
                 </p>
-                <p className="text-4xl sm:text-5xl font-black text-[#F5F1E8] mb-2" style={{ fontFamily: 'var(--font-heading)' }}>
+                <p className="text-4xl sm:text-5xl font-black mb-2" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
                   {champion.team}
                 </p>
                 {champion.club && (
-                  <p className="text-xs uppercase tracking-widest text-[#F5F1E8]/35 mb-5">{champion.club}</p>
+                  <p className="text-xs uppercase tracking-widest mb-5" style={{ color: T.textDim }}>{champion.club}</p>
                 )}
-                <p className="text-5xl sm:text-6xl font-black" style={{ color: T.accent, textShadow: `0 0 24px ${T.accent}50` }}>
+                <p className={`text-5xl sm:text-6xl font-black ${isW ? 'electric' : ''}`}
+                  style={{ color: T.accent, textShadow: isW ? undefined : T.glow }}>
                   {champion.main}
                 </p>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-[#F5F1E8]/30 mt-2">points</p>
+                <p className="text-[10px] uppercase tracking-[0.3em] mt-2" style={{ color: T.textDim }}>points</p>
               </div>
             </div>
           )}
 
           {listRows.length > 0 && (
-            <div className="rounded-2xl overflow-hidden" style={{ background: '#181510', border: '1px solid #ffffff12' }}>
-              <div className="px-6 py-4 flex items-center justify-between" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a' }}>
-                <span className="text-xs font-black uppercase tracking-[0.25em] text-[#F5F1E8]">
+            <div className="rounded-2xl overflow-hidden" style={{ background: T.surface, border: '1px solid #ffffff12' }}>
+              <div className="flex items-center justify-between" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a', padding: '16px 28px' }}>
+                <span className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: T.text }}>
                   {view === 'weekly' ? 'The Chasing Pack' : view === 'clubs' ? 'Club' : 'Team'}
                 </span>
-                <span className="text-xs font-black uppercase tracking-[0.25em] text-[#F5F1E8]">
+                <span className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: T.text, paddingRight: '2px' }}>
                   {view === 'h2h' ? 'Win %' : view === 'clubs' ? 'Avg' : 'Points'}
                 </span>
               </div>
@@ -241,41 +239,41 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
                 const rankNum = Number(rankLabel)
                 const isMe = !!user && row.id === user.id
                 return (
-                  <div key={row.id} className="flex items-center gap-4 px-6 py-4"
+                  <div key={row.id} className="flex items-center gap-4"
                     style={{
                       borderBottom: '1px solid #ffffff08',
                       opacity: row.unranked ? 0.45 : 1,
-                      background: isMe ? `${T.accent}0d` : 'transparent',
+                      background: isMe ? T.accentSoft : 'transparent',
+                      padding: '16px 28px',
                     }}>
-                    <span className="w-8 text-sm font-black" style={{ color: !row.unranked && rankNum <= 3 ? T.accent : '#F5F1E850' }}>{rankLabel}</span>
+                    <span className="w-9 text-sm font-black shrink-0" style={{ color: !row.unranked && rankNum <= 3 ? T.accent : T.textDim }}>{rankLabel}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-black text-[#F5F1E8] truncate" style={{ fontFamily: 'var(--font-heading)' }}>{row.team}</p>
-                      <p className="text-[10px] text-[#F5F1E8]/35">{row.club}{row.unranked ? ' · needs 5 to rank' : ''}</p>
+                      <p className="text-sm font-black truncate" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{row.team}</p>
+                      <p className="text-[10px]" style={{ color: T.textDim }}>{row.club}{row.unranked ? ' · needs 5 to rank' : ''}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-base font-black text-[#F5F1E8]">{row.main}</p>
-                      {row.sub && <p className="text-[10px] text-[#F5F1E8]/35">{row.sub}</p>}
+                    <div className="text-right shrink-0">
+                      <p className="text-base font-black" style={{ color: T.text }}>{row.main}</p>
+                      {row.sub && <p className="text-[10px]" style={{ color: T.textDim }}>{row.sub}</p>}
                     </div>
                   </div>
                 )
               })}
 
-              {/* Pinned own rank when outside the top 20 */}
               {pinned && (
                 <>
-                  <div className="px-6 py-1 text-center" style={{ borderBottom: '1px solid #ffffff08' }}>
-                    <span className="text-xs font-black" style={{ color: '#F5F1E830' }}>⋯</span>
+                  <div className="text-center" style={{ borderBottom: '1px solid #ffffff08', padding: '4px 28px' }}>
+                    <span className="text-xs font-black" style={{ color: T.textDim }}>⋯</span>
                   </div>
-                  <div className="flex items-center gap-4 px-6 py-4"
-                    style={{ background: `${T.accent}0d`, borderTop: `1px solid ${T.accent}30` }}>
-                    <span className="w-8 text-sm font-black" style={{ color: T.accent }}>{pinned.rank}</span>
+                  <div className="flex items-center gap-4"
+                    style={{ background: T.accentSoft, borderTop: `1px solid ${T.accent}30`, padding: '16px 28px' }}>
+                    <span className="w-9 text-sm font-black shrink-0" style={{ color: T.accent }}>{pinned.rank}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-black text-[#F5F1E8] truncate" style={{ fontFamily: 'var(--font-heading)' }}>{pinned.row.team}</p>
-                      <p className="text-[10px]" style={{ color: `${T.accent}90` }}>Your team</p>
+                      <p className="text-sm font-black truncate" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{pinned.row.team}</p>
+                      <p className="text-[10px]" style={{ color: T.accent }}>Your team</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-base font-black text-[#F5F1E8]">{pinned.row.main}</p>
-                      {pinned.row.sub && <p className="text-[10px] text-[#F5F1E8]/35">{pinned.row.sub}</p>}
+                    <div className="text-right shrink-0">
+                      <p className="text-base font-black" style={{ color: T.text }}>{pinned.row.main}</p>
+                      {pinned.row.sub && <p className="text-[10px]" style={{ color: T.textDim }}>{pinned.row.sub}</p>}
                     </div>
                   </div>
                 </>
@@ -284,8 +282,8 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
           )}
 
           {rows.length === 0 && (
-            <div className="rounded-2xl overflow-hidden" style={{ background: '#181510', border: '1px solid #ffffff12' }}>
-              <p className="px-6 py-10 text-sm text-center text-[#F5F1E8]/40">
+            <div className="rounded-2xl overflow-hidden" style={{ background: T.surface, border: '1px solid #ffffff12' }}>
+              <p className="text-sm text-center" style={{ color: T.textDim, padding: '40px 28px' }}>
                 {view === 'points' && 'No rounds scored yet — the ladder starts with Round 1.'}
                 {view === 'h2h' && 'No matchups resolved yet — H2H standings start with Round 1.'}
                 {view === 'weekly' && 'No rounds scored yet — the first High Score lands after Round 1.'}
@@ -294,7 +292,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
             </div>
           )}
 
-          <p className="text-[11px] text-center mt-6 text-[#F5F1E8]/30">
+          <p className="text-[11px] text-center mt-6" style={{ color: T.textDim }}>
             {view === 'points' && 'Top 20 shown. Cumulative points from all scored rounds. Provisional scores update once official stats are confirmed.'}
             {view === 'h2h' && 'Top 20 shown. Win percentage: W=1, D=0.5, L=0. Ties broken by total points scored. Minimum half a season to qualify for the title.'}
             {view === 'weekly' && 'Top score from the latest round. A new champion is crowned every week.'}
