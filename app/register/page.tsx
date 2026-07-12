@@ -86,9 +86,11 @@ export default function Register() {
 
   function onPackDone() {
     setPackQueue(prev => {
-      const next = prev.slice(1)
-      if (next.length === 0) window.location.href = '/team'
-      return next
+      if (prev.length <= 1) {
+        window.location.href = '/team'
+        return prev
+      }
+      return prev.slice(1)
     })
   }
 
@@ -147,6 +149,7 @@ export default function Register() {
 
       {packQueue.length > 0 && (
         <PackReveal
+          key={`${packQueue[0].grade}-${packQueue[0].packName ?? 'pack'}`}
           grade={packQueue[0].grade}
           packName={packQueue[0].packName ?? 'Starter Pack'}
           cards={packQueue[0].cards}
