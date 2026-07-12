@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Oxanium, Rajdhani, Archivo, Nunito } from 'next/font/google'
 import './globals.css'
 
@@ -10,8 +10,14 @@ const body = Nunito({ subsets: ['latin'], variable: '--font-body' })
 export const metadata: Metadata = {
   title: 'Grassroots Fantasy — Play along with your favourite players',
   description: 'The fantasy league platform built for grassroots sport. Any sport, any league, any number of teams. Collect player cards, build your squad, play along with your favourite players.',
-  icons: { icon: '/gf-logo.jpg' },
+  icons: {
+    icon: '/gf-logo.jpg',
+    apple: '/icon-192.png',
+  },
   manifest: '/manifest.json',
+}
+
+export const viewport: Viewport = {
   themeColor: '#141210',
 }
 
