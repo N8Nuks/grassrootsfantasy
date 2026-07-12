@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   title: 'Grassroots Fantasy — Play along with your favourite players',
   description: 'The fantasy league platform built for grassroots sport. Any sport, any league, any number of teams. Collect player cards, build your squad, play along with your favourite players.',
   icons: { icon: '/gf-logo.jpg' },
+  manifest: '/manifest.json',
+  themeColor: '#141210',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
