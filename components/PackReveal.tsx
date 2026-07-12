@@ -61,7 +61,7 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-6 cursor-pointer select-none"
       style={{ background: '#000000E8', backdropFilter: 'blur(6px)' }}
       onClick={advance}>
-      <div className="w-full text-center" style={{ maxWidth: '400px', perspective: '900px' }}>
+      <div className="w-full text-center flex flex-col items-center" style={{ maxWidth: '400px', perspective: '900px' }}>
 
         {/* Stage 1 — the unopened pack */}
         {(stage === 'pack' || stage === 'tearing') && (
@@ -81,10 +81,10 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
         {(stage === 'back' || stage === 'fuse') && (
           <div key={`back-${idx}`} className={stage === 'back' ? 'gf-pop' : ''}>
             <div className="relative mx-auto rounded-2xl pinstripe flex flex-col items-center justify-center"
-              style={{ width: '250px', height: '360px', background: `linear-gradient(160deg, ${T.surfaceRaised} 0%, ${T.field} 100%)`, border: '2px solid #F5F1E825' }}>
+              style={{ width: '250px', height: '360px', background: '#0F2242', border: '3px solid #F5F1E825' }}>
               {/* GF logo — the igniter */}
-              <div className="rounded-full overflow-hidden flex items-center justify-center"
-                style={{ width: '92px', height: '92px', border: `2px solid ${T.accent}60`, boxShadow: stage === 'back' ? `0 0 24px ${T.accent}40` : 'none', background: '#141210' }}>
+              .<div className="overflow-hidden flex items-center justify-center"
+                style={{ width: '120px', height: '120px', boxShadow: stage === 'back' ? `0 0 28px ${T.accent}35` : 'none' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/gf-logo.jpg" alt="Grassroots Fantasy" className="w-full h-full object-cover" />
               </div>
@@ -114,7 +114,7 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
               style={{ color: meta.accent, textShadow: isRare ? `0 0 16px ${meta.accent}` : undefined }}>
               {meta.announce}
             </p>
-            <div className="gf-flip-in mx-auto" style={{ width: '250px' }}>
+            <div className="gf-flip-in" style={{ width: '250px', margin: '0 auto' }}>
               <div className="relative rounded-2xl overflow-hidden flex flex-col gf-wiggle"
                 style={{
                   width: '250px', height: '360px',
