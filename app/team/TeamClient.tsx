@@ -291,24 +291,28 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
       <div className="flex items-center justify-center gap-4 flex-wrap" style={{ margin: '32px 0' }}>
         {cards.length >= 21 && (
           <button onClick={t3Claimed ? undefined : claimT3} disabled={t3Claimed}
-            className="text-xs font-bold uppercase tracking-widest px-6 py-3.5 rounded-full transition-all hover:scale-[1.02] disabled:hover:scale-100"
-            style={t3Claimed
-              ? { color: T.textDim, border: '1px solid #ffffff20', background: 'transparent' }
-              : { color: '#141210', background: T.accent, boxShadow: T.glow }}>
+            className="text-xs font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.02] disabled:hover:scale-100 flex items-center"
+            style={{
+              padding: '14px 32px',
+              minHeight: '48px',
+              ...(t3Claimed
+                ? { color: T.textDim, border: '1px solid #ffffff25', background: 'transparent' }
+                : { color: '#141210', background: T.accent, boxShadow: T.glow }),
+            }}>
             {t3Claimed ? 'Weekly Pack Claimed ✓' : 'Claim Weekly Pack · 2 cards'}
           </button>
         )}
-        <div className="flex gap-2">
+        <div className="inline-flex rounded-full overflow-hidden" style={{ border: '1px solid #ffffff25', minHeight: '48px' }}>
           <input
             value={t4Code}
             onChange={e => setT4Code(e.target.value)}
             placeholder="Bonus pack code"
-            className="rounded-full px-4 py-2.5 text-sm outline-none w-44"
-            style={{ background: T.surface, border: '1px solid #ffffff15', caretColor: T.text, color: T.text }}
+            className="text-xs font-bold uppercase tracking-widest outline-none w-44"
+            style={{ background: 'transparent', caretColor: T.text, color: T.text, padding: '14px 24px', fontFamily: 'var(--font-label)' }}
           />
           <button onClick={redeemT4} disabled={!t4Code.trim()}
-            className="text-xs font-bold uppercase tracking-widest px-5 rounded-full transition-all hover:scale-[1.02] disabled:opacity-40"
-            style={{ color: '#E8C15A', border: '1px solid #E8C15A', background: 'transparent' }}>
+            className="text-xs font-black uppercase tracking-widest transition-all disabled:opacity-40"
+            style={{ color: '#141210', background: '#E8C15A', padding: '14px 28px', borderLeft: '1px solid #ffffff15' }}>
             Redeem
           </button>
         </div>
