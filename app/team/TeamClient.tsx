@@ -5,6 +5,7 @@ import GradeSwitch from '@/components/GradeSwitch'
 import PlayerCard from '@/components/PlayerCard'
 import PlayerCardFull from '@/components/PlayerCardFull'
 import FieldPicker from '@/components/FieldPicker'
+import PackReveal, { RevealCard } from '@/components/PackReveal'
 
 export type TeamCard = {
   id: string
@@ -84,6 +85,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   const [message, setMessage] = useState('')
   const [sortBy, setSortBy] = useState<'tier' | 'ba' | 'points'>('tier')
   const [t4Code, setT4Code] = useState('')
+  const [reveal, setReveal] = useState<{ packName: string; cards: RevealCard[] } | null>(null)
 
   const cardById = new Map(cards.map(c => [c.id, c]))
   const assignedIds = new Set(slots.map(s => s.card_id))
@@ -161,16 +163,16 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     const r = await fetch('/api/redeem-t4', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: t4Code }) })
     const data = await r.json()
     if (r.ok) {
-      const names = data.players.map((p: { name: string; tier: string }) => p.tier.startsWith('rare') ? `⭐ ${p.name} (RARE)` : p.name).join(', ')
-      alert((data.rare_hit ? 'RARE PULL! ' : '') + 'New cards: ' + names)
-      window.location.reload()
+      setReveal({ packName: 'Bonus Pack', cards: data.players.map((p: { name: string; tier: string }) => ({ name: p.name, tier: p.tier })) })
     } else alert(data.error)
   }
   async function claimT3() {
     const r = await fetch('/api/deal-t3', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade }) })
     const data = await r.json()
-    if (r.ok) { alert('New cards: ' + data.players.join(', ')); window.location.reload() }
-    else alert(data.error)
+    if (r.ok) {
+      const cards: RevealCard[] = (data.cards ?? data.players.map((n: string) => ({ name: n, tier: 'common' })))
+      setReveal({ packName: 'Weekly Pack', cards })
+    } else alert(data.error)
   }
 
   function statBlock(cardList: TeamCard[]) {
@@ -250,6 +252,14 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         <span className="hidden sm:block w-12 text-right text-[11px] shrink-0" style={{ color: T.textDim }}>
           {c.stats.career_sb ?? 0}
         </span>
+      {reveal && (
+        <PackReveal
+          grade={grade}
+          packName={reveal.packName}
+          cards={reveal.cards}
+          onDone={() => window.location.reload()}
+        />
+      )}
       </div>
     )
   }
