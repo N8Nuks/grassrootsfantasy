@@ -5,7 +5,7 @@ import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/client'
 import PackReveal, { RevealCard } from '@/components/PackReveal'
 
-type PackQueueItem = { grade: 'mens' | 'womens'; cards: RevealCard[] }
+type PackQueueItem = { grade: 'mens' | 'womens'; cards: RevealCard[]; packName?: string }
 
 export default function Register() {
   const [email, setEmail] = useState('')
@@ -58,9 +58,24 @@ export default function Register() {
     const dealRes = await fetch('/api/deal-t1', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grades }) })
     const dealData = await dealRes.json().catch(() => null)
 
-    // Starter Pack ritual — one ceremony per grade dealt
+    const queue: PackQueueItem[] = []
     if (dealRes.ok && dealData?.packs?.length) {
-      setPackQueue(dealData.packs as PackQueueItem[])
+      for (const p of dealData.packs as PackQueueItem[]) {
+        queue.push({ ...p, packName: 'Starter Pack' })
+      }
+    }
+
+    // In-season registrants: Pre-Season Pack deals immediately after (release-gated)
+    for (const grade of grades) {
+      const t2 = await fetch('/api/deal-t2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade }) })
+      const t2Data = await t2.json().catch(() => null)
+      if (t2.ok && t2Data?.cards?.length) {
+        queue.push({ grade, cards: t2Data.cards, packName: 'Pre-Season Pack' })
+      }
+    }
+
+    if (queue.length) {
+      setPackQueue(queue)
       setBusy(false)
       return
     }
@@ -133,7 +148,7 @@ export default function Register() {
       {packQueue.length > 0 && (
         <PackReveal
           grade={packQueue[0].grade}
-          packName="Starter Pack"
+          packName={packQueue[0].packName ?? 'Starter Pack'}
           cards={packQueue[0].cards}
           onDone={onPackDone}
         />
