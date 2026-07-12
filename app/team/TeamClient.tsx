@@ -438,14 +438,22 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
 
       {view === 'collection' && (
         <div>
-          <div className="flex justify-center gap-2 mb-8">
-            {(['tier','ba','points'] as const).map(s => (
-              <button key={s} onClick={() => setSortBy(s)}
-                className="text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full transition-all"
-                style={sortBy === s ? { color: '#141210', background: '#E8D5A3' } : { color: T.textDim, border: '1px solid #ffffff15' }}>
-                {s === 'ba' ? 'Batting Avg' : s}
-              </button>
-            ))}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex rounded-full overflow-hidden" style={{ border: '1px solid #ffffff25' }}>
+              {(['tier','ba','points'] as const).map((s, i) => (
+                <button key={s} onClick={() => setSortBy(s)}
+                  className="text-xs font-black uppercase tracking-widest transition-all flex items-center"
+                  style={{
+                    color: sortBy === s ? '#141210' : T.textDim,
+                    background: sortBy === s ? T.accent : 'transparent',
+                    padding: '12px 24px',
+                    minHeight: '44px',
+                    ...(i > 0 ? { borderLeft: '1px solid #ffffff15' } : {}),
+                  }}>
+                  {s === 'ba' ? 'Bat Ave.' : s}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {sortedCollection.map(c => {
