@@ -57,9 +57,9 @@ export default function NFS() {
       <section className="px-6 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "90px", paddingBottom: "90px" }}>
         <div className="grid gap-6 sm:grid-cols-3" style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
           {[
-            { big: '2005', label: 'NFS founded', d: 'Twenty seasons of premier fastpitch softball.' },
-            { big: '1939', label: 'Auckland softball begins', d: 'Nearly ninety years of history behind every game.' },
-            { big: '300+', label: 'Career games club', d: 'Only eight players have ever reached it. Their cards carry the badge.' },
+            { big: '2005', label: 'NFS founded', d: 'Twenty seasons of Northern Premier fastpitch softball.' },
+            { big: '1939', label: 'Auckland softball begins', d: 'Nearly ninety years of history behind ASA every game.' },
+            { big: '300+', label: 'Career games club', d: 'Only eight players have ever been recorded as reaching it. Their cards carry the badge.' },
           ].map((s) => (
             <div key={s.label} className="rounded-3xl p-8 flex flex-col gap-2 items-center text-center" style={{ background: '#121215', border: `1px solid ${COBALT}30` }}>
               <span className="text-4xl font-black" style={{ color: COBALT, fontFamily: 'var(--font-heading)' }}>{s.big}</span>
@@ -95,15 +95,15 @@ export default function NFS() {
         <div className="flex flex-col items-center" style={{ maxWidth: "1000px", marginLeft: "auto", marginRight: "auto" }}>
           <h2 className="text-2xl sm:text-3xl font-black text-white text-center mb-5" style={{ fontFamily: 'var(--font-heading)' }}>The NFS card tiers.</h2>
           <p className="text-sm text-white/55 text-center leading-relaxed" style={{ maxWidth: "540px", marginBottom: "64px" }}>
-            Softball is the only sport where one player can dominate both sides of the game — so the NFS League carries two Rare tiers found nowhere else: the two-way players.
+            Softball is a sport where one player can dominate both sides of the game and affect outcomes heavily — so the NFS League carries two Rare tiers found nowhere else: the two-way players.
           </p>
 
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 w-full">
             {[
-              { tier: 'RARE 2WP A', accent: '#FFD700', desc: 'The complete two-way players — they pitch AND hit at the top level. The rarest cards in the game, dealt only in Starter Packs.' },
-              { tier: 'RARE 2WP B', accent: GOLD, desc: 'Two-way pitchers whose value lives on the mound. Rare, specialist, and game-changing in the right matchup.' },
+              { tier: 'RARE 2WP A', accent: '#FFD700', desc: 'The complete two-way players — they pitch AND hit at the top level. The rarest cards in the game, dealt only in Starter Packs...' },
+              { tier: 'RARE 2WP B', accent: GOLD, desc: 'Pitchers whose value lives on the mound. Rare, specialist, and game-changing in the right matchup.' },
               { tier: 'ELITE', accent: SILVER, desc: 'The proven performers — season after season at the top of the stats. Silver treatment, serious points.' },
-              { tier: 'COMMON', accent: GREEN, desc: 'The backbone of every club and every fantasy squad. Smart managers know: championships are won with great Commons.' },
+              { tier: 'COMMON', accent: GREEN, desc: 'The backbone of every Club and every fantasy squad. Smart Managers know: Championships are won with great Commons.' },
             ].map((c) => (
               <div key={c.tier} className="rounded-3xl p-7 flex flex-col gap-4 items-center text-center" style={{ background: '#121215', border: `1px solid ${c.accent}45`, paddingTop: "36px" }}>
                 <span className="text-[10px] font-black tracking-widest px-3 py-1.5 rounded-full" style={{ color: c.accent, background: c.accent + '18', lineHeight: "1.6" }}>{c.tier}</span>
