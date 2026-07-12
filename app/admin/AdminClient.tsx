@@ -2,8 +2,9 @@
 import { useState } from 'react'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
+import type { AdminStats } from './page'
 
-export default function AdminClient() {
+export default function AdminClient({ stats }: { stats: AdminStats }) {
   const [csv, setCsv] = useState('')
   const [roundNumber, setRoundNumber] = useState('0')
   const [grade, setGrade] = useState<'mens' | 'womens'>('mens')
@@ -87,11 +88,53 @@ export default function AdminClient() {
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#141210' }}>
       <Nav />
-      <section className="flex-1 px-6" style={{ paddingTop: "130px", paddingBottom: "100px" }}>
+      <section className="flex-1 px-6" style={{ paddingTop: "90px", paddingBottom: "100px" }}>
         <div style={{ maxWidth: "720px", marginLeft: "auto", marginRight: "auto" }}>
           <div className="text-center mb-10">
             <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: '#E8C15A' }}>GF Admin</p>
-            <h1 className="text-3xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>Round Stats Upload</h1>
+            <h1 className="text-3xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>Season One Command</h1>
+          </div>
+
+          {/* ── Season command view ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            {[
+              ['Accounts', String(stats.users)],
+              ['Teams M / W', `${stats.teams.mens} / ${stats.teams.womens}`],
+              ['Rounds scored M / W', `${stats.roundsScored.mens} / ${stats.roundsScored.womens}`],
+              ['Weekly unclaimed M / W', `${stats.weeklyUnclaimed.mens} / ${stats.weeklyUnclaimed.womens}`],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-xl p-4 text-center" style={{ background: '#2A211A', border: '1px solid #ffffff12' }}>
+                <p className="text-2xl font-black" style={{ color: '#FFC425', fontFamily: 'var(--font-heading)' }}>{value}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest mt-1 text-[#F5F1E8]/50">{label}</p>
+              </div>
+            ))}
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3 mb-12">
+            <div className="rounded-xl p-4" style={{ background: '#2A211A', border: '1px solid #ffffff12' }}>
+              <p className="text-[10px] font-black uppercase tracking-widest mb-3 text-[#F5F1E8]/50">Cards dealt by source</p>
+              <div className="flex gap-4 flex-wrap text-sm text-[#F5F1E8]">
+                {stats.cardsBySource.length === 0 && <span className="text-[#F5F1E8]/40">None yet</span>}
+                {stats.cardsBySource.map(c => (
+                  <span key={c.source} className="font-bold uppercase">{c.source}: <b style={{ color: '#FFC425' }}>{c.count}</b></span>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-xl p-4" style={{ background: '#2A211A', border: '1px solid #ffffff12' }}>
+              <p className="text-[10px] font-black uppercase tracking-widest mb-3 text-[#F5F1E8]/50">Latest scored round</p>
+              <div className="flex gap-5 flex-wrap text-sm text-[#F5F1E8]">
+                {stats.latestRound.length === 0 && <span className="text-[#F5F1E8]/40">Nothing scored yet</span>}
+                {stats.latestRound.map(r => (
+                  <span key={r.grade} className="font-bold">
+                    {r.grade === 'mens' ? 'M' : 'W'} R{r.round_number}: {r.teamsScored} teams{r.topScore != null ? `, top ${r.topScore}` : ''}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Stats upload ── */}
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>Round Stats Upload</h2>
           </div>
 
           <div className="flex gap-4 mb-4">
