@@ -29,12 +29,18 @@ export default function Nav() {
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname.startsWith(href)
 
-  // Right-side nav links
+  const boxLink = (href: string, color: string) => ({
+    fontFamily: 'var(--font-label)',
+    color,
+    border: `1px solid ${color}`,
+    ...(isActive(href) ? { background: `${color}18` } : {}),
+  })
+
+  // Right-side page links
   const links = [
-    { label: 'Leagues', href: '/leagues', color: '#39FF6A', glow: '0 0 10px #39FF6A60' },
     ...(!loggedIn ? [{ label: 'How it works', href: '/how' }] : []),
     ...(loggedIn ? [
-      { label: 'My Team', href: '/team', color: '#39FF6A', glow: '0 0 10px #39FF6A60' },
+      { label: 'My Team', href: '/team', color: '#C8CDD4', glow: '0 0 10px #E6EAF080, 0 0 20px #C8CDD440' },
       { label: 'Matchups', href: '/matchups' },
       { label: 'Ladder', href: '/ladder' },
     ] : []),
@@ -48,7 +54,7 @@ export default function Nav() {
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 sm:px-12 py-4 bg-[#141210]/90 backdrop-blur-md border-b border-white/5">
-        {/* Left: logo + Join GF + Admin */}
+        {/* Left: logo + Join GF + Leagues */}
         <div className="flex items-center gap-6">
           <a href="/" className="flex items-center gap-2.5">
             <img src="/gf-mark.png" alt="" className="h-9 w-auto" />
@@ -61,31 +67,30 @@ export default function Nav() {
           <div className="hidden md:flex items-center gap-3">
             <a href="/join"
               className="text-xs font-bold uppercase tracking-widest px-4 py-2 transition-all hover:scale-[1.03]"
-              style={{
-                fontFamily: 'var(--font-label)',
-                color: JOIN_GOLD,
-                border: `1px solid ${JOIN_GOLD}`,
-                ...(isActive('/join') ? { background: `${JOIN_GOLD}18` } : {}),
-              }}>
+              style={boxLink('/join', JOIN_GOLD)}>
               Join GF
             </a>
-            {isAdmin && (
-              <a href="/admin"
-                className="text-xs font-bold uppercase tracking-widest px-4 py-2 transition-all hover:scale-[1.03]"
-                style={{
-                  fontFamily: 'var(--font-label)',
-                  color: ADMIN_RED,
-                  border: `1px solid ${ADMIN_RED}`,
-                  ...(isActive('/admin') ? { background: `${ADMIN_RED}18` } : {}),
-                }}>
-                Admin
-              </a>
-            )}
+            <a href="/leagues"
+              className="text-xs font-bold uppercase tracking-widest px-4 py-2 transition-all hover:scale-[1.03]"
+              style={boxLink('/leagues', '#39FF6A')}>
+              Leagues
+            </a>
           </div>
         </div>
 
+        {/* Centre: Admin only */}
+        {isAdmin && (
+          <div className="hidden md:block absolute left-1/2 -translate-x-1/2">
+            <a href="/admin"
+              className="text-xs font-bold uppercase tracking-widest px-4 py-2 transition-all hover:scale-[1.03]"
+              style={boxLink('/admin', ADMIN_RED)}>
+              Admin
+            </a>
+          </div>
+        )}
+
         {/* Right: page links + auth */}
-        <div className="hidden md:flex items-center gap-10 lg:gap-14">
+        <div className="hidden md:flex items-center gap-10 lg:gap-14" style={{ paddingRight: '24px' }}>
           {links.map(l => (
             <a key={l.label} href={l.href}
               className="text-xs font-bold uppercase tracking-widest transition-colors"
@@ -99,8 +104,8 @@ export default function Nav() {
             </a>
           ))}
           <button onClick={loggedIn ? logout : () => (window.location.href = '/login')}
-            className="text-xs font-bold uppercase tracking-widest transition-colors"
-            style={{ fontFamily: 'var(--font-label)', color: '#F5F1E850' }}>
+            className="text-sm font-bold uppercase tracking-widest transition-colors hover:text-[#F5F1E8]"
+            style={{ fontFamily: 'var(--font-label)', color: '#F5F1E870' }}>
             {loggedIn ? 'Log out' : 'Log in'}
           </button>
         </div>
@@ -123,6 +128,12 @@ export default function Nav() {
             style={{ fontFamily: 'var(--font-label)', color: JOIN_GOLD }}
             onClick={() => setOpen(false)}>
             Join GF
+          </a>
+          <a href="/leagues"
+            className="text-2xl font-black uppercase tracking-widest"
+            style={{ fontFamily: 'var(--font-label)', color: '#39FF6A' }}
+            onClick={() => setOpen(false)}>
+            Leagues
           </a>
           {isAdmin && (
             <a href="/admin"
