@@ -1,11 +1,13 @@
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/server'
+import { theme, type Grade } from '@/lib/clubhouse'
 import TeamClient, { TeamCard } from './TeamClient'
 
 export default async function Team({ searchParams }: { searchParams: Promise<{ grade?: string }> }) {
   const params = await searchParams
-  const grade = params.grade === 'womens' ? 'womens' : 'mens'
+  const grade: Grade = params.grade === 'womens' ? 'womens' : 'mens'
+  const T = theme(grade)
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -55,7 +57,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
   const slots = (lineup?.lineup_slots ?? []) as { slot: string; card_id: string; batting_order: number | null }[]
 
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: '#141210' }}>
+    <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
       <Nav />
       <section className="flex-1 px-4 sm:px-6" style={{ paddingTop: "120px", paddingBottom: "100px" }}>
         <TeamClient
