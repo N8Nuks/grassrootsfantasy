@@ -39,6 +39,13 @@ export async function POST(request: Request) {
     if (body?.grade === 'womens') grade = 'womens'
   } catch { /* default mens */ }
 
+  // Release gate — Pre-Season Packs open when admin releases the grade
+  const { data: config } = await admin.from('scoring_config')
+    .select('t2_released').eq('grade', grade).single()
+  if (!config?.t2_released) {
+    return NextResponse.json({ error: 'Pre-Season Packs are not released yet' }, { status: 403 })
+  }
+
   const { count: t1 } = await admin.from('cards').select('id', { count: 'exact', head: true })
     .eq('owner_id', user.id).eq('grade', grade).eq('source', 't1')
   if (!t1) return NextResponse.json({ error: 'No Starter Pack found — register first' }, { status: 400 })
@@ -86,5 +93,9 @@ export async function POST(request: Request) {
     await admin.from('lineup_slots').insert(slotRows)
   }
 
-  return NextResponse.json({ dealt: picks.length, players: picks.map(p => p.full_name) })
+  return NextResponse.json({
+    dealt: picks.length,
+    players: picks.map(p => p.full_name),
+    cards: picks.map(p => ({ name: p.full_name, tier: p.tier, positions: p.positions })),
+  })
 }
