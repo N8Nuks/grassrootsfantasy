@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { theme, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
 import PlayerCard from '@/components/PlayerCard'
+import PlayerCardFull from '@/components/PlayerCardFull'
 import FieldPicker from '@/components/FieldPicker'
 
 export type TeamCard = {
@@ -517,54 +518,25 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         const meta = TIER_META[c.tier] ?? TIER_META.common
         const currentSlot = slotByCard.get(c.id)
         const isOut = unavailable.has(c.playerId)
-        const st = c.stats
-        const seasonRow = [
-          st.season_ba != null ? ['BA', Number(st.season_ba).toFixed(3)] : null,
-          st.season_hr != null ? ['HR', st.season_hr] : null,
-          st.season_rbi != null ? ['RBI', st.season_rbi] : null,
-          st.season_sb != null ? ['SB', st.season_sb] : null,
-        ].filter(Boolean) as [string, string | number][]
-        const careerRow = [
-          st.career_ba != null ? ['BA', Number(st.career_ba).toFixed(3)] : null,
-          st.career_hr != null ? ['HR', st.career_hr] : null,
-          st.career_rbi != null ? ['RBI', st.career_rbi] : null,
-          st.career_sb != null ? ['SB', st.career_sb] : null,
-          st.career_ip != null ? ['IP', st.career_ip] : null,
-          st.career_era != null ? ['ERA', Number(st.career_era).toFixed(2)] : null,
-          st.career_wins != null ? ['W', st.career_wins] : null,
-        ].filter(Boolean) as [string, string | number][]
         const placeTargets = [...STARTER_SLOTS.filter(s => isEligible(c, s)), ...BENCH_SLOTS, ...RES_SLOTS]
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto" style={{ background: '#000000CC' }} onClick={() => setDetailCard(null)}>
-            <div className="w-full rounded-2xl overflow-hidden" style={{ maxWidth: "760px", maxHeight: "94vh", background: T.surface, border: `1px solid ${meta.accent}50` }} onClick={e => e.stopPropagation()}>
-              <div className="px-6 py-5 pinstripe" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a' }}>
-                <div className="flex items-center justify-between mb-1">
+            <div className="w-full rounded-2xl overflow-hidden" style={{ maxWidth: "820px", maxHeight: "94vh", background: T.surface, border: `1px solid ${meta.accent}50` }} onClick={e => e.stopPropagation()}>
+              <div className="px-6 py-4 flex items-center justify-between" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a' }}>
+                <div className="flex items-center gap-3">
                   <span className="text-[9px] font-black tracking-widest px-2.5 py-1 rounded-full" style={{ color: meta.accent, background: meta.accent + '20' }}>{meta.label}</span>
-                  <button onClick={() => setDetailCard(null)} className="text-xl font-black" style={{ color: T.textDim }}>×</button>
+                  {isOut && <span className="text-[9px] font-black px-2 py-0.5 rounded" style={{ background: '#FF6B6B', color: '#141210' }}>OUT THIS ROUND</span>}
+                  {currentSlot && <span className="text-[10px] uppercase tracking-widest" style={{ color: T.textDim }}>currently {SLOT_LABELS[currentSlot] ?? currentSlot}</span>}
                 </div>
-                <h3 className="text-xl font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
-                  {c.name} {isOut && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1 align-middle" style={{ background: '#FF6B6B', color: '#141210' }}>OUT</span>}
-                </h3>
-                <p className="text-xs" style={{ color: T.textDim }}>{c.club} · {c.positions.map(p => SLOT_LABELS[p] ?? p).join(' · ')}{currentSlot ? ` · currently ${SLOT_LABELS[currentSlot] ?? currentSlot}` : ''}</p>
+                <button onClick={() => setDetailCard(null)} className="text-xl font-black" style={{ color: T.textDim }}>×</button>
               </div>
-              <div className="overflow-y-auto px-6 py-5 sm:grid sm:grid-cols-[1fr_1.3fr] sm:gap-8" style={{ maxHeight: "78vh" }}>
-                <div>
-                  {seasonRow.length > 0 && (
-                    <div className="mb-5">
-                      <p className="text-[10px] font-black uppercase tracking-[0.25em] mb-2" style={{ color: T.textDim }}>2025/26 Season</p>
-                      <div className="flex gap-5 text-sm flex-wrap" style={{ color: T.text }}>
-                        {seasonRow.map(([k, v]) => <span key={k}>{k} <b>{v}</b></span>)}
-                      </div>
-                    </div>
-                  )}
-                  {careerRow.length > 0 && (
-                    <div className="mb-6">
-                      <p className="text-[10px] font-black uppercase tracking-[0.25em] mb-2" style={{ color: T.textDim }}>Last 2 Seasons</p>
-                      <div className="flex gap-5 text-sm flex-wrap" style={{ color: T.text }}>
-                        {careerRow.map(([k, v]) => <span key={k}>{k} <b>{v}</b></span>)}
-                      </div>
-                    </div>
-                  )}
+              <div className="overflow-y-auto px-6 py-6 sm:grid sm:grid-cols-[1fr_1.3fr] sm:gap-8" style={{ maxHeight: "82vh" }}>
+                <div className="mb-6 sm:mb-0">
+                  <PlayerCardFull
+                    player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats }}
+                    grade={grade}
+                    owned={true}
+                  />
                 </div>
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.25em] mb-3" style={{ color: T.textDim }}>Place on the field</p>
