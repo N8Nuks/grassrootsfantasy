@@ -87,5 +87,9 @@ export async function POST(request: Request) {
 
   await admin.from('t3_claims').insert({ owner_id: user.id, grade, round_id: round.id })
 
-  return NextResponse.json({ dealt: picks.length, players: picks.map(p => p.full_name) })
+  return NextResponse.json({
+    dealt: picks.length,
+    players: picks.map(p => p.full_name),
+    cards: picks.map(p => ({ name: p.full_name, tier: p.tier, positions: p.positions })),
+  })
 }
