@@ -36,7 +36,7 @@ export default function NFS() {
           </div>
 
           <div className="flex items-center justify-center gap-4 flex-wrap">
-            <a href="/join"
+            <a href="/register"
               className="inline-block text-base font-bold tracking-wide transition-all hover:scale-[1.02]"
               style={{ color: '#0D0D0F', background: GOLD, padding: "18px 52px", boxShadow: `0 0 24px ${GOLD}40` }}>
               Register your team
@@ -139,7 +139,7 @@ export default function NFS() {
           <p className="text-sm text-white/60 leading-relaxed" style={{ maxWidth: "460px", marginLeft: "auto", marginRight: "auto", marginBottom: "56px" }}>
             Register free and your Starter Pack lands instantly. Playing in the competition? Your access comes with your Association registration. Got a club code? It counts toward your club — and earns you a bonus pack.
           </p>
-          <a href="/join"
+          <a href="/register"
             className="inline-block text-base font-bold tracking-wide transition-all hover:scale-[1.02]"
             style={{ color: '#0D0D0F', background: GOLD, padding: "22px 64px", boxShadow: `0 0 28px ${GOLD}45` }}>
             Register your team
@@ -194,7 +194,7 @@ export default function NFS() {
             ))}
           </div>
           <div className="text-center" style={{ marginTop: "48px" }}>
-            <a href="/join" className="inline-block text-base font-bold tracking-wide transition-all hover:scale-[1.02]"
+            <a href="/register" className="inline-block text-base font-bold tracking-wide transition-all hover:scale-[1.02]"
               style={{ color: '#0D0D0F', background: GOLD, padding: "18px 52px", boxShadow: `0 0 24px ${GOLD}40` }}>
               Register your team
             </a>
