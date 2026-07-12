@@ -2,6 +2,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/server'
 import { theme, type Grade } from '@/lib/clubhouse'
+import GradeSwitch from '@/components/GradeSwitch'
 
 const SLOT_ORDER = ['P', 'C', 'B1', 'B2', 'B3', 'SS', 'LF', 'CF', 'RF', 'DP', 'PB', 'DR',
   'BENCH1', 'BENCH2', 'BENCH3', 'BENCH4']
@@ -118,17 +119,8 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
             <h1 className="text-3xl sm:text-4xl font-black mb-4" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
               {grade === 'mens' ? "Men's" : "Women's"} Head to Head
             </h1>
-            <div className="flex justify-center gap-2">
-              <a href="/matchups?grade=mens"
-                className="text-xs font-bold uppercase tracking-widest px-5 py-2.5 transition-all"
-                style={gradeTab(grade === 'mens', '#FFC425')}>
-                Men&apos;s
-              </a>
-              <a href="/matchups?grade=womens"
-                className="text-xs font-bold uppercase tracking-widest px-5 py-2.5 transition-all"
-                style={gradeTab(grade === 'womens', '#4D7FFF')}>
-                Women&apos;s
-              </a>
+            <div className="flex justify-center">
+              <GradeSwitch grade={grade} mensHref="/matchups?grade=mens" womensHref="/matchups?grade=womens" />
             </div>
           </div>
 

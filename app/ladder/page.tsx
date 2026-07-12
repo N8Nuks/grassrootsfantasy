@@ -2,6 +2,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/server'
 import { theme, type Grade } from '@/lib/clubhouse'
+import GradeSwitch from '@/components/GradeSwitch'
 
 export default async function Ladder({ searchParams }: { searchParams: Promise<{ grade?: string; view?: string }> }) {
   const params = await searchParams
@@ -157,17 +158,8 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
             <h1 className="text-3xl sm:text-4xl font-black mb-4" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
               {grade === 'mens' ? "Men's" : "Women's"} Standings
             </h1>
-            <div className="flex justify-center gap-2 mb-3">
-              <a href={`/ladder?grade=mens&view=${view}`}
-                className="text-xs font-bold uppercase tracking-widest px-5 py-2.5 transition-all"
-                style={gradeTab(grade === 'mens', '#FFC425')}>
-                Men&apos;s
-              </a>
-              <a href={`/ladder?grade=womens&view=${view}`}
-                className="text-xs font-bold uppercase tracking-widest px-5 py-2.5 transition-all"
-                style={gradeTab(grade === 'womens', '#4D7FFF')}>
-                Women&apos;s
-              </a>
+            <div className="flex justify-center mb-4">
+              <GradeSwitch grade={grade} mensHref={`/ladder?grade=mens&view=${view}`} womensHref={`/ladder?grade=womens&view=${view}`} />
             </div>
             <div className="flex justify-center gap-2 flex-wrap">
               <a href={`/ladder?grade=${grade}&view=points`}
