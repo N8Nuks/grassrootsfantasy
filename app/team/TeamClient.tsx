@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { theme, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
 import PlayerCard from '@/components/PlayerCard'
+import FieldPicker from '@/components/FieldPicker'
 
 export type TeamCard = {
   id: string
@@ -565,18 +566,13 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                     </div>
                   </div>
                 )}
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] mb-2" style={{ color: T.textDim }}>Place in position</p>
-                <div className="flex flex-wrap gap-2">
-                  {placeTargets.map(slot => (
-                    <button key={slot} onClick={() => assignToSlot(slot, c.id)}
-                      className="text-xs font-black px-3 py-2 rounded transition-all hover:scale-105"
-                      style={slot === currentSlot
-                        ? { color: '#141210', background: T.accent }
-                        : { color: T.text, background: '#ffffff10' }}>
-                      {SLOT_LABELS[slot] ?? slot}
-                    </button>
-                  ))}
-                </div>
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] mb-3" style={{ color: T.textDim }}>Place on the field</p>
+                <FieldPicker
+                  grade={grade}
+                  eligible={new Set(placeTargets)}
+                  current={currentSlot ?? null}
+                  onSelect={(slot) => assignToSlot(slot, c.id)}
+                />
                 <p className="text-[10px] mt-3" style={{ color: T.textDim }}>Whoever holds that spot swaps into this player&apos;s current position.</p>
               </div>
             </div>
