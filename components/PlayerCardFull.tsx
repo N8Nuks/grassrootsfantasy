@@ -84,10 +84,10 @@ export default function PlayerCardFull({ player, grade, owned }: {
           <circle cx="30" cy="22" r="13" fill={owned ? meta.accent + '75' : '#ffffff20'} />
           <path d="M6 80 C6 52 54 52 54 80 Z" fill={owned ? meta.accent + '75' : '#ffffff20'} />
         </svg>
-        <span className="absolute top-2.5 left-3 text-[9px] font-black tracking-widest px-2.5 py-1 rounded-full"
-          style={{ color: meta.accent, background: '#000000AA' }}>{meta.label}</span>
-        <span className="absolute top-2.5 right-3 text-[9px] font-bold px-2.5 py-1 rounded-full"
-          style={{ color: T.text, background: '#000000AA' }}>
+        <span className="absolute top-3 left-3.5 text-[10px] font-black tracking-widest"
+          style={{ color: meta.accent, textShadow: `0 0 8px ${meta.accent}90, 0 0 16px ${meta.accent}50` }}>{meta.label}</span>
+        <span className="absolute top-3 right-3.5 text-[10px] font-black tracking-widest"
+          style={{ color: meta.accent, textShadow: `0 0 8px ${meta.accent}90, 0 0 16px ${meta.accent}50` }}>
           {player.positions.map(posLabel).join(' · ')}{player.speedStar ? ' · ★' : ''}
         </span>
         {!owned && (

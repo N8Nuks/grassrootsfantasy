@@ -443,7 +443,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
 
       {view === 'collection' && (
         <div>
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center" style={{ marginTop: '-9px', marginBottom: '40px' }}>
             <div className="inline-flex rounded-full overflow-hidden" style={{ border: '1px solid #ffffff25' }}>
               {(['tier','ba','points'] as const).map((s, i) => (
                 <button key={s} onClick={() => setSortBy(s)}
@@ -530,7 +530,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                 </div>
                 <button onClick={() => setDetailCard(null)} className="text-xl font-black" style={{ color: T.textDim }}>×</button>
               </div>
-              <div className="overflow-y-auto px-6 py-6 sm:grid sm:grid-cols-[1fr_1.3fr] sm:gap-8" style={{ maxHeight: "82vh" }}>
+              <div className="overflow-y-auto px-6 py-5 sm:grid sm:grid-cols-[1fr_1.3fr] sm:gap-7 sm:items-start" style={{ maxHeight: "86vh" }}>
                 <div className="mb-6 sm:mb-0">
                   <PlayerCardFull
                     player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats }}
@@ -539,7 +539,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                   />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] mb-3" style={{ color: T.textDim }}>Place on the field</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.25em] mb-1" style={{ color: T.textDim }}>Place on the field</p>
                   <FieldPicker
                     grade={grade}
                     eligible={new Set(placeTargets)}
