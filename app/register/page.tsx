@@ -3,6 +3,9 @@ import { useState } from 'react'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/client'
+import PackReveal, { RevealCard } from '@/components/PackReveal'
+
+type PackQueueItem = { grade: 'mens' | 'womens'; cards: RevealCard[] }
 
 export default function Register() {
   const [email, setEmail] = useState('')
@@ -14,6 +17,7 @@ export default function Register() {
   const [grades, setGrades] = useState<('mens'|'womens')[]>(['mens'])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [packQueue, setPackQueue] = useState<PackQueueItem[]>([])
 
   async function handleRegister() {
     setError('')
@@ -51,8 +55,26 @@ export default function Register() {
       return
     }
 
-    await fetch('/api/deal-t1', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grades }) })
+    const dealRes = await fetch('/api/deal-t1', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grades }) })
+    const dealData = await dealRes.json().catch(() => null)
+
+    // Starter Pack ritual — one ceremony per grade dealt
+    if (dealRes.ok && dealData?.packs?.length) {
+      setPackQueue(dealData.packs as PackQueueItem[])
+      setBusy(false)
+      return
+    }
+
+    // Fallback: deal happened but no card payload — go straight to the team
     window.location.href = '/team'
+  }
+
+  function onPackDone() {
+    setPackQueue(prev => {
+      const next = prev.slice(1)
+      if (next.length === 0) window.location.href = '/team'
+      return next
+    })
   }
 
   const field = "w-full rounded-lg px-4 py-3.5 text-sm text-[#F5F1E8] outline-none focus:border-[#3FBF63]"
@@ -61,7 +83,7 @@ export default function Register() {
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#141210' }}>
       <Nav />
-      <section className="relative flex-1 px-6 overflow-hidden" style={{ paddingTop: "140px", paddingBottom: "100px" }}>
+      <section className="relative flex-1 px-6 overflow-hidden" style={{ paddingTop: "90px", paddingBottom: "100px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
         <div className="relative z-10" style={{ maxWidth: "440px", marginLeft: "auto", marginRight: "auto" }}>
           <div className="text-center mb-10">
@@ -107,6 +129,15 @@ export default function Register() {
           </div>
         </div>
       </section>
+
+      {packQueue.length > 0 && (
+        <PackReveal
+          grade={packQueue[0].grade}
+          packName="Starter Pack"
+          cards={packQueue[0].cards}
+          onDone={onPackDone}
+        />
+      )}
       <Footer />
     </main>
   )

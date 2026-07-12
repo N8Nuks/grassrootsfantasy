@@ -107,5 +107,8 @@ export async function dealAndPersistT1(admin: SupabaseClient, userId: string, gr
   const { error: slotError } = await admin.from('lineup_slots').insert(slotRows)
   if (slotError) throw new Error('Slot insert failed: ' + slotError.message)
 
-  return { dealt: cards.length }
+  return {
+    dealt: cards.length,
+    cards: cards.map(p => ({ name: p.full_name, tier: p.tier, positions: p.positions })),
+  }
 }
