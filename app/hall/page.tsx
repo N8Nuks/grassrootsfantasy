@@ -63,9 +63,10 @@ export default async function Hall() {
                 <div className="relative z-10 flex flex-col justify-between h-full" style={{ padding: '24px 24px 20px', minHeight: '190px' }}>
                   <div>
                     {/* Crest placeholder until club logos land */}
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4"
-                      style={{ background: `${tint(club)}25`, border: `1px solid ${tint(club)}50` }}>
-                      <span className="text-lg font-black" style={{ color: tint(club) }}>{club[0]}</span>
+                    <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center mb-4"
+                      style={{ background: '#0D0B08', border: `1.5px solid ${tint(club)}60` }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={`/clubs/${slug(club)}.jpg`} alt={club} className="w-full h-full object-cover" />
                     </div>
                     <h2 className="text-xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>{club}</h2>
                   </div>

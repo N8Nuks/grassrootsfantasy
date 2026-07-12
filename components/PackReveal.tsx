@@ -25,14 +25,21 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
   onDone: () => void
 }) {
   const T = theme(grade)
-  // idx: -1 = unopened pack, 0..n-1 = revealing card, n = summary
+  // stage: 'pack' -> 'tearing' -> card index 0..n-1 -> 'summary'
   const [idx, setIdx] = useState(-1)
+  const [tearing, setTearing] = useState(false)
   const done = idx >= cards.length
   const current = idx >= 0 && idx < cards.length ? cards[idx] : null
   const meta = current ? (TIER_META[current.tier] ?? TIER_META.common) : null
   const isRare = current?.tier.startsWith('rare')
 
   function advance() {
+    if (tearing) return
+    if (idx === -1) {
+      setTearing(true)
+      setTimeout(() => { setTearing(false); setIdx(0) }, 460)
+      return
+    }
     if (done) { onDone(); return }
     setIdx(i => i + 1)
   }
@@ -45,14 +52,16 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
 
         {/* Stage 1 — the unopened pack */}
         {idx === -1 && (
-          <div className="gf-pop">
-            <div className="relative mx-auto rounded-2xl pinstripe flex flex-col items-center justify-center"
+          <div className={tearing ? '' : 'gf-pop'}>
+            <div className={`relative mx-auto rounded-2xl pinstripe flex flex-col items-center justify-center ${tearing ? 'gf-tear' : 'gf-wiggle'}`}
               style={{ width: '240px', height: '340px', background: `linear-gradient(160deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`, border: `2px solid ${T.accent}`, boxShadow: `0 0 48px ${T.accent}40` }}>
               <p className="text-xs font-black uppercase tracking-[0.35em] mb-3" style={{ color: T.accent }}>Grassroots</p>
               <p className="text-2xl font-black uppercase" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{packName}</p>
               <p className="text-sm font-bold mt-2" style={{ color: T.textDim }}>{cards.length} cards</p>
+              {/* Perforation line */}
+              <div className="absolute left-3 right-3" style={{ top: '46px', borderTop: `2px dashed ${T.accent}50` }} />
             </div>
-            <p className="text-xs font-bold uppercase tracking-[0.3em] mt-8 gf-pulse" style={{ color: T.text }}>Tap to tear open</p>
+            {!tearing && <p className="text-xs font-bold uppercase tracking-[0.3em] mt-8 gf-pulse" style={{ color: T.text }}>Tap to tear open</p>}
           </div>
         )}
 
