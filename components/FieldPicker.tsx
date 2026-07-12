@@ -14,7 +14,7 @@ const FIELD_SLOTS: { slot: string; label: string; x: number; y: number }[] = [
   { slot: 'B3', label: '3B', x: 84, y: 216 },
   { slot: 'B1', label: '1B', x: 316, y: 216 },
   { slot: 'P', label: 'P', x: 200, y: 196 },
-  { slot: 'C', label: 'C', x: 200, y: 282 },
+  { slot: 'C', label: 'C', x: 200, y: 262 },
 ]
 
 const SPECIAL_SLOTS = [
