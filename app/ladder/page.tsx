@@ -15,6 +15,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
   const T = THEMES[grade]
 
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
   const { data: teams } = await supabase
     .from('public_teams').select('id, team_name, clubs(name)')
@@ -86,7 +87,6 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
       }))
     }
   } else {
-    // Clubs: average cumulative points per user, five-user floor to rank
     const { data: scores } = await supabase
       .from('user_scores').select('owner_id, points').eq('grade', grade)
     const userTotals = new Map<string, number>()
@@ -118,7 +118,23 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
   if (view !== 'clubs') rows.sort((a, b) => b.sortKey - a.sortKey || b.tieKey - a.tieKey)
 
   const champion = view === 'weekly' && rows.length > 0 ? rows[0] : null
-  const listRows = view === 'weekly' ? rows.slice(1) : rows
+
+  // Row caps + pinned own rank
+  const CAP = view === 'weekly' ? 10 : 20
+  let listRows: Row[]
+  let pinned: { row: Row; rank: number } | null = null
+
+  if (view === 'clubs') {
+    listRows = rows
+  } else if (view === 'weekly') {
+    listRows = rows.slice(1, 1 + CAP)
+  } else {
+    listRows = rows.slice(0, CAP)
+    if (user) {
+      const idx = rows.findIndex(r => r.id === user.id)
+      if (idx >= CAP) pinned = { row: rows[idx], rank: idx + 1 }
+    }
+  }
 
   const tabStyle = (active: boolean) =>
     active
@@ -223,9 +239,14 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
                   rankLabel = String(rankCounter)
                 }
                 const rankNum = Number(rankLabel)
+                const isMe = !!user && row.id === user.id
                 return (
                   <div key={row.id} className="flex items-center gap-4 px-6 py-4"
-                    style={{ borderBottom: '1px solid #ffffff08', opacity: row.unranked ? 0.45 : 1 }}>
+                    style={{
+                      borderBottom: '1px solid #ffffff08',
+                      opacity: row.unranked ? 0.45 : 1,
+                      background: isMe ? `${T.accent}0d` : 'transparent',
+                    }}>
                     <span className="w-8 text-sm font-black" style={{ color: !row.unranked && rankNum <= 3 ? T.accent : '#F5F1E850' }}>{rankLabel}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-black text-[#F5F1E8] truncate" style={{ fontFamily: 'var(--font-heading)' }}>{row.team}</p>
@@ -238,6 +259,27 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
                   </div>
                 )
               })}
+
+              {/* Pinned own rank when outside the top 20 */}
+              {pinned && (
+                <>
+                  <div className="px-6 py-1 text-center" style={{ borderBottom: '1px solid #ffffff08' }}>
+                    <span className="text-xs font-black" style={{ color: '#F5F1E830' }}>⋯</span>
+                  </div>
+                  <div className="flex items-center gap-4 px-6 py-4"
+                    style={{ background: `${T.accent}0d`, borderTop: `1px solid ${T.accent}30` }}>
+                    <span className="w-8 text-sm font-black" style={{ color: T.accent }}>{pinned.rank}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-black text-[#F5F1E8] truncate" style={{ fontFamily: 'var(--font-heading)' }}>{pinned.row.team}</p>
+                      <p className="text-[10px]" style={{ color: `${T.accent}90` }}>Your team</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-base font-black text-[#F5F1E8]">{pinned.row.main}</p>
+                      {pinned.row.sub && <p className="text-[10px] text-[#F5F1E8]/35">{pinned.row.sub}</p>}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -253,8 +295,8 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
           )}
 
           <p className="text-[11px] text-center mt-6 text-[#F5F1E8]/30">
-            {view === 'points' && 'Cumulative points from all scored rounds. Provisional scores update once official stats are confirmed.'}
-            {view === 'h2h' && 'Win percentage: W=1, D=0.5, L=0. Ties broken by total points scored. Minimum half a season to qualify for the title.'}
+            {view === 'points' && 'Top 20 shown. Cumulative points from all scored rounds. Provisional scores update once official stats are confirmed.'}
+            {view === 'h2h' && 'Top 20 shown. Win percentage: W=1, D=0.5, L=0. Ties broken by total points scored. Minimum half a season to qualify for the title.'}
             {view === 'weekly' && 'Top score from the latest round. A new champion is crowned every week.'}
             {view === 'clubs' && 'Ranked on average points per team, minimum five teams to rank. Ties broken by club total.'}
           </p>

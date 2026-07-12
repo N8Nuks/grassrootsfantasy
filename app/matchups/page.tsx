@@ -8,7 +8,7 @@ const THEMES = {
 }
 
 const SLOT_ORDER = ['P', 'C', 'B1', 'B2', 'B3', 'SS', 'LF', 'CF', 'RF', 'DP', 'PB', 'DR',
-  'BENCH1', 'BENCH2', 'BENCH3', 'BENCH4', 'RES1', 'RES2', 'RES3', 'RES4', 'RES5']
+  'BENCH1', 'BENCH2', 'BENCH3', 'BENCH4']
 const SLOT_LABELS: Record<string, string> = { B1: '1B', B2: '2B', B3: '3B' }
 const slotRank = (s: string) => {
   const i = SLOT_ORDER.indexOf(s)
@@ -29,7 +29,8 @@ type LineupRec = {
 }
 
 function TeamCard({ title, slots, accent, carried }: { title: string; slots: SlotRow[]; accent: string; carried: boolean }) {
-  const sorted = [...slots].sort((a, b) => slotRank(a.slot) - slotRank(b.slot))
+  const sorted = slots.filter(s => !s.slot.startsWith('RES'))
+    .sort((a, b) => slotRank(a.slot) - slotRank(b.slot))
   return (
     <div className="flex-1 rounded-2xl overflow-hidden" style={{ background: '#181510', border: '1px solid #ffffff12' }}>
       <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #ffffff0a' }}>
