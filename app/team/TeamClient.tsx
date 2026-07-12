@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { theme, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
+import PlayerCard from '@/components/PlayerCard'
 
 export type TeamCard = {
   id: string
@@ -459,25 +460,18 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               ))}
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
             {sortedCollection.map(c => {
-              const meta = TIER_META[c.tier] ?? TIER_META.common
               const inLineup = assignedIds.has(c.id)
+              const slot = slotByCard.get(c.id)
               return (
-                <button key={c.id} onClick={() => setDetailCard(c)} className="rounded-2xl p-5 flex flex-col gap-2 text-left"
-                  style={{ background: T.surface, border: `1px solid ${meta.accent}30`, opacity: inLineup ? 1 : 0.75 }}>
-                  <div className="flex justify-between">
-                    <span className="text-[9px] font-black tracking-widest px-2.5 py-1 rounded-full" style={{ color: meta.accent, background: meta.accent + '15' }}>{meta.label}</span>
-                    {inLineup && <span className="text-[9px] font-black px-2 py-1 rounded-full" style={{ color: '#141210', background: T.accent }}>{SLOT_LABELS[slotByCard.get(c.id) ?? ''] ?? 'IN LINEUP'}</span>}
-                  </div>
-                  <h3 className="text-base font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{c.name}</h3>
-                  <p className="text-[10px]" style={{ color: T.textDim }}>{c.club} · {c.positions.map(p => SLOT_LABELS[p] ?? p).join(' ')}</p>
-                  <div className="flex gap-3 text-[10px]" style={{ color: T.textDim }}>
-                    {c.stats.career_ba != null && <span>BA <b>{Number(c.stats.career_ba).toFixed(3)}</b></span>}
-                    {c.stats.career_hr != null && <span>HR <b>{c.stats.career_hr}</b></span>}
-                    {c.stats.career_sb != null && <span>SB <b>{c.stats.career_sb}</b></span>}
-                  </div>
-                </button>
+                <PlayerCard key={c.id}
+                  player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats }}
+                  grade={grade}
+                  owned={true}
+                  chip={inLineup ? `IN ${SLOT_LABELS[slot ?? ''] ?? ''}` : undefined}
+                  onClick={() => setDetailCard(c)}
+                />
               )
             })}
           </div>
