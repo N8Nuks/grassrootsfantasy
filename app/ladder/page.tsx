@@ -152,10 +152,10 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
         <div style={{ maxWidth: '680px', marginLeft: 'auto', marginRight: 'auto' }}>
           <div className="text-center" style={{ marginBottom: '40px' }}>
             <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: T.accent }}>{titles[view]}</p>
-            <h1 className="text-3xl sm:text-4xl font-black mb-4" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
+            <h1 className="text-3xl sm:text-4xl font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text, marginBottom: '28px' }}>
               {grade === 'mens' ? "Men's" : "Women's"} Standings
             </h1>
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-center" style={{ marginBottom: '20px' }}>
               <GradeSwitch grade={grade} mensHref={`/ladder?grade=mens&view=${view}`} womensHref={`/ladder?grade=womens&view=${view}`} />
             </div>
             <div className="flex justify-center">
