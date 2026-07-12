@@ -58,14 +58,14 @@ export default function PlayerCard({ player, grade, owned, chip, onClick }: {
           </span>
         )}
         {owned && chip && (
-          <span className="absolute top-2 right-2 text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full"
-            style={{ color: '#141210', background: T.accent }}>
+          <span className="absolute top-2 right-2 text-[9px] font-black uppercase tracking-widest"
+            style={{ color: T.accent, textShadow: `0 0 8px ${T.accent}90` }}>
             {chip}
           </span>
         )}
       </div>
       <div style={{ padding: '12px 14px 14px' }}>
-        <span className="text-[8px] font-black tracking-widest px-2 py-0.5 rounded-full" style={{ color: meta.accent, background: meta.accent + '15' }}>
+        <span className="text-[9px] font-black tracking-widest" style={{ color: meta.accent, textShadow: `0 0 8px ${meta.accent}80` }}>
           {meta.label}
         </span>
         <p className="text-sm font-black mt-2 truncate" style={{ fontFamily: 'var(--font-heading)', color: owned ? T.text : T.textDim }}>
