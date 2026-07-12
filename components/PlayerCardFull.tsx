@@ -11,10 +11,10 @@ const SLOT_LABELS: Record<string, string> = { B1: '1B', B2: '2B', B3: '3B', PB: 
 const posLabel = (p: string) => SLOT_LABELS[p] ?? p
 
 const CLUB_TINTS: Record<string, string> = {
-  'Bandits': '#D64545', 'Howick': '#3FBF63', 'Marist': '#4D7FFF',
-  'Otahuhu': '#E8983A', 'Patriots': '#B04DFF', 'Pukekohe': '#45C8D6',
-  'Ramblers': '#FFC425', 'Roosters': '#FF6B6B', 'United': '#6BCB77',
-  'United-Marist': '#7F9CF5', 'Waitakere': '#F08FC0',
+  'Bandits': '#5B2D8E', 'Howick': '#8A1E41', 'Marist': '#2456E6',
+  'Otahuhu': '#2B5C9E', 'Patriots': '#B49759', 'Pukekohe': '#2D9E4E',
+  'Ramblers': '#C41E3A', 'Roosters': '#C8102E', 'United': '#E03A3E',
+  'United-Marist': '#2456E6', 'Waitakere': '#FFB81C',
 }
 const clubSlug = (name: string) => name.toLowerCase().replace(/\s+/g, '-')
 
