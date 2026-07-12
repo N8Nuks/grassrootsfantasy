@@ -1,5 +1,7 @@
 // Grassroots Fantasy scoring engine — Season One
-// Order of operations: raw events -> point table -> slot/bench modifier -> team sums (true)
+// Order of operations: raw events -> point table -> ROUND FLOOR (no player scores
+// below 0 in any round; negatives only reduce positive scoring) -> slot/bench
+// modifier -> team sums (true)
 // Player display floors applied ONLY to player_season_totals.displayed_total
 
 export type StatLine = {
@@ -22,28 +24,39 @@ const PIT_KEYS: [keyof StatLine, string][] = [
   ['ip','ip'],['k_pit','k_pit'],['win','win'],['er','er'],
 ]
 
-export function battingPoints(s: StatLine, v: PointValues): number {
+// Raw subtotals (can be negative) — used internally, floored at combination points
+function battingRaw(s: StatLine, v: PointValues): number {
   return BAT_KEYS.reduce((sum, [stat, key]) => sum + (Number(s[stat]) || 0) * (v[key] ?? 0), 0)
 }
 
-export function pitchingPoints(s: StatLine, v: PointValues): number {
-  const raw = PIT_KEYS.reduce((sum, [stat, key]) => sum + (Number(s[stat]) || 0) * (v[key] ?? 0), 0)
-  return Math.max(raw, 0) // ER floor: pitching subtotal never below 0 for the week
+function pitchingRaw(s: StatLine, v: PointValues): number {
+  return PIT_KEYS.reduce((sum, [stat, key]) => sum + (Number(s[stat]) || 0) * (v[key] ?? 0), 0)
 }
 
-// Slot scoring rules (locked spec)
+// ROUND FLOOR RULE: no player scores below 0 in any round, on any basis.
+// Negatives (CS, batting K, ER) only ever reduce positive scoring.
+export function battingPoints(s: StatLine, v: PointValues): number {
+  return Math.max(battingRaw(s, v), 0)
+}
+
+export function pitchingPoints(s: StatLine, v: PointValues): number {
+  return Math.max(pitchingRaw(s, v), 0)
+}
+
+// Slot scoring rules (locked spec + round floor)
+// Note: P slot combines the RAW subtotals then floors once — so a strong pitching
+// day still absorbs a bad batting day before the floor applies.
 export function slotPoints(slot: string, s: StatLine, v: PointValues): number {
-  const bat = battingPoints(s, v)
-  const pit = pitchingPoints(s, v)
   switch (slot) {
-    case 'P': return bat + pit          // 2WP A slot: both sides
-    case 'PB': return pit               // pitching only
-    case 'DP': return bat               // offence only
-    case 'C': return bat                // hitting only
-    case 'DR': {                        // SB/CS only
-      return (Number(s.sb) || 0) * (v['sb'] ?? 0) + (Number(s.cs) || 0) * (v['cs'] ?? 0)
+    case 'P': return Math.max(battingRaw(s, v) + pitchingRaw(s, v), 0)  // 2WP A: both sides, floored once
+    case 'PB': return pitchingPoints(s, v)          // pitching only
+    case 'DP': return battingPoints(s, v)           // offence only
+    case 'C': return battingPoints(s, v)            // hitting only
+    case 'DR': {                                    // SB/CS only, floored
+      const raw = (Number(s.sb) || 0) * (v['sb'] ?? 0) + (Number(s.cs) || 0) * (v['cs'] ?? 0)
+      return Math.max(raw, 0)
     }
-    default: return bat                 // all field positions: batting
+    default: return battingPoints(s, v)             // all field positions: batting
   }
 }
 
@@ -53,8 +66,9 @@ export function applyBench(points: number, slot: string, v: PointValues, promote
 }
 
 // Display floor ladder: 0 / 5 / 10 / 15 / 20, ratchet stops at 20
+// (Round floor means roundPoints is never negative now; negative-guard retained
+// for safety against direct calls with raw values.)
 export function updateSeasonTotals(prevTrue: number, prevFloor: number, roundPoints: number) {
-  // At 0 with negatives: negatives discard (only positive rounds accrue)
   const effectiveRound = prevTrue <= 0 && roundPoints < 0 ? 0 : roundPoints
   const newTrue = prevTrue + effectiveRound
   let floor = prevFloor
