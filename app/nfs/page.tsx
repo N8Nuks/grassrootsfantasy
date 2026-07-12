@@ -13,7 +13,7 @@ export default function NFS() {
       <Nav />
 
       {/* Hero */}
-      <section className="relative px-6 sm:px-12 overflow-hidden" style={{ paddingTop: "140px", paddingBottom: "80px" }}>
+      <section className="relative px-6 sm:px-12 overflow-hidden" style={{ paddingTop: "90px", paddingBottom: "80px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 75% 55% at 50% 0%, #10214D 0%, #0D0D0F 70%)' }} />
         <div className="relative z-10 text-center" style={{ maxWidth: "760px", marginLeft: "auto", marginRight: "auto" }}>
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-6" style={{ color: GOLD }}>League One · Now Live</p>

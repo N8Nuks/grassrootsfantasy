@@ -146,7 +146,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
   return (
     <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
       <Nav />
-      <section className="flex-1 px-6" style={{ paddingTop: '130px', paddingBottom: '100px' }}>
+      <section className="flex-1 px-6" style={{ paddingTop: '80px', paddingBottom: '100px' }}>
         <div style={{ maxWidth: '980px', marginLeft: 'auto', marginRight: 'auto' }}>
           <div className="text-center" style={{ marginBottom: '40px' }}>
             <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: T.accent }}>

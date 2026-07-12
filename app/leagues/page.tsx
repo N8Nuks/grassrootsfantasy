@@ -6,7 +6,7 @@ export default function Leagues() {
     <main className="min-h-screen w-full flex flex-col" style={{ background: '#141210' }}>
       <Nav />
 
-      <section className="relative px-6 overflow-hidden" style={{ paddingTop: "140px", paddingBottom: "80px" }}>
+      <section className="relative px-6 overflow-hidden" style={{ paddingTop: "80px", paddingBottom: "80px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
 
         {/* Scoresheet / tactics board motif */}

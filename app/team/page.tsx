@@ -59,7 +59,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
   return (
     <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
       <Nav />
-      <section className="flex-1 px-4 sm:px-6" style={{ paddingTop: "120px", paddingBottom: "100px" }}>
+      <section className="flex-1 px-4 sm:px-6" style={{ paddingTop: "70px", paddingBottom: "100px" }}>
         <TeamClient
           teamName={profile?.team_name ?? 'Your team'}
           clubName={(profile as unknown as { clubs: { name: string } | null })?.clubs?.name ?? ''}

@@ -51,7 +51,7 @@ export default function Scoring() {
       <Nav />
 
       {/* Hero */}
-      <section className="relative px-6 sm:px-12 overflow-hidden" style={{ paddingTop: "140px", paddingBottom: "70px" }}>
+      <section className="relative px-6 sm:px-12 overflow-hidden" style={{ paddingTop: "70px", paddingBottom: "70px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 75% 55% at 50% 0%, #10214D 0%, #0D0D0F 70%)' }} />
         <div className="relative z-10 text-center" style={{ maxWidth: "760px", marginLeft: "auto", marginRight: "auto" }}>
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>NFS Premier Softball League</p>
@@ -66,7 +66,7 @@ export default function Scoring() {
       </section>
 
       {/* Point tables */}
-      <section className="px-6 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "80px", paddingBottom: "80px" }}>
+      <section className="px-6 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "22px", paddingBottom: "22px" }}>
         <div className="grid gap-8 sm:grid-cols-2" style={{ maxWidth: "820px", marginLeft: "auto", marginRight: "auto" }}>
           {[{ title: 'Batting', rows: batting }, { title: 'Pitching', rows: pitching }].map(table => (
             <div key={table.title} className="rounded-2xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${COBALT}30` }}>
@@ -91,7 +91,7 @@ export default function Scoring() {
       </section>
 
       {/* Slot rules */}
-      <section className="px-6 sm:px-12" style={{ background: '#101013', borderTop: '1px solid #ffffff0a', paddingTop: "80px", paddingBottom: "80px" }}>
+      <section className="px-6 sm:px-12" style={{ background: '#101013', borderTop: '1px solid #ffffff0a', paddingTop: "22px", paddingBottom: "22px" }}>
         <div style={{ maxWidth: "720px", marginLeft: "auto", marginRight: "auto" }}>
           <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "48px" }}>How your card scores.</h2>
           <div className="flex flex-col gap-3">
@@ -106,7 +106,7 @@ export default function Scoring() {
       </section>
 
       {/* Leaderboards */}
-      <section className="px-6 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "80px", paddingBottom: "80px" }}>
+      <section className="px-6 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "22px", paddingBottom: "22px" }}>
         <div style={{ maxWidth: "720px", marginLeft: "auto", marginRight: "auto" }}>
           <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "48px" }}>Five ways to win.</h2>
           <div className="flex flex-col gap-3">
@@ -121,7 +121,7 @@ export default function Scoring() {
       </section>
 
       {/* Integrity note */}
-      <section className="px-6 sm:px-12" style={{ background: '#101013', borderTop: `1px solid ${COBALT}40`, paddingTop: "56px", paddingBottom: "64px" }}>
+      <section className="px-6 sm:px-12" style={{ background: '#101013', borderTop: `1px solid ${COBALT}40`, paddingTop: "40px", paddingBottom: "40px" }}>
         <div className="text-center" style={{ maxWidth: "640px", marginLeft: "auto", marginRight: "auto" }}>
           <p className="text-xs leading-relaxed" style={{ color: SILVER, opacity: 0.6 }}>
             Fantasy scoring reflects what happens on the field — it must never influence it. Players play for their teams and their coaches make the calls. Grassroots Fantasy just keeps score. All points come from official game records; never fan voting, never popularity.

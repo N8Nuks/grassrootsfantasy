@@ -6,7 +6,7 @@ export default function Join() {
     <main className="min-h-screen flex flex-col" style={{ background: '#141210' }}>
       <Nav />
 
-      <section className="relative px-6 sm:px-12 overflow-hidden grain" style={{ paddingTop: "140px", paddingBottom: "90px" }}>
+      <section className="relative px-6 sm:px-12 overflow-hidden grain" style={{ paddingTop: "80px", paddingBottom: "90px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
 
         {/* Sport shapes motif */}
