@@ -75,11 +75,17 @@ function TeamCard({ title, slots, T, winner, pointsByPlayer }: {
 export default async function Matchups({ searchParams }: { searchParams: Promise<{ grade?: string }> }) {
   const params = await searchParams
   const grade: Grade = params.grade === 'womens' ? 'womens' : 'mens'
-  const T = theme(grade)
   const isW = grade === 'womens'
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+
+  let siteTheme = 'grade'
+  if (user) {
+    const { data: prof } = await supabase.from('profiles').select('site_theme').eq('id', user.id).single()
+    siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
+  }
+  const T = theme(grade, siteTheme)
 
   const { data: round } = await supabase
     .from('rounds').select('id, round_number, lock_at')
@@ -147,14 +153,15 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
       <section className="flex-1 px-6" style={{ paddingTop: '80px', paddingBottom: '90px' }}>
         <div style={{ maxWidth: '980px', marginLeft: 'auto', marginRight: 'auto' }}>
           <div className="text-center" style={{ marginBottom: '40px' }}>
-            <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: T.accent }}>
+            <p className={"text-xs font-black uppercase tracking-[0.3em] mb-3" + (T.shimmer ? ' gf-shimmer-text' : '')}
+              style={T.shimmer ? undefined : { color: T.accent }}>
               {round ? `Round ${round.round_number} Matchups` : 'Matchups'}
             </p>
             <h1 className="text-3xl sm:text-4xl font-black mb-4" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
               {grade === 'mens' ? "Men's" : "Women's"} Head to Head
             </h1>
             <div className="flex justify-center">
-              <GradeSwitch grade={grade} mensHref="/matchups?grade=mens" womensHref="/matchups?grade=womens" />
+              <GradeSwitch grade={grade} mensHref="/matchups?grade=mens" womensHref="/matchups?grade=womens" palette={siteTheme !== 'grade' ? T : undefined} />
             </div>
           </div>
 
@@ -173,8 +180,8 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
                     {aWins && <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-1" style={{ color: '#3FBF63' }}>Winner</p>}
                   </div>
                   <div className="text-center">
-                    <p className={`text-3xl sm:text-5xl font-black whitespace-nowrap ${isW && scored ? 'electric' : ''}`}
-                      style={{ color: T.accent, textShadow: isW ? undefined : T.glow }}>
+                    <p className={`text-3xl sm:text-5xl font-black whitespace-nowrap ${isW && scored && siteTheme === 'grade' ? 'electric' : ''}${T.shimmer ? ' gf-shimmer-text' : ''}`}
+                      style={T.shimmer ? undefined : { color: T.accent, textShadow: isW && siteTheme === 'grade' ? undefined : T.glow }}>
                       {scored ? `${myMatchup.score_a} – ${myMatchup.score_b}` : 'VS'}
                     </p>
                     {!scored && <p className="text-[10px] uppercase tracking-[0.3em] mt-1" style={{ color: T.textDim }}>locks in — good luck</p>}
