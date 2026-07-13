@@ -14,10 +14,20 @@ export default function Register() {
   const [clubCode, setClubCode] = useState('')
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
-  const [grades, setGrades] = useState<('mens'|'womens')[]>(['mens'])
+  const [grades, setGrades] = useState<('mens'|'womens')[]>(['mens', 'womens'])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [packQueue, setPackQueue] = useState<PackQueueItem[]>([])
+
+  function toggleGrade(g: 'mens' | 'womens') {
+    setGrades(prev => {
+      if (prev.includes(g)) {
+        if (prev.length === 1) return prev // always at least one grade selected
+        return prev.filter(x => x !== g)
+      }
+      return [...prev, g]
+    })
+  }
 
   async function handleRegister() {
     setError('')
@@ -94,8 +104,9 @@ export default function Register() {
     })
   }
 
-  const field = "w-full rounded-lg px-4 py-3.5 text-sm text-[#F5F1E8] outline-none focus:border-[#3FBF63]"
+  const field = "w-full rounded-lg px-4 py-3.5 text-sm text-[#F5F1E8] outline-none transition-shadow focus:border-[#3FBF63] focus:shadow-[0_0_14px_#3FBF6340]"
   const fieldStyle = { background: '#181510', border: '1px solid #ffffff15' }
+  const label = "block text-xs font-bold uppercase tracking-wider text-[#F5F1E8]/50 mb-1.5"
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#141210' }}>
@@ -111,26 +122,48 @@ export default function Register() {
           </div>
 
           <div className="flex flex-col gap-4">
-            <input className={field} style={fieldStyle} type="email" placeholder="Email *" value={email} onChange={e => setEmail(e.target.value)} />
-            <input className={field} style={fieldStyle} type="password" placeholder="Password *" value={password} onChange={e => setPassword(e.target.value)} />
-            <input className={field} style={fieldStyle} type="text" placeholder="Team name *" value={teamName} onChange={e => setTeamName(e.target.value)} />
-            <input className={field} style={fieldStyle} type="text" placeholder="Club code *" value={clubCode} onChange={e => setClubCode(e.target.value)} />
-            <p className="text-[11px] text-[#F5F1E8]/35" style={{ marginTop: "-8px" }}>
-              No club code? Use <b style={{ color: '#E8C15A' }}>GFNFS26</b> to join as a general supporter.
-            </p>
-            <input className={field} style={fieldStyle} type="text" placeholder="Your name (optional)" value={fullName} onChange={e => setFullName(e.target.value)} />
-            <input className={field} style={fieldStyle} type="tel" placeholder="Phone (optional)" value={phone} onChange={e => setPhone(e.target.value)} />
-            <div className="flex gap-3">
-              {(['mens','womens'] as const).map(g => (
-                <button key={g} type="button"
-                  onClick={() => setGrades(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])}
-                  className="flex-1 rounded-lg px-4 py-3.5 text-sm font-bold transition-all"
-                  style={grades.includes(g)
-                    ? { color: '#141210', background: g === 'mens' ? '#3FBF63' : '#4D7FFF' }
-                    : { color: '#F5F1E860', background: '#181510', border: '1px solid #ffffff15' }}>
-                  {g === 'mens' ? "Men's League" : "Women's League"}
-                </button>
-              ))}
+            <div>
+              <label className={label}>Email *</label>
+              <input className={field} style={fieldStyle} type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+            </div>
+            <div>
+              <label className={label}>Password *</label>
+              <input className={field} style={fieldStyle} type="password" autoComplete="new-password" placeholder="At least 8 characters" value={password} onChange={e => setPassword(e.target.value)} />
+            </div>
+            <div>
+              <label className={label}>Team name *</label>
+              <input className={field} style={fieldStyle} type="text" autoComplete="off" placeholder="The name on the ladder" value={teamName} onChange={e => setTeamName(e.target.value)} />
+            </div>
+            <div>
+              <label className={label}>Club code *</label>
+              <input className={field} style={fieldStyle} type="text" autoComplete="off" placeholder="From your Team Manager or Club" value={clubCode} onChange={e => setClubCode(e.target.value)} />
+              <p className="text-[11px] text-[#F5F1E8]/35 mt-1.5">
+                No club code? Use <b style={{ color: '#E8C15A' }}>GFNFS26</b> to join as a general supporter.
+              </p>
+            </div>
+            <div>
+              <label className={label}>Your name (optional)</label>
+              <input className={field} style={fieldStyle} type="text" autoComplete="name" placeholder="First and last" value={fullName} onChange={e => setFullName(e.target.value)} />
+            </div>
+            <div>
+              <label className={label}>Phone (optional)</label>
+              <input className={field} style={fieldStyle} type="tel" autoComplete="tel" inputMode="tel" placeholder="For prize contact only" value={phone} onChange={e => setPhone(e.target.value)} />
+            </div>
+
+            <div>
+              <label className={label}>Leagues — you&apos;re in both unless you opt out</label>
+              <div className="flex gap-3">
+                {(['mens','womens'] as const).map(g => (
+                  <button key={g} type="button"
+                    onClick={() => toggleGrade(g)}
+                    className="flex-1 rounded-xl px-4 py-5 text-base font-black transition-all"
+                    style={grades.includes(g)
+                      ? { color: '#141210', background: g === 'mens' ? '#3FBF63' : '#4D7FFF', boxShadow: g === 'mens' ? '0 0 16px #3FBF6350' : '0 0 16px #4D7FFF50' }
+                      : { color: '#F5F1E860', background: '#181510', border: '1px solid #ffffff15' }}>
+                    {g === 'mens' ? "Men's League" : "Women's League"}
+                  </button>
+                ))}
+              </div>
             </div>
             {error && <p className="text-sm" style={{ color: '#FF6B6B' }}>{error}</p>}
 
