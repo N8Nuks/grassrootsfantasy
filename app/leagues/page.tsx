@@ -6,7 +6,7 @@ export default function Leagues() {
     <main className="min-h-screen w-full flex flex-col" style={{ background: '#141210' }}>
       <Nav />
 
-      <section className="relative px-6 overflow-hidden" style={{ paddingTop: "80px", paddingBottom: "80px" }}>
+      <section className="relative px-6 overflow-hidden" style={{ paddingTop: "80px", paddingBottom: "180px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
 
         {/* Scoresheet / tactics board motif */}
@@ -67,7 +67,7 @@ export default function Leagues() {
               NFS Premier<br/>Softball League
             </h2>
             <p className="text-sm text-[#F5F1E8]/45 leading-relaxed">
-              The Northern Fastpitch Series — Auckland premier softball, endorsed by the Auckland Softball Association. Men&apos;s launching this season.
+              The Northern Fastpitch Series — Premier Softball League, endorsed by the Auckland Softball Association. Men&apos;s launching this season.
             </p>
             <a href="/nfs" className="mt-auto text-center text-base font-bold tracking-wide transition-all hover:scale-[1.02]" style={{ color: '#4D7FFF', border: '1px solid #4D7FFF', background: 'transparent', padding: "22px 24px" }}>
               Enter NFS Premier Softball League
