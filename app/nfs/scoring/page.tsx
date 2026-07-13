@@ -79,8 +79,11 @@ export default function Scoring() {
                   <span className="text-sm font-black" style={{ color: r.pts.startsWith('-') ? RED : GREEN }}>{r.pts}</span>
                 </div>
               ))}
+              {table.title === 'Batting' && (
+                <p className="px-6 pt-3 pb-5 text-[11px] leading-relaxed text-white/35">A batting week never scores below zero — strikeouts and caught stealing can cost points, not bury you.</p>
+              )}
               {table.title === 'Pitching' && (
-                <p className="px-6 py-3 text-[11px] text-white/35">A pitching week never scores below zero — earned runs can cost points, not bury you.</p>
+                <p className="px-6 pt-3 pb-5 text-[11px] leading-relaxed text-white/35">A pitching week never scores below zero — earned runs can cost points, not bury you.</p>
               )}
             </div>
           ))}
