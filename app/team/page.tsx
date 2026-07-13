@@ -7,13 +7,15 @@ import TeamClient, { TeamCard } from './TeamClient'
 export default async function Team({ searchParams }: { searchParams: Promise<{ grade?: string }> }) {
   const params = await searchParams
   const grade: Grade = params.grade === 'womens' ? 'womens' : 'mens'
-  const T = theme(grade)
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const { data: profile } = await supabase
-    .from('profiles').select('team_name, clubs(name)').eq('id', user!.id).single()
+    .from('profiles').select('team_name, site_theme, clubs(name)').eq('id', user!.id).single()
+
+  const siteTheme = (profile as unknown as { site_theme?: string })?.site_theme ?? 'grade'
+  const T = theme(grade, siteTheme)
 
   const { data: cards } = await supabase
     .from('cards')
@@ -77,6 +79,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
           cards={teamCards}
           initialSlots={slots}
           grade={grade}
+          siteTheme={siteTheme}
           unavailableIds={unavailableIds}
           t3Claimed={t3Claimed}
           t2Available={t2Available}

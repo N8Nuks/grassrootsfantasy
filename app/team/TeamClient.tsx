@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { theme, type Grade } from '@/lib/clubhouse'
+import { theme, THEMES, THEME_ORDER, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
 import PlayerCard from '@/components/PlayerCard'
 import PlayerCardFull from '@/components/PlayerCardFull'
@@ -51,20 +51,20 @@ function isEligible(card: TeamCard, slot: string): boolean {
   return card.positions.includes(slot)
 }
 
-export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, unavailableIds, roundNumber, t3Claimed, t2Available }: {
+export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available }: {
   teamName: string
   clubName: string
   cards: TeamCard[]
   initialSlots: SlotState[]
   grade: Grade
+  siteTheme: string
   unavailableIds: string[]
   roundNumber: number | null
   t3Claimed: boolean
   t2Available: boolean
 }) {
-  const T = theme(grade)
-  const isW = grade === 'womens'
-  const accentBright = isW ? '#9DBBFF' : '#FFC425'
+  const T = theme(grade, siteTheme)
+  const accentBright = T.electric ?? T.accent
   const unavailable = new Set(unavailableIds)
   const [view, setView] = useState<'lineup' | 'collection'>('lineup')
   const [slots, setSlots] = useState<SlotState[]>(() => {
@@ -87,6 +87,16 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   const [sortBy, setSortBy] = useState<'tier' | 'ba' | 'points'>('tier')
   const [t4Code, setT4Code] = useState('')
   const [reveal, setReveal] = useState<{ packName: string; cards: RevealCard[] } | null>(null)
+  const [themeSaving, setThemeSaving] = useState(false)
+
+  async function setSiteTheme(next: string) {
+    if (themeSaving || next === siteTheme) return
+    setThemeSaving(true)
+    const r = await fetch('/api/set-theme', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ siteTheme: next }) })
+    if (r.ok) { window.location.reload(); return }
+    setThemeSaving(false)
+    alert('Could not save theme')
+  }
 
   const cardById = new Map(cards.map(c => [c.id, c]))
   const assignedIds = new Set(slots.map(s => s.card_id))
@@ -296,6 +306,31 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           <h1 className="text-4xl sm:text-5xl font-black mb-2" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{teamName}</h1>
           <p className="text-sm mb-5" style={{ color: T.textDim }}>{clubName} · {cards.length} cards{roundNumber != null ? ` · Round ${roundNumber}` : ''}</p>
           <GradeSwitch grade={grade} mensHref="/team?grade=mens" womensHref="/team?grade=womens" />
+
+          {/* Site theme switcher */}
+          <div className="flex items-center justify-center gap-2.5 flex-wrap" style={{ marginTop: '18px', opacity: themeSaving ? 0.5 : 1 }}>
+            <button onClick={() => setSiteTheme('grade')} title="Classic — colours follow the grade"
+              className="text-[9px] font-black uppercase tracking-widest px-3 rounded-full transition-all hover:scale-105"
+              style={{
+                height: '22px',
+                color: siteTheme === 'grade' ? '#141210' : T.textDim,
+                background: siteTheme === 'grade' ? T.accent : 'transparent',
+                border: `1px solid ${siteTheme === 'grade' ? T.accent : '#ffffff30'}`,
+              }}>
+              Classic
+            </button>
+            {THEME_ORDER.map(k => (
+              <button key={k} onClick={() => setSiteTheme(k)} title={THEMES[k].label}
+                className="rounded-full transition-all hover:scale-110"
+                style={{
+                  width: '22px',
+                  height: '22px',
+                  background: THEMES[k].accent,
+                  border: siteTheme === k ? `2px solid ${T.text}` : '2px solid transparent',
+                  boxShadow: siteTheme === k ? `0 0 10px ${THEMES[k].accent}` : 'none',
+                }} />
+            ))}
+          </div>
         </div>
       </div>
 
