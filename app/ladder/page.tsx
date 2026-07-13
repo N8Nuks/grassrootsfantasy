@@ -184,7 +184,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
           {/* Weekly champion honour board */}
           {champion && (
             <div className="relative rounded-2xl overflow-hidden text-center mb-8 pinstripe-fine"
-              style={{ background: `linear-gradient(180deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`, border: `1px solid ${T.accent}45` }}>
+              style={{ background: `linear-gradient(180deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`, border: `3px solid ${T.button}` }}>
               <div className="relative z-10" style={{ padding: '48px 32px 40px' }}>
                 <p className="text-[10px] font-black uppercase tracking-[0.4em] mb-4" style={{ color: T.accent }}>
                   Round {weeklyRoundNumber} · High Score

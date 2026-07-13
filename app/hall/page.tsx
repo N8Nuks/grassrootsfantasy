@@ -66,7 +66,7 @@ export default async function Hall() {
                     <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center mb-4"
                       style={{ background: '#0D0B08', border: `1.5px solid ${tint(club)}60` }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`/clubs/${slug(club)}.jpg`} alt={club} className="w-full h-full object-contain" style={{ padding: '3px' }} />
+                      <img src={`/clubs/${slug(club)}.jpg`} alt={club} className="w-full h-full object-cover" />
                     </div>
                     <h2 className="text-xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>{club}</h2>
                   </div>

@@ -74,8 +74,7 @@ export default function PlayerCardFull({ player, grade, owned }: {
             style={{ width: '44px', height: '44px', background: '#141210', border: `1.5px solid ${tint}70` }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`/clubs/${clubSlug(player.club)}.jpg`} alt={player.club}
-              className="w-full h-full object-contain"
-              style={{ padding: '2px' }}
+              className="w-full h-full object-cover"
               onError={(e) => {
                 const el = e.currentTarget
                 el.style.display = 'none'
