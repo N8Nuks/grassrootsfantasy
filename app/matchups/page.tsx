@@ -171,7 +171,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
               {/* Scoreboard banner */}
               <div className="relative rounded-2xl overflow-hidden pinstripe-fine mb-8"
                 style={{ background: `linear-gradient(180deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`, border: `3px solid ${T.button}` }}>
-                <div className="relative z-10 grid grid-cols-3 items-center" style={{ padding: '32px 24px' }}>
+                <div className="relative z-10 flex flex-col gap-3 sm:grid sm:grid-cols-3 items-center" style={{ padding: '32px 24px' }}>
                   <div className="text-center" style={{ opacity: scored && !aWins ? 0.55 : 1 }}>
                     <p className="text-lg sm:text-2xl font-black truncate px-2" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{nameOf(myMatchup.user_a)}</p>
                     {aWins && <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-1" style={{ color: '#3FBF63' }}>Winner</p>}
