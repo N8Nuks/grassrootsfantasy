@@ -195,8 +195,8 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
                 {champion.club && (
                   <p className="text-xs uppercase tracking-widest mb-5" style={{ color: T.textDim }}>{champion.club}</p>
                 )}
-                <p className={`text-5xl sm:text-6xl font-black ${isW && siteTheme === 'grade' ? 'electric' : ''}`}
-                  style={{ color: T.accent, textShadow: isW && siteTheme === 'grade' ? undefined : T.glow }}>
+                <p className={`text-5xl sm:text-6xl font-black ${isW && siteTheme === 'grade' ? 'electric' : ''}${T.shimmer ? ' gf-shimmer-text' : ''}`}
+                  style={T.shimmer ? undefined : { color: T.accent, textShadow: isW && siteTheme === 'grade' ? undefined : T.glow }}>
                   {champion.main}
                 </p>
                 <p className="text-[10px] uppercase tracking-[0.3em] mt-2" style={{ color: T.textDim }}>points</p>
@@ -234,7 +234,8 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
                       background: isMe ? T.accentSoft : 'transparent',
                       padding: '16px 28px',
                     }}>
-                    <span className="w-9 text-sm font-black shrink-0" style={{ color: !row.unranked && rankNum <= 3 ? T.accent : T.textDim }}>{rankLabel}</span>
+                    <span className={"w-9 text-sm font-black shrink-0" + (T.shimmer && !row.unranked && rankNum <= 3 ? ' gf-shimmer-text' : '')}
+                      style={T.shimmer && !row.unranked && rankNum <= 3 ? undefined : { color: !row.unranked && rankNum <= 3 ? T.accent : T.textDim }}>{rankLabel}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-black truncate" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{row.team}</p>
                       <p className="text-[10px]" style={{ color: T.textDim }}>{row.club}{row.unranked ? ' · needs 5 to rank' : ''}</p>
