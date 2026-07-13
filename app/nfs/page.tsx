@@ -4,7 +4,7 @@ import FactsTicker from '@/components/FactsTicker'
 
 const COBALT = '#2456E6'
 const GOLD = '#E8C15A'
-const SILVER = '#C0C0C0'
+const SILVER = '#4DA6FF'
 const GREEN = '#2D9E4E'
 
 export default function NFS() {
