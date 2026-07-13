@@ -9,11 +9,18 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
   const grade: Grade = params.grade === 'womens' ? 'womens' : 'mens'
   const validViews = ['points', 'h2h', 'weekly', 'clubs']
   const view = validViews.includes(params.view ?? '') ? (params.view as string) : 'points'
-  const T = theme(grade)
-  const isW = grade === 'womens'
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+
+  let siteTheme = 'grade'
+  if (user) {
+    const { data: prof } = await supabase.from('profiles').select('site_theme').eq('id', user.id).single()
+    siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
+  }
+  const T = theme(grade, siteTheme)
+  const isW = grade === 'womens'
+  const shimmer = T.shimmer ? ' gf-shimmer' : ''
 
   const { data: teams } = await supabase
     .from('public_teams').select('id, team_name, clubs(name)')
@@ -147,21 +154,22 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
       <section className="flex-1 px-6" style={{ paddingTop: '80px', paddingBottom: '100px' }}>
         <div style={{ maxWidth: '680px', marginLeft: 'auto', marginRight: 'auto' }}>
           <div className="text-center" style={{ marginBottom: '40px' }}>
-            <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: T.accent }}>{titles[view]}</p>
+            <p className={"text-xs font-black uppercase tracking-[0.3em] mb-3" + (T.shimmer ? ' gf-shimmer-text' : '')}
+              style={T.shimmer ? undefined : { color: T.accent }}>{titles[view]}</p>
             <h1 className="text-3xl sm:text-4xl font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text, marginBottom: '28px' }}>
               {grade === 'mens' ? "Men's" : "Women's"} Standings
             </h1>
             <div className="flex justify-center" style={{ marginBottom: '20px' }}>
-              <GradeSwitch grade={grade} mensHref={`/ladder?grade=mens&view=${view}`} womensHref={`/ladder?grade=womens&view=${view}`} />
+              <GradeSwitch grade={grade} mensHref={`/ladder?grade=mens&view=${view}`} womensHref={`/ladder?grade=womens&view=${view}`} palette={siteTheme !== 'grade' ? T : undefined} />
             </div>
             <div className="flex justify-center">
               <div className="inline-flex rounded-full overflow-hidden flex-wrap justify-center" style={{ border: '1px solid #ffffff25' }}>
                 {([['points','Ladder'],['h2h','H2H'],['weekly','Weekly'],['clubs','Clubs']] as const).map(([v, label], i) => (
                   <a key={v} href={`/ladder?grade=${grade}&view=${v}`}
-                    className="text-xs font-black uppercase tracking-widest transition-all flex items-center"
+                    className={"text-xs font-black uppercase tracking-widest transition-all flex items-center" + (view === v ? shimmer : '')}
                     style={{
-                      color: view === v ? '#141210' : T.textDim,
-                      background: view === v ? T.accent : 'transparent',
+                      color: view === v ? T.buttonText : T.textDim,
+                      background: view === v ? T.button : 'transparent',
                       padding: '12px 24px',
                       minHeight: '44px',
                       ...(i > 0 ? { borderLeft: '1px solid #ffffff15' } : {}),
@@ -187,8 +195,8 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
                 {champion.club && (
                   <p className="text-xs uppercase tracking-widest mb-5" style={{ color: T.textDim }}>{champion.club}</p>
                 )}
-                <p className={`text-5xl sm:text-6xl font-black ${isW ? 'electric' : ''}`}
-                  style={{ color: T.accent, textShadow: isW ? undefined : T.glow }}>
+                <p className={`text-5xl sm:text-6xl font-black ${isW && siteTheme === 'grade' ? 'electric' : ''}`}
+                  style={{ color: T.accent, textShadow: isW && siteTheme === 'grade' ? undefined : T.glow }}>
                   {champion.main}
                 </p>
                 <p className="text-[10px] uppercase tracking-[0.3em] mt-2" style={{ color: T.textDim }}>points</p>
