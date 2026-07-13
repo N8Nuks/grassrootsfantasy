@@ -24,7 +24,7 @@ const pitching = [
   { event: 'Inning Pitched', pts: '+3' },
   { event: 'Strikeout (pitching)', pts: '+2' },
   { event: 'Win', pts: '+10' },
-  { event: 'Earned Run', pts: '-2' },
+  { event: 'Earned Run', pts: '-1' },
 ]
 
 const slots = [
@@ -80,10 +80,10 @@ export default function Scoring() {
                 </div>
               ))}
               {table.title === 'Batting' && (
-                <p className="px-6 pt-3 pb-5 text-[11px] leading-relaxed text-white/35">A batting week never scores below zero — strikeouts and caught stealing can cost points, not bury you.</p>
+                <p className="px-8 pt-3 pb-5 text-[11px] leading-relaxed text-white/35">A batting week never scores below zero — strikeouts and caught stealing can cost points, not bury you.</p>
               )}
               {table.title === 'Pitching' && (
-                <p className="px-6 pt-3 pb-5 text-[11px] leading-relaxed text-white/35">A pitching week never scores below zero — earned runs can cost points, not bury you.</p>
+                <p className="px-8 pt-3 pb-5 text-[11px] leading-relaxed text-white/35">A pitching week never scores below zero — earned runs can cost points, not bury you.</p>
               )}
             </div>
           ))}
