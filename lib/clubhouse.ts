@@ -10,6 +10,9 @@ export type Palette = {
   button: string             // buttons, chips, toggles, pills
   buttonText: string
   shimmer?: boolean          // gold shimmer treatment on buttons + My Team label
+  chipNonBatting?: string    // P(B)/DR chips (defaults to shared gold)
+  chipBench?: string         // bench chips (defaults to shared light gold)
+  chipReserve?: string       // reserve chips (defaults to shared muted gold)
   field: string
   surface: string
   surfaceRaised: string
@@ -45,6 +48,9 @@ export const THEMES: Record<string, Palette> = {
     accentSoft: '#4D7FFF20',
     button: '#4D7FFF',
     buttonText: '#0C1428',
+    chipNonBatting: '#4D7FFF',
+    chipBench: '#82A5FF',
+    chipReserve: '#B3C8FF',
     field: '#0C1428',
     surface: '#101E3E',
     surfaceRaised: '#16295A',
@@ -62,6 +68,9 @@ export const THEMES: Record<string, Palette> = {
     accentSoft: '#E03A3E20',
     button: '#E03A3E',
     buttonText: '#F5F1E8',
+    chipNonBatting: '#E03A3E',
+    chipBench: '#EC7A7D',
+    chipReserve: '#F4AEB0',
     field: '#10141F',
     surface: '#161C2C',
     surfaceRaised: '#1E2740',
@@ -90,9 +99,9 @@ export const THEMES: Record<string, Palette> = {
     seam: '#FFB81C',                  // yellow stitching
   },
   cardinal: {
-    label: 'Cardinal & Gold',
-    accent: '#C41E3A',
-    accentSoft: '#C41E3A20',
+    label: 'Respect',
+    accent: '#69233C',
+    accentSoft: '#69233C28',
     button: '#E8C15A',                // gold buttons + chips
     buttonText: '#241318',
     shimmer: true,                    // gold shimmer treatment
@@ -104,7 +113,7 @@ export const THEMES: Record<string, Palette> = {
     textDim: '#F5F1E870',
     electric: '#E8C15A',
     glow: '0 0 16px #E8C15A50',
-    swatch: ['#C41E3A', '#E8C15A'],
+    swatch: ['#69233C', '#E8C15A'],
     seam: '#F5F1E8',
   },
   purple: {
@@ -113,6 +122,9 @@ export const THEMES: Record<string, Palette> = {
     accentSoft: '#8E5BD820',
     button: '#8E5BD8',
     buttonText: '#F3EFFA',
+    chipNonBatting: '#8E5BD8',
+    chipBench: '#B08BE5',
+    chipReserve: '#CDB6F0',
     field: '#130F1C',
     surface: '#1B1527',
     surfaceRaised: '#261D38',

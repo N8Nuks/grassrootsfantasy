@@ -238,11 +238,11 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   })
 
   const pickerCandidates = pickerSlot ? cards.filter(c => isEligible(c, pickerSlot)) : []
-
-  function chipTone(slot: string) {
-    if (slot.startsWith('RES')) return CHIP_TONES.reserve
-    if (slot.startsWith('BENCH')) return CHIP_TONES.bench
-    if (NON_BATTING.includes(slot)) return CHIP_TONES.nonBatting
+ 
+    function chipTone(slot: string) {
+    if (slot.startsWith('RES')) return T.chipReserve ?? CHIP_TONES.reserve
+    if (slot.startsWith('BENCH')) return T.chipBench ?? CHIP_TONES.bench
+    if (NON_BATTING.includes(slot)) return T.chipNonBatting ?? CHIP_TONES.nonBatting
     return T.button
   }
   function chipShimmer(slot: string) {
