@@ -146,3 +146,39 @@ a { color: inherit; text-decoration: none; }
   97% { text-shadow: 0 0 8px #4DA6FF, 0 0 18px #4DA6FF90, 0 0 30px #4DA6FF50; }
 }
 .gf-lightning { animation: gf-lightning 5s ease-in-out infinite; }
+
+/* ── Gold shimmer — Cardinal & Gold theme buttons/labels ── */
+@keyframes gf-shimmer {
+  0% { background-position: -120% 0; }
+  100% { background-position: 220% 0; }
+}
+.gf-shimmer {
+  background-image: linear-gradient(
+    105deg,
+    #E8C15A 0%,
+    #E8C15A 38%,
+    #FFF3C4 48%,
+    #FFE9A0 52%,
+    #E8C15A 62%,
+    #E8C15A 100%
+  ) !important;
+  background-size: 250% 100%;
+  animation: gf-shimmer 3.2s ease-in-out infinite;
+}
+/* Text-only shimmer — My Team label */
+.gf-shimmer-text {
+  background-image: linear-gradient(
+    105deg,
+    #E8C15A 0%,
+    #E8C15A 38%,
+    #FFF7D6 48%,
+    #FFE9A0 52%,
+    #E8C15A 62%,
+    #E8C15A 100%
+  );
+  background-size: 250% 100%;
+  animation: gf-shimmer 3.2s ease-in-out infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

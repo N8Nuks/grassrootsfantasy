@@ -7,6 +7,9 @@ export type Palette = {
   label: string
   accent: string
   accentSoft: string
+  button: string             // buttons, chips, toggles, pills
+  buttonText: string
+  shimmer?: boolean          // gold shimmer treatment on buttons + My Team label
   field: string
   surface: string
   surfaceRaised: string
@@ -24,6 +27,8 @@ export const THEMES: Record<string, Palette> = {
     label: 'Brown & Gold',
     accent: '#FFC425',
     accentSoft: '#FFC42520',
+    button: '#FFC425',
+    buttonText: '#141210',
     field: '#1E1710',
     surface: '#2A211A',
     surfaceRaised: '#3A2C21',
@@ -38,6 +43,8 @@ export const THEMES: Record<string, Palette> = {
     label: 'Chevron Blue',
     accent: '#4D7FFF',
     accentSoft: '#4D7FFF20',
+    button: '#4D7FFF',
+    buttonText: '#0C1428',
     field: '#0C1428',
     surface: '#101E3E',
     surfaceRaised: '#16295A',
@@ -53,6 +60,8 @@ export const THEMES: Record<string, Palette> = {
     label: 'Red, White & Blue',
     accent: '#E03A3E',
     accentSoft: '#E03A3E20',
+    button: '#E03A3E',
+    buttonText: '#F5F1E8',
     field: '#10141F',
     surface: '#161C2C',
     surfaceRaised: '#1E2740',
@@ -68,6 +77,8 @@ export const THEMES: Record<string, Palette> = {
     label: 'Black & Yellow',
     accent: '#FFB81C',
     accentSoft: '#FFB81C20',
+    button: '#FFB81C',
+    buttonText: '#141210',
     field: '#0C0C0E',
     surface: '#141416',
     surfaceRaised: '#1D1D20',
@@ -82,6 +93,9 @@ export const THEMES: Record<string, Palette> = {
     label: 'Cardinal & Gold',
     accent: '#C41E3A',
     accentSoft: '#C41E3A20',
+    button: '#E8C15A',                // gold buttons + chips
+    buttonText: '#241318',
+    shimmer: true,                    // gold shimmer treatment
     field: '#170F11',
     surface: '#211518',
     surfaceRaised: '#2E1C20',
@@ -89,7 +103,7 @@ export const THEMES: Record<string, Palette> = {
     text: '#F5F1E8',
     textDim: '#F5F1E870',
     electric: '#E8C15A',
-    glow: '0 0 16px #C41E3A50',
+    glow: '0 0 16px #E8C15A50',
     swatch: ['#C41E3A', '#E8C15A'],
     seam: '#F5F1E8',
   },
@@ -97,6 +111,8 @@ export const THEMES: Record<string, Palette> = {
     label: 'Purple & Gold',
     accent: '#8E5BD8',
     accentSoft: '#8E5BD820',
+    button: '#8E5BD8',
+    buttonText: '#F3EFFA',
     field: '#130F1C',
     surface: '#1B1527',
     surfaceRaised: '#261D38',
@@ -112,6 +128,8 @@ export const THEMES: Record<string, Palette> = {
     label: 'Green & Yellow',
     accent: '#3FBF63',
     accentSoft: '#3FBF6320',
+    button: '#FFD84D',                // yellow buttons, not green
+    buttonText: '#141210',
     field: '#0F1710',
     surface: '#152018',
     surfaceRaised: '#1D2C21',

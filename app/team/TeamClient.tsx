@@ -85,6 +85,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
 }) {
   const T = theme(grade, siteTheme)
   const accentBright = T.electric ?? T.accent
+  const shimmer = T.shimmer ? ' gf-shimmer' : ''
   const unavailable = new Set(unavailableIds)
   const [view, setView] = useState<'lineup' | 'collection'>('lineup')
   const [slots, setSlots] = useState<SlotState[]>(() => {
@@ -242,7 +243,12 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     if (slot.startsWith('RES')) return CHIP_TONES.reserve
     if (slot.startsWith('BENCH')) return CHIP_TONES.bench
     if (NON_BATTING.includes(slot)) return CHIP_TONES.nonBatting
-    return T.accent
+    return T.button
+  }
+  function chipShimmer(slot: string) {
+    if (!T.shimmer) return ''
+    if (slot.startsWith('RES') || slot.startsWith('BENCH')) return ''
+    return ' gf-shimmer'
   }
 
   function PlayerRow({ s, showOrder }: { s: SlotState; showOrder: boolean }) {
@@ -261,16 +267,16 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         style={{ borderBottom: '1px solid #ffffff08', opacity: isOut ? 0.4 : 1, cursor: showOrder ? 'grab' : 'default', padding: '14px 28px' }}>
         {showOrder ? (
           <button onClick={() => tapOrder(s.batting_order!)}
-            className="w-9 h-9 shrink-0 rounded-full text-sm font-black flex items-center justify-center transition-all"
+            className={"w-9 h-9 shrink-0 rounded-full text-sm font-black flex items-center justify-center transition-all" + (selected ? shimmer : '')}
             style={selected
-              ? { background: accentBright, color: '#141210', boxShadow: T.glow }
+              ? { background: T.button, color: T.buttonText, boxShadow: T.glow }
               : { background: '#ffffff10', color: T.text }}>
             {s.batting_order}
           </button>
         ) : <span className="w-9 shrink-0" />}
         <button onClick={() => setPickerSlot(s.slot)}
-          className="w-11 shrink-0 text-xs font-black text-center px-2 py-1 rounded transition-all hover:scale-105"
-          style={{ color: '#141210', background: chipTone(s.slot) }}>
+          className={"w-11 shrink-0 text-xs font-black text-center px-2 py-1 rounded transition-all hover:scale-105" + chipShimmer(s.slot)}
+          style={{ color: T.buttonText, background: chipTone(s.slot) }}>
           {SLOT_LABELS[s.slot] ?? 'B'}
         </button>
         <button onClick={() => setDetailCard(c)} className="flex-1 min-w-0 text-left">
@@ -299,8 +305,8 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
       <div className="flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff08', padding: '14px 28px' }}>
         <span className="w-9 shrink-0" />
         <button onClick={() => setPickerSlot(slot)}
-          className="w-11 shrink-0 text-xs font-black text-center px-2 py-1 rounded transition-all hover:scale-105"
-          style={{ color: '#141210', background: chipTone(slot) }}>
+          className={"w-11 shrink-0 text-xs font-black text-center px-2 py-1 rounded transition-all hover:scale-105" + chipShimmer(slot)}
+          style={{ color: T.buttonText, background: chipTone(slot) }}>
           {SLOT_LABELS[slot]}
         </button>
         <button onClick={() => setPickerSlot(slot)} className="flex-1 text-left text-sm" style={{ color: T.textDim, opacity: 0.6 }}>
@@ -322,10 +328,11 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
       <div className="rounded-2xl overflow-hidden pinstripe-fine text-center mb-6"
         style={{ background: `linear-gradient(180deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`, border: `1px solid ${T.accent}35` }}>
         <div style={{ padding: '36px 28px 32px' }}>
-          <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: T.accent }}>My Team</p>
+          <p className={"text-xs font-black uppercase tracking-[0.3em] mb-3" + (T.shimmer ? ' gf-shimmer-text' : '')}
+            style={T.shimmer ? undefined : { color: T.accent }}>My Team</p>
           <h1 className="text-4xl sm:text-5xl font-black mb-2" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{teamName}</h1>
           <p className="text-sm mb-5" style={{ color: T.textDim }}>{clubName} · {cards.length} cards{roundNumber != null ? ` · Round ${roundNumber}` : ''}</p>
-          <GradeSwitch grade={grade} mensHref="/team?grade=mens" womensHref="/team?grade=womens" />
+          <GradeSwitch grade={grade} mensHref="/team?grade=mens" womensHref="/team?grade=womens" palette={siteTheme !== 'grade' ? T : undefined} />
 
           {/* Site theme switcher — softballs */}
           <div className="flex items-center justify-center gap-3 flex-wrap" style={{ marginTop: '18px', opacity: themeSaving ? 0.5 : 1 }}>
@@ -333,9 +340,9 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               className="text-[9px] font-black uppercase tracking-widest px-3 rounded-full transition-all hover:scale-105"
               style={{
                 height: '26px',
-                color: siteTheme === 'grade' ? '#141210' : T.textDim,
-                background: siteTheme === 'grade' ? T.accent : 'transparent',
-                border: `1px solid ${siteTheme === 'grade' ? T.accent : '#ffffff30'}`,
+                color: siteTheme === 'grade' ? T.buttonText : T.textDim,
+                background: siteTheme === 'grade' ? T.button : 'transparent',
+                border: `1px solid ${siteTheme === 'grade' ? T.button : '#ffffff30'}`,
               }}>
               Classic
             </button>
@@ -366,13 +373,13 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         )}
         {cards.length >= 21 && (
           <button onClick={t3Claimed ? undefined : claimT3} disabled={t3Claimed}
-            className="text-xs font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.02] disabled:hover:scale-100 flex items-center"
+            className={"text-xs font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.02] disabled:hover:scale-100 flex items-center" + (t3Claimed ? '' : shimmer)}
             style={{
               padding: '14px 32px',
               minHeight: '48px',
               ...(t3Claimed
                 ? { color: T.textDim, border: '1px solid #ffffff25', background: 'transparent' }
-                : { color: '#141210', background: T.accent, boxShadow: T.glow }),
+                : { color: T.buttonText, background: T.button, boxShadow: T.glow }),
             }}>
             {t3Claimed ? 'Weekly Pack Claimed ✓' : 'Claim Weekly Pack · 2 cards'}
           </button>
@@ -386,8 +393,8 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
             style={{ background: 'transparent', caretColor: T.text, color: T.text, padding: '14px 24px', fontFamily: 'var(--font-label)' }}
           />
           <button onClick={redeemT4} disabled={!t4Code.trim()}
-            className="text-xs font-black uppercase tracking-widest transition-all disabled:opacity-40"
-            style={{ color: '#141210', background: '#E8C15A', padding: '14px 28px', borderLeft: '1px solid #ffffff15' }}>
+            className={"text-xs font-black uppercase tracking-widest transition-all disabled:opacity-40" + shimmer}
+            style={{ color: T.buttonText, background: T.button, padding: '14px 28px', borderLeft: '1px solid #ffffff15' }}>
             Redeem
           </button>
         </div>
@@ -403,10 +410,10 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         <div className="inline-flex rounded-full overflow-hidden" style={{ border: '1px solid #ffffff25' }}>
           {(['lineup','collection'] as const).map((v, i) => (
             <button key={v} onClick={() => setView(v)}
-              className="text-xs font-black uppercase tracking-widest transition-all flex items-center"
+              className={"text-xs font-black uppercase tracking-widest transition-all flex items-center" + (view === v ? shimmer : '')}
               style={{
-                color: view === v ? '#141210' : T.textDim,
-                background: view === v ? T.accent : 'transparent',
+                color: view === v ? T.buttonText : T.textDim,
+                background: view === v ? T.button : 'transparent',
                 padding: '14px 32px',
                 minHeight: '44px',
                 ...(i > 0 ? { borderLeft: '1px solid #ffffff15' } : {}),
@@ -504,8 +511,8 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               <div className="flex items-center gap-4">
                 <span className="text-xs font-bold uppercase tracking-widest" style={{ color: T.textDim }}>Unsaved changes</span>
                 <button onClick={save} disabled={saving}
-                  className="text-sm font-black uppercase tracking-widest px-8 py-3 rounded-full transition-all hover:scale-[1.02] disabled:opacity-50"
-                  style={{ color: '#141210', background: T.accent, boxShadow: T.glow }}>
+                  className={"text-sm font-black uppercase tracking-widest px-8 py-3 rounded-full transition-all hover:scale-[1.02] disabled:opacity-50" + shimmer}
+                  style={{ color: T.buttonText, background: T.button, boxShadow: T.glow }}>
                   {saving ? 'Saving…' : 'Save Lineup Card'}
                 </button>
               </div>
@@ -520,10 +527,10 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
             <div className="inline-flex rounded-full overflow-hidden" style={{ border: '1px solid #ffffff25' }}>
               {(['tier','ba','points'] as const).map((s, i) => (
                 <button key={s} onClick={() => setSortBy(s)}
-                  className="text-xs font-black uppercase tracking-widest transition-all flex items-center"
+                  className={"text-xs font-black uppercase tracking-widest transition-all flex items-center" + (sortBy === s ? shimmer : '')}
                   style={{
-                    color: sortBy === s ? '#141210' : T.textDim,
-                    background: sortBy === s ? T.accent : 'transparent',
+                    color: sortBy === s ? T.buttonText : T.textDim,
+                    background: sortBy === s ? T.button : 'transparent',
                     padding: '12px 24px',
                     minHeight: '44px',
                     ...(i > 0 ? { borderLeft: '1px solid #ffffff15' } : {}),
