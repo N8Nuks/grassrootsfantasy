@@ -43,6 +43,10 @@ export default function Login() {
             <input className={field} style={fieldStyle} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
             <input className={field} style={fieldStyle} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
 
+            <p className="text-xs text-right -mt-1">
+              <a href="/forgot-password" className="text-[#F5F1E8]/40 hover:text-[#F5F1E8] transition-colors underline">Forgot password?</a>
+            </p>
+
             {error && <p className="text-sm" style={{ color: '#FF6B6B' }}>{error}</p>}
 
             <button onClick={handleLogin} disabled={busy}
