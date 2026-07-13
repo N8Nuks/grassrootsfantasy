@@ -46,7 +46,7 @@ function TeamCard({ title, slots, T, winner, pointsByPlayer }: {
           <p className="text-xs font-black uppercase tracking-[0.2em] truncate" style={{ color: T.accent }}>{title}</p>
         </div>
         {pointsByPlayer && (
-          <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim, paddingRight: '16px' }}>Points</span>
+          <span className="w-14 text-center text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Points</span>
         )}
       </div>
       {sorted.map((s, i) => {
@@ -56,13 +56,10 @@ function TeamCard({ title, slots, T, winner, pointsByPlayer }: {
           <div key={i} className="flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff08', padding: '10px 24px' }}>
             <span className="w-12 text-[10px] font-black uppercase shrink-0" style={{ color: T.textDim }}>{slotLabel(s.slot)}</span>
             <span className="flex-1 min-w-0 text-sm font-bold truncate" style={{ color: T.text }}>
-              {s.batting_order != null && (
-                <span className="text-[10px] font-black mr-2" style={{ color: T.textDim }}>{s.batting_order}.</span>
-              )}
               {s.cards?.players?.full_name ?? '—'}
             </span>
             {pts != null && (
-              <span className="w-14 text-right text-sm font-black shrink-0" style={{ color: T.accent, paddingRight: '16px' }}>{pts}</span>
+              <span className="w-14 text-center text-sm font-black shrink-0" style={{ color: T.accent }}>{pts}</span>
             )}
           </div>
         )
