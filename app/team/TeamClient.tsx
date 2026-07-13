@@ -51,6 +51,26 @@ function isEligible(card: TeamCard, slot: string): boolean {
   return card.positions.includes(slot)
 }
 
+function SoftballSwatch({ colors, seam, selected, ringColor }: {
+  colors: [string, string]
+  seam: string
+  selected: boolean
+  ringColor: string
+}) {
+  return (
+    <svg width="26" height="26" viewBox="0 0 26 26" style={{ display: 'block' }}>
+      {/* half-and-half ball */}
+      <path d="M13 2 A11 11 0 0 0 13 24 Z" fill={colors[0]} />
+      <path d="M13 2 A11 11 0 0 1 13 24 Z" fill={colors[1]} />
+      {/* stitching seams */}
+      <path d="M7 3.8 Q11.5 13 7 22.2" fill="none" stroke={seam} strokeWidth="1.3" strokeDasharray="2 1.6" strokeLinecap="round" />
+      <path d="M19 3.8 Q14.5 13 19 22.2" fill="none" stroke={seam} strokeWidth="1.3" strokeDasharray="2 1.6" strokeLinecap="round" />
+      {/* outline / selection ring */}
+      <circle cx="13" cy="13" r="11" fill="none" stroke={selected ? ringColor : '#ffffff30'} strokeWidth={selected ? 2 : 1} />
+    </svg>
+  )
+}
+
 export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available }: {
   teamName: string
   clubName: string
@@ -307,12 +327,12 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           <p className="text-sm mb-5" style={{ color: T.textDim }}>{clubName} · {cards.length} cards{roundNumber != null ? ` · Round ${roundNumber}` : ''}</p>
           <GradeSwitch grade={grade} mensHref="/team?grade=mens" womensHref="/team?grade=womens" />
 
-          {/* Site theme switcher */}
-          <div className="flex items-center justify-center gap-2.5 flex-wrap" style={{ marginTop: '18px', opacity: themeSaving ? 0.5 : 1 }}>
+          {/* Site theme switcher — softballs */}
+          <div className="flex items-center justify-center gap-3 flex-wrap" style={{ marginTop: '18px', opacity: themeSaving ? 0.5 : 1 }}>
             <button onClick={() => setSiteTheme('grade')} title="Classic — colours follow the grade"
               className="text-[9px] font-black uppercase tracking-widest px-3 rounded-full transition-all hover:scale-105"
               style={{
-                height: '22px',
+                height: '26px',
                 color: siteTheme === 'grade' ? '#141210' : T.textDim,
                 background: siteTheme === 'grade' ? T.accent : 'transparent',
                 border: `1px solid ${siteTheme === 'grade' ? T.accent : '#ffffff30'}`,
@@ -321,14 +341,15 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
             </button>
             {THEME_ORDER.map(k => (
               <button key={k} onClick={() => setSiteTheme(k)} title={THEMES[k].label}
-                className="rounded-full transition-all hover:scale-110"
-                style={{
-                  width: '22px',
-                  height: '22px',
-                  background: THEMES[k].accent,
-                  border: siteTheme === k ? `2px solid ${T.text}` : '2px solid transparent',
-                  boxShadow: siteTheme === k ? `0 0 10px ${THEMES[k].accent}` : 'none',
-                }} />
+                className="transition-all hover:scale-110"
+                style={{ filter: siteTheme === k ? `drop-shadow(0 0 6px ${THEMES[k].accent})` : 'none' }}>
+                <SoftballSwatch
+                  colors={THEMES[k].swatch}
+                  seam={THEMES[k].seam}
+                  selected={siteTheme === k}
+                  ringColor={T.text}
+                />
+              </button>
             ))}
           </div>
         </div>

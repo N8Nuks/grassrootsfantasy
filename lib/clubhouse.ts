@@ -4,6 +4,7 @@
 export type Grade = 'mens' | 'womens'
 
 export type Palette = {
+  label: string
   accent: string
   accentSoft: string
   field: string
@@ -14,9 +15,11 @@ export type Palette = {
   textDim: string
   glow: string
   electric?: string
+  swatch: [string, string]   // half-and-half softball fill
+  seam: string               // softball stitching colour
 }
 
-export const THEMES = {
+export const THEMES: Record<string, Palette> = {
   padres: {
     label: 'Brown & Gold',
     accent: '#FFC425',
@@ -28,6 +31,8 @@ export const THEMES = {
     text: '#F5F1E8',
     textDim: '#F5F1E870',
     glow: '0 0 16px #FFC42540',
+    swatch: ['#3A2C21', '#FFC425'],
+    seam: '#F5F1E8',
   },
   chevron: {
     label: 'Chevron Blue',
@@ -41,6 +46,8 @@ export const THEMES = {
     textDim: '#DDE9FF70',
     electric: '#9DBBFF',
     glow: '0 0 18px #4D7FFF60, 0 0 36px #4D7FFF25',
+    swatch: ['#4D7FFF', '#EEF3FF'],
+    seam: '#0C1428',
   },
   rwb: {
     label: 'Red, White & Blue',
@@ -54,6 +61,8 @@ export const THEMES = {
     textDim: '#F5F1E870',
     electric: '#7FA4FF',
     glow: '0 0 16px #E03A3E45',
+    swatch: ['#E03A3E', '#2456E6'],
+    seam: '#F5F1E8',
   },
   blackgold: {
     label: 'Black & Yellow',
@@ -66,6 +75,8 @@ export const THEMES = {
     text: '#F5F1E8',
     textDim: '#F5F1E870',
     glow: '0 0 16px #FFB81C45',
+    swatch: ['#141416', '#141416'],   // black ball
+    seam: '#FFB81C',                  // yellow stitching
   },
   cardinal: {
     label: 'Cardinal & Gold',
@@ -79,6 +90,8 @@ export const THEMES = {
     textDim: '#F5F1E870',
     electric: '#E8C15A',
     glow: '0 0 16px #C41E3A50',
+    swatch: ['#C41E3A', '#E8C15A'],
+    seam: '#F5F1E8',
   },
   purple: {
     label: 'Purple & Gold',
@@ -92,13 +105,31 @@ export const THEMES = {
     textDim: '#F3EFFA70',
     electric: '#E8C15A',
     glow: '0 0 18px #8E5BD855',
+    swatch: ['#8E5BD8', '#E8C15A'],
+    seam: '#F3EFFA',
   },
-} as const
+  greenyellow: {
+    label: 'Green & Yellow',
+    accent: '#3FBF63',
+    accentSoft: '#3FBF6320',
+    field: '#0F1710',
+    surface: '#152018',
+    surfaceRaised: '#1D2C21',
+    headerBg: '#142015',
+    text: '#F5F1E8',
+    textDim: '#F5F1E870',
+    electric: '#FFD84D',
+    glow: '0 0 16px #3FBF6345',
+    swatch: ['#3FBF63', '#FFD84D'],
+    seam: '#141210',
+  },
+}
 
 export type ThemeKey = keyof typeof THEMES
 export type SiteTheme = ThemeKey | 'grade'
 
-export const THEME_ORDER: ThemeKey[] = ['padres', 'chevron', 'rwb', 'blackgold', 'cardinal', 'purple']
+// Switcher order — padres excluded (Classic covers it on Men's)
+export const THEME_ORDER: string[] = ['chevron', 'rwb', 'blackgold', 'cardinal', 'purple', 'greenyellow']
 
 // Back-compat: existing grade-keyed lookups
 export const CLUBHOUSE = {
@@ -113,7 +144,7 @@ export const JOIN_GOLD = '#E8C15A'      // Join GF retains marketing gold
 // second argument to override. 'grade' (or missing/unknown) = classic per-grade look.
 export function theme(grade: Grade, siteTheme?: string | null): Palette {
   if (siteTheme && siteTheme !== 'grade' && siteTheme in THEMES) {
-    return THEMES[siteTheme as ThemeKey]
+    return THEMES[siteTheme]
   }
   return CLUBHOUSE[grade]
 }
