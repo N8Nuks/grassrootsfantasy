@@ -5,6 +5,7 @@
 // Player display floors applied ONLY to player_season_totals.displayed_total
 
 export type StatLine = {
+  ab?: number
   singles?: number; doubles?: number; triples?: number; hr?: number
   rbi?: number; runs?: number; bb?: number; hbp?: number
   sb?: number; cs?: number; k_bat?: number
