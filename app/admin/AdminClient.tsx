@@ -110,6 +110,13 @@ const [t2Log, setT2Log] = useState<string[]>([])
           <div className="text-center mb-10">
             <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: '#E8C15A' }}>GF Admin</p>
             <h1 className="text-3xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>Season One Command</h1>
+            <div className="mt-4">
+              <a href="/admin/photos"
+                className="inline-block text-xs font-black uppercase tracking-widest px-6 py-3 rounded-full transition-all hover:scale-[1.03]"
+                style={{ color: '#E8C15A', border: '1px solid #E8C15A' }}>
+                Player Photos →
+              </a>
+            </div>
           </div>
 
           {/* ── Season command view ── */}
