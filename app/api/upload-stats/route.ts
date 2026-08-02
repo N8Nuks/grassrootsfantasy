@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-const STAT_COLS = ['singles','doubles','triples','hr','rbi','runs','bb','hbp','sb','cs','k_bat','ip','k_pit','win','er']
+const STAT_COLS = ['ab','singles','doubles','triples','hr','rbi','runs','bb','hbp','sb','cs','k_bat','ip','k_pit','win','er']
 
 export async function POST(request: Request) {
   const supabase = await createClient()
