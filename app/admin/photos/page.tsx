@@ -6,7 +6,6 @@ import PhotosClient from './PhotosClient'
 export type PhotoPlayer = {
   id: string
   full_name: string
-  club_id: string
   grade: string
   photo_url: string | null
   playing_number: number | null
@@ -31,5 +30,5 @@ export default async function AdminPhotosPage() {
 
   if (error) return <pre style={{ color: '#FF6B6B', padding: '120px 40px' }}>{JSON.stringify(error, null, 2)}</pre>
 
-  return <PhotosClient players={(players ?? []) as PhotoPlayer[]} />
+  return <PhotosClient players={(players ?? []) as unknown as PhotoPlayer[]} />
 }
