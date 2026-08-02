@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
   // Confirm the player exists
   const { data: player, error: pErr } = await admin
-    .from('players').select('id, name').eq('id', playerId).single()
+    .from('players').select('id, full_name').eq('id', playerId).single()
   if (pErr || !player) return NextResponse.json({ error: 'Player not found' }, { status: 404 })
 
   // Store as <player_id>.png — re-uploading the same player overwrites cleanly
@@ -44,5 +44,5 @@ export async function POST(req: Request) {
     .from('players').update({ photo_url: url }).eq('id', playerId)
   if (dbErr) return NextResponse.json({ error: 'DB update failed: ' + dbErr.message }, { status: 500 })
 
-  return NextResponse.json({ ok: true, name: player.name, url })
+  return NextResponse.json({ ok: true, name: player.full_name, url })
 }

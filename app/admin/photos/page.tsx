@@ -1,0 +1,30 @@
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import PhotosClient from './PhotosClient'
+
+export type PhotoPlayer = {
+  id: string
+  full_name: string
+  club_id: string
+  grade: string
+  photo_url: string | null
+}
+
+export default async function AdminPhotosPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: profile } = await supabase
+    .from('profiles').select('is_admin').eq('id', user.id).single()
+  if (!profile?.is_admin) redirect('/team')
+
+  const admin = createAdminClient()
+  const { data: players } = await admin
+    .from('players')
+    .select('id, full_name, club_id, grade, photo_url')
+    .order('club').order('name')
+
+  return <PhotosClient players={(players ?? []) as PhotoPlayer[]} />
+}
