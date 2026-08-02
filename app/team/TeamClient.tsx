@@ -72,7 +72,7 @@ function SoftballSwatch({ colors, seam, selected, ringColor }: {
   )
 }
 
-export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available }: {
+export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen }: {
   teamName: string
   clubName: string
   cards: TeamCard[]
@@ -83,6 +83,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   roundNumber: number | null
   t3Claimed: boolean
   t2Available: boolean
+  roundOpen: boolean
 }) {
   const T = theme(grade, siteTheme)
   const accentBright = T.electric ?? T.accent
@@ -400,6 +401,12 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           </button>
         </div>
       </div>
+
+      {!roundOpen && view === 'lineup' && (
+        <div className="rounded-xl px-5 py-4 mb-6 text-sm text-center" style={{ background: '#E8C15A15', border: '1px solid #E8C15A60', color: '#E8C15A' }}>
+          <b>Lineups are locked.</b> Changes can&apos;t be saved until the next round opens{roundNumber != null ? ` — this is Round ${roundNumber}` : ''}.
+        </div>
+      )}
 
       {unavailableRostered.length > 0 && view === 'lineup' && (
         <div className="rounded-xl px-5 py-4 mb-6 text-sm" style={{ background: '#FF6B6B15', border: '1px solid #FF6B6B50', color: '#FF9B9B' }}>

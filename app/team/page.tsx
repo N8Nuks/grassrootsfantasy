@@ -29,7 +29,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
 
   // Latest round for this grade + its availability flags
   const { data: latestRound } = await supabase
-    .from('rounds').select('id, round_number')
+    .from('rounds').select('id, round_number, status')
     .eq('grade', grade).order('round_number', { ascending: false }).limit(1).maybeSingle()
 
   let unavailableIds: string[] = []
@@ -85,6 +85,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
           t3Claimed={t3Claimed}
           t2Available={t2Available}
           roundNumber={latestRound?.round_number ?? null}
+          roundOpen={latestRound?.status === 'open'}
         />
       </section>
       <Footer />
