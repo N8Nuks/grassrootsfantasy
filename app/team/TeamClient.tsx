@@ -13,11 +13,9 @@ export type TeamCard = {
   name: string
   club: string
   tier: string
-  positions: string[]positions: string[]
+  positions: string[]
   stats: Record<string, number>
   photoUrl?: string | null
-}
-  stats: Record<string, number>
 }
 
 const TIER_META: Record<string, { label: string; accent: string }> = {
