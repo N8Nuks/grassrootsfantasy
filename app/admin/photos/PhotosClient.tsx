@@ -4,6 +4,39 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import type { PhotoPlayer } from './page'
 
+// Crop a transparent-background PNG down to its visible pixels
+async function trimTransparent(blob: Blob): Promise<Blob> {
+  const bitmap = await createImageBitmap(blob)
+  const canvas = document.createElement('canvas')
+  canvas.width = bitmap.width
+  canvas.height = bitmap.height
+  const ctx = canvas.getContext('2d')!
+  ctx.drawImage(bitmap, 0, 0)
+  const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height)
+
+  let top = height, bottom = 0, left = width, right = 0
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const alpha = data[(y * width + x) * 4 + 3]
+      if (alpha > 8) {
+        if (y < top) top = y
+        if (y > bottom) bottom = y
+        if (x < left) left = x
+        if (x > right) right = x
+      }
+    }
+  }
+  if (top >= bottom || left >= right) return blob // nothing visible — return as-is
+
+  const w = right - left + 1
+  const h = bottom - top + 1
+  const out = document.createElement('canvas')
+  out.width = w
+  out.height = h
+  out.getContext('2d')!.drawImage(canvas, left, top, w, h, 0, 0, w, h)
+  return new Promise(resolve => out.toBlob(b => resolve(b!), 'image/png'))
+}
+
 export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
   const [grade, setGrade] = useState<'mens' | 'womens'>('mens')
   const [playerId, setPlayerId] = useState('')
@@ -27,9 +60,11 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
     setStatus('Cutting out background… (first run downloads the tool, can take a minute)')
     try {
       const { removeBackground } = await import('@imgly/background-removal')
-      const blob = await removeBackground(file)
-      setCutout(blob)
-      setPreview(URL.createObjectURL(blob))
+      const removed = await removeBackground(file)
+      setStatus('Trimming to fit…')
+      const trimmed = await trimTransparent(removed)
+      setCutout(trimmed)
+      setPreview(URL.createObjectURL(trimmed))
       setStatus('Cut-out ready. Check it, then upload.')
     } catch (e) {
       setStatus('ERROR cutting out: ' + (e instanceof Error ? e.message : String(e)))
@@ -59,7 +94,7 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
           <div className="text-center mb-10">
             <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: '#E8C15A' }}>GF Admin</p>
             <h1 className="text-3xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>Player Photos</h1>
-            <p className="text-xs text-[#F5F1E8]/40 mt-2">Pick a player, choose a photo, the background is cut out automatically, check it, upload. Re-uploading replaces the old photo.</p>
+            <p className="text-xs text-[#F5F1E8]/40 mt-2">Pick a player, choose a photo, the background is cut out and trimmed automatically, check it, upload. Re-uploading replaces the old photo.</p>
           </div>
 
           <div className="flex gap-4 mb-4">
