@@ -43,7 +43,7 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
 
   // 2b. Season stats onto players (recomputed from ALL scored rounds — re-run safe)
   const { data: gradeRounds } = await admin.from('rounds')
-    .select('id').eq('grade', round.grade).in('status', ['provisional', 'confirmed'])
+    .select('id').eq('grade', round.grade)
   const gradeRoundIds = (gradeRounds ?? []).map(r => r.id)
 
   const { data: allStats } = await admin.from('player_stats')
