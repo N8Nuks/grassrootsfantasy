@@ -18,6 +18,7 @@ export type PlayerCardData = {
   speedStar?: boolean
   club?: string
   stats?: Record<string, number>
+  photoUrl?: string | null
 }
 
 export default function PlayerCard({ player, grade, owned, chip, onClick }: {
@@ -38,19 +39,32 @@ export default function PlayerCard({ player, grade, owned, chip, onClick }: {
         background: T.surface,
         border: `1px solid ${owned ? meta.accent + '60' : '#ffffff12'}`,
       }}>
-      {/* Card face — photo slot; silhouette until photos land */}
-      <div className="relative flex items-end justify-center"
+      {/* Card face — real photo when available, silhouette fallback */}
+      <div className="relative flex items-end justify-center overflow-hidden"
         style={{
           height: '120px',
           background: owned
             ? `linear-gradient(180deg, ${meta.accent}30 0%, ${T.surface} 100%)`
             : `linear-gradient(180deg, #ffffff08 0%, ${T.surface} 100%)`,
         }}>
-        <svg width="64" height="86" viewBox="0 0 60 80" fill="none"
-          style={{ filter: owned ? 'none' : 'grayscale(1) brightness(0.55)' }}>
-          <circle cx="30" cy="22" r="12" fill={owned ? meta.accent + '70' : '#ffffff20'} />
-          <path d="M8 80 C8 55 52 55 52 80 Z" fill={owned ? meta.accent + '70' : '#ffffff20'} />
-        </svg>
+        {player.photoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={player.photoUrl} alt={player.name}
+            style={{
+              height: '112px',
+              width: 'auto',
+              maxWidth: '90%',
+              objectFit: 'contain',
+              objectPosition: 'bottom',
+              filter: owned ? 'none' : 'grayscale(1) brightness(0.55)',
+            }} />
+        ) : (
+          <svg width="64" height="86" viewBox="0 0 60 80" fill="none"
+            style={{ filter: owned ? 'none' : 'grayscale(1) brightness(0.55)' }}>
+            <circle cx="30" cy="22" r="12" fill={owned ? meta.accent + '70' : '#ffffff20'} />
+            <path d="M8 80 C8 55 52 55 52 80 Z" fill={owned ? meta.accent + '70' : '#ffffff20'} />
+          </svg>
+        )}
         {!owned && (
           <span className="absolute top-2 right-2 text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full"
             style={{ color: T.textDim, background: '#00000060' }}>

@@ -28,6 +28,7 @@ export type FullCardPlayer = {
   speedStar?: boolean
   badges?: string[]
   stats: Record<string, number>
+  photoUrl?: string | null
 }
 
 export default function PlayerCardFull({ player, grade, owned }: {
@@ -111,12 +112,25 @@ export default function PlayerCardFull({ player, grade, owned }: {
                  linear-gradient(180deg, ${meta.accent}20 0%, ${T.surface} 85%)`
               : `linear-gradient(180deg, #ffffff08 0%, ${T.surface} 85%)`,
           }} />
-          {/* PHOTO SLOT — player photo/artwork replaces this silhouette when assets land */}
-          <svg width="46%" viewBox="0 0 60 80" fill="none" className="relative"
-            style={{ filter: owned ? 'none' : 'grayscale(1) brightness(0.5)', maxHeight: '88%' }}>
-            <circle cx="30" cy="22" r="13" fill={owned ? meta.accent + '75' : '#ffffff20'} />
-            <path d="M6 80 C6 52 54 52 54 80 Z" fill={owned ? meta.accent + '75' : '#ffffff20'} />
-          </svg>
+          {player.photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={player.photoUrl} alt={player.name} className="relative"
+              style={{
+                height: '92%',
+                width: 'auto',
+                maxWidth: '94%',
+                objectFit: 'contain',
+                objectPosition: 'bottom',
+                filter: owned ? 'drop-shadow(0 6px 18px #00000070)' : 'grayscale(1) brightness(0.5)',
+              }} />
+          ) : (
+            // PHOTO SLOT — silhouette until this player's photo lands
+            <svg width="46%" viewBox="0 0 60 80" fill="none" className="relative"
+              style={{ filter: owned ? 'none' : 'grayscale(1) brightness(0.5)', maxHeight: '88%' }}>
+              <circle cx="30" cy="22" r="13" fill={owned ? meta.accent + '75' : '#ffffff20'} />
+              <path d="M6 80 C6 52 54 52 54 80 Z" fill={owned ? meta.accent + '75' : '#ffffff20'} />
+            </svg>
+          )}
           <span className="absolute top-3 left-3.5 text-[10px] font-black tracking-widest"
             style={{ color: meta.accent, textShadow: `0 0 8px ${meta.accent}90, 0 0 16px ${meta.accent}50` }}>{meta.label}</span>
           {!owned && (
