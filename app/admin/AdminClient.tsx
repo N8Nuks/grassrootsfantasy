@@ -4,6 +4,20 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import type { AdminStats } from './page'
 
+// ── Command palette — matches the Photo Studio ──
+const P = {
+  purple: '#8B5CF6',
+  orange: '#FF8C42',
+  blue: '#7DD3FC',
+  green: '#4ADE80',
+  red: '#FF6B6B',
+  ink: '#12101C',
+  panel: '#1C1830',
+  panelEdge: '#8B5CF630',
+  text: '#F2EFFB',
+  dim: '#F2EFFB80',
+}
+
 export default function AdminClient({ stats }: { stats: AdminStats }) {
   const [csv, setCsv] = useState('')
   const [roundNumber, setRoundNumber] = useState('0')
@@ -82,7 +96,8 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
     setAvailLog(lines)
     setAvailBusy(false)
   }
-const [t2Log, setT2Log] = useState<string[]>([])
+
+  const [t2Log, setT2Log] = useState<string[]>([])
   const [t2Busy, setT2Busy] = useState(false)
 
   async function releaseT2(g: 'mens' | 'womens') {
@@ -100,53 +115,100 @@ const [t2Log, setT2Log] = useState<string[]>([])
     setT2Log(prev => [...prev, r.ok ? `Force-opened ${data.forced}/${data.pending} (${g}), failures: ${data.failures}` : 'ERROR: ' + data.error])
     setT2Busy(false)
   }
-  const field = { background: '#181510', border: '1px solid #ffffff15', color: '#F5F1E8' }
+
+  const field = { background: P.ink, border: `1px solid ${P.purple}40`, color: P.text }
+
+  function Panel({ number, title, accent, sub, children }: {
+    number: string; title: string; accent: string; sub?: string; children: React.ReactNode
+  }) {
+    return (
+      <div className="rounded-2xl" style={{
+        background: P.panel, border: `1px solid ${P.panelEdge}`,
+        padding: '28px', marginBottom: '24px', boxShadow: `0 0 40px ${accent}0E`,
+      }}>
+        <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: accent, marginBottom: sub ? '6px' : '18px' }}>
+          {number} · {title}
+        </p>
+        {sub && <p className="text-xs" style={{ color: P.dim, marginBottom: '18px' }}>{sub}</p>}
+        {children}
+      </div>
+    )
+  }
+
+  function LogBox({ lines, error }: { lines: string[]; error?: boolean }) {
+    if (!lines.length) return null
+    return (
+      <pre className="rounded-xl text-xs leading-relaxed whitespace-pre-wrap" style={{
+        marginTop: '20px', padding: '20px 24px',
+        background: P.ink,
+        border: `1px solid ${error ? P.red + '50' : P.blue + '30'}`,
+        color: error ? P.red : P.green,
+      }}>
+        {lines.join('\n')}
+      </pre>
+    )
+  }
 
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: '#141210' }}>
+    <main className="min-h-screen flex flex-col" style={{ background: P.ink }}>
+      {/* Dynamic studio backdrop */}
+      <div className="fixed inset-0 pointer-events-none" style={{
+        background: `
+          radial-gradient(ellipse 70% 50% at 15% 10%, ${P.purple}28 0%, transparent 60%),
+          radial-gradient(ellipse 60% 45% at 85% 25%, ${P.blue}20 0%, transparent 60%),
+          radial-gradient(ellipse 75% 55% at 50% 100%, ${P.orange}18 0%, transparent 55%)
+        `,
+      }} />
+      <div className="fixed inset-0 pointer-events-none" style={{
+        backgroundImage: `linear-gradient(${P.purple}0A 1px, transparent 1px), linear-gradient(90deg, ${P.purple}0A 1px, transparent 1px)`,
+        backgroundSize: '44px 44px',
+        maskImage: 'radial-gradient(ellipse 80% 70% at 50% 30%, black 0%, transparent 100%)',
+        WebkitMaskImage: 'radial-gradient(ellipse 80% 70% at 50% 30%, black 0%, transparent 100%)',
+      }} />
+
       <Nav />
-      <section className="flex-1 px-6" style={{ paddingTop: "90px", paddingBottom: "100px" }}>
-        <div style={{ maxWidth: "720px", marginLeft: "auto", marginRight: "auto" }}>
-          <div className="text-center mb-10">
-            <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: '#E8C15A' }}>GF Admin</p>
-            <h1 className="text-3xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>Season One Command</h1>
-            <div className="mt-4">
-              <a href="/admin/photos"
-                className="inline-block text-xs font-black uppercase tracking-widest px-6 py-3 rounded-full transition-all hover:scale-[1.03]"
-                style={{ color: '#E8C15A', border: '1px solid #E8C15A' }}>
-                Player Photos →
-              </a>
-            </div>
+      <section className="relative flex-1 px-6" style={{ paddingTop: '90px', paddingBottom: '100px' }}>
+        <div style={{ maxWidth: '720px', marginLeft: 'auto', marginRight: 'auto' }}>
+
+          {/* Header */}
+          <div className="text-center" style={{ marginBottom: '48px' }}>
+            <p className="text-xs font-black uppercase tracking-[0.3em]" style={{ color: P.orange, marginBottom: '14px' }}>GF Admin</p>
+            <h1 className="text-4xl font-black" style={{ fontFamily: 'var(--font-heading)', color: P.text, marginBottom: '26px' }}>Season One Command</h1>
+            <a href="/admin/photos"
+              className="inline-block text-xs font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.04]"
+              style={{ color: P.blue, border: `1px solid ${P.blue}70`, padding: '13px 30px' }}>
+              Photo Studio →
+            </a>
           </div>
 
-          {/* ── Season command view ── */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          {/* Season pulse */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" style={{ marginBottom: '16px' }}>
             {[
               ['Accounts', String(stats.users)],
               ['Teams M / W', `${stats.teams.mens} / ${stats.teams.womens}`],
               ['Rounds scored M / W', `${stats.roundsScored.mens} / ${stats.roundsScored.womens}`],
               ['Weekly unclaimed M / W', `${stats.weeklyUnclaimed.mens} / ${stats.weeklyUnclaimed.womens}`],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-xl p-4 text-center" style={{ background: '#2A211A', border: '1px solid #ffffff12' }}>
-                <p className="text-2xl font-black" style={{ color: '#FFC425', fontFamily: 'var(--font-heading)' }}>{value}</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest mt-1 text-[#F5F1E8]/50">{label}</p>
+              <div key={label} className="rounded-2xl text-center" style={{ background: P.panel, border: `1px solid ${P.panelEdge}`, padding: '18px 12px' }}>
+                <p className="text-2xl font-black" style={{ color: P.orange, fontFamily: 'var(--font-heading)' }}>{value}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: P.dim, marginTop: '6px' }}>{label}</p>
               </div>
             ))}
           </div>
-          <div className="grid sm:grid-cols-2 gap-3 mb-12">
-            <div className="rounded-xl p-4" style={{ background: '#2A211A', border: '1px solid #ffffff12' }}>
-              <p className="text-[10px] font-black uppercase tracking-widest mb-3 text-[#F5F1E8]/50">Cards dealt by source</p>
-              <div className="flex gap-4 flex-wrap text-sm text-[#F5F1E8]">
-                {stats.cardsBySource.length === 0 && <span className="text-[#F5F1E8]/40">None yet</span>}
+          <div className="grid sm:grid-cols-2 gap-3" style={{ marginBottom: '48px' }}>
+            <div className="rounded-2xl" style={{ background: P.panel, border: `1px solid ${P.panelEdge}`, padding: '18px 20px' }}>
+              <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: P.dim, marginBottom: '12px' }}>Cards dealt by source</p>
+              <div className="flex gap-4 flex-wrap text-sm" style={{ color: P.text }}>
+                {stats.cardsBySource.length === 0 && <span style={{ color: P.dim }}>None yet</span>}
                 {stats.cardsBySource.map(c => (
-                  <span key={c.source} className="font-bold uppercase">{c.source}: <b style={{ color: '#FFC425' }}>{c.count}</b></span>
+                  <span key={c.source} className="font-bold uppercase">{c.source}: <b style={{ color: P.orange }}>{c.count}</b></span>
                 ))}
               </div>
             </div>
-            <div className="rounded-xl p-4" style={{ background: '#2A211A', border: '1px solid #ffffff12' }}>
-              <p className="text-[10px] font-black uppercase tracking-widest mb-3 text-[#F5F1E8]/50">Latest scored round</p>
-              <div className="flex gap-5 flex-wrap text-sm text-[#F5F1E8]">
-                {stats.latestRound.length === 0 && <span className="text-[#F5F1E8]/40">Nothing scored yet</span>}
+            <div className="rounded-2xl" style={{ background: P.panel, border: `1px solid ${P.panelEdge}`, padding: '18px 20px' }}>
+              <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: P.dim, marginBottom: '12px' }}>Latest scored round</p>
+              <div className="flex gap-5 flex-wrap text-sm" style={{ color: P.text }}>
+                {stats.latestRound.length === 0 && <span style={{ color: P.dim }}>Nothing scored yet</span>}
                 {stats.latestRound.map(r => (
                   <span key={r.grade} className="font-bold">
                     {r.grade === 'mens' ? 'M' : 'W'} R{r.round_number}: {r.teamsScored} teams{r.topScore != null ? `, top ${r.topScore}` : ''}
@@ -156,130 +218,106 @@ const [t2Log, setT2Log] = useState<string[]>([])
             </div>
           </div>
 
-          {/* ── Stats upload ── */}
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>Round Stats Upload</h2>
-          </div>
+          {/* 1 · Stats upload */}
+          <Panel number="1" title="Round Stats Upload" accent={P.purple}>
+            <div className="flex gap-4" style={{ marginBottom: '16px' }}>
+              <select value={grade} onChange={e => setGrade(e.target.value as 'mens' | 'womens')}
+                className="rounded-xl px-4 py-3.5 text-sm flex-1" style={field}>
+                <option value="mens">Men&apos;s</option>
+                <option value="womens">Women&apos;s</option>
+              </select>
+              <input type="number" value={roundNumber} onChange={e => setRoundNumber(e.target.value)}
+                placeholder="Round #" className="rounded-xl px-4 py-3.5 text-sm w-32" style={field} />
+            </div>
+            <textarea value={csv} onChange={e => setCsv(e.target.value)}
+              placeholder={"Paste iScore CSV here. Expected header:\nplayer,ab,singles,doubles,triples,hr,rbi,runs,bb,hbp,sb,cs,k_bat,ip,k_pit,win,er"}
+              rows={12} className="w-full rounded-xl px-4 py-3.5 text-xs font-mono" style={field} />
+            <div className="text-center" style={{ marginTop: '22px' }}>
+              <button onClick={upload} disabled={busy || !csv.trim()}
+                className="text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] disabled:opacity-40"
+                style={{
+                  color: P.ink,
+                  background: `linear-gradient(120deg, ${P.purple} 0%, ${P.orange} 100%)`,
+                  padding: '16px 52px',
+                  boxShadow: `0 0 30px ${P.purple}50`,
+                }}>
+                {busy ? 'Processing…' : 'Upload & Score Round'}
+              </button>
+            </div>
+            <LogBox lines={log} />
+          </Panel>
 
-          <div className="flex gap-4 mb-4">
-            <select value={grade} onChange={e => setGrade(e.target.value as 'mens' | 'womens')}
-              className="rounded-lg px-4 py-3 text-sm flex-1" style={field}>
-              <option value="mens">Men&apos;s</option>
-              <option value="womens">Women&apos;s</option>
-            </select>
-            <input type="number" value={roundNumber} onChange={e => setRoundNumber(e.target.value)}
-              placeholder="Round #" className="rounded-lg px-4 py-3 text-sm w-32" style={field} />
-          </div>
+          {/* 2 · Score only */}
+          <Panel number="2" title="Score Round Only" accent={P.blue}
+            sub="Re-run scoring on a round whose stats are already uploaded. Resolves H2H matchups too.">
+            <div className="flex gap-4" style={{ marginBottom: '16px' }}>
+              <select value={scoreGrade} onChange={e => setScoreGrade(e.target.value as 'mens' | 'womens')}
+                className="rounded-xl px-4 py-3.5 text-sm flex-1" style={field}>
+                <option value="mens">Men&apos;s</option>
+                <option value="womens">Women&apos;s</option>
+              </select>
+              <input type="number" value={scoreRound} onChange={e => setScoreRound(e.target.value)}
+                placeholder="Round #" className="rounded-xl px-4 py-3.5 text-sm w-32" style={field} />
+            </div>
+            <div className="text-center">
+              <button onClick={scoreOnly} disabled={scoreBusy}
+                className="text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] disabled:opacity-40"
+                style={{ color: P.blue, border: `1px solid ${P.blue}`, background: 'transparent', padding: '16px 52px' }}>
+                {scoreBusy ? 'Scoring…' : 'Score Round'}
+              </button>
+            </div>
+            <LogBox lines={scoreLog} error={scoreLog[0]?.startsWith('ERROR')} />
+          </Panel>
 
-          <textarea value={csv} onChange={e => setCsv(e.target.value)}
-            placeholder={"Paste iScore CSV here. Expected header:\nplayer,singles,doubles,triples,hr,rbi,runs,bb,hbp,sb,cs,k_bat,ip,k_pit,win,er"}
-            rows={12} className="w-full rounded-lg px-4 py-3 text-xs font-mono" style={field} />
+          {/* 3 · Pre-Season Packs */}
+          <Panel number="3" title="Pre-Season Packs" accent={P.orange}
+            sub="Release lets users open their T2 with the full reveal. Force-open bulk-deals any still unopened — run it 12 hours before Round 1 lock.">
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={() => releaseT2('mens')} disabled={t2Busy}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
+                style={{ color: P.green, border: `1px solid ${P.green}70`, padding: '16px 0' }}>Release Men&apos;s</button>
+              <button onClick={() => releaseT2('womens')} disabled={t2Busy}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
+                style={{ color: P.blue, border: `1px solid ${P.blue}70`, padding: '16px 0' }}>Release Women&apos;s</button>
+              <button onClick={() => forceOpenT2('mens')} disabled={t2Busy}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
+                style={{ color: P.red, border: `1px solid ${P.red}70`, padding: '16px 0' }}>Force-open Men&apos;s</button>
+              <button onClick={() => forceOpenT2('womens')} disabled={t2Busy}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
+                style={{ color: P.red, border: `1px solid ${P.red}70`, padding: '16px 0' }}>Force-open Women&apos;s</button>
+            </div>
+            <LogBox lines={t2Log} />
+          </Panel>
 
-          <div className="text-center mt-6">
-            <button onClick={upload} disabled={busy || !csv.trim()}
-              className="text-base font-bold tracking-wide transition-all hover:scale-[1.02] disabled:opacity-40"
-              style={{ color: '#E8C15A', border: '1px solid #E8C15A', background: 'transparent', padding: "16px 56px" }}>
-              {busy ? 'Processing…' : 'Upload & Score Round'}
-            </button>
-          </div>
-
-          {log.length > 0 && (
-            <pre className="mt-8 rounded-lg p-5 text-xs leading-relaxed whitespace-pre-wrap" style={{ background: '#181510', border: '1px solid #ffffff10', color: '#3FBF63' }}>
-              {log.join('\n')}
-            </pre>
-          )}
-
-          {/* ── Score Round Only ── */}
-          <div className="text-center mt-16 mb-8">
-            <h2 className="text-2xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>Score Round Only</h2>
-            <p className="text-xs text-[#F5F1E8]/40 mt-2">Re-run scoring on a round whose stats are already uploaded. Resolves H2H matchups too.</p>
-          </div>
-
-          <div className="flex gap-4 mb-4">
-            <select value={scoreGrade} onChange={e => setScoreGrade(e.target.value as 'mens' | 'womens')}
-              className="rounded-lg px-4 py-3 text-sm flex-1" style={field}>
-              <option value="mens">Men&apos;s</option>
-              <option value="womens">Women&apos;s</option>
-            </select>
-            <input type="number" value={scoreRound} onChange={e => setScoreRound(e.target.value)}
-              placeholder="Round #" className="rounded-lg px-4 py-3 text-sm w-32" style={field} />
-          </div>
-
-          <div className="text-center mt-6">
-            <button onClick={scoreOnly} disabled={scoreBusy}
-              className="text-base font-bold tracking-wide transition-all hover:scale-[1.02] disabled:opacity-40"
-              style={{ color: '#E8C15A', border: '1px solid #E8C15A', background: 'transparent', padding: "16px 56px" }}>
-              {scoreBusy ? 'Scoring…' : 'Score Round'}
-            </button>
-          </div>
-
-          {scoreLog.length > 0 && (
-            <pre className="mt-8 rounded-lg p-5 text-xs leading-relaxed whitespace-pre-wrap" style={{ background: '#181510', border: '1px solid #ffffff10', color: '#3FBF63' }}>
-              {scoreLog.join('\n')}
-            </pre>
-          )}
-          {/* ── Pre-Season Packs ── */}
-          <div className="text-center mt-16 mb-8">
-            <h2 className="text-2xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>Pre-Season Packs</h2>
-            <p className="text-xs text-[#F5F1E8]/40 mt-2">Release lets users open their T2 with the full reveal. Force-open bulk-deals any still unopened — run it 12 hours before Round 1 lock.</p>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <button onClick={() => releaseT2('mens')} disabled={t2Busy}
-              className="text-sm font-bold py-4 transition-all hover:scale-[1.01] disabled:opacity-40"
-              style={{ color: '#E8C15A', border: '1px solid #E8C15A' }}>Release Men&apos;s</button>
-            <button onClick={() => releaseT2('womens')} disabled={t2Busy}
-              className="text-sm font-bold py-4 transition-all hover:scale-[1.01] disabled:opacity-40"
-              style={{ color: '#4D7FFF', border: '1px solid #4D7FFF' }}>Release Women&apos;s</button>
-            <button onClick={() => forceOpenT2('mens')} disabled={t2Busy}
-              className="text-sm font-bold py-4 transition-all hover:scale-[1.01] disabled:opacity-40"
-              style={{ color: '#FF6B6B', border: '1px solid #FF6B6B' }}>Force-open Men&apos;s</button>
-            <button onClick={() => forceOpenT2('womens')} disabled={t2Busy}
-              className="text-sm font-bold py-4 transition-all hover:scale-[1.01] disabled:opacity-40"
-              style={{ color: '#FF6B6B', border: '1px solid #FF6B6B' }}>Force-open Women&apos;s</button>
-          </div>
-          {t2Log.length > 0 && (
-            <pre className="mt-6 rounded-lg p-5 text-xs leading-relaxed whitespace-pre-wrap" style={{ background: '#181510', border: '1px solid #ffffff10', color: '#3FBF63' }}>
-              {t2Log.join('\n')}
-            </pre>
-          )}
-          {/* ── Availability ── */}
-          <div className="text-center mt-16 mb-8">
-            <h2 className="text-2xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)' }}>Player Availability</h2>
-            <p className="text-xs text-[#F5F1E8]/40 mt-2">Mark players unavailable for a round — users see it on their team cards immediately.</p>
-          </div>
-
-          <div className="flex gap-4 mb-4">
-            <select value={availGrade} onChange={e => setAvailGrade(e.target.value as 'mens' | 'womens')}
-              className="rounded-lg px-4 py-3 text-sm flex-1" style={field}>
-              <option value="mens">Men&apos;s</option>
-              <option value="womens">Women&apos;s</option>
-            </select>
-            <input type="number" value={availRound} onChange={e => setAvailRound(e.target.value)}
-              placeholder="Round #" className="rounded-lg px-4 py-3 text-sm w-32" style={field} />
-          </div>
-
-          <textarea value={availNames} onChange={e => setAvailNames(e.target.value)}
-            placeholder={"One player name per line:\nJack Besgrove\nHarrison Wildbore"}
-            rows={5} className="w-full rounded-lg px-4 py-3 text-xs font-mono" style={field} />
-
-          <div className="text-center mt-6">
-            <button onClick={() => setAvailability(true)} disabled={availBusy || !availNames.trim()}
-              className="text-base font-bold tracking-wide transition-all hover:scale-[1.02] disabled:opacity-40"
-              style={{ color: '#FF6B6B', border: '1px solid #FF6B6B', background: 'transparent', padding: "16px 56px", marginRight: "16px" }}>
-              {availBusy ? 'Working…' : 'Mark Unavailable'}
-            </button>
-            <button onClick={() => setAvailability(false)} disabled={availBusy || !availNames.trim()}
-              className="text-base font-bold tracking-wide transition-all hover:scale-[1.02] disabled:opacity-40"
-              style={{ color: '#3FBF63', border: '1px solid #3FBF63', background: 'transparent', padding: "16px 56px" }}>
-              {availBusy ? 'Working…' : 'Mark Available'}
-            </button>
-          </div>
-
-          {availLog.length > 0 && (
-            <pre className="mt-8 rounded-lg p-5 text-xs leading-relaxed whitespace-pre-wrap" style={{ background: '#181510', border: '1px solid #ffffff10', color: '#FF6B6B' }}>
-              {availLog.join('\n')}
-            </pre>
-          )}
+          {/* 4 · Availability */}
+          <Panel number="4" title="Player Availability" accent={P.green}
+            sub="Mark players unavailable for a round — users see it on their team cards immediately.">
+            <div className="flex gap-4" style={{ marginBottom: '16px' }}>
+              <select value={availGrade} onChange={e => setAvailGrade(e.target.value as 'mens' | 'womens')}
+                className="rounded-xl px-4 py-3.5 text-sm flex-1" style={field}>
+                <option value="mens">Men&apos;s</option>
+                <option value="womens">Women&apos;s</option>
+              </select>
+              <input type="number" value={availRound} onChange={e => setAvailRound(e.target.value)}
+                placeholder="Round #" className="rounded-xl px-4 py-3.5 text-sm w-32" style={field} />
+            </div>
+            <textarea value={availNames} onChange={e => setAvailNames(e.target.value)}
+              placeholder={"One player name per line:\nJack Besgrove\nHarrison Wildbore"}
+              rows={5} className="w-full rounded-xl px-4 py-3.5 text-xs font-mono" style={field} />
+            <div className="text-center flex justify-center gap-4 flex-wrap" style={{ marginTop: '22px' }}>
+              <button onClick={() => setAvailability(true)} disabled={availBusy || !availNames.trim()}
+                className="text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] disabled:opacity-40"
+                style={{ color: P.red, border: `1px solid ${P.red}`, background: 'transparent', padding: '16px 44px' }}>
+                {availBusy ? 'Working…' : 'Mark Unavailable'}
+              </button>
+              <button onClick={() => setAvailability(false)} disabled={availBusy || !availNames.trim()}
+                className="text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] disabled:opacity-40"
+                style={{ color: P.green, border: `1px solid ${P.green}`, background: 'transparent', padding: '16px 44px' }}>
+                {availBusy ? 'Working…' : 'Mark Available'}
+              </button>
+            </div>
+            <LogBox lines={availLog} error={availLog[0]?.startsWith('ERROR')} />
+          </Panel>
         </div>
       </section>
       <Footer />
