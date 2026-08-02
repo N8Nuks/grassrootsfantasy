@@ -41,6 +41,48 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
       { onConflict: 'player_id,grade' })
   }
 
+  // 2b. Season stats onto players (recomputed from ALL scored rounds — re-run safe)
+  const { data: gradeRounds } = await admin.from('rounds')
+    .select('id').eq('grade', round.grade).in('status', ['provisional', 'confirmed'])
+  const gradeRoundIds = (gradeRounds ?? []).map(r => r.id)
+
+  const { data: allStats } = await admin.from('player_stats')
+    .select('player_id, raw').in('round_id', gradeRoundIds)
+  const { data: allScores } = await admin.from('player_scores')
+    .select('player_id, points').in('round_id', gradeRoundIds)
+
+  const pointsByPlayer = new Map<string, number>()
+  for (const s of allScores ?? []) {
+    pointsByPlayer.set(s.player_id, (pointsByPlayer.get(s.player_id) ?? 0) + Number(s.points))
+  }
+
+  const aggByPlayer = new Map<string, Record<string, number>>()
+  for (const s of allStats ?? []) {
+    const line = s.raw as StatLine
+    const a = aggByPlayer.get(s.player_id) ?? { ab: 0, hits: 0, hr: 0, rbi: 0, sb: 0 }
+    a.ab += Number(line.ab) || 0
+    a.hits += (Number(line.singles) || 0) + (Number(line.doubles) || 0) + (Number(line.triples) || 0) + (Number(line.hr) || 0)
+    a.hr += Number(line.hr) || 0
+    a.rbi += Number(line.rbi) || 0
+    a.sb += Number(line.sb) || 0
+    aggByPlayer.set(s.player_id, a)
+  }
+
+  for (const [playerId, a] of aggByPlayer) {
+    const { data: p } = await admin.from('players').select('stats').eq('id', playerId).single()
+    const existing = (p?.stats ?? {}) as Record<string, number>
+    const seasonStats: Record<string, number> = {
+      ...existing,
+      season_hr: a.hr,
+      season_rbi: a.rbi,
+      season_sb: a.sb,
+      season_points: pointsByPlayer.get(playerId) ?? 0,
+    }
+    if (a.ab > 0) seasonStats.season_ba = a.hits / a.ab
+    else delete seasonStats.season_ba
+    await admin.from('players').update({ stats: seasonStats }).eq('id', playerId)
+  }
+
   // 3. Team scores with carry-forward + full substitution cascade
   const statByPlayer = new Map(stats.map(s => [s.player_id, s.raw as StatLine]))
   const played = new Set(stats.map(s => s.player_id))
