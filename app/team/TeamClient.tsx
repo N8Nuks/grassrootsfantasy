@@ -13,7 +13,10 @@ export type TeamCard = {
   name: string
   club: string
   tier: string
-  positions: string[]
+  positions: string[]positions: string[]
+  stats: Record<string, number>
+  photoUrl?: string | null
+}
   stats: Record<string, number>
 }
 
@@ -546,7 +549,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               const slot = slotByCard.get(c.id)
               return (
                 <PlayerCard key={c.id}
-                  player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats }}
+                  player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats, photoUrl: c.photoUrl }}
                   grade={grade}
                   owned={true}
                   chip={inLineup ? `IN ${SLOT_LABELS[slot ?? ''] ?? ''}` : undefined}
@@ -613,7 +616,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               <div className="overflow-y-auto px-6 py-5 sm:grid sm:grid-cols-[1fr_1.3fr] sm:gap-7 sm:items-start" style={{ maxHeight: "86vh" }}>
                 <div className="mb-6 sm:mb-0">
                   <PlayerCardFull
-                    player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats }}
+                    player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats, photoUrl: c.photoUrl }}
                     grade={grade}
                     owned={true}
                   />
