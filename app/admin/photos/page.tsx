@@ -9,6 +9,8 @@ export type PhotoPlayer = {
   club_id: string
   grade: string
   photo_url: string | null
+  playing_number: number | null
+  is_under18: boolean
 }
 
 export default async function AdminPhotosPage() {
@@ -23,7 +25,7 @@ export default async function AdminPhotosPage() {
   const admin = createAdminClient()
   const { data: players, error } = await admin
     .from('players')
-    .select('id, full_name, club_id, grade, photo_url')
+    .select('id, full_name, club_id, grade, photo_url, playing_number, is_under18')
     .order('club_id').order('full_name')
 
   if (error) return <pre style={{ color: '#FF6B6B', padding: '120px 40px' }}>{JSON.stringify(error, null, 2)}</pre>
