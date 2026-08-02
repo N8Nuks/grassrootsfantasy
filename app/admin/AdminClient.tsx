@@ -97,6 +97,19 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
     setAvailBusy(false)
   }
 
+  const [rcLog, setRcLog] = useState<string[]>([])
+  const [rcBusy, setRcBusy] = useState(false)
+
+  async function roundControl(g: 'mens' | 'womens', action: 'open' | 'lock' | 'status') {
+    setRcBusy(true)
+    const r = await fetch('/api/round-control', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade: g, action }) })
+    const data = await r.json()
+    if (!r.ok) setRcLog(prev => [...prev, 'ERROR: ' + data.error])
+    else if (action === 'status') setRcLog(prev => [...prev, data.round ? `${g === 'mens' ? "Men's" : "Women's"} R${data.round.round_number}: ${data.round.status}` : `${g === 'mens' ? "Men's" : "Women's"}: no rounds yet`])
+    else setRcLog(prev => [...prev, `${g === 'mens' ? "Men's" : "Women's"} R${data.round_number} → ${data.status}`])
+    setRcBusy(false)
+  }
+
   const [t2Log, setT2Log] = useState<string[]>([])
   const [t2Busy, setT2Busy] = useState(false)
 
@@ -269,7 +282,33 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
             <LogBox lines={scoreLog} error={scoreLog[0]?.startsWith('ERROR')} />
           </Panel>
 
-          {/* 3 · Pre-Season Packs */}
+          {/* Round Control */}
+          <Panel number="3" title="Round Control" accent={P.red}
+            sub="Open lets users save lineups for the latest round; Lock rejects saves. Check shows the current status.">
+            <div className="grid grid-cols-3 gap-3">
+              <button onClick={() => roundControl('mens', 'status')} disabled={rcBusy}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
+                style={{ color: P.dim, border: `1px solid ${P.purple}40`, padding: '16px 0' }}>Check Men&apos;s</button>
+              <button onClick={() => roundControl('mens', 'open')} disabled={rcBusy}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
+                style={{ color: P.green, border: `1px solid ${P.green}70`, padding: '16px 0' }}>Open Men&apos;s</button>
+              <button onClick={() => roundControl('mens', 'lock')} disabled={rcBusy}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
+                style={{ color: P.red, border: `1px solid ${P.red}70`, padding: '16px 0' }}>Lock Men&apos;s</button>
+              <button onClick={() => roundControl('womens', 'status')} disabled={rcBusy}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
+                style={{ color: P.dim, border: `1px solid ${P.purple}40`, padding: '16px 0' }}>Check Women&apos;s</button>
+              <button onClick={() => roundControl('womens', 'open')} disabled={rcBusy}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
+                style={{ color: P.blue, border: `1px solid ${P.blue}70`, padding: '16px 0' }}>Open Women&apos;s</button>
+              <button onClick={() => roundControl('womens', 'lock')} disabled={rcBusy}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
+                style={{ color: P.red, border: `1px solid ${P.red}70`, padding: '16px 0' }}>Lock Women&apos;s</button>
+            </div>
+            <LogBox lines={rcLog} error={rcLog[rcLog.length - 1]?.startsWith('ERROR')} />
+          </Panel>
+
+          {/* 4 · Pre-Season Packs */}
           <Panel number="3" title="Pre-Season Packs" accent={P.orange}
             sub="Release lets users open their T2 with the full reveal. Force-open bulk-deals any still unopened — run it 12 hours before Round 1 lock.">
             <div className="grid grid-cols-2 gap-3">
