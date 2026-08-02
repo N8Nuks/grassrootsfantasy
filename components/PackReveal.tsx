@@ -31,6 +31,25 @@ const FUSE: Record<string, { color: string; ms: number }> = {
 
 type Stage = 'pack' | 'tearing' | 'igniter' | 'fuse' | 'front' | 'summary'
 
+function Fireworks({ colors }: { colors: string[] }) {
+  const bursts = [
+    { left: '12%', top: '16%', delay: 0 },
+    { left: '80%', top: '12%', delay: 350 },
+    { left: '22%', top: '62%', delay: 700 },
+    { left: '86%', top: '55%', delay: 1050 },
+    { left: '50%', top: '8%', delay: 1400 },
+    { left: '8%', top: '42%', delay: 1750 },
+  ]
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {bursts.map((b, i) => (
+        <span key={i} className="gf-firework"
+          style={{ left: b.left, top: b.top, color: colors[i % colors.length], animationDelay: `${b.delay}ms` }} />
+      ))}
+    </div>
+  )
+}
+
 export default function PackReveal({ grade, packName, cards, onDone }: {
   grade: Grade
   packName: string
@@ -47,6 +66,8 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
   const meta = current ? (TIER_META[current.tier] ?? TIER_META.common) : TIER_META.common
   const isRare = current?.tier.startsWith('rare')
   const fuse = FUSE[current?.tier ?? 'common'] ?? FUSE.common
+  const gradeLabel = grade === 'mens' ? "MEN'S" : "WOMEN'S"
+  const isStarter = packName === 'Starter Pack'
 
   function runFuse(nextIdx: number) {
     setIdx(nextIdx)
@@ -82,10 +103,28 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
   const cardBack = 'linear-gradient(180deg, #132B52 0%, #0F2242 45%, #08162E 100%)'
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-6 cursor-pointer select-none"
-      style={{ background: '#000000E8', backdropFilter: 'blur(6px)' }}
+    <div className="fixed inset-0 z-[70] flex items-center justify-center cursor-pointer select-none overflow-hidden"
+      style={{ background: '#000000E8', backdropFilter: 'blur(6px)', padding: '16px' }}
       onClick={advance}>
-      <div className="w-full text-center flex flex-col items-center" style={{ maxWidth: '400px', perspective: '900px' }}>
+
+      {/* Fireworks — the ceremony opener */}
+      {(stage === 'pack' || stage === 'tearing') && (
+        <Fireworks colors={[T.accent, '#FFD700', '#4DA6FF', '#3FBF63']} />
+      )}
+
+      {/* Welcome banner — Starter Packs only */}
+      {isStarter && stage !== 'summary' && (
+        <div className="gf-banner-in fixed top-0 left-0 right-0 z-[71] text-center pointer-events-none"
+          style={{ background: `linear-gradient(180deg, ${T.accent}30 0%, transparent 100%)`, borderBottom: `1px solid ${T.accent}40`, padding: '18px 12px 14px' }}>
+          <p className="text-base sm:text-xl font-black uppercase tracking-[0.25em]"
+            style={{ fontFamily: 'var(--font-heading)', color: T.text, textShadow: `0 0 18px ${T.accent}80` }}>
+            Welcome to The Game
+          </p>
+        </div>
+      )}
+
+      <div className="text-center flex flex-col items-center"
+        style={{ width: '100%', maxWidth: 'min(400px, calc(100vw - 32px))', perspective: '900px' }}>
 
         {/* Stage 1 — the unopened pack */}
         {(stage === 'pack' || stage === 'tearing') && (
@@ -93,6 +132,7 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
             <div className={`relative mx-auto rounded-2xl pinstripe flex flex-col items-center justify-center ${stage === 'tearing' ? 'gf-tear' : 'gf-wiggle'}`}
               style={{ width: '240px', height: '340px', background: `linear-gradient(160deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`, border: `2px solid ${T.accent}`, boxShadow: `0 0 48px ${T.accent}40` }}>
               <p className="text-xs font-black uppercase tracking-[0.35em] mb-3" style={{ color: T.accent }}>Grassroots</p>
+              <p className="text-lg font-black uppercase tracking-[0.2em] mb-1" style={{ fontFamily: 'var(--font-heading)', color: T.accent }}>{gradeLabel}</p>
               <p className="text-2xl font-black uppercase" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{packName}</p>
               <p className="text-sm font-bold mt-2" style={{ color: T.textDim }}>{sorted.length} cards</p>
               <div className="absolute left-3 right-3" style={{ top: '46px', borderTop: `2px dashed ${T.accent}50` }} />
@@ -124,7 +164,7 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
                 </svg>
               )}
             </div>
-            <p className="text-xs font-bold uppercase tracking-[0.3em] mt-8" style={{ color: stage === 'igniter' ? T.text : fuse.color }}>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] mt-8 px-4" style={{ color: stage === 'igniter' ? T.text : fuse.color }}>
               {stage === 'igniter' ? <span className="gf-pulse inline-block">Tap the logo to light the fuse</span> : '· · ·'}
             </p>
           </div>
@@ -170,7 +210,7 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
 
         {/* Stage 4 — summary */}
         {stage === 'summary' && (
-          <div className="gf-pop w-full">
+          <div className="gf-pop w-full" style={{ maxHeight: '85vh', overflowY: 'auto' }}>
             <p className="text-sm font-black uppercase tracking-[0.35em] mb-6" style={{ color: T.accent }}>Added to your collection</p>
             <div className="flex flex-col gap-2 mb-8">
               {sorted.map((c, i) => {

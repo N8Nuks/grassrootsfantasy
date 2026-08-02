@@ -59,9 +59,9 @@ export default function Nav() {
         <div className="flex items-center gap-6">
           <a href="/" className="flex items-center gap-2.5">
             <img src="/gf-mark.png" alt="" className="h-9 w-auto" />
-            <span className="hidden sm:flex flex-col leading-none gap-0.5">
-              <span className="text-[13px] font-bold tracking-wide" style={{ color: '#3FBF63', fontFamily: 'var(--font-heading)' }}>GRASSROOTS</span>
-              <span className="text-[13px] font-black tracking-wider" style={{ color: '#F5F1E8', fontFamily: 'var(--font-wordmark)', fontStretch: '125%' }}>FANTASY</span>
+            <span className="flex flex-col leading-none gap-0.5">
+              <span className="text-[12px] sm:text-[13px] font-bold tracking-wide" style={{ color: '#3FBF63', fontFamily: 'var(--font-heading)' }}>GRASSROOTS</span>
+              <span className="text-[12px] sm:text-[13px] font-black tracking-wider" style={{ color: '#F5F1E8', fontFamily: 'var(--font-wordmark)', fontStretch: '125%' }}>FANTASY</span>
             </span>
           </a>
 
@@ -111,8 +111,8 @@ export default function Nav() {
           </button>
         </div>
 
-        {/* Mobile hamburger */}
-        <button className="md:hidden flex flex-col gap-1.5 p-2" onClick={() => setOpen(!open)} aria-label="Menu">
+        {/* Mobile hamburger — inset from the screen edge */}
+        <button className="md:hidden flex flex-col gap-1.5 p-2" style={{ marginRight: '10px' }} onClick={() => setOpen(!open)} aria-label="Menu">
           <span className={`block h-px w-6 bg-[#F5F1E8] transition-all duration-300 ${open ? 'rotate-45 translate-y-2' : ''}`} />
           <span className={`block h-px w-6 bg-[#F5F1E8] transition-all duration-300 ${open ? 'opacity-0' : ''}`} />
           <span className={`block h-px w-6 bg-[#F5F1E8] transition-all duration-300 ${open ? '-rotate-45 -translate-y-2' : ''}`} />
