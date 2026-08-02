@@ -403,8 +403,8 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
       </div>
 
       {!roundOpen && view === 'lineup' && (
-        <div className="rounded-xl px-5 py-4 mb-6 text-sm text-center" style={{ background: '#E8C15A15', border: '1px solid #E8C15A60', color: '#E8C15A' }}>
-          <b>Lineups are locked.</b> Changes can&apos;t be saved until the next round opens{roundNumber != null ? ` — this is Round ${roundNumber}` : ''}.
+        <div className="rounded-xl px-5 py-5 mb-6 text-base font-bold text-center" style={{ background: '#FF6B6B18', border: '2px solid #FF6B6B', color: '#FF9B9B' }}>
+          🔒 Lineups are locked. Changes can&apos;t be saved until the next round opens{roundNumber != null ? ` — this is Round ${roundNumber}` : ''}.
         </div>
       )}
 
@@ -515,12 +515,20 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
 
           {dirty && (
             <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center"
-              style={{ background: `${T.field}F0`, borderTop: `1px solid ${T.accent}40`, padding: '14px 24px', backdropFilter: 'blur(8px)' }}>
+              style={{
+                background: roundOpen ? `${T.field}F0` : '#3A1215F0',
+                borderTop: roundOpen ? `1px solid ${T.accent}40` : '2px solid #FF6B6B',
+                padding: '14px 24px', backdropFilter: 'blur(8px)',
+              }}>
               <div className="flex items-center gap-4">
-                <span className="text-xs font-bold uppercase tracking-widest" style={{ color: T.textDim }}>Unsaved changes</span>
-                <button onClick={save} disabled={saving}
-                  className={"text-sm font-black uppercase tracking-widest px-8 py-3 rounded-full transition-all hover:scale-[1.02] disabled:opacity-50" + shimmer}
-                  style={{ color: T.buttonText, background: T.button, boxShadow: T.glow }}>
+                <span className="text-xs font-bold uppercase tracking-widest" style={{ color: roundOpen ? T.textDim : '#FF9B9B' }}>
+                  {roundOpen ? 'Unsaved changes' : '🔒 Lineups locked — changes won\'t save'}
+                </span>
+                <button onClick={save} disabled={saving || !roundOpen}
+                  className={"text-sm font-black uppercase tracking-widest px-8 py-3 rounded-full transition-all hover:scale-[1.02] disabled:opacity-50" + (roundOpen ? shimmer : '')}
+                  style={roundOpen
+                    ? { color: T.buttonText, background: T.button, boxShadow: T.glow }
+                    : { color: '#FF9B9B', background: 'transparent', border: '1px solid #FF6B6B' }}>
                   {saving ? 'Saving…' : 'Save Lineup Card'}
                 </button>
               </div>
