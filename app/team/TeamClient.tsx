@@ -298,6 +298,9 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         <span className="hidden sm:block w-12 text-right text-[11px] shrink-0" style={{ color: T.textDim }}>
           {c.stats.career_sb ?? 0}
         </span>
+        <span className="hidden sm:block w-14 text-right text-[11px] font-black shrink-0" style={{ color: T.text }}>
+          {c.stats.season_points ?? 0}
+        </span>
       </div>
     )
   }
@@ -449,6 +452,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               <span className="w-20 text-center text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Tier</span>
               <span className="w-20 text-center text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Bat Ave.</span>
               <span className="w-12 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>SB</span>
+              <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Pts</span>
             </div>
 
             {battingRows.map(s => <PlayerRow key={s.slot} s={s} showOrder={true} />)}
