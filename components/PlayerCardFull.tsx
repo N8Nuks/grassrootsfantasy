@@ -42,7 +42,7 @@ export default function PlayerCardFull({ player, grade, owned }: {
   const st = player.stats ?? {}
 
   const seasonRow: [string, string | number][] = [
-    ['BA', st.season_ba != null ? Number(st.season_ba).toFixed(3) : '.000'],
+    ['BA', st.season_ba != null ? Number(st.season_ba).toFixed(3) : '—'],
     ['HR', st.season_hr ?? 0],
     ['RBI', st.season_rbi ?? 0],
     ['SB', st.season_sb ?? 0],
@@ -55,6 +55,23 @@ export default function PlayerCardFull({ player, grade, owned }: {
     st.career_ip != null ? ['IP', st.career_ip] : null,
     st.career_wins != null ? ['W', st.career_wins] : null,
   ].filter(Boolean) as [string, string | number][]
+
+  function StatRow({ label, row, bright }: { label: string; row: [string, string | number][]; bright: boolean }) {
+    return (
+      <div className="text-center">
+        <p className="text-[9px] font-black uppercase tracking-[0.25em] mb-1.5"
+          style={{ color: bright ? meta.accent : T.textDim }}>{label}</p>
+        <div className="flex justify-center gap-5 flex-wrap" style={{ color: T.text }}>
+          {row.length ? row.map(([k, v]) => (
+            <span key={k} className="text-center">
+              <span className="block text-[9px] font-black uppercase tracking-widest" style={{ color: T.textDim }}>{k}</span>
+              <span className="block text-lg font-black" style={{ fontFamily: 'var(--font-heading)', color: bright ? T.text : T.textDim }}>{v}</span>
+            </span>
+          )) : <span className="text-xs" style={{ color: T.textDim }}>No prior stats</span>}
+        </div>
+      </div>
+    )
+  }
 
   return (
     // Outer tier frame
@@ -139,19 +156,14 @@ export default function PlayerCardFull({ player, grade, owned }: {
           )}
         </div>
 
-        {/* Stats band */}
-        <div style={{ flex: '0 0 auto', background: T.headerBg, borderTop: `1px solid ${meta.accent}40`, padding: '10px 14px 12px' }}>
-          <p className="text-[10px] font-black tracking-widest mb-2" style={{ color: meta.accent, textShadow: `0 0 8px ${meta.accent}70` }}>
+        {/* Stats band — centred, enlarged */}
+        <div style={{ flex: '0 0 auto', background: T.headerBg, borderTop: `1px solid ${meta.accent}40`, padding: '12px 14px 14px' }}>
+          <p className="text-[10px] font-black tracking-widest mb-3 text-center" style={{ color: meta.accent, textShadow: `0 0 8px ${meta.accent}70` }}>
             {player.positions.map(posLabel).join(' · ')}{player.speedStar ? ' · ★' : ''}
           </p>
-          <p className="text-[8px] font-black uppercase tracking-[0.25em] mb-1" style={{ color: meta.accent }}>2025/26 Season</p>
-          <div className="flex gap-3 text-[11px] flex-wrap mb-2" style={{ color: T.text }}>
-            {seasonRow.map(([k, v]) => <span key={k}>{k} <b>{v}</b></span>)}
-          </div>
-          <p className="text-[8px] font-black uppercase tracking-[0.25em] mb-1" style={{ color: T.textDim }}>Last 2 Seasons</p>
-          <div className="flex gap-3 text-[11px] flex-wrap" style={{ color: T.text }}>
-            {careerRow.length ? careerRow.map(([k, v]) => <span key={k}>{k} <b>{v}</b></span>)
-              : <span style={{ color: T.textDim }}>No prior stats</span>}
+          <div className="flex flex-col gap-3">
+            <StatRow label="2026/27 Season" row={seasonRow} bright={true} />
+            <StatRow label="Last 3 Seasons" row={careerRow} bright={false} />
           </div>
         </div>
       </div>
