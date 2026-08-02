@@ -24,7 +24,7 @@ export default async function AdminPhotosPage() {
   const { data: players, error } = await admin
     .from('players')
     .select('id, full_name, club_id, grade, photo_url')
-    .order('club').order('name')
+    .order('club_id').order('full_name')
 
   if (error) return <pre style={{ color: '#FF6B6B', padding: '120px 40px' }}>{JSON.stringify(error, null, 2)}</pre>
 
