@@ -52,6 +52,10 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
     if (data.overwriting > 0) addLog(`⚠ Round already had ${data.overwriting} stat rows — existing entries updated`)
     addLog(`Stats loaded: ${data.loaded} players. Unmatched names: ${data.unmatched?.length ?? 0}`)
     data.unmatched?.forEach((n: string) => addLog('  ⚠ no player match: ' + n))
+    if (data.warnings?.length) {
+      addLog(`Sanity check: ${data.warnings.length} warning(s)`)
+      data.warnings.forEach((w: string) => addLog('  ⚠ ' + w))
+    }
     addLog('Now scoring the round…')
     const score = await fetch('/api/score-round', {
       method: 'POST',

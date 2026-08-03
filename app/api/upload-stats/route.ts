@@ -68,10 +68,35 @@ export async function POST(request: Request) {
     rows.push({ player_id: playerId, round_id: round!.id, raw })
   }
 
+  // ── Sanity warnings (advisory only, nothing blocks) ──
+  const warnings: string[] = []
+  if (!header.includes('ab')) {
+    warnings.push('No "ab" column — season batting averages will not accrue from this round')
+  }
+  const { data: clubLookup } = await admin.from('players').select('id, clubs(name)').eq('grade', grade)
+  const clubOf = new Map((clubLookup ?? []).map(p => [p.id, (p as unknown as { clubs: { name: string } | null }).clubs?.name ?? '?']))
+  const winsByClub = new Map<string, string[]>()
+  const nameOf = new Map((players ?? []).map(p => [p.id, p.full_name]))
+  for (const r of rows) {
+    const raw = r.raw
+    const hits = (raw.singles ?? 0) + (raw.doubles ?? 0) + (raw.triples ?? 0) + (raw.hr ?? 0)
+    const pname = nameOf.get(r.player_id) ?? '?'
+    if (raw.ab != null && hits > raw.ab) warnings.push(`${pname}: ${hits} hits from ${raw.ab} at-bats`)
+    if ((raw.hr ?? 0) > 4) warnings.push(`${pname}: ${raw.hr} HR in one round`)
+    if ((raw.sb ?? 0) > 5) warnings.push(`${pname}: ${raw.sb} SB in one round`)
+    if ((raw.win ?? 0) > 0) {
+      const club = clubOf.get(r.player_id) ?? '?'
+      winsByClub.set(club, [...(winsByClub.get(club) ?? []), pname])
+    }
+  }
+  for (const [club, names] of winsByClub) {
+    if (names.length > 1) warnings.push(`${club} has ${names.length} pitching Ws this round (${names.join(', ')}) — one WP per winning team per game`)
+  }
+
   if (rows.length) {
     const { error } = await admin.from('player_stats').upsert(rows, { onConflict: 'player_id,round_id' })
     if (error) return NextResponse.json({ error: 'Stats insert failed: ' + error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ loaded: rows.length, unmatched, round_id: round!.id, overwriting })
+  return NextResponse.json({ loaded: rows.length, unmatched, round_id: round!.id, overwriting, warnings })
 }
