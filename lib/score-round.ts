@@ -64,12 +64,15 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
   const aggByPlayer = new Map<string, Record<string, number>>()
   for (const s of allStats ?? []) {
     const line = s.raw as StatLine
-    const a = aggByPlayer.get(s.player_id) ?? { ab: 0, hits: 0, hr: 0, rbi: 0, sb: 0 }
+    const a = aggByPlayer.get(s.player_id) ?? { ab: 0, hits: 0, hr: 0, rbi: 0, sb: 0, wins: 0, k_pit: 0, ip: 0 }
     a.ab += Number(line.ab) || 0
     a.hits += (Number(line.singles) || 0) + (Number(line.doubles) || 0) + (Number(line.triples) || 0) + (Number(line.hr) || 0)
     a.hr += Number(line.hr) || 0
     a.rbi += Number(line.rbi) || 0
     a.sb += Number(line.sb) || 0
+    a.wins += Number(line.win) || 0
+    a.k_pit += Number(line.k_pit) || 0
+    a.ip += Number(line.ip) || 0
     aggByPlayer.set(s.player_id, a)
   }
 
@@ -81,6 +84,9 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
       season_hr: a.hr,
       season_rbi: a.rbi,
       season_sb: a.sb,
+      season_wins: a.wins,
+      season_k_pit: a.k_pit,
+      season_ip: a.ip,
       season_points: pointsByPlayer.get(playerId) ?? 0,
     }
     if (a.ab > 0) seasonStats.season_ba = a.hits / a.ab

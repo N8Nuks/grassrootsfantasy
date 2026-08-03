@@ -10,6 +10,8 @@ const CATS: { key: string; label: string; format?: 'ba' }[] = [
   { key: 'season_rbi', label: 'RBI' },
   { key: 'season_sb', label: 'Stolen Bases' },
   { key: 'season_ba', label: 'Batting Average', format: 'ba' },
+  { key: 'season_wins', label: 'Pitching Wins' },
+  { key: 'season_k_pit', label: 'Pitching Strikeouts' },
 ]
 
 export default async function Leaders({ searchParams }: { searchParams: Promise<{ grade?: string }> }) {
