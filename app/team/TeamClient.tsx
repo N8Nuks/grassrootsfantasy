@@ -297,10 +297,10 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           </span>
         </span>
         <span className="hidden sm:block w-20 text-center text-[11px] shrink-0" style={{ color: T.textDim }}>
-          {c.stats.career_ba != null ? Number(c.stats.career_ba).toFixed(3) : '—'}
+          {c.stats.season_ba != null ? Number(c.stats.season_ba).toFixed(3) : '—'}
         </span>
         <span className="hidden sm:block w-12 text-right text-[11px] shrink-0" style={{ color: T.textDim }}>
-          {c.stats.career_sb ?? 0}
+          {c.stats.season_sb ?? 0}
         </span>
         <span className="hidden sm:block w-14 text-right text-[11px] shrink-0" style={{ color: T.textDim }}>
           {lastRoundPoints[c.playerId] ?? '—'}
@@ -612,7 +612,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                       <p className="text-[10px]" style={{ color: T.textDim }}>{c.club} · {c.positions.map(p => SLOT_LABELS[p] ?? p).join(' ')}</p>
                     </div>
                     {currentSlot && <span className="text-[9px] uppercase" style={{ color: T.textDim }}>{SLOT_LABELS[currentSlot] ?? currentSlot}</span>}
-                    <span className="text-[11px]" style={{ color: T.textDim }}>{c.stats.career_ba != null ? Number(c.stats.career_ba).toFixed(3) : ''}</span>
+                    <span className="text-[11px]" style={{ color: T.textDim }}>{c.stats.season_ba != null ? Number(c.stats.season_ba).toFixed(3) : ''}</span>
                   </button>
                 )
               })}

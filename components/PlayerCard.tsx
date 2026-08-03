@@ -88,13 +88,13 @@ export default function PlayerCard({ player, grade, owned, chip, onClick }: {
         <p className="text-[10px] truncate" style={{ color: T.textDim }}>
           {player.club ? `${player.club} · ` : ''}{player.positions.map(posLabel).join(' ')}{player.speedStar ? ' · ★' : ''}
         </p>
-        {(st.career_ba != null || st.career_hr != null || st.career_sb != null) && (
-          <div className="flex gap-3 text-[10px] mt-1.5" style={{ color: T.textDim }}>
-            {st.career_ba != null && <span>BA <b>{Number(st.career_ba).toFixed(3)}</b></span>}
-            {st.career_hr != null && <span>HR <b>{st.career_hr}</b></span>}
-            {st.career_sb != null && <span>SB <b>{st.career_sb}</b></span>}
-          </div>
-        )}
+        {/* 2026/27 season line — points lead */}
+        <div className="flex gap-3 text-[10px] mt-1.5 items-center" style={{ color: T.textDim }}>
+          <span className="font-black" style={{ color: meta.accent }}>{st.season_points ?? 0} pts</span>
+          {st.season_ba != null && <span>BA <b>{Number(st.season_ba).toFixed(3)}</b></span>}
+          <span>HR <b>{st.season_hr ?? 0}</b></span>
+          <span>SB <b>{st.season_sb ?? 0}</b></span>
+        </div>
       </div>
     </button>
   )
