@@ -44,7 +44,23 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
       <Nav />
-      <section className="flex-1 px-6" style={{ paddingTop: '90px', paddingBottom: '100px' }}>
+      {/* Club crest atmosphere — oversized, faint, bleeding off the corner */}
+      <div className="fixed pointer-events-none" style={{
+        top: '4%',
+        right: '-18%',
+        width: '68vmin',
+        height: '68vmin',
+        borderRadius: '9999px',
+        overflow: 'hidden',
+        opacity: 0.05,
+        filter: 'saturate(0.6)',
+        maskImage: 'radial-gradient(circle, black 55%, transparent 78%)',
+        WebkitMaskImage: 'radial-gradient(circle, black 55%, transparent 78%)',
+      }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={`/clubs/${clubSlug}.jpg`} alt="" className="w-full h-full object-cover" />
+      </div>
+      <section className="relative flex-1 px-6" style={{ paddingTop: '90px', paddingBottom: '100px' }}>
         <div style={{ maxWidth: '980px', marginLeft: 'auto', marginRight: 'auto' }}>
           <a href="/hall"
             className="fixed z-40 text-[11px] font-bold uppercase tracking-widest transition-all hover:tracking-[0.2em]"
