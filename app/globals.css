@@ -211,3 +211,22 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+/* ── Hall: club crest atmosphere ── */
+.gf-crest-bg {
+  /* Mobile: corner accent (looks right on narrow screens) */
+  top: 4%;
+  right: -18%;
+  width: 68vmin;
+  height: 68vmin;
+}
+@media (min-width: 768px) {
+  /* Desktop: full-hog centred behind the grid */
+  .gf-crest-bg {
+    top: 50%;
+    left: 50%;
+    right: auto;
+    transform: translate(-50%, -46%);
+    width: 92vmin;
+    height: 92vmin;
+  }
+}

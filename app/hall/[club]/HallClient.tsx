@@ -45,11 +45,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
     <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
       <Nav />
       {/* Club crest atmosphere — oversized, faint, bleeding off the corner */}
-      <div className="fixed pointer-events-none" style={{
-        top: '4%',
-        right: '-18%',
-        width: '68vmin',
-        height: '68vmin',
+      <div className="fixed pointer-events-none gf-crest-bg" style={{
         borderRadius: '9999px',
         overflow: 'hidden',
         opacity: 0.05,
