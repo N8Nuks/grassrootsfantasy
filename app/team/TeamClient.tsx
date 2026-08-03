@@ -72,7 +72,7 @@ function SoftballSwatch({ colors, seam, selected, ringColor }: {
   )
 }
 
-export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen, thisRoundPoints, lastRoundPoints, thisRoundScored }: {
+export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen, thisRoundPoints, lastRoundPoints, thisRoundLabel, lastRoundLabel }: {
   teamName: string
   clubName: string
   cards: TeamCard[]
@@ -86,7 +86,8 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   roundOpen: boolean
   thisRoundPoints: Record<string, number>
   lastRoundPoints: Record<string, number>
-  thisRoundScored: boolean
+  thisRoundLabel: string | null
+  lastRoundLabel: string | null
 }) {
   const T = theme(grade, siteTheme)
   const accentBright = T.electric ?? T.accent
@@ -304,8 +305,8 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         <span className="hidden sm:block w-14 text-right text-[11px] shrink-0" style={{ color: T.textDim }}>
           {lastRoundPoints[c.playerId] ?? '—'}
         </span>
-        <span className="hidden sm:block w-14 text-right text-[11px] shrink-0" style={{ color: thisRoundScored ? T.text : T.textDim }}>
-          {thisRoundScored ? (thisRoundPoints[c.playerId] ?? '—') : '—'}
+        <span className="hidden sm:block w-14 text-right text-[11px] shrink-0" style={{ color: T.text }}>
+          {thisRoundPoints[c.playerId] ?? '—'}
         </span>
         <span className="hidden sm:block w-14 text-right text-[11px] font-black shrink-0" style={{ color: T.text }}>
           {c.stats.season_points ?? 0}
@@ -461,8 +462,8 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               <span className="w-20 text-center text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Tier</span>
               <span className="w-20 text-center text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Bat Ave.</span>
               <span className="w-12 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>SB</span>
-              <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Last Rd</span>
-              <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>This Rd</span>
+              <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>{lastRoundLabel ?? 'Prev Rd'}</span>
+              <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>{thisRoundLabel ?? 'Last Rd'}</span>
               <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Season</span>
             </div>
 

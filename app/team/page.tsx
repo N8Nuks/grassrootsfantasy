@@ -36,7 +36,8 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
   let t3Claimed = false
   let thisRoundPoints: Record<string, number> = {}
   let lastRoundPoints: Record<string, number> = {}
-  let thisRoundScored = false
+  let thisRoundLabel: string | null = null
+  let lastRoundLabel: string | null = null
 
   // Pre-Season Pack: released for this grade AND not yet opened by this user?
   const { data: t2Config } = await supabase
@@ -58,28 +59,30 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
       .eq('round_id', latestRound.id).eq('unavailable', true)
     unavailableIds = (avail ?? []).map(a => a.player_id)
 
-    // This round's player scores (empty until scored/visible)
-    const { data: thisScores } = await supabase
-      .from('player_scores').select('player_id, points')
-      .eq('round_id', latestRound.id)
-    if (thisScores?.length) {
-      thisRoundScored = true
-      for (const s of thisScores) thisRoundPoints[s.player_id] = Number(s.points)
-    }
-
-    // Previous round's player scores — most recent prior round that has visible scores
-    const { data: prevRounds } = await supabase
-      .from('rounds').select('id')
-      .eq('grade', grade).lt('round_number', latestRound.round_number)
-      .order('round_number', { ascending: false }).limit(4)
-    for (const pr of prevRounds ?? []) {
-      const { data: lastScores } = await supabase
+    // Two most recent rounds with visible scores (includes the latest if scored)
+    const { data: recentRounds } = await supabase
+      .from('rounds').select('id, round_number')
+      .eq('grade', grade).lte('round_number', latestRound.round_number)
+      .order('round_number', { ascending: false }).limit(6)
+    const scoredRounds: { round_number: number; points: Record<string, number> }[] = []
+    for (const rr of recentRounds ?? []) {
+      if (scoredRounds.length >= 2) break
+      const { data: scores } = await supabase
         .from('player_scores').select('player_id, points')
-        .eq('round_id', pr.id)
-      if (lastScores?.length) {
-        for (const s of lastScores) lastRoundPoints[s.player_id] = Number(s.points)
-        break
+        .eq('round_id', rr.id)
+      if (scores?.length) {
+        const pts: Record<string, number> = {}
+        for (const s of scores) pts[s.player_id] = Number(s.points)
+        scoredRounds.push({ round_number: rr.round_number, points: pts })
       }
+    }
+    if (scoredRounds[0]) {
+      thisRoundPoints = scoredRounds[0].points
+      thisRoundLabel = `Rd ${scoredRounds[0].round_number}`
+    }
+    if (scoredRounds[1]) {
+      lastRoundPoints = scoredRounds[1].points
+      lastRoundLabel = `Rd ${scoredRounds[1].round_number}`
     }
   }
 
@@ -115,7 +118,8 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
           roundOpen={latestRound?.status === 'open'}
           thisRoundPoints={thisRoundPoints}
           lastRoundPoints={lastRoundPoints}
-          thisRoundScored={thisRoundScored}
+          thisRoundLabel={thisRoundLabel}
+          lastRoundLabel={lastRoundLabel}
         />
       </section>
       <Footer />
