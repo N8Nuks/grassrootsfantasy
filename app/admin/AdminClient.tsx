@@ -100,7 +100,7 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
   const [rcLog, setRcLog] = useState<string[]>([])
   const [rcBusy, setRcBusy] = useState(false)
 
-  async function roundControl(g: 'mens' | 'womens', action: 'open' | 'lock' | 'provisional' | 'status') {
+  async function roundControl(g: 'mens' | 'womens', action: 'open' | 'lock' | 'provisional' | 'status' | 'advance') {
     setRcBusy(true)
     const r = await fetch('/api/round-control', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade: g, action }) })
     const data = await r.json()
@@ -295,6 +295,9 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
               <button onClick={() => roundControl('mens', 'lock')} disabled={rcBusy}
                 className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
                 style={{ color: P.red, border: `1px solid ${P.red}70`, padding: '16px 0' }}>Lock Men&apos;s</button>
+              <button onClick={() => { if (confirm('Start the next Men\'s round? This opens a new week and a fresh Weekly Pack for everyone.')) roundControl('mens', 'advance') }} disabled={rcBusy}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
+                style={{ color: P.purple, border: `1px solid ${P.purple}70`, padding: '16px 0' }}>Next Round M</button>
               <button onClick={() => roundControl('mens', 'provisional')} disabled={rcBusy}
                 className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
                 style={{ color: P.orange, border: `1px solid ${P.orange}70`, padding: '16px 0' }}>Scores Live M</button>
@@ -307,6 +310,9 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
               <button onClick={() => roundControl('womens', 'lock')} disabled={rcBusy}
                 className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
                 style={{ color: P.red, border: `1px solid ${P.red}70`, padding: '16px 0' }}>Lock Women&apos;s</button>
+              <button onClick={() => { if (confirm('Start the next Women\'s round? This opens a new week and a fresh Weekly Pack for everyone.')) roundControl('womens', 'advance') }} disabled={rcBusy}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
+                style={{ color: P.purple, border: `1px solid ${P.purple}70`, padding: '16px 0' }}>Next Round W</button>
               <button onClick={() => roundControl('womens', 'provisional')} disabled={rcBusy}
                 className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
                 style={{ color: P.orange, border: `1px solid ${P.orange}70`, padding: '16px 0' }}>Scores Live W</button>

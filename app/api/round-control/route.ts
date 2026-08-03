@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     .from('profiles').select('is_admin').eq('id', user.id).single()
   if (!profile?.is_admin) return NextResponse.json({ error: 'Not authorised' }, { status: 403 })
 
-  const { grade, action } = await req.json() as { grade: 'mens' | 'womens'; action: 'open' | 'lock' | 'provisional' | 'status' }
+  const { grade, action } = await req.json() as { grade: 'mens' | 'womens'; action: 'open' | 'lock' | 'provisional' | 'status' | 'advance' }
   const admin = createAdminClient()
 
   // Latest round for the grade
@@ -22,6 +22,14 @@ export async function POST(req: Request) {
 
   if (action === 'status') {
     return NextResponse.json({ round: round ?? null })
+  }
+
+  if (action === 'advance') {
+    const nextNumber = (round?.round_number ?? 0) + 1
+    const { error: advErr } = await admin.from('rounds')
+      .insert({ grade, round_number: nextNumber, lock_at: new Date().toISOString(), status: 'open' })
+    if (advErr) return NextResponse.json({ error: 'Advance failed: ' + advErr.message }, { status: 500 })
+    return NextResponse.json({ ok: true, round_number: nextNumber, status: 'open' })
   }
 
   if (!round) return NextResponse.json({ error: 'No rounds exist for this grade yet' }, { status: 400 })
