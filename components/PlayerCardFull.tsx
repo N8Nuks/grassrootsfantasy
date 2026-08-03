@@ -31,12 +31,13 @@ export type FullCardPlayer = {
   photoUrl?: string | null
 }
 
-export default function PlayerCardFull({ player, grade, owned }: {
+export default function PlayerCardFull({ player, grade, owned, siteTheme }: {
   player: FullCardPlayer
   grade: Grade
   owned: boolean
+  siteTheme?: string
 }) {
-  const T = theme(grade)
+  const T = theme(grade, siteTheme)
   const meta = TIER_META[player.tier] ?? TIER_META.common
   const tint = CLUB_TINTS[player.club] ?? '#E8D5A3'
   const st = player.stats ?? {}

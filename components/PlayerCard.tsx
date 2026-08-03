@@ -29,14 +29,15 @@ export type PlayerCardData = {
   photoUrl?: string | null
 }
 
-export default function PlayerCard({ player, grade, owned, chip, onClick }: {
+export default function PlayerCard({ player, grade, owned, chip, onClick, siteTheme }: {
   player: PlayerCardData
   grade: Grade
   owned: boolean            // owned = lit face; unowned = greyed
   chip?: string             // optional corner chip, e.g. "IN P(B)"
   onClick?: () => void
+  siteTheme?: string
 }) {
-  const T = theme(grade)
+  const T = theme(grade, siteTheme)
   const meta = TIER_META[player.tier] ?? TIER_META.common
   const tint = player.club ? (CLUB_TINTS[player.club] ?? '#E8D5A3') : '#E8D5A3'
   const st = player.stats ?? {}

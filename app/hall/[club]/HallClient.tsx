@@ -80,6 +80,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
                 player={{ id: p.id, name: p.name, tier: p.tier, positions: p.positions, speedStar: p.speedStar, club: clubName, stats: p.stats, photoUrl: p.photoUrl }}
                 grade={grade}
                 owned={owned.has(p.id)}
+                siteTheme={siteTheme}
                 onClick={() => setDetail(p)}
               />
             ))}
@@ -94,6 +95,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
               player={{ id: detail.id, name: detail.name, tier: detail.tier, positions: detail.positions, club: clubName, speedStar: detail.speedStar, badges: detail.badges, stats: detail.stats, photoUrl: detail.photoUrl }}
               grade={grade}
               owned={owned.has(detail.id)}
+              siteTheme={siteTheme}
             />
             <button onClick={() => setDetail(null)} className="w-full text-center text-xs font-bold uppercase tracking-widest mt-4" style={{ color: T.textDim }}>Close</button>
           </div>

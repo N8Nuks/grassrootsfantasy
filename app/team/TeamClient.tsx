@@ -581,6 +581,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                   player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats, photoUrl: c.photoUrl }}
                   grade={grade}
                   owned={true}
+                  siteTheme={siteTheme}
                   chip={inLineup ? `IN ${SLOT_LABELS[slot ?? ''] ?? ''}` : undefined}
                   onClick={() => setDetailCard(c)}
                 />
@@ -648,6 +649,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                     player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats, photoUrl: c.photoUrl }}
                     grade={grade}
                     owned={true}
+                    siteTheme={siteTheme}
                   />
                 </div>
                 <div>
