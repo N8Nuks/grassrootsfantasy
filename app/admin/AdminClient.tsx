@@ -282,10 +282,26 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
             <LogBox lines={scoreLog} error={scoreLog[0]?.startsWith('ERROR')} />
           </Panel>
 
-          {/* Round Control */}
+          .{/* Round Control */}
           <Panel number="3" title="Round Control" accent={P.red}
             sub="Open lets users save lineups for the latest round; Lock rejects saves. Check shows the current status.">
-            <div className="grid grid-cols-3 gap-3">
+            {/* The weekly ritual */}
+            <div className="rounded-xl" style={{ background: P.ink, border: `1px solid ${P.purple}30`, padding: '16px 20px', marginBottom: '20px' }}>
+              <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: P.dim, marginBottom: '12px' }}>The weekly ritual</p>
+              <div className="flex items-center gap-2 flex-wrap text-[11px] font-bold">
+                <span className="rounded-full px-3 py-1.5" style={{ color: P.green, border: `1px solid ${P.green}60` }}>Tue · Open</span>
+                <span style={{ color: P.dim }}>→</span>
+                <span className="rounded-full px-3 py-1.5" style={{ color: P.red, border: `1px solid ${P.red}60` }}>Fri 4pm · Lock</span>
+                <span style={{ color: P.dim }}>→</span>
+                <span className="rounded-full px-3 py-1.5" style={{ color: P.purple, border: `1px solid ${P.purple}60` }}>Sat · Upload &amp; Score</span>
+                <span style={{ color: P.dim }}>→</span>
+                <span className="rounded-full px-3 py-1.5" style={{ color: P.orange, border: `1px solid ${P.orange}60` }}>Scores go live</span>
+                <span style={{ color: P.dim }}>→</span>
+                <span className="rounded-full px-3 py-1.5" style={{ color: P.blue, border: `1px solid ${P.blue}60` }}>Tue · Next Round</span>
+              </div>
+            </div>
+            <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: P.green, marginBottom: '10px' }}>Men&apos;s</p>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3" style={{ marginBottom: '20px' }}>
               <button onClick={() => roundControl('mens', 'status')} disabled={rcBusy}
                 className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
                 style={{ color: P.dim, border: `1px solid ${P.purple}40`, padding: '16px 0' }}>Check Men&apos;s</button>
@@ -301,6 +317,9 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
               <button onClick={() => roundControl('mens', 'provisional')} disabled={rcBusy}
                 className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
                 style={{ color: P.orange, border: `1px solid ${P.orange}70`, padding: '16px 0' }}>Scores Live M</button>
+            </div>
+            <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: P.blue, marginBottom: '10px' }}>Women&apos;s</p>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               <button onClick={() => roundControl('womens', 'status')} disabled={rcBusy}
                 className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
                 style={{ color: P.dim, border: `1px solid ${P.purple}40`, padding: '16px 0' }}>Check Women&apos;s</button>
@@ -321,7 +340,7 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
           </Panel>
 
           {/* 4 · Pre-Season Packs */}
-          <Panel number="3" title="Pre-Season Packs" accent={P.orange}
+          <Panel number="4" title="Pre-Season Packs" accent={P.orange}
             sub="Release lets users open their T2 with the full reveal. Force-open bulk-deals any still unopened — run it 12 hours before Round 1 lock.">
             <div className="grid grid-cols-2 gap-3">
               <button onClick={() => releaseT2('mens')} disabled={t2Busy}
@@ -341,7 +360,7 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
           </Panel>
 
           {/* 4 · Availability */}
-          <Panel number="4" title="Player Availability" accent={P.green}
+          <Panel number="5" title="Player Availability" accent={P.green}
             sub="Mark players unavailable for a round — users see it on their team cards immediately.">
             <div className="flex gap-4" style={{ marginBottom: '16px' }}>
               <select value={availGrade} onChange={e => setAvailGrade(e.target.value as 'mens' | 'womens')}
