@@ -20,6 +20,9 @@ export async function POST(request: Request) {
   if (round && round.status === 'confirmed') {
     return NextResponse.json({ error: `Round ${round_number} is confirmed and locked — stats cannot be changed` }, { status: 400 })
   }
+  if (round && round.status === 'open') {
+    return NextResponse.json({ error: `Round ${round_number} is still open — lock it in Round Control before scoring` }, { status: 400 })
+  }
   let overwriting = 0
   if (round) {
     const { count } = await admin.from('player_stats').select('id', { count: 'exact', head: true }).eq('round_id', round.id)

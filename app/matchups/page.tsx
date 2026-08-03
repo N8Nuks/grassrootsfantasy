@@ -153,6 +153,17 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
   }
 
   const { data: teams } = await supabase.from('public_teams').select('id, team_name')
+
+  // Season totals for the two H2H teams (from public user_scores)
+  const seasonTotals = new Map<string, number>()
+  if (myMatchup) {
+    const { data: allScores } = await supabase
+      .from('user_scores').select('owner_id, points').eq('grade', grade)
+      .in('owner_id', [myMatchup.user_a, myMatchup.user_b])
+    for (const s of allScores ?? []) {
+      seasonTotals.set(s.owner_id, (seasonTotals.get(s.owner_id) ?? 0) + Number(s.points))
+    }
+  }
   const nameOf = (id: string) =>
     (teams ?? []).find(t => t.id === id)?.team_name ?? 'Unknown team'
 
@@ -192,6 +203,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
                 <div className="relative z-10 flex flex-col gap-3 sm:grid sm:grid-cols-3 items-center" style={{ padding: '32px 24px' }}>
                   <div className="text-center" style={{ opacity: scored && !aWins ? 0.55 : 1 }}>
                     <p className="text-lg sm:text-2xl font-black truncate px-2" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{nameOf(myMatchup.user_a)}</p>
+                    <p className="text-[10px] uppercase tracking-widest mt-1" style={{ color: T.textDim }}>Season: {seasonTotals.get(myMatchup.user_a) ?? 0} pts</p>
                     {aWins && <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-1" style={{ color: '#3FBF63' }}>Winner</p>}
                   </div>
                   <div className="text-center">
@@ -203,6 +215,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
                   </div>
                   <div className="text-center" style={{ opacity: scored && !bWins ? 0.55 : 1 }}>
                     <p className="text-lg sm:text-2xl font-black truncate px-2" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{nameOf(myMatchup.user_b)}</p>
+                    <p className="text-[10px] uppercase tracking-widest mt-1" style={{ color: T.textDim }}>Season: {seasonTotals.get(myMatchup.user_b) ?? 0} pts</p>
                     {bWins && <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-1" style={{ color: '#3FBF63' }}>Winner</p>}
                   </div>
                 </div>
