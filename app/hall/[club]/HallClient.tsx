@@ -65,7 +65,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
           <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
             {sorted.map(p => (
               <PlayerCard key={p.id}
-                player={{ id: p.id, name: p.name, tier: p.tier, positions: p.positions, speedStar: p.speedStar, stats: p.stats, photoUrl: p.photoUrl }}
+                player={{ id: p.id, name: p.name, tier: p.tier, positions: p.positions, speedStar: p.speedStar, club: clubName, stats: p.stats, photoUrl: p.photoUrl }}
                 grade={grade}
                 owned={owned.has(p.id)}
                 onClick={() => setDetail(p)}
