@@ -41,10 +41,10 @@ export default function Nav() {
     ...(!loggedIn ? [{ label: 'How it works', href: '/how' }] : []),
     ...(loggedIn ? [
       { label: 'My Team', href: '/team', color: '#4DA6FF', glow: '0 0 8px #4DA6FF, 0 0 18px #4DA6FF90, 0 0 30px #4DA6FF50', lightning: true },
-      { label: 'Athlete Hall', href: '/hall', color: '#C8CDD4', glow: '0 0 10px #E6EAF080, 0 0 20px #C8CDD440' },
       { label: 'Matchups', href: '/matchups', color: '#F5F1E8' },
-      { label: 'Leaders', href: '/leaders', color: '#FFD700' },
       { label: 'Ladder', href: '/ladder', color: '#F5F1E8' },
+      { label: 'Athlete Hall', href: '/hall', color: '#3FBF63', glow: '0 0 10px #3FBF6390, 0 0 22px #3FBF6340' },
+      { label: 'Leaders', href: '/leaders', color: '#FFD700' },
     ] : []),
   ]
 
