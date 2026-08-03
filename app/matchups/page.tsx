@@ -26,12 +26,13 @@ type LineupRec = {
 }
 type Palette = ReturnType<typeof theme>
 
-function TeamCard({ title, slots, T, winner, pointsByPlayer }: {
+function TeamCard({ title, slots, T, winner, pointsByPlayer, pointsRoundLabel }: {
   title: string
   slots: SlotRow[]
   T: Palette
   winner: boolean
   pointsByPlayer: Map<string, number> | null
+  pointsRoundLabel: string | null
 }) {
   const sorted = slots.filter(s => !s.slot.startsWith('RES'))
     .sort((a, b) => slotRank(a.slot) - slotRank(b.slot))
@@ -46,7 +47,9 @@ function TeamCard({ title, slots, T, winner, pointsByPlayer }: {
           <p className="text-xs font-black uppercase tracking-[0.2em] truncate" style={{ color: T.accent }}>{title}</p>
         </div>
         {pointsByPlayer && (
-          <span className="w-14 text-center text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Points</span>
+          <span className="w-14 text-center text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>
+            {pointsRoundLabel ?? 'Points'}
+          </span>
         )}
       </div>
       {sorted.map((s, i) => {
@@ -58,8 +61,8 @@ function TeamCard({ title, slots, T, winner, pointsByPlayer }: {
             <span className="flex-1 min-w-0 text-sm font-bold truncate" style={{ color: T.text }}>
               {s.cards?.players?.full_name ?? '—'}
             </span>
-            {pts != null && (
-              <span className="w-14 text-center text-sm font-black shrink-0" style={{ color: T.accent }}>{pts}</span>
+            {pointsByPlayer && (
+              <span className="w-14 text-center text-sm font-black shrink-0" style={{ color: pts != null ? T.accent : T.textDim }}>{pts ?? '—'}</span>
             )}
           </div>
         )
@@ -95,6 +98,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
   let lineupA: LineupRec | null = null
   let lineupB: LineupRec | null = null
   let pointsByPlayer: Map<string, number> | null = null
+  let pointsRoundNumber: number | null = null
 
   if (round) {
     await supabase.rpc('pair_round', { p_round_id: round.id })
@@ -119,15 +123,29 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
       lineupA = latest(myMatchup.user_a)
       lineupB = latest(myMatchup.user_b)
 
-      if (myMatchup.score_a != null) {
-        const ids = [...(lineupA?.lineup_slots ?? []), ...(lineupB?.lineup_slots ?? [])]
-          .map(s => s.cards?.player_id).filter(Boolean) as string[]
-        if (ids.length) {
-          const { data: pscores } = await supabase
-            .from('player_scores').select('player_id, points')
-            .eq('round_id', round.id).in('player_id', ids)
-          if (pscores?.length) {
-            pointsByPlayer = new Map(pscores.map(p => [p.player_id, Number(p.points)]))
+      const ids = [...(lineupA?.lineup_slots ?? []), ...(lineupB?.lineup_slots ?? [])]
+        .map(s => s.cards?.player_id).filter(Boolean) as string[]
+      if (ids.length) {
+        const { data: pscores } = await supabase
+          .from('player_scores').select('player_id, points')
+          .eq('round_id', round.id).in('player_id', ids)
+        if (pscores?.length) {
+          pointsByPlayer = new Map(pscores.map(p => [p.player_id, Number(p.points)]))
+          pointsRoundNumber = round.round_number
+        } else {
+          // Current round not scored/visible yet — fall back to the previous round
+          const { data: prevRound } = await supabase
+            .from('rounds').select('id, round_number')
+            .eq('grade', grade).lt('round_number', round.round_number)
+            .order('round_number', { ascending: false }).limit(1).maybeSingle()
+          if (prevRound) {
+            const { data: prevScores } = await supabase
+              .from('player_scores').select('player_id, points')
+              .eq('round_id', prevRound.id).in('player_id', ids)
+            if (prevScores?.length) {
+              pointsByPlayer = new Map(prevScores.map(p => [p.player_id, Number(p.points)]))
+              pointsRoundNumber = prevRound.round_number
+            }
           }
         }
       }
@@ -191,8 +209,8 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
               </div>
 
               <div className="flex flex-col sm:flex-row gap-6 mb-12">
-                <TeamCard title={nameOf(myMatchup.user_a)} slots={lineupA?.lineup_slots ?? []} T={T} winner={!!aWins} pointsByPlayer={pointsByPlayer} />
-                <TeamCard title={nameOf(myMatchup.user_b)} slots={lineupB?.lineup_slots ?? []} T={T} winner={!!bWins} pointsByPlayer={pointsByPlayer} />
+                <TeamCard title={nameOf(myMatchup.user_a)} slots={lineupA?.lineup_slots ?? []} T={T} winner={!!aWins} pointsByPlayer={pointsByPlayer} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber} Pts` : null} />
+                <TeamCard title={nameOf(myMatchup.user_b)} slots={lineupB?.lineup_slots ?? []} T={T} winner={!!bWins} pointsByPlayer={pointsByPlayer} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber} Pts` : null} />
               </div>
             </>
           )}
