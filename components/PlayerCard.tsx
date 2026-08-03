@@ -131,10 +131,13 @@ export default function PlayerCard({ player, grade, owned, chip, onClick }: {
           <p className="text-[9px] truncate" style={{ color: T.textDim, marginBottom: '3px' }}>
             {player.positions.map(posLabel).join(' ')}{player.speedStar ? ' · ★' : ''}
           </p>
-          <div className="flex gap-2.5 text-[10px] items-center" style={{ color: T.textDim }}>
+          <div className="flex gap-2.5 text-[10px] items-center flex-wrap" style={{ color: T.textDim }}>
             <span className="font-black" style={{ color: meta.accent }}>{st.season_points ?? 0} pts</span>
             {st.season_ba != null && <span>BA <b>{Number(st.season_ba).toFixed(3)}</b></span>}
             <span>HR <b>{st.season_hr ?? 0}</b></span>
+            <span>RBI <b>{st.season_rbi ?? 0}</b></span>
+            <span>SB <b>{st.season_sb ?? 0}</b></span>
+            {(st.season_wins ?? 0) > 0 && <span>W <b>{st.season_wins}</b></span>}
           </div>
         </div>
       </div>
