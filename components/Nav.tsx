@@ -77,19 +77,15 @@ export default function Nav() {
               style={boxLink('/leagues', '#39FF6A')}>
               Leagues
             </a>
+            {isAdmin && (
+              <a href="/admin"
+                className="text-xs font-bold uppercase tracking-widest px-4 py-2 transition-all hover:scale-[1.03]"
+                style={boxLink('/admin', ADMIN_RED)}>
+                Admin
+              </a>
+            )}
           </div>
         </div>
-
-        {/* Centre: Admin only */}
-        {isAdmin && (
-          <div className="hidden md:block absolute left-1/2 -translate-x-1/2">
-            <a href="/admin"
-              className="text-xs font-bold uppercase tracking-widest px-4 py-2 transition-all hover:scale-[1.03]"
-              style={boxLink('/admin', ADMIN_RED)}>
-              Admin
-            </a>
-          </div>
-        )}
 
         {/* Right: page links + auth */}
         <div className="hidden md:flex items-center gap-10 lg:gap-14" style={{ paddingRight: '24px' }}>
