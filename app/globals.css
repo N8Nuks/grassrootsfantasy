@@ -200,3 +200,14 @@ a { color: inherit; text-decoration: none; }
   100% { opacity: 1; transform: translateY(0); }
 }
 .gf-banner-in { animation: gf-banner-in 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.1) both; }
+
+/* ── Number inputs: no spinner arrows (type, don't scroll) ── */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
