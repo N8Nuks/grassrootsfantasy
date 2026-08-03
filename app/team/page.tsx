@@ -67,16 +67,19 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
       for (const s of thisScores) thisRoundPoints[s.player_id] = Number(s.points)
     }
 
-    // Previous round's player scores
-    const { data: prevRound } = await supabase
+    // Previous round's player scores — most recent prior round that has visible scores
+    const { data: prevRounds } = await supabase
       .from('rounds').select('id')
       .eq('grade', grade).lt('round_number', latestRound.round_number)
-      .order('round_number', { ascending: false }).limit(1).maybeSingle()
-    if (prevRound) {
+      .order('round_number', { ascending: false }).limit(4)
+    for (const pr of prevRounds ?? []) {
       const { data: lastScores } = await supabase
         .from('player_scores').select('player_id, points')
-        .eq('round_id', prevRound.id)
-      for (const s of lastScores ?? []) lastRoundPoints[s.player_id] = Number(s.points)
+        .eq('round_id', pr.id)
+      if (lastScores?.length) {
+        for (const s of lastScores) lastRoundPoints[s.player_id] = Number(s.points)
+        break
+      }
     }
   }
 
