@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     .from('profiles').select('is_admin').eq('id', user.id).single()
   if (!profile?.is_admin) return NextResponse.json({ error: 'Not authorised' }, { status: 403 })
 
-  const { grade, action } = await req.json() as { grade: 'mens' | 'womens'; action: 'open' | 'lock' | 'status' }
+  const { grade, action } = await req.json() as { grade: 'mens' | 'womens'; action: 'open' | 'lock' | 'provisional' | 'status' }
   const admin = createAdminClient()
 
   // Latest round for the grade
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `Round ${round.round_number} is confirmed and immutable` }, { status: 400 })
   }
 
-  const status = action === 'open' ? 'open' : 'locked'
+  const status = action === 'open' ? 'open' : action === 'provisional' ? 'provisional' : 'locked'
   const { error } = await admin.from('rounds').update({ status }).eq('id', round.id)
   if (error) return NextResponse.json({ error: 'Update failed: ' + error.message }, { status: 500 })
 

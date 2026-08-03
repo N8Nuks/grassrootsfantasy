@@ -100,7 +100,7 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
   const [rcLog, setRcLog] = useState<string[]>([])
   const [rcBusy, setRcBusy] = useState(false)
 
-  async function roundControl(g: 'mens' | 'womens', action: 'open' | 'lock' | 'status') {
+  async function roundControl(g: 'mens' | 'womens', action: 'open' | 'lock' | 'provisional' | 'status') {
     setRcBusy(true)
     const r = await fetch('/api/round-control', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade: g, action }) })
     const data = await r.json()
@@ -295,6 +295,9 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
               <button onClick={() => roundControl('mens', 'lock')} disabled={rcBusy}
                 className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
                 style={{ color: P.red, border: `1px solid ${P.red}70`, padding: '16px 0' }}>Lock Men&apos;s</button>
+              <button onClick={() => roundControl('mens', 'provisional')} disabled={rcBusy}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
+                style={{ color: P.orange, border: `1px solid ${P.orange}70`, padding: '16px 0' }}>Scores Live M</button>
               <button onClick={() => roundControl('womens', 'status')} disabled={rcBusy}
                 className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
                 style={{ color: P.dim, border: `1px solid ${P.purple}40`, padding: '16px 0' }}>Check Women&apos;s</button>
@@ -304,6 +307,9 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
               <button onClick={() => roundControl('womens', 'lock')} disabled={rcBusy}
                 className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
                 style={{ color: P.red, border: `1px solid ${P.red}70`, padding: '16px 0' }}>Lock Women&apos;s</button>
+              <button onClick={() => roundControl('womens', 'provisional')} disabled={rcBusy}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
+                style={{ color: P.orange, border: `1px solid ${P.orange}70`, padding: '16px 0' }}>Scores Live W</button>
             </div>
             <LogBox lines={rcLog} error={rcLog[rcLog.length - 1]?.startsWith('ERROR')} />
           </Panel>
