@@ -72,7 +72,7 @@ function SoftballSwatch({ colors, seam, selected, ringColor }: {
   )
 }
 
-export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen }: {
+export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen, thisRoundPoints, lastRoundPoints, thisRoundScored }: {
   teamName: string
   clubName: string
   cards: TeamCard[]
@@ -84,6 +84,9 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   t3Claimed: boolean
   t2Available: boolean
   roundOpen: boolean
+  thisRoundPoints: Record<string, number>
+  lastRoundPoints: Record<string, number>
+  thisRoundScored: boolean
 }) {
   const T = theme(grade, siteTheme)
   const accentBright = T.electric ?? T.accent
@@ -298,6 +301,12 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         <span className="hidden sm:block w-12 text-right text-[11px] shrink-0" style={{ color: T.textDim }}>
           {c.stats.career_sb ?? 0}
         </span>
+        <span className="hidden sm:block w-14 text-right text-[11px] shrink-0" style={{ color: T.textDim }}>
+          {lastRoundPoints[c.playerId] ?? '—'}
+        </span>
+        <span className="hidden sm:block w-14 text-right text-[11px] shrink-0" style={{ color: thisRoundScored ? T.text : T.textDim }}>
+          {thisRoundScored ? (thisRoundPoints[c.playerId] ?? '—') : '—'}
+        </span>
         <span className="hidden sm:block w-14 text-right text-[11px] font-black shrink-0" style={{ color: T.text }}>
           {c.stats.season_points ?? 0}
         </span>
@@ -452,7 +461,9 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               <span className="w-20 text-center text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Tier</span>
               <span className="w-20 text-center text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Bat Ave.</span>
               <span className="w-12 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>SB</span>
-              <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Pts</span>
+              <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Last Rd</span>
+              <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>This Rd</span>
+              <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Season</span>
             </div>
 
             {battingRows.map(s => <PlayerRow key={s.slot} s={s} showOrder={true} />)}

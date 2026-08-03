@@ -34,6 +34,9 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
 
   let unavailableIds: string[] = []
   let t3Claimed = false
+  let thisRoundPoints: Record<string, number> = {}
+  let lastRoundPoints: Record<string, number> = {}
+  let thisRoundScored = false
 
   // Pre-Season Pack: released for this grade AND not yet opened by this user?
   const { data: t2Config } = await supabase
@@ -54,6 +57,27 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
       .from('player_availability').select('player_id')
       .eq('round_id', latestRound.id).eq('unavailable', true)
     unavailableIds = (avail ?? []).map(a => a.player_id)
+
+    // This round's player scores (empty until scored/visible)
+    const { data: thisScores } = await supabase
+      .from('player_scores').select('player_id, points')
+      .eq('round_id', latestRound.id)
+    if (thisScores?.length) {
+      thisRoundScored = true
+      for (const s of thisScores) thisRoundPoints[s.player_id] = Number(s.points)
+    }
+
+    // Previous round's player scores
+    const { data: prevRound } = await supabase
+      .from('rounds').select('id')
+      .eq('grade', grade).lt('round_number', latestRound.round_number)
+      .order('round_number', { ascending: false }).limit(1).maybeSingle()
+    if (prevRound) {
+      const { data: lastScores } = await supabase
+        .from('player_scores').select('player_id, points')
+        .eq('round_id', prevRound.id)
+      for (const s of lastScores ?? []) lastRoundPoints[s.player_id] = Number(s.points)
+    }
   }
 
   type Raw = { id: string; players: { id: string; full_name: string; tier: string; positions: string[]; stats: Record<string, number>; photo_url: string | null; clubs: { name: string } | null } | null }
@@ -86,6 +110,9 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
           t2Available={t2Available}
           roundNumber={latestRound?.round_number ?? null}
           roundOpen={latestRound?.status === 'open'}
+          thisRoundPoints={thisRoundPoints}
+          lastRoundPoints={lastRoundPoints}
+          thisRoundScored={thisRoundScored}
         />
       </section>
       <Footer />
