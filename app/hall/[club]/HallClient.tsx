@@ -21,15 +21,16 @@ export type HallPlayer = {
 
 const TIER_ORDER = ['rare_2wp_a', 'rare_2wp_b', 'elite', 'common']
 
-export default function HallClient({ clubName, clubSlug, grade, grades, roster, ownedPlayerIds }: {
+export default function HallClient({ clubName, clubSlug, grade, grades, roster, ownedPlayerIds, siteTheme }: {
   clubName: string
   clubSlug: string
   grade: Grade
   grades: Grade[]
   roster: HallPlayer[]
   ownedPlayerIds: string[]
+  siteTheme: string
 }) {
-  const T = theme(grade)
+  const T = theme(grade, siteTheme)
   const owned = new Set(ownedPlayerIds)
   const [detail, setDetail] = useState<HallPlayer | null>(null)
 

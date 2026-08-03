@@ -15,6 +15,12 @@ export default async function ClubHall({ params, searchParams }: {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  let siteTheme = 'grade'
+  if (user) {
+    const { data: prof } = await supabase.from('profiles').select('site_theme').eq('id', user.id).single()
+    siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
+  }
+
   const { data: clubs } = await supabase.from('clubs').select('id, name')
   const club = (clubs ?? []).find(c =>
     c.name.toLowerCase().replace(/\s+/g, '-') === clubSlug.toLowerCase()
@@ -81,6 +87,7 @@ export default async function ClubHall({ params, searchParams }: {
       grades={grades}
       roster={roster}
       ownedPlayerIds={ownedPlayerIds}
+      siteTheme={siteTheme}
     />
   )
 }
