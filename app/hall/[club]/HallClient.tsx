@@ -45,9 +45,20 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
       <Nav />
       <section className="flex-1 px-6" style={{ paddingTop: '90px', paddingBottom: '100px' }}>
         <div style={{ maxWidth: '980px', marginLeft: 'auto', marginRight: 'auto' }}>
+          <a href="/hall"
+            className="fixed z-40 text-[11px] font-bold uppercase tracking-widest transition-all hover:tracking-[0.2em]"
+            style={{ top: '84px', left: '24px', color: T.textDim }}>
+            ← Hall
+          </a>
           <div className="text-center" style={{ marginBottom: '48px' }}>
-            <a href="/hall" className="text-[11px] font-bold uppercase tracking-widest" style={{ color: T.textDim }}>← Back to the Hall</a>
-            <h1 className="text-3xl sm:text-4xl font-black mt-4 mb-2" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{clubName}</h1>
+            <div className="flex items-center justify-center gap-4 mt-2 mb-2">
+              <div className="rounded-full overflow-hidden shrink-0"
+                style={{ width: '56px', height: '56px', background: '#141210', border: '1.5px solid #ffffff25' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/clubs/${clubSlug}.jpg`} alt={clubName} className="w-full h-full object-cover" />
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{clubName}</h1>
+            </div>
             <p className="text-sm mb-5" style={{ color: T.textDim }}>
               {roster.length} players · {ownedCount} in your squad
             </p>
