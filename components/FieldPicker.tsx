@@ -4,17 +4,18 @@ import { theme, type Grade } from '@/lib/clubhouse'
 // Generic softball field diagram.
 // Modes: picker (eligible slots tappable) and display (pass occupants to show
 // a whole lineup standing on the diamond — future Field View of the lineup card).
+// Size hierarchy: starters (field + specialists) largest, bench smaller, reserves smallest.
 
 const FIELD_SLOTS: { slot: string; label: string; x: number; y: number }[] = [
-  { slot: 'CF', label: 'CF', x: 200, y: 46 },
-  { slot: 'LF', label: 'LF', x: 88, y: 84 },
-  { slot: 'RF', label: 'RF', x: 312, y: 84 },
-  { slot: 'SS', label: 'SS', x: 142, y: 152 },
-  { slot: 'B2', label: '2B', x: 258, y: 152 },
-  { slot: 'B3', label: '3B', x: 84, y: 216 },
-  { slot: 'B1', label: '1B', x: 316, y: 216 },
-  { slot: 'P', label: 'P', x: 200, y: 196 },
-  { slot: 'C', label: 'C', x: 200, y: 262 },
+  { slot: 'CF', label: 'CF', x: 200, y: 42 },
+  { slot: 'LF', label: 'LF', x: 78, y: 82 },
+  { slot: 'RF', label: 'RF', x: 322, y: 82 },
+  { slot: 'SS', label: 'SS', x: 138, y: 150 },
+  { slot: 'B2', label: '2B', x: 262, y: 150 },
+  { slot: 'B3', label: '3B', x: 76, y: 218 },
+  { slot: 'B1', label: '1B', x: 324, y: 218 },
+  { slot: 'P', label: 'P', x: 200, y: 198 },
+  { slot: 'C', label: 'C', x: 200, y: 266 },
 ]
 
 const SPECIAL_SLOTS = [
@@ -46,23 +47,23 @@ export default function FieldPicker({ grade, eligible, current, occupants, onSel
     return (
       <g onClick={() => can && onSelect(slot)} style={{ cursor: can ? 'pointer' : 'default' }}>
         {isCur && (
-          <rect x={x - 26} y={y - 15} width={52} height={30} rx={8}
-            fill="none" stroke={T.accent} strokeWidth={2} opacity={0.9}>
+          <rect x={x - 32} y={y - 19} width={64} height={38} rx={10}
+            fill="none" stroke={T.accent} strokeWidth={2.5} opacity={0.9}>
             <animate attributeName="opacity" values="0.9;0.3;0.9" dur="1.6s" repeatCount="indefinite" />
           </rect>
         )}
-        <rect x={x - 22} y={y - 12} width={44} height={24} rx={6}
+        <rect x={x - 28} y={y - 16} width={56} height={32} rx={8}
           fill={can ? T.accent : '#ffffff10'}
           stroke={can ? 'none' : '#ffffff15'} strokeWidth={1} />
-        <text x={x} y={y + 4} textAnchor="middle"
-          fontSize="11" fontWeight="900"
+        <text x={x} y={y + 5} textAnchor="middle"
+          fontSize="14" fontWeight="900"
           fill={can ? '#141210' : '#F5F1E835'}
           style={{ userSelect: 'none', fontFamily: 'var(--font-label)' }}>
           {label}
         </text>
         {occ && (
-          <text x={x} y={y + 26} textAnchor="middle" fontSize="9" fontWeight="700"
-            fill={T.text} opacity={0.75} style={{ userSelect: 'none' }}>
+          <text x={x} y={y + 30} textAnchor="middle" fontSize="10" fontWeight="700"
+            fill={T.text} opacity={0.8} style={{ userSelect: 'none' }}>
             {occ}
           </text>
         )}
@@ -70,17 +71,18 @@ export default function FieldPicker({ grade, eligible, current, occupants, onSel
     )
   }
 
-  const boxStyle = (slot: string) => {
+  const boxStyle = (slot: string, tier: 'starter' | 'bench' | 'reserve') => {
     const can = eligible.has(slot)
     const isCur = current === slot
+    const pad = tier === 'starter' ? '14px 0' : tier === 'bench' ? '9px 0' : '6px 0'
     return {
       color: can ? '#141210' : `${T.textDim}`,
       background: can ? T.accent : '#ffffff08',
       border: isCur ? `2px solid ${T.accent}` : '1px solid #ffffff15',
-      opacity: can ? 1 : 0.5,
+      opacity: can ? (tier === 'reserve' ? 0.9 : 1) : (tier === 'reserve' ? 0.35 : 0.5),
       cursor: can ? 'pointer' : 'default',
       boxShadow: isCur ? T.glow : 'none',
-      padding: '10px 0',
+      padding: pad,
       minWidth: 0,
     } as const
   }
@@ -107,40 +109,40 @@ export default function FieldPicker({ grade, eligible, current, occupants, onSel
         {FIELD_SLOTS.map(f => <Plate key={f.slot} {...f} />)}
       </svg>
 
-      {/* Specialist slots */}
-      <div className="grid grid-cols-3 gap-2" style={{ marginTop: '14px' }}>
+      {/* Specialist slots — starter weight */}
+      <div className="grid grid-cols-3 gap-3" style={{ marginTop: '16px' }}>
         {SPECIAL_SLOTS.map(s => (
           <button key={s.slot} onClick={() => eligible.has(s.slot) && onSelect(s.slot)}
-            className="rounded-lg text-xs font-black text-center uppercase tracking-widest transition-all"
-            style={boxStyle(s.slot)}>
+            className="rounded-lg text-sm font-black text-center uppercase tracking-widest transition-all"
+            style={boxStyle(s.slot, 'starter')}>
             {s.label}
-            {surname(s.slot) && <span className="block text-[9px] font-bold normal-case tracking-normal" style={{ opacity: 0.75 }}>{surname(s.slot)}</span>}
+            {surname(s.slot) && <span className="block text-[10px] font-bold normal-case tracking-normal" style={{ opacity: 0.75 }}>{surname(s.slot)}</span>}
           </button>
         ))}
       </div>
 
-      {/* Bench strip */}
-      <p className="text-[9px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim, margin: '14px 0 6px' }}>Bench</p>
+      {/* Bench strip — smaller */}
+      <p className="text-[9px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim, margin: '16px 0 6px' }}>Bench</p>
       <div className="grid grid-cols-4 gap-2">
         {BENCH_SLOTS.map((s, i) => (
           <button key={s} onClick={() => eligible.has(s) && onSelect(s)}
             className="rounded-lg text-xs font-black text-center transition-all"
-            style={boxStyle(s)}>
+            style={boxStyle(s, 'bench')}>
             B{i + 1}
             {surname(s) && <span className="block text-[9px] font-bold" style={{ opacity: 0.75 }}>{surname(s)}</span>}
           </button>
         ))}
       </div>
 
-      {/* Reserve strip */}
-      <p className="text-[9px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim, margin: '14px 0 6px' }}>Reserve</p>
-      <div className="grid grid-cols-5 gap-2">
+      {/* Reserve strip — smallest */}
+      <p className="text-[9px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim, margin: '12px 0 5px' }}>Reserve</p>
+      <div className="grid grid-cols-5 gap-1.5">
         {RES_SLOTS.map((s, i) => (
           <button key={s} onClick={() => eligible.has(s) && onSelect(s)}
-            className="rounded-lg text-xs font-black text-center transition-all"
-            style={boxStyle(s)}>
+            className="rounded-lg text-[10px] font-black text-center transition-all"
+            style={boxStyle(s, 'reserve')}>
             R{i + 1}
-            {surname(s) && <span className="block text-[9px] font-bold" style={{ opacity: 0.75 }}>{surname(s)}</span>}
+            {surname(s) && <span className="block text-[8px] font-bold" style={{ opacity: 0.75 }}>{surname(s)}</span>}
           </button>
         ))}
       </div>
