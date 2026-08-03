@@ -158,8 +158,8 @@ export const THEMES: Record<string, Palette> = {
 export type ThemeKey = keyof typeof THEMES
 export type SiteTheme = ThemeKey | 'grade'
 
-// Switcher order — padres excluded (Classic covers it on Men's)
-export const THEME_ORDER: string[] = ['chevron', 'rwb', 'blackgold', 'cardinal', 'purple', 'greenyellow']
+// Switcher order — every theme selectable in both grades
+export const THEME_ORDER: string[] = ['padres', 'chevron', 'rwb', 'blackgold', 'cardinal', 'purple', 'greenyellow']
 
 // Back-compat: existing grade-keyed lookups
 export const CLUBHOUSE = {
