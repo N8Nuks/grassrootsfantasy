@@ -10,8 +10,13 @@ export type ScoreRoundResult =
 // admin must be a service-role client.
 export async function scoreRound(admin: SupabaseClient, round_id: string): Promise<ScoreRoundResult> {
   const { data: round } = await admin.from('rounds')
-    .select('id, grade, round_number').eq('id', round_id).single()
+    .select('id, grade, round_number, status').eq('id', round_id).single()
   if (!round) return { ok: false, error: 'Round not found', status: 404 }
+
+  // Scoring publishes: a scored round becomes provisional (unless already confirmed)
+  if (round.status !== 'confirmed') {
+    await admin.from('rounds').update({ status: 'provisional' }).eq('id', round_id)
+  }
 
   const { data: config } = await admin.from('scoring_config').select('values').eq('grade', round.grade).single()
   if (!config) return { ok: false, error: 'No scoring config for grade', status: 500 }
