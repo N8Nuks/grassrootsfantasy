@@ -346,3 +346,12 @@ input[type="number"] {
     height: 92vmin;
   }
 }
+
+/* ── Hide scrollbars (touch swipe still works) ── */
+.gf-noscroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.gf-noscroll::-webkit-scrollbar {
+  display: none;
+}
