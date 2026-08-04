@@ -88,9 +88,9 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[9px] font-black uppercase tracking-[0.25em] truncate" style={{ color: T.textDim }}>{player.club}</p>
-            <p className="text-sm font-black truncate" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{player.name}</p>
+            <p className="text-lg sm:text-xl font-black truncate leading-tight" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{player.name}</p>
           </div>
-          {player.playingNumber != null && (
+          {(
             // Gem corner
             <div className="shrink-0 flex items-center justify-center"
               style={{
@@ -99,7 +99,7 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
                 clipPath: 'polygon(50% 0%, 100% 28%, 100% 72%, 50% 100%, 0% 72%, 0% 28%)',
                 boxShadow: `0 0 14px ${meta.accent}60`,
               }}>
-              <span className="text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: '#141210' }}>{player.playingNumber}</span>
+              <span className="text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: '#141210' }}>{player.playingNumber ?? 26}</span>
             </div>
           )}
         </div>
