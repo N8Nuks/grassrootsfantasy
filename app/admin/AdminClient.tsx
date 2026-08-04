@@ -18,7 +18,7 @@ const P = {
   dim: '#F2EFFB80',
 }
 
-export default function AdminClient({ stats }: { stats: AdminStats }) {
+export default function AdminClient({ stats, cardStyle: initialStyle }: { stats: AdminStats; cardStyle: string }) {
   const [csv, setCsv] = useState('')
   const [roundNumber, setRoundNumber] = useState('0')
   const [grade, setGrade] = useState<'mens' | 'womens'>('mens')
@@ -102,9 +102,11 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
   }
 
   const [styleLog, setStyleLog] = useState('')
+  const [activeStyle, setActiveStyle] = useState(initialStyle)
   async function setCardStyle(style: 'standard' | 'premium') {
     const r = await fetch('/api/card-style', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ style }) })
     const data = await r.json()
+    if (r.ok) setActiveStyle(data.style)
     setStyleLog(r.ok ? `Card style set to ${data.style}` : 'ERROR: ' + data.error)
   }
 
@@ -406,10 +408,21 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
             <div className="grid grid-cols-2 gap-3">
               <button type="button" onClick={() => setCardStyle('standard')}
                 className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01]"
-                style={{ color: P.blue, border: `1px solid ${P.blue}70`, padding: '16px 0' }}>Standard</button>
+                style={{
+                  color: activeStyle === 'standard' ? P.ink : P.blue,
+                  background: activeStyle === 'standard' ? P.blue : 'transparent',
+                  border: `1px solid ${P.blue}70`,
+                  opacity: activeStyle === 'standard' ? 1 : 0.55,
+                  padding: '16px 0',
+                }}>Standard{activeStyle === 'standard' ? ' ✓' : ''}</button>
               <button type="button" onClick={() => setCardStyle('premium')}
                 className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01]"
-                style={{ color: P.orange, border: `1px solid ${P.orange}70`, padding: '16px 0' }}>Premium</button>
+                style={{
+                  color: activeStyle === 'premium' ? P.ink : P.orange,
+                  background: activeStyle === 'premium' ? P.orange : 'transparent',
+                  border: `1px solid ${P.orange}70`,
+                  opacity: activeStyle === 'premium' ? 1 : 0.55,
+                }}>Premium{activeStyle === 'premium' ? ' ✓' : ''}</button>
             </div>
             {styleLog && <LogBox lines={[styleLog]} error={styleLog.startsWith('ERROR')} />}
           </Panel>

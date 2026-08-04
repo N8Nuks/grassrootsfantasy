@@ -23,6 +23,10 @@ export default async function AdminPage() {
 
   const admin = createAdminClient()
 
+  const { data: styleRow } = await admin.from('site_settings')
+    .select('value').eq('key', 'card_style').maybeSingle()
+  const cardStyle = styleRow?.value ?? 'premium'
+
   // Users
   const { count: users } = await admin.from('profiles').select('id', { count: 'exact', head: true })
 
@@ -92,5 +96,5 @@ export default async function AdminPage() {
     weeklyUnclaimed,
   }
 
-  return <AdminClient stats={stats} />
+  return <AdminClient stats={stats} cardStyle={cardStyle} />
 }
