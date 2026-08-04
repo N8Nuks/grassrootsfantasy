@@ -106,6 +106,8 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
               </span>
             </div>
           )}
+        </div>
+
         {/* Photo / artwork area */}
         <div className="relative flex items-end justify-center overflow-hidden" style={{ flex: '1 1 auto', minHeight: 0, background: T.surface }}>
           {cardStyle === 'premium' && owned ? (
