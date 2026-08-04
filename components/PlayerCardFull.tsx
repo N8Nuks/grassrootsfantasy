@@ -49,10 +49,9 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme }: {
     { label: 'BA', season: st.season_ba != null ? Number(st.season_ba).toFixed(3) : '—', hist: st.career_ba != null ? Number(st.career_ba).toFixed(3) : '—' },
     { label: 'HR', season: st.season_hr ?? 0, hist: st.career_hr ?? '—' },
     { label: 'RBI', season: st.season_rbi ?? 0, hist: st.career_rbi ?? '—' },
-    { label: 'R', season: st.season_runs ?? 0, hist: st.career_runs ?? '—' },
     { label: 'SB', season: st.season_sb ?? 0, hist: st.career_sb ?? '—' },
     ...(isPitcher ? [
-      { label: 'W', season: st.season_wins ?? 0, hist: st.career_wins ?? '—' },
+      { label: 'W', season: st.season_wins ?? 0, hist: st.career_w ?? st.career_wins ?? '—' },
       { label: 'K', season: st.season_k_pit ?? 0, hist: st.career_k ?? '—' },
     ] : []),
   ]
@@ -174,7 +173,7 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme }: {
                 </div>
               ))}
             </div>
-            <p className="text-[7px] font-bold uppercase tracking-widest text-right" style={{ color: T.textDim, marginTop: '3px', opacity: 0.7 }}>Top: 2026/27 · Below: Last 3 Seasons</p>
+            <p className="text-[7px] font-bold uppercase tracking-widest text-right" style={{ color: T.textDim, marginTop: '3px', opacity: 0.7 }}>2026/27 · prior 3 seasons below</p>
           </div>
         </div>
       </div>
