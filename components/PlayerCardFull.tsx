@@ -91,19 +91,21 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
             <p className="text-lg sm:text-xl font-black truncate leading-tight" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{player.name}</p>
           </div>
           {(
-            // Gem corner
+           // Gem corner — outlined diamond, uniform number in tier colour
             <div className="shrink-0 flex items-center justify-center"
               style={{
-                width: '40px', height: '40px',
+                width: '54px', height: '54px',
                 background: `linear-gradient(150deg, ${meta.accent} 0%, ${meta.accent}60 100%)`,
                 clipPath: 'polygon(50% 0%, 100% 28%, 100% 72%, 50% 100%, 0% 72%, 0% 28%)',
                 boxShadow: `0 0 14px ${meta.accent}60`,
+                padding: '2.5px',
               }}>
-              <span className="text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: '#141210' }}>{player.playingNumber ?? 26}</span>
+              <span className="w-full h-full flex items-center justify-center"
+                style={{ background: T.headerBg, clipPath: 'polygon(50% 0%, 100% 28%, 100% 72%, 50% 100%, 0% 72%, 0% 28%)' }}>
+                <span className="text-2xl font-black" style={{ fontFamily: 'var(--font-number, var(--font-heading))', color: meta.accent, textShadow: `0 0 8px ${meta.accent}60` }}>{player.playingNumber ?? 26}</span>
+              </span>
             </div>
           )}
-        </div>
-
         {/* Photo / artwork area */}
         <div className="relative flex items-end justify-center overflow-hidden" style={{ flex: '1 1 auto', minHeight: 0, background: T.surface }}>
           {cardStyle === 'premium' && owned ? (
