@@ -42,37 +42,20 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme }: {
   const tint = CLUB_TINTS[player.club] ?? '#E8D5A3'
   const st = player.stats ?? {}
 
-  const seasonRow: [string, string | number][] = [
-    ['BA', st.season_ba != null ? Number(st.season_ba).toFixed(3) : '—'],
-    ['HR', st.season_hr ?? 0],
-    ['RBI', st.season_rbi ?? 0],
-    ['SB', st.season_sb ?? 0],
-  ]
-  const careerRow = [
-    st.career_ba != null ? ['BA', Number(st.career_ba).toFixed(3)] : null,
-    st.career_hr != null ? ['HR', st.career_hr] : null,
-    st.career_rbi != null ? ['RBI', st.career_rbi] : null,
-    st.career_sb != null ? ['SB', st.career_sb] : null,
-    st.career_ip != null ? ['IP', st.career_ip] : null,
-    st.career_wins != null ? ['W', st.career_wins] : null,
-  ].filter(Boolean) as [string, string | number][]
+  const isPitcher = (st.season_ip ?? 0) > 0 || (st.career_ip ?? 0) > 0
 
-  function StatRow({ label, row, bright }: { label: string; row: [string, string | number][]; bright: boolean }) {
-    return (
-      <div className="text-center">
-        <p className="text-[9px] font-black uppercase tracking-[0.25em] mb-1.5"
-          style={{ color: bright ? meta.accent : T.textDim }}>{label}</p>
-        <div className="flex justify-center gap-5 flex-wrap" style={{ color: T.text }}>
-          {row.length ? row.map(([k, v]) => (
-            <span key={k} className="text-center">
-              <span className="block text-[9px] font-black uppercase tracking-widest" style={{ color: T.textDim }}>{k}</span>
-              <span className="block text-lg font-black" style={{ fontFamily: 'var(--font-heading)', color: bright ? T.text : T.textDim }}>{v}</span>
-            </span>
-          )) : <span className="text-xs" style={{ color: T.textDim }}>No prior stats</span>}
-        </div>
-      </div>
-    )
-  }
+  // Column set: five hitting columns, plus W and K when they've pitched
+  const cols: { label: string; season: string | number; hist: string | number }[] = [
+    { label: 'BA', season: st.season_ba != null ? Number(st.season_ba).toFixed(3) : '—', hist: st.career_ba != null ? Number(st.career_ba).toFixed(3) : '—' },
+    { label: 'HR', season: st.season_hr ?? 0, hist: st.career_hr ?? '—' },
+    { label: 'RBI', season: st.season_rbi ?? 0, hist: st.career_rbi ?? '—' },
+    { label: 'R', season: st.season_runs ?? 0, hist: st.career_runs ?? '—' },
+    { label: 'SB', season: st.season_sb ?? 0, hist: st.career_sb ?? '—' },
+    ...(isPitcher ? [
+      { label: 'W', season: st.season_wins ?? 0, hist: st.career_wins ?? '—' },
+      { label: 'K', season: st.season_k_pit ?? 0, hist: st.career_k ?? '—' },
+    ] : []),
+  ]
 
   return (
     // Outer tier frame
@@ -157,14 +140,41 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme }: {
           )}
         </div>
 
-        {/* Stats band — centred, enlarged */}
-        <div style={{ flex: '0 0 auto', background: T.headerBg, borderTop: `1px solid ${meta.accent}40`, padding: '12px 14px 14px' }}>
-          <p className="text-[10px] font-black tracking-widest mb-3 text-center" style={{ color: meta.accent, textShadow: `0 0 8px ${meta.accent}70` }}>
+        {/* Positions row */}
+        <div className="text-center" style={{ flex: '0 0 auto', background: T.headerBg, borderTop: `1px solid ${meta.accent}40`, padding: '8px 14px 6px' }}>
+          <p className="text-[11px] font-black tracking-[0.2em]" style={{ color: meta.accent, textShadow: `0 0 8px ${meta.accent}70` }}>
             {player.positions.map(posLabel).join(' · ')}{player.speedStar ? ' · ★' : ''}
           </p>
-          <div className="flex flex-col gap-3">
-            <StatRow label="2026/27 Season" row={seasonRow} bright={true} />
-            <StatRow label="Last 3 Seasons" row={careerRow} bright={false} />
+        </div>
+
+        {/* Stat table — points column + divided grid */}
+        <div className="flex items-stretch" style={{ flex: '0 0 auto', background: T.headerBg, padding: '6px 14px 14px', gap: '12px' }}>
+          {/* Season points column */}
+          <div className="shrink-0 flex flex-col justify-center text-center" style={{ borderRight: `1px solid ${meta.accent}30`, paddingRight: '12px' }}>
+            <p className="text-[8px] font-black uppercase tracking-[0.2em]" style={{ color: meta.accent }}>Season Points</p>
+            <p className="text-3xl font-black leading-none" style={{ fontFamily: 'var(--font-heading)', color: meta.accent, textShadow: `0 0 14px ${meta.accent}60`, margin: '4px 0' }}>
+              {st.season_points ?? 0}
+            </p>
+            <p className="text-[8px] font-bold uppercase tracking-widest" style={{ color: T.textDim }}>2026/27</p>
+          </div>
+          {/* Stat grid */}
+          <div className="flex-1 min-w-0 flex flex-col justify-center">
+            <div className="flex">
+              {cols.map((c, i) => (
+                <div key={c.label} className="flex-1 text-center" style={{ borderLeft: i > 0 ? '1px solid #ffffff12' : 'none' }}>
+                  <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: T.textDim }}>{c.label}</p>
+                  <p className="text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{c.season}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex" style={{ borderTop: '1px solid #ffffff10', marginTop: '4px', paddingTop: '4px' }}>
+              {cols.map((c, i) => (
+                <div key={c.label} className="flex-1 text-center" style={{ borderLeft: i > 0 ? '1px solid #ffffff0a' : 'none' }}>
+                  <p className="text-xs font-bold" style={{ color: T.textDim }}>{c.hist}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-[7px] font-bold uppercase tracking-widest text-right" style={{ color: T.textDim, marginTop: '3px', opacity: 0.7 }}>Top: 2026/27 · Below: Last 3 Seasons</p>
           </div>
         </div>
       </div>
