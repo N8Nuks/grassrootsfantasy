@@ -674,6 +674,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
       {reveal && (
         <PackReveal
           grade={grade}
+          cardStyle={cardStyle}
           packName={reveal.packName}
           cards={reveal.cards}
           onDone={() => window.location.reload()}
