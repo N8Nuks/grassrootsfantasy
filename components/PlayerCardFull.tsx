@@ -45,14 +45,14 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme }: {
   const isPitcher = (st.season_ip ?? 0) > 0 || (st.career_ip ?? 0) > 0
 
   // Column set: five hitting columns, plus W and K when they've pitched
-  const cols: { label: string; season: string | number; hist: string | number }[] = [
+  const cols: { label: string; season: string | number; hist: string | number; pitching?: boolean }[] = [
     { label: 'BA', season: st.season_ba != null ? Number(st.season_ba).toFixed(3) : '—', hist: st.career_ba != null ? Number(st.career_ba).toFixed(3) : '—' },
     { label: 'HR', season: st.season_hr ?? 0, hist: st.career_hr ?? '—' },
     { label: 'RBI', season: st.season_rbi ?? 0, hist: st.career_rbi ?? '—' },
     { label: 'SB', season: st.season_sb ?? 0, hist: st.career_sb ?? '—' },
     ...(isPitcher ? [
-      { label: 'W', season: st.season_wins ?? 0, hist: st.career_w ?? st.career_wins ?? '—' },
-      { label: 'K', season: st.season_k_pit ?? 0, hist: st.career_k ?? '—' },
+      { label: 'W', season: st.season_wins ?? 0, hist: st.career_w ?? st.career_wins ?? '—', pitching: true },
+      { label: 'K', season: st.season_k_pit ?? 0, hist: st.career_k ?? '—', pitching: true },
     ] : []),
   ]
 
@@ -159,16 +159,24 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme }: {
           {/* Stat grid */}
           <div className="flex-1 min-w-0 flex flex-col justify-center">
             <div className="flex">
-              {cols.map((c, i) => (
-                <div key={c.label} className="flex-1 text-center" style={{ borderLeft: i > 0 ? '1px solid #ffffff12' : 'none' }}>
-                  <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: T.textDim }}>{c.label}</p>
-                  <p className="text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{c.season}</p>
-                </div>
-              ))}
+              {cols.map((c, i) => {
+                const startPitch = c.pitching && !cols[i - 1]?.pitching
+                return (
+                  <div key={c.label} className="flex-1 text-center relative"
+                    style={{ borderLeft: startPitch ? `1px solid ${meta.accent}50` : i > 0 ? '1px solid #ffffff12' : 'none' }}>
+                    {startPitch && (
+                      <span className="absolute text-[6px] font-black uppercase tracking-widest whitespace-nowrap"
+                        style={{ color: meta.accent, top: '-9px', left: '4px', opacity: 0.9 }}>Pitching</span>
+                    )}
+                    <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: c.pitching ? meta.accent : T.textDim }}>{c.label}</p>
+                    <p className="text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{c.season}</p>
+                  </div>
+                )
+              })}
             </div>
             <div className="flex" style={{ borderTop: '1px solid #ffffff10', marginTop: '4px', paddingTop: '4px' }}>
               {cols.map((c, i) => (
-                <div key={c.label} className="flex-1 text-center" style={{ borderLeft: i > 0 ? '1px solid #ffffff0a' : 'none' }}>
+                <div key={c.label} className="flex-1 text-center" style={{ borderLeft: c.pitching && !cols[i - 1]?.pitching ? `1px solid ${meta.accent}35` : i > 0 ? '1px solid #ffffff0a' : 'none' }}>
                   <p className="text-xs font-bold" style={{ color: T.textDim }}>{c.hist}</p>
                 </div>
               ))}
