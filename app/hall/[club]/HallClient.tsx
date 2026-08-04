@@ -94,6 +94,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
                 grade={grade}
                 owned={owned.has(p.id)}
                 siteTheme={siteTheme}
+                cardStyle={cardStyle}
                 onClick={() => setDetail(p)}
               />
             ))}

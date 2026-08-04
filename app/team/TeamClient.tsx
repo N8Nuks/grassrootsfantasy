@@ -583,6 +583,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                   grade={grade}
                   owned={true}
                   siteTheme={siteTheme}
+                  cardStyle={cardStyle}
                   chip={inLineup ? `IN ${SLOT_LABELS[slot ?? ''] ?? ''}` : undefined}
                   onClick={() => setDetailCard(c)}
                 />

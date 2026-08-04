@@ -29,13 +29,14 @@ export type PlayerCardData = {
   photoUrl?: string | null
 }
 
-export default function PlayerCard({ player, grade, owned, chip, onClick, siteTheme }: {
+export default function PlayerCard({ player, grade, owned, chip, onClick, siteTheme, cardStyle = 'premium' }: {
   player: PlayerCardData
   grade: Grade
   owned: boolean            // owned = lit face; unowned = greyed
   chip?: string             // optional corner chip, e.g. "IN P(B)"
   onClick?: () => void
   siteTheme?: string
+  cardStyle?: 'standard' | 'premium'
 }) {
   const T = theme(grade, siteTheme)
   const meta = TIER_META[player.tier] ?? TIER_META.common
@@ -85,12 +86,26 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
 
         {/* Photo area — energy slashes backdrop, cut-out standing on base */}
         <div className="relative flex items-end justify-center overflow-hidden" style={{ height: '110px' }}>
-          <div className="absolute inset-0" style={{
-            background: owned
-              ? `linear-gradient(115deg, transparent 0%, transparent 44%, ${meta.accent}28 44%, ${meta.accent}28 54%, transparent 54%, transparent 62%, ${tint}22 62%, ${tint}22 68%, transparent 68%),
-                 linear-gradient(180deg, ${meta.accent}18 0%, ${T.surface} 88%)`
-              : `linear-gradient(180deg, #ffffff06 0%, ${T.surface} 88%)`,
-          }} />
+          {cardStyle === 'premium' && owned ? (
+            <>
+              <div className="absolute inset-0" style={{
+                backgroundImage: `url(/card-bg-${player.tier === 'rare_2wp_a' ? 'rare2wpa' : player.tier === 'rare_2wp_b' ? 'rare2wpb' : player.tier === 'elite' ? 'elite' : 'common'}.webp)`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center top',
+              }} />
+              {/* Base fade so the stat band transition stays clean at mini size */}
+              <div className="absolute inset-0" style={{
+                background: `linear-gradient(180deg, transparent 55%, ${T.surface}E6 100%)`,
+              }} />
+            </>
+          ) : (
+            <div className="absolute inset-0" style={{
+              background: owned
+                ? `linear-gradient(115deg, transparent 0%, transparent 44%, ${meta.accent}28 44%, ${meta.accent}28 54%, transparent 54%, transparent 62%, ${tint}22 62%, ${tint}22 68%, transparent 68%),
+                   linear-gradient(180deg, ${meta.accent}18 0%, ${T.surface} 88%)`
+                : `linear-gradient(180deg, #ffffff06 0%, ${T.surface} 88%)`,
+            }} />
+          )}
           {player.photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={player.photoUrl} alt={player.name} className="relative"
