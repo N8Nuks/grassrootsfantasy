@@ -1,12 +1,16 @@
 'use client'
 import { useState } from 'react'
 import { theme, type Grade } from '@/lib/clubhouse'
+import PlayerCardFull from '@/components/PlayerCardFull'
+import PlayerCard from '@/components/PlayerCard'
 
 export type RevealCard = {
   name: string
   tier: string
   club?: string
   positions?: string[]
+  stats?: Record<string, number>
+  photoUrl?: string | null
 }
 
 const TIER_META: Record<string, { label: string; word: string; accent: string; announce: string }> = {
@@ -15,13 +19,23 @@ const TIER_META: Record<string, { label: string; word: string; accent: string; a
   elite: { label: 'ELITE', word: 'ELITE', accent: '#4DA6FF', announce: 'Elite' },
   common: { label: 'COMMON', word: 'COMMON', accent: '#2D9E4E', announce: 'Common' },
 }
-const SLOT_LABELS: Record<string, string> = { B1: '1B', B2: '2B', B3: '3B', PB: 'P(B)' }
-const posLabel = (p: string) => SLOT_LABELS[p] ?? p
 
+// Reveal order: Commons first, building to the 2WP A finale
 const REVEAL_ORDER = ['common', 'elite', 'rare_2wp_b', 'rare_2wp_a']
 
-const crestSrc = (club?: string) =>
-  club ? `/clubs/${club.toLowerCase().replace(/\s+/g, '-')}.jpg` : null
+const clubSlug = (name: string) => name.toLowerCase().replace(/\s+/g, '-')
+
+// Orb label: P beats C beats IF beats OF; outfielders with at most one infield spot read OF
+function posBucket(positions: string[]): string {
+  const set = new Set(positions)
+  if (set.has('P') || set.has('PB')) return 'P'
+  if (set.has('C')) return 'C'
+  const ifCount = ['B1', 'B2', 'B3', 'SS'].filter(p => set.has(p)).length
+  const hasOF = ['LF', 'CF', 'RF'].some(p => set.has(p))
+  if (hasOF && ifCount <= 1) return 'OF'
+  if (ifCount > 0) return 'IF'
+  return 'OF'
+}
 
 type Stage = 'pack' | 'tearing' | 'back' | 'orbPos' | 'orbCrest' | 'unfurl' | 'front' | 'haul'
 
@@ -49,9 +63,30 @@ function WordWall({ word, accent }: { word: string; accent: string }) {
   )
 }
 
+/* Sorare-style bolt: continuous jagged strike travelling the full screen, over the card */
+function LightningBolt({ color }: { color: string }) {
+  return (
+    <svg className="gf-strike fixed inset-0 z-[73] w-full h-full pointer-events-none"
+      viewBox="0 0 400 800" preserveAspectRatio="none" fill="none">
+      <path d="M235 0 L205 95 L248 150 L185 265 L245 330 L170 470 L238 555 L185 680 L225 800"
+        stroke={color} strokeWidth="11" strokeLinejoin="round" strokeLinecap="round" opacity="0.55"
+        style={{ filter: `blur(6px) drop-shadow(0 0 18px ${color})` }} />
+      <path d="M235 0 L205 95 L248 150 L185 265 L245 330 L170 470 L238 555 L185 680 L225 800"
+        stroke="#FFFFFF" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round"
+        style={{ filter: `drop-shadow(0 0 6px #FFFFFF) drop-shadow(0 0 14px ${color})` }} />
+      <path d="M248 150 L292 210 L268 250" stroke="#FFFFFF" strokeWidth="2.5"
+        strokeLinejoin="round" strokeLinecap="round" opacity="0.85"
+        style={{ filter: `drop-shadow(0 0 8px ${color})` }} />
+      <path d="M245 330 L205 400 L228 438" stroke="#FFFFFF" strokeWidth="2.5"
+        strokeLinejoin="round" strokeLinecap="round" opacity="0.85"
+        style={{ filter: `drop-shadow(0 0 8px ${color})` }} />
+    </svg>
+  )
+}
+
 /* Tier-coloured card back: debossed medallion over layered wordmark texture */
-function CardBack({ accent, isRare, idx, total, markSrc }: {
-  accent: string; isRare: boolean; idx: number; total: number; markSrc: string
+function CardBack({ accent, isRare, idx, total }: {
+  accent: string; isRare: boolean; idx: number; total: number
 }) {
   return (
     <div className="relative rounded-2xl overflow-hidden flex flex-col items-center justify-center"
@@ -61,7 +96,6 @@ function CardBack({ accent, isRare, idx, total, markSrc }: {
         border: `2px solid ${accent}60`,
         boxShadow: `0 0 36px ${accent}30, inset 0 0 60px #00000080`,
       }}>
-      {/* Layered wordmark texture */}
       <div className="absolute inset-0 flex flex-col justify-center overflow-hidden" style={{ opacity: 0.07 }}>
         {Array.from({ length: 9 }).map((_, i) => (
           <p key={i} className="whitespace-nowrap font-black uppercase text-2xl leading-relaxed"
@@ -70,7 +104,6 @@ function CardBack({ accent, isRare, idx, total, markSrc }: {
           </p>
         ))}
       </div>
-      {/* Sheen sweep on rares */}
       {isRare && (
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="gf-sheen absolute top-0 bottom-0" style={{
@@ -79,7 +112,6 @@ function CardBack({ accent, isRare, idx, total, markSrc }: {
           }} />
         </div>
       )}
-      {/* Debossed medallion */}
       <div className="relative rounded-full flex items-center justify-center"
         style={{
           width: '132px', height: '132px',
@@ -88,7 +120,7 @@ function CardBack({ accent, isRare, idx, total, markSrc }: {
           border: `1px solid ${accent}40`,
         }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={markSrc} alt="" style={{ width: '76%', height: '76%', objectFit: 'contain', opacity: 0.9, filter: 'grayscale(0.2)' }} />
+        <img src="/gf-mark.png" alt="" style={{ width: '76%', height: '76%', objectFit: 'contain', opacity: 0.9, filter: 'grayscale(0.2)' }} />
       </div>
       <p className="relative text-[10px] font-black uppercase tracking-[0.35em] mt-6" style={{ color: `${accent}90` }}>Grassroots Fantasy</p>
       <p className="relative text-xs font-bold mt-1" style={{ color: '#F5F1E860' }}>Card {idx + 1} of {total}</p>
@@ -96,11 +128,60 @@ function CardBack({ accent, isRare, idx, total, markSrc }: {
   )
 }
 
-export default function PackReveal({ grade, packName, cards, onDone }: {
+/* Foil packet: crimped tear strip, series markings, barcode */
+function FoilPacket({ T, gradeLabel, packName, count, tearing }: {
+  T: ReturnType<typeof theme>; gradeLabel: string; packName: string; count: number; tearing: boolean
+}) {
+  const crimp = `repeating-linear-gradient(90deg, #ffffff28 0px, #ffffff28 3px, transparent 3px, transparent 6px)`
+  const barcode = `repeating-linear-gradient(90deg, #F5F1E8 0px, #F5F1E8 2px, transparent 2px, transparent 4px, #F5F1E8 4px, #F5F1E8 5px, transparent 5px, transparent 9px)`
+  return (
+    <div className={`relative mx-auto flex flex-col ${tearing ? 'gf-tear' : 'gf-wiggle'}`}
+      style={{
+        width: '250px', height: '360px', borderRadius: '10px', overflow: 'hidden',
+        background: `linear-gradient(150deg, ${T.surfaceRaised} 0%, ${T.surface} 42%, #ffffff14 50%, ${T.surface} 58%, #0B0E14 100%)`,
+        border: `1.5px solid ${T.accent}70`,
+        boxShadow: `0 0 48px ${T.accent}35, inset 0 0 40px #00000060`,
+      }}>
+      {/* Crimped seals top + bottom */}
+      <div style={{ height: '16px', background: crimp, borderBottom: `1px solid #ffffff20` }} />
+      {/* Tear strip */}
+      <div className="flex items-center" style={{ borderBottom: `2px dashed ${T.accent}60`, padding: '5px 12px' }}>
+        <span className="text-[8px] font-black uppercase tracking-[0.3em]" style={{ color: T.accent }}>Tear here ▸</span>
+      </div>
+      {/* Body */}
+      <div className="flex-1 flex flex-col items-center justify-center relative" style={{ padding: '0 16px' }}>
+        {/* Foil sheen band */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: 'linear-gradient(115deg, transparent 30%, #ffffff10 46%, #ffffff22 50%, #ffffff10 54%, transparent 70%)' }} />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/gf-mark.png" alt="" style={{ width: '84px', height: '84px', objectFit: 'contain', filter: `drop-shadow(0 0 16px ${T.accent}60)` }} />
+        <p className="text-[9px] font-black uppercase tracking-[0.35em] mt-4" style={{ color: T.accent }}>Grassroots Fantasy</p>
+        <p className="text-lg font-black uppercase tracking-[0.15em] mt-1" style={{ fontFamily: 'var(--font-heading)', color: T.accent }}>{gradeLabel}</p>
+        <p className="text-2xl font-black uppercase text-center leading-tight" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{packName}</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.25em] mt-3 px-3 py-1 rounded-full"
+          style={{ color: T.text, border: `1px solid ${T.accent}50`, background: `${T.accent}12` }}>
+          {count} Official Cards
+        </p>
+      </div>
+      {/* Barcode footer */}
+      <div className="flex items-end justify-between" style={{ padding: '8px 14px 10px', borderTop: '1px solid #ffffff12' }}>
+        <div>
+          <div style={{ width: '92px', height: '22px', background: barcode, opacity: 0.85 }} />
+          <p className="text-[7px] font-bold tracking-[0.2em] mt-1" style={{ color: '#F5F1E870' }}>NFS · SEASON ONE · 2026/27</p>
+        </div>
+        <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: '#F5F1E850' }}>Series 1</p>
+      </div>
+      <div style={{ height: '16px', background: crimp, borderTop: `1px solid #ffffff20` }} />
+    </div>
+  )
+}
+
+export default function PackReveal({ grade, packName, cards, onDone, cardStyle = 'premium' }: {
   grade: Grade
   packName: string
   cards: RevealCard[]
   onDone: () => void
+  cardStyle?: 'standard' | 'premium'
 }) {
   const T = theme(grade)
   const sorted = [...cards].sort((a, b) => REVEAL_ORDER.indexOf(a.tier) - REVEAL_ORDER.indexOf(b.tier))
@@ -114,21 +195,20 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
   const isRare = !!current?.tier.startsWith('rare')
   const gradeLabel = grade === 'mens' ? "MEN'S" : "WOMEN'S"
   const isStarter = packName === 'Starter Pack'
-  const crest = crestSrc(current?.club)
-  const firstPos = (current?.positions ?? []).map(posLabel)[0] ?? '—'
+  const crest = current?.club ? `/clubs/${clubSlug(current.club)}.jpg` : null
 
-  /* Orb sequence: position → crest → unfurl → front (+ strike on rares) */
+  /* Orb sequence: position → crest → unfurl → real card (+ bolt on rares) */
   function runOrb() {
     setStage('orbPos')
-    setTimeout(() => setStage('orbCrest'), 750)
-    setTimeout(() => setStage('unfurl'), 1500)
+    setTimeout(() => setStage('orbCrest'), 800)
+    setTimeout(() => setStage('unfurl'), 1650)
     setTimeout(() => {
       setStage('front')
       if (sorted[idx].tier.startsWith('rare')) {
         setStrike(true)
-        setTimeout(() => setStrike(false), 1100)
+        setTimeout(() => setStrike(false), 1150)
       }
-    }, 2050)
+    }, 2200)
   }
 
   function advance() {
@@ -151,6 +231,18 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
   const orbActive = stage === 'orbPos' || stage === 'orbCrest'
   const wallStages: Stage[] = ['back', 'orbPos', 'orbCrest', 'unfurl', 'front']
 
+  function toFullPlayer(c: RevealCard) {
+    return {
+      id: c.name,
+      name: c.name,
+      tier: c.tier,
+      positions: c.positions ?? [],
+      club: c.club ?? '',
+      stats: c.stats ?? {},
+      photoUrl: c.photoUrl ?? null,
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center cursor-pointer select-none overflow-hidden"
       style={{ background: '#000000E8', backdropFilter: 'blur(6px)', padding: '16px' }}
@@ -161,11 +253,8 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
         <WordWall key={`wall-${current.tier}`} word={meta.word} accent={meta.accent} />
       )}
 
-      {/* Lightning strike flash — rares only */}
-      {strike && (
-        <div className="gf-strike fixed inset-0 z-[72]"
-          style={{ background: `radial-gradient(circle at 50% 30%, #FFFFFF 0%, ${meta.accent}80 30%, transparent 70%)` }} />
-      )}
+      {/* Sorare-style bolt — rares only */}
+      {strike && <LightningBolt color={meta.accent} />}
 
       {/* Welcome banner — Starter Packs only */}
       {isStarter && stage !== 'haul' && (
@@ -179,19 +268,12 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
       )}
 
       <div className="relative text-center flex flex-col items-center"
-        style={{ width: '100%', maxWidth: 'min(400px, calc(100vw - 32px))', perspective: '900px' }}>
+        style={{ width: '100%', maxWidth: 'min(420px, calc(100vw - 24px))', perspective: '900px' }}>
 
-        {/* Stage 1 — the unopened pack */}
+        {/* Stage 1 — the foil packet */}
         {(stage === 'pack' || stage === 'tearing') && (
           <div className={stage === 'tearing' ? '' : 'gf-pop'}>
-            <div className={`relative mx-auto rounded-2xl pinstripe flex flex-col items-center justify-center ${stage === 'tearing' ? 'gf-tear' : 'gf-wiggle'}`}
-              style={{ width: '240px', height: '340px', background: `linear-gradient(160deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`, border: `2px solid ${T.accent}`, boxShadow: `0 0 48px ${T.accent}40` }}>
-              <p className="text-xs font-black uppercase tracking-[0.35em] mb-3" style={{ color: T.accent }}>Grassroots</p>
-              <p className="text-lg font-black uppercase tracking-[0.2em] mb-1" style={{ fontFamily: 'var(--font-heading)', color: T.accent }}>{gradeLabel}</p>
-              <p className="text-2xl font-black uppercase" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{packName}</p>
-              <p className="text-sm font-bold mt-2" style={{ color: T.textDim }}>{sorted.length} cards</p>
-              <div className="absolute left-3 right-3" style={{ top: '46px', borderTop: `2px dashed ${T.accent}50` }} />
-            </div>
+            <FoilPacket T={T} gradeLabel={gradeLabel} packName={packName} count={sorted.length} tearing={stage === 'tearing'} />
             {stage === 'pack' && (
               <span className="inline-block rounded-full mt-8 gf-pulse"
                 style={{ border: `1px solid ${T.accent}60`, background: `${T.accent}15`, padding: '8px 20px' }}>
@@ -204,7 +286,7 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
         {/* Stage 2 — tier card back */}
         {stage === 'back' && current && (
           <div key={`back-${idx}`} className="gf-pop">
-            <CardBack accent={meta.accent} isRare={isRare} idx={idx} total={sorted.length} markSrc="/gf-mark.png" />
+            <CardBack accent={meta.accent} isRare={isRare} idx={idx} total={sorted.length} />
             <span className="inline-block rounded-full mt-8 gf-pulse"
               style={{ border: `1px solid ${meta.accent}60`, background: `${meta.accent}15`, padding: '8px 20px' }}>
               <span className="text-xs font-bold uppercase tracking-[0.3em]" style={{ color: T.text }}>Tap to reveal</span>
@@ -224,7 +306,7 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
               }}>
               {stage === 'orbPos' ? (
                 <p className="text-5xl font-black" style={{ fontFamily: 'var(--font-heading)', color: '#F5F1E8', textShadow: `0 0 20px ${meta.accent}` }}>
-                  {firstPos}
+                  {posBucket(current.positions ?? [])}
                 </p>
               ) : crest ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
@@ -239,42 +321,26 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
           </div>
         )}
 
-        {/* Stage 4 — unfurl + revealed card */}
+        {/* Stage 4 — unfurl + the real card */}
         {(stage === 'unfurl' || stage === 'front') && current && (
-          <div key={`front-${idx}`}>
+          <div key={`front-${idx}`} className="w-full">
             {stage === 'front' && (
-              <p className="text-sm font-black uppercase tracking-[0.35em] mb-5 gf-pop"
+              <p className="text-sm font-black uppercase tracking-[0.35em] mb-4 gf-pop"
                 style={{ color: meta.accent, textShadow: isRare ? `0 0 16px ${meta.accent}` : undefined }}>
                 {meta.announce}
               </p>
             )}
-            <div className={stage === 'unfurl' ? 'gf-unfurl' : ''} style={{ width: '250px', margin: '0 auto' }}>
-              <div className={`relative rounded-2xl overflow-hidden flex flex-col ${stage === 'front' ? 'gf-wiggle' : ''}`}
-                style={{
-                  width: '250px', height: '360px',
-                  background: T.surface,
-                  border: `2px solid ${meta.accent}`,
-                  boxShadow: isRare ? `0 0 64px ${meta.accent}70, 0 0 120px ${meta.accent}30` : `0 0 28px ${meta.accent}30`,
-                }}>
-                <div className="flex-1 relative flex items-end justify-center"
-                  style={{ background: `linear-gradient(180deg, ${meta.accent}35 0%, ${T.surface} 95%)` }}>
-                  <svg width="52%" viewBox="0 0 60 80" fill="none">
-                    <circle cx="30" cy="22" r="13" fill={meta.accent + '80'} />
-                    <path d="M6 80 C6 52 54 52 54 80 Z" fill={meta.accent + '80'} />
-                  </svg>
-                  <span className="absolute top-3 left-3.5 text-[10px] font-black tracking-widest"
-                    style={{ color: meta.accent, textShadow: `0 0 8px ${meta.accent}90` }}>{meta.label}</span>
-                </div>
-                <div className="text-left" style={{ background: T.headerBg, borderTop: `1px solid ${meta.accent}40`, padding: '12px 16px 14px' }}>
-                  <p className="text-lg font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{current.name}</p>
-                  <p className="text-[11px] font-bold" style={{ color: T.textDim }}>
-                    {current.club ?? ''}{current.club && current.positions?.length ? ' · ' : ''}{(current.positions ?? []).map(posLabel).join(' ')}
-                  </p>
-                </div>
-              </div>
+            <div className={stage === 'unfurl' ? 'gf-unfurl' : ''}
+              style={{ width: 'min(300px, 82vw)', margin: '0 auto' }}>
+              <PlayerCardFull
+                player={toFullPlayer(current)}
+                grade={grade}
+                owned={true}
+                cardStyle={cardStyle}
+              />
             </div>
             {stage === 'front' && (
-              <span className="inline-block rounded-full mt-7 gf-pulse"
+              <span className="inline-block rounded-full mt-6 gf-pulse"
                 style={{ border: `1px solid ${meta.accent}60`, background: `${meta.accent}15`, padding: '8px 20px' }}>
                 <span className="text-[11px] font-bold uppercase tracking-[0.3em]" style={{ color: T.text }}>
                   {idx + 1 < sorted.length ? 'Tap for the next card' : 'Tap to see your haul'}
@@ -284,38 +350,22 @@ export default function PackReveal({ grade, packName, cards, onDone }: {
           </div>
         )}
 
-        {/* Stage 5 — carousel haul */}
+        {/* Stage 5 — carousel haul, real mini cards, neighbours peeking */}
         {stage === 'haul' && (
           <div className="gf-pop w-full">
             <p className="text-sm font-black uppercase tracking-[0.35em] mb-6" style={{ color: T.accent }}>Your Haul</p>
-            <div className="flex gap-4 overflow-x-auto pb-4 px-2 -mx-2" style={{ scrollSnapType: 'x mandatory' }}
+            <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollSnapType: 'x mandatory', padding: '0 60px' }}
               onClick={(e) => e.stopPropagation()}>
-              {sorted.map((c, i) => {
-                const m = TIER_META[c.tier] ?? TIER_META.common
-                return (
-                  <div key={i} className="gf-slide-in shrink-0 rounded-2xl overflow-hidden flex flex-col"
-                    style={{
-                      width: '170px', height: '245px', scrollSnapAlign: 'center',
-                      animationDelay: `${i * 90}ms`,
-                      background: T.surface, border: `2px solid ${m.accent}`,
-                      boxShadow: c.tier.startsWith('rare') ? `0 0 32px ${m.accent}50` : `0 0 16px ${m.accent}25`,
-                    }}>
-                    <div className="flex-1 relative flex items-end justify-center"
-                      style={{ background: `linear-gradient(180deg, ${m.accent}35 0%, ${T.surface} 95%)` }}>
-                      <svg width="52%" viewBox="0 0 60 80" fill="none">
-                        <circle cx="30" cy="22" r="13" fill={m.accent + '80'} />
-                        <path d="M6 80 C6 52 54 52 54 80 Z" fill={m.accent + '80'} />
-                      </svg>
-                      <span className="absolute top-2 left-2.5 text-[9px] font-black tracking-widest"
-                        style={{ color: m.accent, textShadow: `0 0 8px ${m.accent}90` }}>{m.label}</span>
-                    </div>
-                    <div className="text-left" style={{ background: T.headerBg, borderTop: `1px solid ${m.accent}40`, padding: '8px 10px 10px' }}>
-                      <p className="text-sm font-black leading-tight" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{c.name}</p>
-                      <p className="text-[10px] font-bold" style={{ color: T.textDim }}>{c.club ?? ''}</p>
-                    </div>
-                  </div>
-                )
-              })}
+              {sorted.map((c, i) => (
+                <div key={i} className="gf-slide-in shrink-0" style={{ width: '190px', scrollSnapAlign: 'center', animationDelay: `${i * 90}ms` }}>
+                  <PlayerCard
+                    player={toFullPlayer(c)}
+                    grade={grade}
+                    owned={true}
+                    cardStyle={cardStyle}
+                  />
+                </div>
+              ))}
             </div>
             <p className="text-[10px] font-bold mt-2 mb-4" style={{ color: T.textDim }}>Swipe to browse</p>
             <span className="inline-block rounded-full gf-pulse" style={{ border: `1px solid ${T.accent}60`, background: `${T.accent}15`, padding: '8px 20px' }}>
