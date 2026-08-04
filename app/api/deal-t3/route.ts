@@ -2,7 +2,15 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-type Player = { id: string; full_name: string; tier: string; positions: string[] }
+type Player = {
+  id: string
+  full_name: string
+  tier: string
+  positions: string[]
+  stats?: Record<string, number>
+  photo_url?: string | null
+  clubs?: { name: string } | null
+}
 
 // Weighted pick: players with fewer cards in circulation are more likely
 function weightedPick(pool: Player[], circulation: Map<string, number>, n: number): Player[] {
@@ -66,10 +74,11 @@ export async function POST(request: Request) {
   }
 
   const { data: pool, error } = await admin.from('players')
-    .select('id, full_name, tier, positions').eq('grade', grade).eq('active', true)
+    .select('id, full_name, tier, positions, stats, photo_url, clubs(name)')
+    .eq('grade', grade).eq('active', true)
   if (error || !pool) return NextResponse.json({ error: 'Player pool unavailable' }, { status: 500 })
 
-  const fresh = (pool as Player[]).filter(p => !ownedIds.has(p.id))
+  const fresh = (pool as unknown as Player[]).filter(p => !ownedIds.has(p.id))
   // 2 cards: ~80% Common / ~20% Elite per slot
   const picks: Player[] = []
   for (let i = 0; i < 2; i++) {
@@ -90,6 +99,13 @@ export async function POST(request: Request) {
   return NextResponse.json({
     dealt: picks.length,
     players: picks.map(p => p.full_name),
-    cards: picks.map(p => ({ name: p.full_name, tier: p.tier, positions: p.positions })),
+    cards: picks.map(p => ({
+      name: p.full_name,
+      tier: p.tier,
+      positions: p.positions,
+      club: p.clubs?.name ?? '',
+      stats: p.stats ?? {},
+      photoUrl: p.photo_url ?? null,
+    })),
   })
 }
