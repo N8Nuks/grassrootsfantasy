@@ -55,7 +55,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
         WebkitMaskImage: 'radial-gradient(circle, black 55%, transparent 78%)',
       }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`/clubs/${clubSlug}.jpg`} alt="" className="w-full h-full object-cover" />
+        <img src={`/clubs/${clubSlug}.jpg`} alt="" className="w-full h-full object-contain" style={{ padding: '8%' }} />
       </div>
       <section className="relative flex-1 px-6" style={{ paddingTop: '90px', paddingBottom: '100px' }}>
         <div style={{ maxWidth: '980px', marginLeft: 'auto', marginRight: 'auto' }}>
@@ -69,7 +69,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
               <div className="rounded-full overflow-hidden shrink-0"
                 style={{ width: '56px', height: '56px', background: '#141210', border: '1.5px solid #ffffff25' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/clubs/${clubSlug}.jpg`} alt={clubName} className="w-full h-full object-cover" />
+                <img src={`/clubs/${clubSlug}.jpg`} alt={clubName} className="w-full hclassName="w-full h-full object-contain" style={{ padding: '8%' }}-full object-cover" />
               </div>
               <h1 className="text-3xl sm:text-4xl font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{clubName}</h1>
             </div>
