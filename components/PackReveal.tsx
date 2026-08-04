@@ -400,7 +400,7 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
         {stage === 'haul' && (
           <div className="gf-pop w-full">
             <p className="text-sm font-black uppercase tracking-[0.35em] mb-6" style={{ color: T.accent }}>Your Haul</p>
-            <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollSnapType: 'x mandatory', padding: '0 60px' }}
+            <div className="flex gap-4 overflow-x-auto pb-4 gf-noscroll" style={{ scrollSnapType: 'x mandatory', padding: '0 60px' }}
               onClick={(e) => e.stopPropagation()}>
               {sorted.map((c, i) => (
                 <div key={i} className="gf-slide-in shrink-0" style={{ width: '190px', scrollSnapAlign: 'center', animationDelay: `${i * 90}ms` }}>
