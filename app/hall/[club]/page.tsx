@@ -20,6 +20,9 @@ export default async function ClubHall({ params, searchParams }: {
     const { data: prof } = await supabase.from('profiles').select('site_theme').eq('id', user.id).single()
     siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
   }
+  const { data: styleRow } = await supabase.from('site_settings')
+    .select('value').eq('key', 'card_style').maybeSingle()
+  const cardStyle = (styleRow?.value ?? 'premium') as 'standard' | 'premium'
 
   const { data: clubs } = await supabase.from('clubs').select('id, name')
   const club = (clubs ?? []).find(c =>
@@ -88,6 +91,7 @@ export default async function ClubHall({ params, searchParams }: {
       roster={roster}
       ownedPlayerIds={ownedPlayerIds}
       siteTheme={siteTheme}
+      cardStyle={cardStyle}
     />
   )
 }

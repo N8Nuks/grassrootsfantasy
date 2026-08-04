@@ -15,6 +15,9 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
     .from('profiles').select('team_name, site_theme, clubs(name)').eq('id', user!.id).single()
 
   const siteTheme = (profile as unknown as { site_theme?: string })?.site_theme ?? 'grade'
+  const { data: styleRow } = await supabase.from('site_settings')
+    .select('value').eq('key', 'card_style').maybeSingle()
+  const cardStyle = (styleRow?.value ?? 'premium') as 'standard' | 'premium'
   const T = theme(grade, siteTheme)
 
   const { data: cards } = await supabase
@@ -119,6 +122,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
           thisRoundPoints={thisRoundPoints}
           lastRoundPoints={lastRoundPoints}
           thisRoundLabel={thisRoundLabel}
+          cardStyle={cardStyle}
           lastRoundLabel={lastRoundLabel}
         />
       </section>

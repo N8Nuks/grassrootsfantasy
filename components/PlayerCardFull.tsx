@@ -106,13 +106,22 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
 
         {/* Photo / artwork area */}
         <div className="relative flex items-end justify-center overflow-hidden" style={{ flex: '1 1 auto', minHeight: 0, background: T.surface }}>
-          {/* Diagonal energy slashes */}
-          <div className="absolute inset-0" style={{
-            background: owned
-              ? `linear-gradient(115deg, transparent 0%, transparent 42%, ${meta.accent}30 42%, ${meta.accent}30 52%, transparent 52%, transparent 60%, ${tint}28 60%, ${tint}28 66%, transparent 66%),
-                 linear-gradient(180deg, ${meta.accent}20 0%, ${T.surface} 85%)`
-              : `linear-gradient(180deg, #ffffff08 0%, ${T.surface} 85%)`,
-          }} />
+          {cardStyle === 'premium' && owned ? (
+            /* Tier backdrop artwork */
+            <div className="absolute inset-0" style={{
+              backgroundImage: `url(/card-bg-${player.tier === 'rare_2wp_a' ? 'rare2wpa' : player.tier === 'rare_2wp_b' ? 'rare2wpb' : player.tier === 'elite' ? 'elite' : 'common'}.webp)`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center top',
+            }} />
+          ) : (
+            /* Diagonal energy slashes (standard style / unowned) */
+            <div className="absolute inset-0" style={{
+              background: owned
+                ? `linear-gradient(115deg, transparent 0%, transparent 42%, ${meta.accent}30 42%, ${meta.accent}30 52%, transparent 52%, transparent 60%, ${tint}28 60%, ${tint}28 66%, transparent 66%),
+                   linear-gradient(180deg, ${meta.accent}20 0%, ${T.surface} 85%)`
+                : `linear-gradient(180deg, #ffffff08 0%, ${T.surface} 85%)`,
+            }} />
+          )}
           {player.photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={player.photoUrl} alt={player.name} className="relative"

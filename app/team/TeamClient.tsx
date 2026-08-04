@@ -72,7 +72,7 @@ function SoftballSwatch({ colors, seam, selected, ringColor }: {
   )
 }
 
-export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen, thisRoundPoints, lastRoundPoints, thisRoundLabel, lastRoundLabel }: {
+export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen, thisRoundPoints, lastRoundPoints, thisRoundLabel, lastRoundLabel, cardStyle }: {
   teamName: string
   clubName: string
   cards: TeamCard[]
@@ -88,6 +88,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   lastRoundPoints: Record<string, number>
   thisRoundLabel: string | null
   lastRoundLabel: string | null
+  cardStyle: 'standard' | 'premium'
 }) {
   const T = theme(grade, siteTheme)
   const accentBright = T.electric ?? T.accent
@@ -650,6 +651,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                     grade={grade}
                     owned={true}
                     siteTheme={siteTheme}
+                    cardStyle={cardStyle}
                   />
                 </div>
                 <div>

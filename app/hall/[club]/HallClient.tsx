@@ -21,7 +21,7 @@ export type HallPlayer = {
 
 const TIER_ORDER = ['rare_2wp_a', 'rare_2wp_b', 'elite', 'common']
 
-export default function HallClient({ clubName, clubSlug, grade, grades, roster, ownedPlayerIds, siteTheme }: {
+export default function HallClient({ clubName, clubSlug, grade, grades, roster, ownedPlayerIds, siteTheme, cardStyle }: {
   clubName: string
   clubSlug: string
   grade: Grade
@@ -29,6 +29,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
   roster: HallPlayer[]
   ownedPlayerIds: string[]
   siteTheme: string
+  cardStyle: 'standard' | 'premium'
 }) {
   const T = theme(grade, siteTheme)
   const owned = new Set(ownedPlayerIds)
@@ -108,6 +109,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
               grade={grade}
               owned={owned.has(detail.id)}
               siteTheme={siteTheme}
+              cardStyle={cardStyle}
             />
             <button onClick={() => setDetail(null)} className="w-full text-center text-xs font-bold uppercase tracking-widest mt-4" style={{ color: T.textDim }}>Close</button>
           </div>
