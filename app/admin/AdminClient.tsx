@@ -101,6 +101,13 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
     setAvailBusy(false)
   }
 
+  const [styleLog, setStyleLog] = useState('')
+  async function setCardStyle(style: 'standard' | 'premium') {
+    const r = await fetch('/api/card-style', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ style }) })
+    const data = await r.json()
+    setStyleLog(r.ok ? `Card style set to ${data.style}` : 'ERROR: ' + data.error)
+  }
+
   const [rcLog, setRcLog] = useState<string[]>([])
   const [rcBusy, setRcBusy] = useState(false)
 
@@ -391,6 +398,20 @@ export default function AdminClient({ stats }: { stats: AdminStats }) {
               </button>
             </div>
             <LogBox lines={availLog} error={availLog[0]?.startsWith('ERROR')} />
+          </Panel>
+
+          {/* 6 · Card Style */}
+          <Panel number="6" title="Card Style" accent={P.purple}
+            sub="Premium shows the full designed cards (backdrops, marks). Standard is the clean build for testing and trial weeks.">
+            <div className="grid grid-cols-2 gap-3">
+              <button type="button" onClick={() => setCardStyle('standard')}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01]"
+                style={{ color: P.blue, border: `1px solid ${P.blue}70`, padding: '16px 0' }}>Standard</button>
+              <button type="button" onClick={() => setCardStyle('premium')}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01]"
+                style={{ color: P.orange, border: `1px solid ${P.orange}70`, padding: '16px 0' }}>Premium</button>
+            </div>
+            {styleLog && <LogBox lines={[styleLog]} error={styleLog.startsWith('ERROR')} />}
           </Panel>
         </div>
       </section>
