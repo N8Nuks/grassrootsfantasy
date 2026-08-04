@@ -1,6 +1,14 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 
-type Player = { id: string; full_name: string; tier: string; positions: string[] }
+type Player = {
+  id: string
+  full_name: string
+  tier: string
+  positions: string[]
+  stats?: Record<string, number>
+  photo_url?: string | null
+  clubs?: { name: string } | null
+}
 type Grade = 'mens' | 'womens'
 
 const TOP_2WPA: Record<Grade, string[]> = {
@@ -82,10 +90,11 @@ export async function dealAndPersistT1(admin: SupabaseClient, userId: string, gr
   if (count && count > 0) throw new Error('T1 already dealt for this grade')
 
   const { data: pool, error: poolError } = await admin.from('players')
-    .select('id, full_name, tier, positions').eq('grade', grade).eq('active', true)
+    .select('id, full_name, tier, positions, stats, photo_url, clubs(name)')
+    .eq('grade', grade).eq('active', true)
   if (poolError || !pool || pool.length === 0) throw new Error('Player pool unavailable')
 
-  const { cards, lineup } = dealT1(pool as Player[], grade)
+  const { cards, lineup } = dealT1(pool as unknown as Player[], grade)
 
   const { data: inserted, error: cardError } = await admin.from('cards')
     .insert(cards.map(p => ({ owner_id: userId, player_id: p.id, grade, source: 't1' })))
@@ -109,6 +118,13 @@ export async function dealAndPersistT1(admin: SupabaseClient, userId: string, gr
 
   return {
     dealt: cards.length,
-    cards: cards.map(p => ({ name: p.full_name, tier: p.tier, positions: p.positions })),
+    cards: cards.map(p => ({
+      name: p.full_name,
+      tier: p.tier,
+      positions: p.positions,
+      club: p.clubs?.name ?? '',
+      stats: p.stats ?? {},
+      photoUrl: p.photo_url ?? null,
+    })),
   }
 }
