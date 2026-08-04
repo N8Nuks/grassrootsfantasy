@@ -2,7 +2,15 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-type Player = { id: string; full_name: string; tier: string; positions: string[] }
+type Player = {
+  id: string
+  full_name: string
+  tier: string
+  positions: string[]
+  stats?: Record<string, number>
+  photo_url?: string | null
+  clubs?: { name: string } | null
+}
 
 function sample<T>(arr: T[]): T | null {
   if (arr.length === 0) return null
@@ -43,10 +51,11 @@ export async function POST(request: Request) {
   const ownedIds = new Set((owned ?? []).map(c => c.player_id))
 
   const { data: pool, error } = await admin.from('players')
-    .select('id, full_name, tier, positions').eq('grade', grade).eq('active', true)
+    .select('id, full_name, tier, positions, stats, photo_url, clubs(name)')
+    .eq('grade', grade).eq('active', true)
   if (error || !pool) return NextResponse.json({ error: 'Player pool unavailable' }, { status: 500 })
 
-  const fresh = (pool as Player[]).filter(p => !ownedIds.has(p.id))
+  const fresh = (pool as unknown as Player[]).filter(p => !ownedIds.has(p.id))
   const byTier = (t: string) => fresh.filter(p => p.tier === t)
 
   // 3 cards: 1 Elite + 1 Common guaranteed; third = 50% any Rare (2WP A or B) / 50% Elite
@@ -74,6 +83,14 @@ export async function POST(request: Request) {
   return NextResponse.json({
     dealt: picks.length,
     players: picks.map(p => ({ name: p.full_name, tier: p.tier })),
+    cards: picks.map(p => ({
+      name: p.full_name,
+      tier: p.tier,
+      positions: p.positions,
+      club: p.clubs?.name ?? '',
+      stats: p.stats ?? {},
+      photoUrl: p.photo_url ?? null,
+    })),
     rare_hit: picks.some(p => p.tier.startsWith('rare')),
   })
 }
