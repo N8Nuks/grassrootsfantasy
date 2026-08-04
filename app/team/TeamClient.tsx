@@ -209,7 +209,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     const r = await fetch('/api/redeem-t4', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: t4Code }) })
     const data = await r.json()
     if (r.ok) {
-      setReveal({ packName: 'Bonus Pack', cards: data.players.map((p: { name: string; tier: string }) => ({ name: p.name, tier: p.tier })) })
+      setReveal({ packName: 'Bonus Pack', cards: data.cards ?? data.players.map((p: { name: string; tier: string }) => ({ name: p.name, tier: p.tier })) })
     } else alert(data.error)
   }
   async function claimT3() {
