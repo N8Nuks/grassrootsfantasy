@@ -34,7 +34,7 @@ function CrestRing({ club, owned, total }: { club: string; owned: number; total:
       <div className="absolute rounded-full overflow-hidden flex items-center justify-center"
         style={{ inset: '14px', background: '#0D0B08', border: `1.5px solid ${c}50` }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`/clubs/${slug(club)}.jpg`} alt={club} className="w-full h-full object-contain" style={{ padding: '8%' }} 
+        <img src={`/clubs/${slug(club)}.jpg`} alt={club} className="w-full h-full object-cover" 
         />
       </div>
     </div>

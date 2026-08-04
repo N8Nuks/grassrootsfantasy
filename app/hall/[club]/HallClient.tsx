@@ -69,7 +69,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
               <div className="rounded-full overflow-hidden shrink-0"
                 style={{ width: '56px', height: '56px', background: '#141210', border: '1.5px solid #ffffff25' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/clubs/${clubSlug}.jpg`} alt={clubName} className="w-full h-full object-contain" style={{ padding: '8%' }} />
+                <img src={`/clubs/${clubSlug}.jpg`} alt={clubName} className="w-full h-full object-cover" />
               </div>
               <h1 className="text-3xl sm:text-4xl font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{clubName}</h1>
             </div>
