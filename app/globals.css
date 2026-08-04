@@ -201,6 +201,70 @@ a { color: inherit; text-decoration: none; }
 }
 .gf-banner-in { animation: gf-banner-in 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.1) both; }
 
+/* ── Reveal v4: word wall, orb, card backs, strike, carousel ── */
+@keyframes gf-wordwall {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-8%, -6%); }
+}
+.gf-wordwall {
+  animation: gf-wordwall 26s linear infinite alternate;
+  will-change: transform;
+}
+
+@keyframes gf-orb-in {
+  0% { opacity: 0; transform: scale(0.3); }
+  70% { transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.gf-orb-in { animation: gf-orb-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+
+@keyframes gf-orb-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.gf-orb-float { animation: gf-orb-float 3s ease-in-out infinite; }
+
+@keyframes gf-orb-swap {
+  0% { opacity: 0; transform: scale(0.7) rotate(-8deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+.gf-orb-swap { animation: gf-orb-swap 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.15) both; }
+
+@keyframes gf-unfurl {
+  0% { transform: scaleY(0.08) scaleX(0.6); opacity: 0.4; }
+  55% { transform: scaleY(1.06) scaleX(1); opacity: 1; }
+  100% { transform: scaleY(1) scaleX(1); opacity: 1; }
+}
+.gf-unfurl {
+  animation: gf-unfurl 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+  transform-origin: center center;
+}
+
+@keyframes gf-strike {
+  0% { opacity: 0; }
+  8% { opacity: 1; }
+  14% { opacity: 0.15; }
+  20% { opacity: 0.9; }
+  30% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.gf-strike {
+  animation: gf-strike 1.1s ease-out both;
+  pointer-events: none;
+}
+
+@keyframes gf-sheen {
+  0% { transform: translateX(-140%) skewX(-18deg); }
+  100% { transform: translateX(240%) skewX(-18deg); }
+}
+.gf-sheen { animation: gf-sheen 2.8s ease-in-out infinite; }
+
+@keyframes gf-slide-in {
+  0% { opacity: 0; transform: translateX(56px) scale(0.94); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+.gf-slide-in { animation: gf-slide-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1) both; }
+
 /* ── Number inputs: no spinner arrows (type, don't scroll) ── */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
