@@ -2,7 +2,15 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-type Player = { id: string; full_name: string; tier: string; positions: string[]; stats?: Record<string, number> }
+type Player = {
+  id: string
+  full_name: string
+  tier: string
+  positions: string[]
+  stats?: Record<string, number>
+  photo_url?: string | null
+  clubs?: { name: string } | null
+}
 
 function sample<T>(arr: T[], n: number): T[] {
   const copy = [...arr]
@@ -58,10 +66,11 @@ export async function POST(request: Request) {
   const ownedIds = new Set((owned ?? []).map(c => c.player_id))
 
   const { data: pool, error } = await admin.from('players')
-    .select('id, full_name, tier, positions, stats').eq('grade', grade).eq('active', true)
+    .select('id, full_name, tier, positions, stats, photo_url, clubs(name)')
+    .eq('grade', grade).eq('active', true)
   if (error || !pool) return NextResponse.json({ error: 'Player pool unavailable' }, { status: 500 })
 
-  const picks = dealT2(pool as Player[], ownedIds)
+  const picks = dealT2(pool as unknown as Player[], ownedIds)
   if (picks.length === 0) return NextResponse.json({ error: 'No cards available to deal' }, { status: 500 })
 
   const { data: inserted, error: insertError } = await admin.from('cards')
@@ -96,6 +105,13 @@ export async function POST(request: Request) {
   return NextResponse.json({
     dealt: picks.length,
     players: picks.map(p => p.full_name),
-    cards: picks.map(p => ({ name: p.full_name, tier: p.tier, positions: p.positions })),
+    cards: picks.map(p => ({
+      name: p.full_name,
+      tier: p.tier,
+      positions: p.positions,
+      club: p.clubs?.name ?? '',
+      stats: p.stats ?? {},
+      photoUrl: p.photo_url ?? null,
+    })),
   })
 }
