@@ -45,7 +45,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
       <Nav />
-      {/* Club crest atmosphere — oversized, faint, bleeding off the corner */}
+      {/* Club crest atmosphere — oversized, faint */}
       <div className="fixed pointer-events-none gf-crest-bg" style={{
         borderRadius: '9999px',
         overflow: 'hidden',
@@ -55,21 +55,21 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
         WebkitMaskImage: 'radial-gradient(circle, black 55%, transparent 78%)',
       }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`/clubs/${clubSlug}.jpg`} alt="" className="w-full h-full object-contain" style={{ padding: '8%' }} />
+        <img src={`/clubs/${clubSlug}.jpg`} alt="" className="w-full h-full object-cover" />
       </div>
       <section className="relative flex-1 px-6" style={{ paddingTop: '90px', paddingBottom: '100px' }}>
+        <a href="/hall"
+          className="fixed z-40 text-[11px] font-bold uppercase tracking-widest transition-all hover:tracking-[0.2em]"
+          style={{ top: '84px', left: '24px', color: T.textDim }}>
+          ← Hall
+        </a>
         <div style={{ maxWidth: '980px', marginLeft: 'auto', marginRight: 'auto' }}>
-          <a href="/hall"
-            className="fixed z-40 text-[11px] font-bold uppercase tracking-widest transition-all hover:tracking-[0.2em]"
-            style={{ top: '84px', left: '24px', color: T.textDim }}>
-            ← Hall
-          </a>
           <div className="text-center" style={{ marginBottom: '48px' }}>
             <div className="flex items-center justify-center gap-4 mt-2 mb-2">
               <div className="rounded-full overflow-hidden shrink-0"
                 style={{ width: '56px', height: '56px', background: '#141210', border: '1.5px solid #ffffff25' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/clubs/${clubSlug}.jpg`} alt={clubName} className="w-full hclassName="w-full h-full object-contain" style={{ padding: '8%' }}-full object-cover" />
+                <img src={`/clubs/${clubSlug}.jpg`} alt={clubName} className="w-full h-full object-contain" style={{ padding: '8%' }} />
               </div>
               <h1 className="text-3xl sm:text-4xl font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{clubName}</h1>
             </div>
