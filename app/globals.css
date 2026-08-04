@@ -201,7 +201,7 @@ a { color: inherit; text-decoration: none; }
 }
 .gf-banner-in { animation: gf-banner-in 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.1) both; }
 
-/* ── Reveal v4: word wall, orb, card backs, strike, carousel ── */
+/* ── Reveal: word wall, orb, card backs, carousel ── */
 @keyframes gf-wordwall {
   0% { transform: translate(0, 0); }
   100% { transform: translate(-8%, -6%); }
@@ -240,16 +240,68 @@ a { color: inherit; text-decoration: none; }
   transform-origin: center center;
 }
 
-@keyframes gf-strike {
+/* ── Lightning storm ── */
+@keyframes gf-bolt {
   0% { opacity: 0; }
-  8% { opacity: 1; }
-  14% { opacity: 0.15; }
-  20% { opacity: 0.9; }
-  30% { opacity: 0; }
+  6% { opacity: 1; }
+  13% { opacity: 0.2; }
+  20% { opacity: 1; }
+  28% { opacity: 0.85; }
+  38% { opacity: 0; }
   100% { opacity: 0; }
 }
-.gf-strike {
-  animation: gf-strike 1.1s ease-out both;
+.gf-bolt {
+  opacity: 0;
+  animation-name: gf-bolt;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+}
+@keyframes gf-skyflash {
+  0% { opacity: 0; }
+  5% { opacity: 0.55; }
+  11% { opacity: 0.08; }
+  16% { opacity: 0.4; }
+  26% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.gf-skyflash {
+  opacity: 0;
+  animation-name: gf-skyflash;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+  pointer-events: none;
+}
+/* Impact sparks: fly out from the strike point */
+@keyframes gf-spark {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  10% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(1); }
+}
+.gf-spark {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  opacity: 0;
+  animation-name: gf-spark;
+  animation-duration: 0.7s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.6, 1);
+  animation-fill-mode: both;
+  pointer-events: none;
+}
+/* Electrified card rim: crackling tier-coloured border */
+@keyframes gf-rim {
+  0%, 100% { box-shadow: 0 0 10px var(--rim), 0 0 24px var(--rim), inset 0 0 8px var(--rim); opacity: 1; }
+  8% { box-shadow: 0 0 16px var(--rim), 0 0 40px var(--rim), inset 0 0 14px var(--rim); }
+  14% { box-shadow: 0 0 6px var(--rim), 0 0 14px var(--rim), inset 0 0 5px var(--rim); opacity: 0.75; }
+  22% { box-shadow: 0 0 18px var(--rim), 0 0 44px var(--rim), inset 0 0 15px var(--rim); }
+  47% { box-shadow: 0 0 9px var(--rim), 0 0 20px var(--rim), inset 0 0 7px var(--rim); opacity: 0.9; }
+  55% { box-shadow: 0 0 20px var(--rim), 0 0 48px var(--rim), inset 0 0 16px var(--rim); }
+  71% { box-shadow: 0 0 8px var(--rim), 0 0 18px var(--rim), inset 0 0 6px var(--rim); opacity: 0.8; }
+  83% { box-shadow: 0 0 15px var(--rim), 0 0 38px var(--rim), inset 0 0 12px var(--rim); }
+}
+.gf-rim {
+  animation: gf-rim 2.2s ease-in-out infinite;
   pointer-events: none;
 }
 
