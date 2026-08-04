@@ -181,7 +181,11 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme }: {
                 </div>
               ))}
             </div>
-            <p className="text-[7px] font-bold uppercase tracking-widest text-right" style={{ color: T.textDim, marginTop: '3px', opacity: 0.7 }}>2026/27 · prior 3 seasons below</p>
+            <div className="flex items-center justify-end gap-2" style={{ marginTop: '3px' }}>
+              <p className="text-[7px] font-bold uppercase tracking-widest" style={{ color: T.textDim, opacity: 0.7 }}>2026/27 · prior 3 seasons below</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/gf-mark.png" alt="GF" style={{ height: '14px', width: 'auto', opacity: 0.45 }} />
+            </div>
           </div>
         </div>
       </div>
