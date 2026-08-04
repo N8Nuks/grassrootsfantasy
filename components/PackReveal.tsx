@@ -63,24 +63,66 @@ function WordWall({ word, accent }: { word: string; accent: string }) {
   )
 }
 
-/* Sorare-style bolt: continuous jagged strike travelling the full screen, over the card */
-function LightningBolt({ color }: { color: string }) {
+/* Lightning storm: diagonal forked bolts striking the card, with impact sparks */
+const BOLTS = [
+  // Diagonal from top-left into centre, forks off midway
+  { d: 'M-20 40 L90 130 L70 190 L180 280 L160 330 L215 400', forks: ['M180 280 L245 320 L230 370', 'M90 130 L140 150 L128 195'], delay: 0 },
+  // Diagonal from top-right into centre
+  { d: 'M420 20 L320 140 L345 200 L250 310 L268 360 L205 420', forks: ['M250 310 L195 340 L210 395', 'M320 140 L280 165 L295 215'], delay: 650 },
+  // Steep from top, kicks left into the card
+  { d: 'M260 -20 L230 120 L275 180 L215 300 L240 355 L195 410', forks: ['M215 300 L160 335 L178 385'], delay: 1350 },
+  // Final: low sweeping diagonal from the left, biggest fork
+  { d: 'M-30 200 L110 260 L95 320 L200 380 L185 420', forks: ['M110 260 L170 240 L195 285', 'M200 380 L260 355 L250 415'], delay: 2150 },
+]
+const SPARKS = [
+  { sx: '-34px', sy: '-26px' }, { sx: '30px', sy: '-34px' }, { sx: '-42px', sy: '10px' },
+  { sx: '44px', sy: '4px' }, { sx: '-20px', sy: '34px' }, { sx: '26px', sy: '30px' },
+  { sx: '-8px', sy: '-44px' }, { sx: '10px', sy: '42px' },
+]
+function LightningStorm({ color }: { color: string }) {
   return (
-    <svg className="gf-strike fixed inset-0 z-[73] w-full h-full pointer-events-none"
-      viewBox="0 0 400 800" preserveAspectRatio="none" fill="none">
-      <path d="M235 0 L205 95 L248 150 L185 265 L245 330 L170 470 L238 555 L185 680 L225 800"
-        stroke={color} strokeWidth="11" strokeLinejoin="round" strokeLinecap="round" opacity="0.55"
-        style={{ filter: `blur(6px) drop-shadow(0 0 18px ${color})` }} />
-      <path d="M235 0 L205 95 L248 150 L185 265 L245 330 L170 470 L238 555 L185 680 L225 800"
-        stroke="#FFFFFF" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round"
-        style={{ filter: `drop-shadow(0 0 6px #FFFFFF) drop-shadow(0 0 14px ${color})` }} />
-      <path d="M248 150 L292 210 L268 250" stroke="#FFFFFF" strokeWidth="2.5"
-        strokeLinejoin="round" strokeLinecap="round" opacity="0.85"
-        style={{ filter: `drop-shadow(0 0 8px ${color})` }} />
-      <path d="M245 330 L205 400 L228 438" stroke="#FFFFFF" strokeWidth="2.5"
-        strokeLinejoin="round" strokeLinecap="round" opacity="0.85"
-        style={{ filter: `drop-shadow(0 0 8px ${color})` }} />
-    </svg>
+    <>
+      {/* Sky flashes syncing with each strike */}
+      {BOLTS.map((b, i) => (
+        <div key={`sky-${i}`} className="gf-skyflash fixed inset-0 z-[72]"
+          style={{
+            animationDelay: `${b.delay}ms`,
+            animationDuration: `${900 + i * 120}ms`,
+            background: `radial-gradient(circle at ${i % 2 ? '70%' : '30%'} 20%, #FFFFFF30 0%, ${color}20 35%, transparent 70%)`,
+          }} />
+      ))}
+      <svg className="fixed inset-0 z-[73] w-full h-full pointer-events-none"
+        viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" fill="none">
+        {BOLTS.map((b, i) => (
+          <g key={i} className="gf-bolt"
+            style={{ animationDelay: `${b.delay}ms`, animationDuration: `${850 + i * 150}ms` }}>
+            <path d={b.d} stroke={color} strokeWidth="10" strokeLinejoin="round" strokeLinecap="round" opacity="0.5"
+              style={{ filter: `blur(6px) drop-shadow(0 0 16px ${color})` }} />
+            <path d={b.d} stroke="#FFFFFF" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round"
+              style={{ filter: `drop-shadow(0 0 6px #FFFFFF) drop-shadow(0 0 14px ${color})` }} />
+            {b.forks.map((f, j) => (
+              <path key={j} d={f} stroke="#FFFFFF" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" opacity="0.85"
+                style={{ filter: `drop-shadow(0 0 8px ${color})` }} />
+            ))}
+          </g>
+        ))}
+      </svg>
+      {/* Impact sparks bursting from the centre with each strike */}
+      <div className="fixed z-[74] pointer-events-none" style={{ left: '50%', top: '50%' }}>
+        {BOLTS.map((b, i) =>
+          SPARKS.map((s, j) => (
+            <span key={`${i}-${j}`} className="gf-spark"
+              style={{
+                background: j % 2 ? '#FFFFFF' : color,
+                boxShadow: `0 0 6px ${color}`,
+                animationDelay: `${b.delay + 60}ms`,
+                ['--sx' as string]: s.sx,
+                ['--sy' as string]: s.sy,
+              }} />
+          ))
+        )}
+      </div>
+    </>
   )
 }
 
@@ -206,7 +248,7 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
       setStage('front')
       if (sorted[idx].tier.startsWith('rare')) {
         setStrike(true)
-        setTimeout(() => setStrike(false), 1150)
+        setTimeout(() => setStrike(false), 3200)
       }
     }, 2200)
   }
@@ -254,7 +296,7 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
       )}
 
       {/* Sorare-style bolt — rares only */}
-      {strike && <LightningBolt color={meta.accent} />}
+      {strike && <LightningStorm color={meta.accent} />}
 
       {/* Welcome banner — Starter Packs only */}
       {isStarter && stage !== 'haul' && (
@@ -330,8 +372,12 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
                 {meta.announce}
               </p>
             )}
-            <div className={stage === 'unfurl' ? 'gf-unfurl' : ''}
+            <div className={`relative ${stage === 'unfurl' ? 'gf-unfurl' : ''}`}
               style={{ width: 'min(300px, 82vw)', margin: '0 auto' }}>
+              {stage === 'front' && isRare && (
+                <div className="gf-rim absolute inset-0 rounded-2xl z-10"
+                  style={{ ['--rim' as string]: `${meta.accent}90` }} />
+              )}
               <PlayerCardFull
                 player={toFullPlayer(current)}
                 grade={grade}
