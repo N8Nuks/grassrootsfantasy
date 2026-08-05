@@ -16,6 +16,7 @@ export type TeamCard = {
   positions: string[]
   stats: Record<string, number>
   photoUrl?: string | null
+  playingNumber?: number | null
 }
 
 const TIER_META: Record<string, { label: string; accent: string }> = {
@@ -579,7 +580,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               const slot = slotByCard.get(c.id)
               return (
                 <PlayerCard key={c.id}
-                  player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats, photoUrl: c.photoUrl }}
+                  player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats, photoUrl: c.photoUrl, playingNumber: c.playingNumber }}
                   grade={grade}
                   owned={true}
                   siteTheme={siteTheme}
@@ -650,8 +651,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                     <span className="text-[11px] font-black tracking-[0.3em] px-4 py-1.5 rounded-full" style={{ color: meta.accent, background: meta.accent + '20', textShadow: `0 0 10px ${meta.accent}60` }}>{meta.label}</span>
                   </p>
                   <PlayerCardFull
-                    player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats, photoUrl: c.photoUrl }}
-                    grade={grade}
+player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats, photoUrl: c.photoUrl, playingNumber: c.playingNumber }}                    grade={grade}
                     owned={true}
                     siteTheme={siteTheme}
                     cardStyle={cardStyle}
