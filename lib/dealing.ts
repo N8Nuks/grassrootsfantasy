@@ -7,6 +7,7 @@ type Player = {
   positions: string[]
   stats?: Record<string, number>
   photo_url?: string | null
+  playing_number?: number | null
   clubs?: { name: string } | null
 }
 type Grade = 'mens' | 'womens'
@@ -90,7 +91,7 @@ export async function dealAndPersistT1(admin: SupabaseClient, userId: string, gr
   if (count && count > 0) throw new Error('T1 already dealt for this grade')
 
   const { data: pool, error: poolError } = await admin.from('players')
-    .select('id, full_name, tier, positions, stats, photo_url, clubs(name)')
+    .select('id, full_name, tier, positions, stats, photo_url, playing_number, clubs(name)')
     .eq('grade', grade).eq('active', true)
   if (poolError || !pool || pool.length === 0) throw new Error('Player pool unavailable')
 
@@ -125,6 +126,7 @@ export async function dealAndPersistT1(admin: SupabaseClient, userId: string, gr
       club: p.clubs?.name ?? '',
       stats: p.stats ?? {},
       photoUrl: p.photo_url ?? null,
+      playingNumber: p.playing_number ?? null,
     })),
   }
 }

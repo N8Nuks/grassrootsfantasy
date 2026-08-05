@@ -11,6 +11,7 @@ export type RevealCard = {
   positions?: string[]
   stats?: Record<string, number>
   photoUrl?: string | null
+  playingNumber?: number | null
 }
 
 const TIER_META: Record<string, { label: string; word: string; accent: string; announce: string }> = {
@@ -282,6 +283,7 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
       club: c.club ?? '',
       stats: c.stats ?? {},
       photoUrl: c.photoUrl ?? null,
+      playingNumber: c.playingNumber ?? null,
     }
   }
 
