@@ -658,14 +658,14 @@ player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.
                   />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] mb-1" style={{ color: T.textDim }}>Place on the field</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.25em] mb-1 text-center" style={{ color: T.textDim }}>Place on the field</p>
                   <FieldPicker
                     grade={grade}
                     eligible={new Set(placeTargets)}
                     current={currentSlot ?? null}
                     onSelect={(slot) => assignToSlot(slot, c.id)}
                   />
-                  <p className="text-[10px] mt-3" style={{ color: T.textDim }}>Whoever holds that spot swaps into this player&apos;s current position.</p>
+                  <p className="text-[10px] mt-3 text-center" style={{ color: T.textDim }}>Whoever holds that spot swaps into this player&apos;s current position.</p>
                 </div>
               </div>
             </div>
