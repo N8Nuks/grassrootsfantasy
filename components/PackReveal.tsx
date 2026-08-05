@@ -12,6 +12,7 @@ export type RevealCard = {
   stats?: Record<string, number>
   photoUrl?: string | null
   playingNumber?: number | null
+  revealPos?: string | null
 }
 
 const TIER_META: Record<string, { label: string; word: string; accent: string; announce: string }> = {
@@ -355,7 +356,7 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
               }}>
               {stage === 'orbPos' ? (
                 <p className="text-5xl font-black" style={{ fontFamily: 'var(--font-heading)', color: '#F5F1E8', textShadow: `0 0 20px ${meta.accent}` }}>
-                  {posBucket(current.positions ?? [])}
+                  {current.revealPos ?? posBucket(current.positions ?? [])}
                 </p>
               ) : crest ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
