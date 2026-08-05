@@ -639,7 +639,6 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
             <div className="w-full rounded-2xl overflow-hidden" style={{ maxWidth: "820px", maxHeight: "94vh", background: T.surface, border: `1px solid ${meta.accent}50` }} onClick={e => e.stopPropagation()}>
               <div className="px-6 py-4 flex items-center justify-between" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a' }}>
                 <div className="flex items-center gap-3">
-                  <span className="text-[9px] font-black tracking-widest px-2.5 py-1 rounded-full" style={{ color: meta.accent, background: meta.accent + '20' }}>{meta.label}</span>
                   {isOut && <span className="text-[9px] font-black px-2 py-0.5 rounded" style={{ background: '#FF6B6B', color: '#141210' }}>OUT THIS ROUND</span>}
                   {currentSlot && <span className="text-[10px] uppercase tracking-widest" style={{ color: T.textDim }}>currently {SLOT_LABELS[currentSlot] ?? currentSlot}</span>}
                 </div>
@@ -647,6 +646,9 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               </div>
               <div className="overflow-y-auto px-6 py-5 sm:grid sm:grid-cols-[1fr_1.3fr] sm:gap-7 sm:items-start" style={{ maxHeight: "86vh" }}>
                 <div className="mb-6 sm:mb-0">
+                  <p className="text-center mb-3">
+                    <span className="text-[11px] font-black tracking-[0.3em] px-4 py-1.5 rounded-full" style={{ color: meta.accent, background: meta.accent + '20', textShadow: `0 0 10px ${meta.accent}60` }}>{meta.label}</span>
+                  </p>
                   <PlayerCardFull
                     player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats, photoUrl: c.photoUrl }}
                     grade={grade}
