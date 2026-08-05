@@ -125,7 +125,7 @@ export default function FieldPicker({ grade, eligible, current, occupants, onSel
       </div>
 
       {/* Bench strip — smaller */}
-      <p className="text-[9px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim, margin: '16px 0 6px' }}>Bench</p>
+      <p className="text-[9px] font-black uppercase tracking-[0.25em] text-center" style={{ color: T.textDim, margin: '16px 0 6px' }}>Bench</p>
       <div className="grid grid-cols-4 gap-2">
         {BENCH_SLOTS.map((s, i) => (
           <button key={s} onClick={() => eligible.has(s) && onSelect(s)}
@@ -138,7 +138,7 @@ export default function FieldPicker({ grade, eligible, current, occupants, onSel
       </div>
 
       {/* Reserve strip — smallest */}
-      <p className="text-[9px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim, margin: '12px 0 5px' }}>Reserve</p>
+      <p className="text-[9px] font-black uppercase tracking-[0.25em] text-center" style={{ color: T.textDim, margin: '12px 0 5px' }}>Reserve</p>
       <div className="grid grid-cols-5 gap-1.5">
         {RES_SLOTS.map((s, i) => (
           <button key={s} onClick={() => eligible.has(s) && onSelect(s)}
