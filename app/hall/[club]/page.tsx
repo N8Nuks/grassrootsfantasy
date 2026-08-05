@@ -50,7 +50,7 @@ export default async function ClubHall({ params, searchParams }: {
 
   const { data: players } = await supabase
     .from('players')
-    .select('id, full_name, grade, tier, positions, badges, speed_star, career_games, stats, photo_url')
+    .select('id, full_name, grade, tier, positions, badges, speed_star, career_games, stats, photo_url, playing_number')
     .in('club_id', clubIds).eq('active', true)
 
   type Raw = {
@@ -58,6 +58,7 @@ export default async function ClubHall({ params, searchParams }: {
     positions: string[]; badges: string[] | null; speed_star: boolean
     career_games: number | null; stats: Record<string, number> | null
     photo_url: string | null
+    playing_number: number | null
   }
   const all = ((players ?? []) as unknown as Raw[])
   const grades = [...new Set(all.map(p => p.grade))].sort() as ('mens' | 'womens')[]
@@ -80,6 +81,7 @@ export default async function ClubHall({ params, searchParams }: {
       speedStar: p.speed_star, careerGames: p.career_games,
       stats: p.stats ?? {},
       photoUrl: p.photo_url,
+      playingNumber: p.playing_number,
     }))
 
   return (
