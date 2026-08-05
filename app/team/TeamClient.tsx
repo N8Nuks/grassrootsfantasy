@@ -637,7 +637,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto" style={{ background: '#000000CC' }} onClick={() => setDetailCard(null)}>
             <div className="w-full rounded-2xl overflow-hidden" style={{ maxWidth: "820px", maxHeight: "94vh", background: T.surface, border: `1px solid ${meta.accent}50` }} onClick={e => e.stopPropagation()}>
-              <div className="px-6 py-4 flex items-center justify-between" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a' }}>
+              <div className="flex items-center justify-between" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a', padding: '16px 22px' }}>
                 <div className="flex items-center gap-3">
                   {isOut && <span className="text-[9px] font-black px-2 py-0.5 rounded" style={{ background: '#FF6B6B', color: '#141210' }}>OUT THIS ROUND</span>}
                   {currentSlot && <span className="text-[10px] uppercase tracking-widest" style={{ color: T.textDim }}>currently {SLOT_LABELS[currentSlot] ?? currentSlot}</span>}
