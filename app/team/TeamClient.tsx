@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { theme, THEMES, THEME_ORDER, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
 import PlayerCard from '@/components/PlayerCard'
@@ -91,6 +92,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   lastRoundLabel: string | null
   cardStyle: 'standard' | 'premium'
 }) {
+  const router = useRouter()
   const T = theme(grade, siteTheme)
   const accentBright = T.electric ?? T.accent
   const shimmer = T.shimmer ? ' gf-shimmer' : ''
@@ -679,7 +681,7 @@ player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.
           cardStyle={cardStyle}
           packName={reveal.packName}
           cards={reveal.cards}
-          onDone={() => window.location.reload()}
+          onDone={() => { setReveal(null); router.refresh() }}
         />
       )}
     </div>

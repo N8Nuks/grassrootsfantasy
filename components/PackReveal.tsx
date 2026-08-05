@@ -232,6 +232,7 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
   const [stage, setStage] = useState<Stage>('pack')
   const [idx, setIdx] = useState(0)
   const [strike, setStrike] = useState(false)
+  const [finishing, setFinishing] = useState(false)
 
   const current = sorted[idx]
   const meta = current ? (TIER_META[current.tier] ?? TIER_META.common) : TIER_META.common
@@ -268,7 +269,11 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
       setStage('back')
       return
     }
-    if (stage === 'haul') onDone()
+    if (stage === 'haul') {
+      if (finishing) return
+      setFinishing(true)
+      onDone()
+    }
   }
 
   const orbActive = stage === 'orbPos' || stage === 'orbCrest'
@@ -417,7 +422,9 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
             </div>
             <p className="text-[10px] font-bold mt-2 mb-4" style={{ color: T.textDim }}>Swipe to browse</p>
             <span className="inline-block rounded-full gf-pulse" style={{ border: `1px solid ${T.accent}60`, background: `${T.accent}15`, padding: '8px 20px' }}>
-              <span className="text-xs font-bold uppercase tracking-[0.3em]" style={{ color: T.text }}>Tap to finish</span>
+              <span className="text-xs font-bold uppercase tracking-[0.3em]" style={{ color: T.text }}>
+                {finishing ? 'Loading your team…' : 'Tap to finish'}
+              </span>
             </span>
           </div>
         )}
