@@ -172,16 +172,23 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
           </div>
           {/* Stat grid */}
           <div className="flex-1 min-w-0 flex flex-col justify-center">
+            <div className="flex" style={{ marginBottom: '3px' }}>
+              <div className="text-center" style={{ flex: cols.filter(c => !c.pitching).length }}>
+                <p className="text-[7px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim }}>2026/27</p>
+              </div>
+              {cols.some(c => c.pitching) && (
+                <div className="text-center" style={{ flex: cols.filter(c => c.pitching).length, borderLeft: `1px solid ${meta.accent}50` }}>
+                  <p className="text-[7px] font-black uppercase tracking-[0.25em]" style={{ color: meta.accent }}>Pitching</p>
+                </div>
+              )}
+            </div>
             <div className="flex">
               {cols.map((c, i) => {
                 const startPitch = c.pitching && !cols[i - 1]?.pitching
                 return (
                   <div key={c.label} className="flex-1 text-center relative"
                     style={{ borderLeft: startPitch ? `1px solid ${meta.accent}50` : i > 0 ? '1px solid #ffffff12' : 'none' }}>
-                    {startPitch && (
-                      <span className="absolute text-[6px] font-black uppercase tracking-widest whitespace-nowrap"
-                        style={{ color: meta.accent, top: '-9px', left: '4px', opacity: 0.9 }}>Pitching</span>
-                    )}
+                   
                     <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: c.pitching ? meta.accent : T.textDim }}>{c.label}</p>
                     <p className="text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{c.season}</p>
                   </div>
@@ -196,7 +203,7 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
               ))}
             </div>
             <div className="flex items-center justify-end gap-2" style={{ marginTop: '3px' }}>
-              <p className="text-[7px] font-bold uppercase tracking-widest" style={{ color: T.textDim, opacity: 0.7 }}>2026/27 · prior 3 seasons below</p>
+              <p className="text-[7px] font-bold uppercase tracking-widest" style={{ color: T.textDim, opacity: 0.7 }}>2023-26 BA &amp; Period Totals</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {cardStyle === 'premium' && (
                 // eslint-disable-next-line @next/next/no-img-element
