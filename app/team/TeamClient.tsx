@@ -645,7 +645,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                 </div>
                 <button onClick={() => setDetailCard(null)} className="text-xl font-black" style={{ color: T.textDim }}>×</button>
               </div>
-              <div className="overflow-y-auto px-6 py-5 sm:grid sm:grid-cols-[1fr_1.3fr] sm:gap-7 sm:items-start" style={{ maxHeight: "86vh" }}>
+              <div className="overflow-y-auto px-6 py-5 sm:grid sm:grid-cols-[1fr_1.3fr] sm:gap-7 sm:items-start" style={{ maxHeight: "calc(94vh - 64px)" }}>
                 <div className="mb-6 sm:mb-0">
                   <p className="text-center mb-3">
                     <span className="text-[11px] font-black tracking-[0.3em] px-4 py-1.5 rounded-full" style={{ color: meta.accent, background: meta.accent + '20', textShadow: `0 0 10px ${meta.accent}60` }}>{meta.label}</span>
