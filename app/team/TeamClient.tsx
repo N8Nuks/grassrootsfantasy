@@ -519,7 +519,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           </div>
 
           <p className="text-[11px] text-center mt-4" style={{ color: T.textDim }}>
-            Drag or tap batting numbers to reorder · tap a name for the player card · tap a position chip to change who fills it.
+            Drag or tap batting numbers to reorder · Tap a name for the player card · Tap a position chip to change who fills it.
           </p>
 
           <div className="text-center" style={{ marginTop: "28px" }}>
