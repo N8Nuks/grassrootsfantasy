@@ -53,13 +53,18 @@ const anatomy = [
   { t: 'Award recognition', d: "Season awards build a card's story — and its value." },
 ]
 
-const steps = [
+type Shot = { src: string; alt: string; caption: string }
+
+const steps: { n: string; h: string; ps: string[]; shots: Shot[] }[] = [
   {
     n: '01',
     h: 'Register your team',
     ps: [
       'Sign up online with your email and a team name. If you play in the competition, your access comes bundled with your Association registration. Everyone else — supporters, family, mates — registers free on the spot.',
       'Got a club code from your Team Manager or Club? Enter it at signup — it locks in your club allegiance for the Club Champion race and earns you a bonus pack.',
+    ],
+    shots: [
+      { src: '/how-register.png', alt: 'Registration form', caption: 'Claim your team in under a minute' },
     ],
   },
   {
@@ -68,6 +73,10 @@ const steps = [
     ps: [
       'The moment you register, your first tranche lands — 12 player cards, including your two-way players, elites, and the backbone of your squad. This is the only place the rarest cards are dealt, so every Starter Pack matters.',
       "And here's the good part: your starting lineup is auto-assigned instantly. You could register on Friday and score points that weekend without touching a thing. The squad is yours to fine-tune whenever you're ready.",
+    ],
+    shots: [
+      { src: '/how-starter-women.png', alt: 'Starter Pack ready to tear open', caption: 'Tap to tear open' },
+      { src: '/how-card-front-rare-floyd.png', alt: 'A revealed Rare card', caption: 'A Rare pull — the finale of every Starter Pack' },
     ],
   },
   {
@@ -78,6 +87,10 @@ const steps = [
       'Every position matters — pitchers, catchers, infield, outfield, and the specialist slots that reward smart selections. Chase steals with a designated runner. Stack your batting order. Back a two-way star to dominate both sides of the game.',
       "Lineups open after each round's results and lock before the weekend's games. Make your calls, then watch them play out for real.",
     ],
+    shots: [
+      { src: '/how-lineup.png', alt: 'The Official Lineup Card', caption: 'Your Official Lineup Card — drag to set the batting order' },
+      { src: '/how-picker.png', alt: 'Placing a player on the field', caption: 'Tap a player, place them on the field' },
+    ],
   },
   {
     n: '04',
@@ -86,6 +99,10 @@ const steps = [
       'Packs keep dropping throughout the season — a free pack every week, a pre-season tranche to complete your squad, club code bonuses, a mid-season drop, and a Finals Challenge with its own packs and its own champion.',
       'Unopened packs stack. Miss a week? Your cards wait for you.',
     ],
+    shots: [
+      { src: '/how-preseason-pack.png', alt: 'Pre-Season Pack', caption: 'The Pre-Season Pack completes your 20-card squad' },
+      { src: '/how-weekly-pack.png', alt: 'Weekly free pack', caption: 'A free pack, every week' },
+    ],
   },
   {
     n: '05',
@@ -93,6 +110,9 @@ const steps = [
     ps: [
       'Every hit, run, steal, strikeout, and win in the real competition drives your fantasy score. Provisional scores land after the games; confirmed scores follow once the official stats are reviewed.',
       "There's more than one way to win: the season-long ladder, weekly head-to-head matchups, the Weekly High Score, your club's Club Champion campaign, and the Finals Challenge. Late joiners always have something to play for.",
+    ],
+    shots: [
+      { src: '/how-ladder.png', alt: 'The season ladder', caption: 'The ladder — every team, every round' },
     ],
   },
 ]
@@ -167,6 +187,28 @@ const groups = [
   },
 ]
 
+// Phone-framed screenshot
+function PhoneShot({ shot }: { shot: Shot }) {
+  return (
+    <figure className="flex flex-col items-center" style={{ maxWidth: '250px' }}>
+      <div className="rounded-[26px] overflow-hidden w-full" style={{
+        border: '2px solid #ffffff18',
+        background: '#0B0A08',
+        padding: '8px',
+        boxShadow: '0 12px 40px #00000080, 0 0 24px #2D9E4E10',
+      }}>
+        <div className="rounded-[18px] overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={shot.src} alt={shot.alt} className="w-full h-auto block" />
+        </div>
+      </div>
+      <figcaption className="text-[11px] text-center leading-snug" style={{ color: '#F5F1E855', marginTop: '12px', maxWidth: '220px' }}>
+        {shot.caption}
+      </figcaption>
+    </figure>
+  )
+}
+
 export default function How() {
   return (
     <main className="min-h-screen" style={{ background: '#141210' }}>
@@ -202,17 +244,24 @@ export default function How() {
         </div>
       </section>
 
-      {/* Steps */}
+      {/* Steps — text + real screenshots */}
       {steps.map((s, i) => (
         <section key={s.n} className="py-20 px-6 sm:px-12" style={{ background: i % 2 === 1 ? '#181510' : 'transparent', borderTop: '1px solid #ffffff08' }}>
-          <div className="grid sm:grid-cols-[90px_1fr] gap-8 items-start px-6" style={{ maxWidth: "860px", marginLeft: "auto", marginRight: "auto" }}>
-            <div className="text-5xl font-black" style={{ color: '#2D9E4E', fontFamily: 'var(--font-heading)' }}>{s.n}</div>
-            <div>
-              <h2 className="text-2xl font-black text-[#F5F1E8] mb-4" style={{ fontFamily: 'var(--font-heading)' }}>{s.h}</h2>
-              {s.ps.map((p, j) => (
-                <p key={j} className="text-sm text-[#F5F1E8]/45 leading-relaxed" style={{ marginBottom: j < s.ps.length - 1 ? '16px' : '0' }}>{p}</p>
-              ))}
+          <div style={{ maxWidth: "980px", marginLeft: "auto", marginRight: "auto" }}>
+            <div className="grid sm:grid-cols-[90px_1fr] gap-8 items-start px-6">
+              <div className="text-5xl font-black" style={{ color: '#2D9E4E', fontFamily: 'var(--font-heading)' }}>{s.n}</div>
+              <div>
+                <h2 className="text-2xl font-black text-[#F5F1E8] mb-4" style={{ fontFamily: 'var(--font-heading)' }}>{s.h}</h2>
+                {s.ps.map((p, j) => (
+                  <p key={j} className="text-sm text-[#F5F1E8]/45 leading-relaxed" style={{ marginBottom: j < s.ps.length - 1 ? '16px' : '0' }}>{p}</p>
+                ))}
+              </div>
             </div>
+            {s.shots.length > 0 && (
+              <div className="flex flex-wrap justify-center items-start gap-10" style={{ marginTop: '48px' }}>
+                {s.shots.map(shot => <PhoneShot key={shot.src} shot={shot} />)}
+              </div>
+            )}
           </div>
         </section>
       ))}
@@ -238,9 +287,12 @@ export default function How() {
           <h2 className="text-4xl sm:text-5xl font-black text-[#F5F1E8] mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
             Play along with your favourite players.
           </h2>
-          <p className="text-sm sm:text-base text-[#F5F1E8]/45 leading-relaxed" style={{ maxWidth: "480px", marginLeft: "auto", marginRight: "auto" }}>
+          <p className="text-sm sm:text-base text-[#F5F1E8]/45 leading-relaxed" style={{ maxWidth: "480px", marginLeft: "auto", marginRight: "auto", marginBottom: "56px" }}>
             Every player in the competition has a card. Your teammates. Your club legends. The young gun hitting ninth.
           </p>
+          <div className="flex justify-center">
+            <PhoneShot shot={{ src: '/how-athlete-hall.png', alt: 'The Athlete Hall', caption: 'The Athlete Hall — every player, every club, waiting to be collected' }} />
+          </div>
         </div>
       </section>
 
@@ -304,7 +356,6 @@ export default function How() {
               </div>
             ))}
           </div>
-          <p className="text-xs text-[#F5F1E8]/30 text-center italic" style={{ marginTop: "64px" }}>Full card designs revealed at launch.</p>
         </div>
       </section>
 
