@@ -1,57 +1,58 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { HONOURS, AWARD_LABELS } from '@/lib/nfsHonours'
+import { PLACINGS, HERITAGE_MEN, HERITAGE_WOMEN, SERIES_TEAMS, CAREER_MEN, CAREER_WOMEN } from '@/lib/nfsHistory'
 
-// Static heritage facts
-const HERITAGE = [
+const HERITAGE_STATIC = [
   'Auckland softball has been played since 1939 — nearly ninety years of history.',
   'The NFS has crowned twenty seasons of premier fastpitch champions since 2005.',
-  'Only eight players have ever reached 300 career games.',
 ]
 
-// Count wins per player for a given grade + award key
-function tally(grade: 'men' | 'women', key: string): [string, number][] {
-  const counts = new Map<string, number>()
-  for (const s of HONOURS) {
-    const winner = s[grade][key]
-    if (!winner) continue
-    counts.set(winner, (counts.get(winner) ?? 0) + 1)
-  }
-  return [...counts.entries()].sort((a, b) => b[1] - a[1])
-}
-
 function buildFacts(): string[] {
-  const facts: string[] = [...HERITAGE]
-  const gradeLabel = { men: "Premier Men's", women: "Premier Women's" } as const
+  const facts: string[] = [...HERITAGE_STATIC]
+  const gLabel = { men: "Premier Men's", women: "Premier Women's" } as const
 
-  for (const grade of ['men', 'women'] as const) {
-    for (const key of ['mvp', 'top_batter', 'top_pitcher', 'most_hr', 'most_sb'] as const) {
-      const leaders = tally(grade, key)
-      if (leaders.length === 0) continue
-      const [name, wins] = leaders[0]
-      if (wins >= 2) {
-        facts.push(`${name} has won the ${gradeLabel[grade]} ${AWARD_LABELS[key]} award ${wins} times — more than anyone in NFS history.`)
-      }
-    }
-    // Most recent MVP
-    for (let i = HONOURS.length - 1; i >= 0; i--) {
-      const w = HONOURS[i][grade]['mvp']
-      if (w) {
-        facts.push(`${w} is the reigning ${gradeLabel[grade]} MVP (${HONOURS[i].season}).`)
-        break
+  // Every award, every season — the time portal
+  for (const s of HONOURS) {
+    for (const grade of ['men', 'women'] as const) {
+      for (const [key, winner] of Object.entries(s[grade])) {
+        if (!winner) continue
+        facts.push(`${s.season}: ${winner} won the ${gLabel[grade]} ${AWARD_LABELS[key] ?? key} award.`)
       }
     }
   }
 
-  // Special award namesakes
-  const nnWinners = tally('men', 'nathan_nukunuku')
-  if (nnWinners.length > 0) {
-    facts.push(`The Nathan Nukunuku Award has been presented to the Premier Men since 2020-21 — ${nnWinners[0][0]} ${nnWinners[0][1] > 1 ? `has won it ${nnWinners[0][1]} times` : 'is among its winners'}.`)
+  // Placings — round robin and grand final winners
+  for (const p of PLACINGS) {
+    if (p.men_rr) facts.push(`${p.season}: ${p.men_rr} topped the Men's round robin.`)
+    if (p.men_final) facts.push(`${p.season}: ${p.men_final} won the Men's grand final.`)
+    if (p.women_rr) facts.push(`${p.season}: ${p.women_rr} topped the Women's round robin.`)
+    if (p.women_final) facts.push(`${p.season}: ${p.women_final} won the Women's grand final.`)
   }
-  const rbWinners = tally('women', 'rebecca_bromhead')
-  if (rbWinners.length > 0) {
-    facts.push(`The Rebecca Bromhead Award honours the Premier Women — ${rbWinners[0][0]} ${rbWinners[0][1] > 1 ? `has won it ${rbWinners[0][1]} times` : 'is among its winners'}.`)
+
+  // Heritage champions
+  for (const h of HERITAGE_MEN) facts.push(`${h.season}: ${h.winner} were Auckland Major Men's champions.`)
+  for (const h of HERITAGE_WOMEN) facts.push(`${h.season}: ${h.winner} won the Women's championship.`)
+
+  // Series Teams — every selection is a fact
+  for (const st of SERIES_TEAMS) {
+    const g = st.grade === 'men' ? "Men's" : "Women's"
+    for (const name of st.players) {
+      facts.push(`${st.season}: ${name} was named in the ${g} Series Team.`)
+    }
   }
+
+  // Career games — definitive all-time list
+  CAREER_MEN.forEach((c, i) => {
+    facts.push(i === 0
+      ? `${c.name} has played ${c.games} Premier games — the most of any man in Auckland softball history.`
+      : `${c.name} has played ${c.games} Premier career games (#${i + 1} all-time among the men).`)
+  })
+  CAREER_WOMEN.forEach((c, i) => {
+    facts.push(i === 0
+      ? `${c.name} has played ${c.games} Premier games — the most of any woman in Auckland softball history.`
+      : `${c.name} has played ${c.games} Premier career games (#${i + 1} all-time among the women).`)
+  })
 
   return facts
 }
