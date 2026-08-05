@@ -9,6 +9,7 @@ type Player = {
   positions: string[]
   stats?: Record<string, number>
   photo_url?: string | null
+  playing_number?: number | null
   clubs?: { name: string } | null
 }
 
@@ -74,7 +75,7 @@ export async function POST(request: Request) {
   }
 
   const { data: pool, error } = await admin.from('players')
-    .select('id, full_name, tier, positions, stats, photo_url, clubs(name)')
+    .select('id, full_name, tier, positions, stats, photo_url, playing_number, clubs(name)')
     .eq('grade', grade).eq('active', true)
   if (error || !pool) return NextResponse.json({ error: 'Player pool unavailable' }, { status: 500 })
 
@@ -106,6 +107,7 @@ export async function POST(request: Request) {
       club: p.clubs?.name ?? '',
       stats: p.stats ?? {},
       photoUrl: p.photo_url ?? null,
+      playingNumber: p.playing_number ?? null,,
     })),
   })
 }
