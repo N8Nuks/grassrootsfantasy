@@ -106,6 +106,9 @@ export default function FieldPicker({ grade, eligible, current, occupants, onSel
         {/* Mound */}
         <circle cx="200" cy="208" r="10" fill={dirt} opacity={0.8} />
 
+        {/* GF mark — top-right corner of the field */}
+        <image href="/gf-mark.png" x="342" y="8" width="48" height="48" opacity="0.55" />
+
         {FIELD_SLOTS.map(f => <Plate key={f.slot} {...f} />)}
       </svg>
 
