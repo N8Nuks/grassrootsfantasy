@@ -113,6 +113,7 @@ const steps: { n: string; h: string; ps: string[]; shots: Shot[] }[] = [
     ],
     shots: [
       { src: '/how-ladder.png', alt: 'The season ladder', caption: 'The ladder — every team, every round' },
+      { src: '/how-matchups.png', alt: 'Head-to-head matchups', caption: 'Head-to-head — your squad against theirs, every week' },
     ],
   },
 ]
