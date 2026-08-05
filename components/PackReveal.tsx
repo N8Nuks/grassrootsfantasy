@@ -64,7 +64,21 @@ function WordWall({ word, accent }: { word: string; accent: string }) {
     </div>
   )
 }
-
+/* Video lightning overlay: plays /lightning.webm blended over the reveal.
+   If the file is missing or fails, falls back to the code-drawn storm. */
+function LightningVideo({ color, onFail }: { color: string; onFail: () => void }) {
+  return (
+    <video
+      className="fixed inset-0 z-[73] w-full h-full pointer-events-none"
+      style={{ objectFit: 'cover', mixBlendMode: 'screen', filter: `drop-shadow(0 0 30px ${color})` }}
+      src="/lightning.webm"
+      autoPlay
+      muted
+      playsInline
+      onError={onFail}
+    />
+  )
+}
 /* Lightning storm: diagonal forked bolts striking the card, with impact sparks */
 const BOLTS = [
   // Diagonal from top-left into centre, forks off midway
@@ -234,6 +248,7 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
   const [idx, setIdx] = useState(0)
   const [strike, setStrike] = useState(false)
   const [finishing, setFinishing] = useState(false)
+  const [videoFailed, setVideoFailed] = useState(false)
 
   const current = sorted[idx]
   const meta = current ? (TIER_META[current.tier] ?? TIER_META.common) : TIER_META.common
@@ -304,7 +319,9 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
       )}
 
       {/* Sorare-style bolt — rares only */}
-      {strike && <LightningStorm color={meta.accent} />}
+      {strike && (videoFailed
+        ? <LightningStorm color={meta.accent} />
+        : <LightningVideo color={meta.accent} onFail={() => setVideoFailed(true)} />)}
 
       {/* Welcome banner — Starter Packs only */}
       {isStarter && stage !== 'haul' && (
