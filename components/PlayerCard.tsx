@@ -27,6 +27,7 @@ export type PlayerCardData = {
   club?: string
   stats?: Record<string, number>
   photoUrl?: string | null
+  playingNumber?: number | null
 }
 
 export default function PlayerCard({ player, grade, owned, chip, onClick, siteTheme, cardStyle = 'premium' }: {
