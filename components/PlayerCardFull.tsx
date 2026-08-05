@@ -88,7 +88,7 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[9px] font-black uppercase tracking-[0.25em] truncate" style={{ color: T.textDim }}>{player.club}</p>
-            <p className="text-lg sm:text-xl font-black truncate leading-tight" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{player.name}</p>
+            <p className="text-lg sm:text-xl font-black leading-tight" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{player.name}</p>
           </div>
           {(
            // Gem corner — outlined diamond, uniform number in tier colour
