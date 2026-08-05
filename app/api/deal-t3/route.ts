@@ -107,7 +107,7 @@ export async function POST(request: Request) {
       club: p.clubs?.name ?? '',
       stats: p.stats ?? {},
       photoUrl: p.photo_url ?? null,
-      playingNumber: p.playing_number ?? null,,
+      playingNumber: p.playing_number ?? null,
     })),
   })
 }
