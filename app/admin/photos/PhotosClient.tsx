@@ -78,6 +78,7 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
   const [busy, setBusy] = useState(false)
   const [preCut, setPreCut] = useState(false)
   const [playingNumber, setPlayingNumber] = useState('')
+  const [revealPos, setRevealPos] = useState('')
   const [under18, setUnder18] = useState(false)
 
   const gradePlayers = useMemo(
@@ -100,6 +101,7 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
     setStatus('')
     const p = players.find(x => x.id === id)
     setPlayingNumber(p?.playing_number != null ? String(p.playing_number) : '')
+    setRevealPos(p?.reveal_pos ?? '')
     setUnder18(p?.is_under18 ?? false)
   }
 
@@ -136,6 +138,7 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
     if (cutout) form.append('file', new File([cutout], 'photo.png', { type: 'image/png' }))
     form.append('player_id', playerId)
     form.append('playing_number', playingNumber.trim())
+    form.append('reveal_pos', revealPos)
     form.append('is_under18', under18 ? 'true' : 'false')
     const res = await fetch('/api/upload-photo', { method: 'POST', body: form })
     const data = await res.json()
@@ -219,6 +222,14 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
                 <div className="flex gap-6 items-center flex-wrap">
                   <input type="number" value={playingNumber} onChange={e => setPlayingNumber(e.target.value)}
                     placeholder="Playing #" className="rounded-xl px-4 py-3.5 text-sm w-36" style={field} />
+                  <select value={revealPos} onChange={e => setRevealPos(e.target.value)}
+                    className="rounded-xl px-4 py-3.5 text-sm w-44" style={field}>
+                    <option value="">Reveal: Auto</option>
+                    <option value="P">Reveal as P</option>
+                    <option value="C">Reveal as C</option>
+                    <option value="IF">Reveal as IF</option>
+                    <option value="OF">Reveal as OF</option>
+                  </select>
                   <label className="flex items-center gap-3 text-sm font-bold cursor-pointer select-none rounded-xl transition-all"
                     style={{
                       color: under18 ? P.orange : P.text,
