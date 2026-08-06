@@ -457,6 +457,9 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               <p className="text-lg sm:text-xl font-black uppercase tracking-[0.35em]" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
                 Official Lineup Card
               </p>
+              <p className="sm:hidden text-[10px] font-bold uppercase tracking-[0.2em] mt-2" style={{ color: T.textDim }}>
+                ↻ Rotate your phone for full stats
+              </p>
             </div>
             {/* Column titles */}
             <div className="hidden sm:flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff0a', padding: '10px 28px' }}>
