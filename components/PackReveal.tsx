@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { theme, type Grade } from '@/lib/clubhouse'
 import PlayerCardFull from '@/components/PlayerCardFull'
 import PlayerCard from '@/components/PlayerCard'
@@ -249,6 +249,10 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
   const [strike, setStrike] = useState(false)
   const [finishing, setFinishing] = useState(false)
   const [videoFailed, setVideoFailed] = useState(false)
+  const [isPortrait, setIsPortrait] = useState(false)
+  useEffect(() => {
+    setIsPortrait(window.matchMedia('(max-width: 640px)').matches)
+  }, [])
 
   const current = sorted[idx]
   const meta = current ? (TIER_META[current.tier] ?? TIER_META.common) : TIER_META.common
@@ -319,7 +323,7 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
       )}
 
       {/* Sorare-style bolt — rares only */}
-      {strike && (videoFailed
+      {strike && ((videoFailed || isPortrait)
         ? <LightningStorm color={meta.accent} />
         : <LightningVideo color={meta.accent} onFail={() => setVideoFailed(true)} />)}
 
