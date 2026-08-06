@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/client'
@@ -18,6 +18,14 @@ export default function Register() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [packQueue, setPackQueue] = useState<PackQueueItem[]>([])
+
+  // Already signed in (e.g. refreshed mid-reveal)? Go to the team — cards are safe.
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) window.location.href = '/team'
+    })
+  }, [])
 
   function toggleGrade(g: 'mens' | 'womens') {
     setGrades(prev => {
