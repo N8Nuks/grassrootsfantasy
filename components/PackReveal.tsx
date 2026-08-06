@@ -70,7 +70,7 @@ function LightningVideo({ color, onFail }: { color: string; onFail: () => void }
   return (
     <video
       className="fixed inset-0 z-[73] w-full h-full pointer-events-none"
-      style={{ objectFit: 'cover', mixBlendMode: 'screen', filter: `drop-shadow(0 0 30px ${color})` }}
+      style={{ objectFit: 'contain', mixBlendMode: 'screen', filter: `drop-shadow(0 0 30px ${color})` }}
       src="/lightning.webm"
       autoPlay
       muted
