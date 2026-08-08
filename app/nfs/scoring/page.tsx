@@ -57,7 +57,7 @@ export default function Scoring() {
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>NFS Premier Softball League</p>
           <div className="mx-auto mb-6 h-px w-24" style={{ background: COBALT }} />
           <h1 className="text-4xl sm:text-5xl font-black text-white mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
-            Scoring &amp; Leaderboards
+            Scoring &amp; Competitions
           </h1>
           <p className="text-sm text-white/50 leading-relaxed" style={{ maxWidth: "480px", marginLeft: "auto", marginRight: "auto" }}>
             Every point your card earns comes from a real event in a real game. Here&apos;s exactly what everything is worth.
@@ -111,7 +111,7 @@ export default function Scoring() {
       {/* Leaderboards */}
       <section className="px-6 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "22px", paddingBottom: "22px" }}>
         <div style={{ maxWidth: "720px", marginLeft: "auto", marginRight: "auto" }}>
-          <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "48px" }}>Five ways to win.</h2>
+          <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "48px" }}>The competitions.</h2>
           <div className="flex flex-col gap-3">
             {boards.map(b => (
               <div key={b.t} className="rounded-xl px-6 py-5" style={{ background: '#121215', border: '1px solid #ffffff0a' }}>

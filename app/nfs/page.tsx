@@ -78,12 +78,13 @@ export default function NFS() {
             {[
               { t: 'Starter Pack on signup', d: '12 cards land the moment you register — including the only two-way player cards dealt all season. Your lineup auto-assigns so you can score from day one.' },
               { t: 'Weekly rhythm', d: 'Results confirm Tuesday, lineups lock Friday 4pm, games play out on the weekend. A living league that moves with the real one.' },
-              { t: 'Six ways to win', d: 'Season ladder, weekly head-to-head, Weekly High Score, Club Champion, and the Finals Challenge with its own packs and title.' },
+              { t: 'Five ways to win', d: 'Season ladder, weekly head-to-head, Weekly High Score, Club Champion, and the Finals Challenge with its own packs and title — and one account can chase them in both grades.', href: '/nfs/scoring', link: 'See how each competition works →' },
               { t: 'Back your club', d: 'Register with your club\'s code and every point you score counts toward their Club Champion campaign.' },
             ].map((f) => (
               <div key={f.t} className="rounded-2xl p-7 flex flex-col gap-3 text-left" style={{ background: '#1A1A22', border: '1px solid #ffffff0a', borderLeft: `3px solid ${COBALT}` }}>
                 <h3 className="text-base font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>{f.t}</h3>
                 <p className="text-xs text-white/55 leading-relaxed">{f.d}</p>
+                {'href' in f && <a href={(f as { href: string }).href} className="text-xs font-bold" style={{ color: SILVER }}>{(f as { link: string }).link}</a>}
               </div>
             ))}
           </div>
@@ -154,7 +155,7 @@ export default function NFS() {
           <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "16px" }}>NFS League questions.</h2>
           <div className="text-center" style={{ marginBottom: "48px" }}>
             <a href="/nfs/scoring" className="text-sm font-bold" style={{ color: '#4D7FFF' }}>
-              Full point table on Scoring &amp; Leaderboards →
+              Full point table on Scoring &amp; Competitions →
             </a>
           </div>
           <div className="flex flex-col gap-3">
