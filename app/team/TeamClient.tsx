@@ -12,7 +12,7 @@ import PageGuide, { GuideStep } from '@/components/PageGuide'
 const TEAM_GUIDE: GuideStep[] = [
   {
     title: 'This is your team',
-    body: 'Your Lineup Card is your batting order — the players who score points for you each round. Tap a number to swap batting positions, tap a name to see their full card, and tap a yellow position chip to change who fills that spot.',
+    body: 'Your Lineup Card is your batting order — the players who score points for you each round. Tap a number to swap batting positions, tap a name to see their full card, and tap a yellow position chip to change who fills that spot. Tap the open card itself to flip it over for their round-by-round stats.',
   },
   {
     title: 'Starters, bench, reserve',
@@ -710,7 +710,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         <PageGuide pageKey="team-collection" accent={T.accent} textColor={T.text} steps={[
           {
             title: 'Your collection',
-            body: 'Every card you own. Tap any card to open it full size — scroll on the open card to see this season, career stats, and prior seasons. Sort by tier, batting average, or points using the buttons up top.',
+            body: 'Every card you own. Tap any card to open it full size, then tap the open card to flip it — the back shows their stats and points round by round. Sort by tier, batting average, or points using the buttons up top.',
           },
         ]} />
       )}

@@ -15,7 +15,7 @@ const HALL_GUIDE: GuideStep[] = [
   },
   {
     title: 'Tap any card',
-    body: "Tap a player to see their full card — stats for this season and their career, positions, and their uniform number.",
+    body: "Tap a player to see their full card — then tap the card again to flip it over for their round-by-round scoring.",
   },
 ]
 
