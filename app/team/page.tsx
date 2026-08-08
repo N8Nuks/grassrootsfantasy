@@ -11,29 +11,36 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: profile } = await supabase
-    .from('profiles').select('team_name, site_theme, clubs(name)').eq('id', user!.id).single()
+  // Batch 1 — independent queries fired together
+  const [
+    { data: profile },
+    { data: styleRow },
+    { data: cards },
+    { data: lineup },
+    { data: latestRound },
+    { data: t2Config },
+    { count: t2Count },
+  ] = await Promise.all([
+    supabase.from('profiles').select('team_name, site_theme, clubs(name)').eq('id', user!.id).single(),
+    supabase.from('site_settings').select('value').eq('key', 'card_style').maybeSingle(),
+    supabase.from('cards')
+      .select('id, players(id, full_name, tier, positions, stats, photo_url, playing_number, clubs(name))')
+      .eq('owner_id', user!.id).eq('grade', grade),
+    supabase.from('lineups').select('id, lineup_slots(slot, card_id, batting_order)')
+      .eq('owner_id', user!.id).eq('grade', grade)
+      .order('submitted_at', { ascending: false }).limit(1).maybeSingle(),
+    supabase.from('rounds').select('id, round_number, status')
+      .eq('grade', grade).order('round_number', { ascending: false }).limit(1).maybeSingle(),
+    supabase.from('scoring_config').select('t2_released').eq('grade', grade).single(),
+    supabase.from('cards').select('id', { count: 'exact', head: true })
+      .eq('owner_id', user!.id).eq('grade', grade).eq('source', 't2'),
+  ])
 
   const siteTheme = (profile as unknown as { site_theme?: string })?.site_theme ?? 'grade'
-  const { data: styleRow } = await supabase.from('site_settings')
-    .select('value').eq('key', 'card_style').maybeSingle()
   const cardStyle = (styleRow?.value ?? 'premium') as 'standard' | 'premium'
   const T = theme(grade, siteTheme)
 
-  const { data: cards } = await supabase
-    .from('cards')
-    .select('id, players(id, full_name, tier, positions, stats, photo_url, playing_number, clubs(name))')
-    .eq('owner_id', user!.id).eq('grade', grade)
-
-  const { data: lineup } = await supabase
-    .from('lineups').select('id, lineup_slots(slot, card_id, batting_order)')
-    .eq('owner_id', user!.id).eq('grade', grade)
-    .order('submitted_at', { ascending: false }).limit(1).maybeSingle()
-
-  // Latest round for this grade + its availability flags
-  const { data: latestRound } = await supabase
-    .from('rounds').select('id, round_number, status')
-    .eq('grade', grade).order('round_number', { ascending: false }).limit(1).maybeSingle()
+  const t2Available = !!t2Config?.t2_released && !t2Count
 
   let unavailableIds: string[] = []
   let t3Claimed = false
@@ -42,43 +49,41 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
   let thisRoundLabel: string | null = null
   let lastRoundLabel: string | null = null
 
-  // Pre-Season Pack: released for this grade AND not yet opened by this user?
-  const { data: t2Config } = await supabase
-    .from('scoring_config').select('t2_released').eq('grade', grade).single()
-  let t2Available = false
-  if (t2Config?.t2_released) {
-    const { count: t2Count } = await supabase
-      .from('cards').select('id', { count: 'exact', head: true })
-      .eq('owner_id', user!.id).eq('grade', grade).eq('source', 't2')
-    t2Available = !t2Count
-  }
   if (latestRound) {
-    const { data: claim } = await supabase
-      .from('t3_claims').select('id')
-      .eq('owner_id', user!.id).eq('grade', grade).eq('round_id', latestRound.id).maybeSingle()
+    // Batch 2 — everything that depends on the latest round, fired together
+    const [
+      { data: claim },
+      { data: avail },
+      { data: recentRounds },
+    ] = await Promise.all([
+      supabase.from('t3_claims').select('id')
+        .eq('owner_id', user!.id).eq('grade', grade).eq('round_id', latestRound.id).maybeSingle(),
+      supabase.from('player_availability').select('player_id')
+        .eq('round_id', latestRound.id).eq('unavailable', true),
+      supabase.from('rounds').select('id, round_number')
+        .eq('grade', grade).lte('round_number', latestRound.round_number)
+        .order('round_number', { ascending: false }).limit(6),
+    ])
     t3Claimed = !!claim
-    const { data: avail } = await supabase
-      .from('player_availability').select('player_id')
-      .eq('round_id', latestRound.id).eq('unavailable', true)
     unavailableIds = (avail ?? []).map(a => a.player_id)
 
-    // Two most recent rounds with visible scores (includes the latest if scored)
-    const { data: recentRounds } = await supabase
-      .from('rounds').select('id, round_number')
-      .eq('grade', grade).lte('round_number', latestRound.round_number)
-      .order('round_number', { ascending: false }).limit(6)
+    // Batch 3 — scores for all recent rounds fetched simultaneously, first two with data used
+    const roundList = recentRounds ?? []
+    const scoreResults = await Promise.all(
+      roundList.map(rr =>
+        supabase.from('player_scores').select('player_id, points').eq('round_id', rr.id)
+      )
+    )
     const scoredRounds: { round_number: number; points: Record<string, number> }[] = []
-    for (const rr of recentRounds ?? []) {
-      if (scoredRounds.length >= 2) break
-      const { data: scores } = await supabase
-        .from('player_scores').select('player_id, points')
-        .eq('round_id', rr.id)
+    roundList.forEach((rr, i) => {
+      if (scoredRounds.length >= 2) return
+      const scores = scoreResults[i].data
       if (scores?.length) {
         const pts: Record<string, number> = {}
         for (const s of scores) pts[s.player_id] = Number(s.points)
         scoredRounds.push({ round_number: rr.round_number, points: pts })
       }
-    }
+    })
     if (scoredRounds[0]) {
       thisRoundPoints = scoredRounds[0].points
       thisRoundLabel = `Rd ${scoredRounds[0].round_number}`
