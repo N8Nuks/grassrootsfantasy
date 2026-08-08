@@ -6,6 +6,18 @@ import { theme, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
 import PlayerCard from '@/components/PlayerCard'
 import PlayerCardFull from '@/components/PlayerCardFull'
+import PageGuide, { GuideStep } from '@/components/PageGuide'
+
+const HALL_GUIDE: GuideStep[] = [
+  {
+    title: 'Every player, every club',
+    body: 'This is the full roster — cards you own glow in full colour, the rest wait greyed out. Collect them through weekly packs, bonus codes, and the season drops.',
+  },
+  {
+    title: 'Tap any card',
+    body: "Tap a player to see their full card — stats for this season and their career, positions, and their uniform number.",
+  },
+]
 
 export type HallPlayer = {
   id: string
@@ -103,6 +115,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
         </div>
       </section>
 
+      <PageGuide pageKey="hall" steps={HALL_GUIDE} accent={T.accent} textColor={T.text} />
       {detail && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: '#000000CC' }} onClick={() => setDetail(null)}>
           <div className="w-full" style={{ maxWidth: '380px' }} onClick={e => e.stopPropagation()}>
