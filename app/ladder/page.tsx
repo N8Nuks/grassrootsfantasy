@@ -10,21 +10,31 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
   const grade: Grade = params.grade === 'womens' ? 'womens' : 'mens'
   const validViews = ['points', 'h2h', 'weekly', 'clubs']
   const view = validViews.includes(params.view ?? '') ? (params.view as string) : 'points'
-
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  let siteTheme = 'grade'
-  if (user) {
-    const { data: prof } = await supabase.from('profiles').select('site_theme').eq('id', user.id).single()
-    siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
-  }
+  // Front batch: profile, teams, and this view's primary query — all in parallel
+  const [{ data: prof }, { data: teams }, primary] = await Promise.all([
+    user
+      ? supabase.from('profiles').select('site_theme').eq('id', user.id).single()
+      : Promise.resolve({ data: null }),
+    supabase.from('public_teams').select('id, team_name, clubs(name)'),
+    view === 'h2h'
+      ? supabase.from('matchups').select('user_a, user_b, points_a, points_b, score_a, score_b')
+          .eq('grade', grade).not('points_a', 'is', null)
+      : view === 'weekly'
+        ? supabase.from('user_scores')
+            .select('round_id, rounds!inner(round_number, grade)')
+            .eq('grade', grade)
+            .order('rounds(round_number)', { ascending: false })
+            .limit(1)
+        : supabase.from('user_scores').select('owner_id, points').eq('grade', grade),
+  ])
+  const siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
   const T = theme(grade, siteTheme)
   const isW = grade === 'womens'
   const shimmer = T.shimmer ? ' gf-shimmer' : ''
 
-  const { data: teams } = await supabase
-    .from('public_teams').select('id, team_name, clubs(name)')
   type TeamRow = { id: string; team_name: string; clubs: { name: string } | null }
   const teamRows = (teams ?? []) as unknown as TeamRow[]
   const teamById = new Map(teamRows.map(t => [t.id, t]))
@@ -36,10 +46,9 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
   let weeklyRoundNumber: number | null = null
 
   if (view === 'points') {
-    const { data: scores } = await supabase
-      .from('user_scores').select('owner_id, points').eq('grade', grade)
+    const scores = (primary.data ?? []) as { owner_id: string; points: number }[]
     const totals = new Map<string, number>()
-    for (const s of scores ?? []) {
+    for (const s of scores) {
       totals.set(s.owner_id, (totals.get(s.owner_id) ?? 0) + Number(s.points))
     }
     rows = [...totals.entries()].map(([id, points]) => ({
@@ -47,9 +56,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
       main: String(points), sub: '', sortKey: points, tieKey: 0,
     }))
   } else if (view === 'h2h') {
-    const { data: matchups } = await supabase
-      .from('matchups').select('user_a, user_b, points_a, points_b, score_a, score_b')
-      .eq('grade', grade).not('points_a', 'is', null)
+    const matchups = (primary.data ?? []) as { user_a: string; user_b: string; points_a: number; points_b: number; score_a: number | null; score_b: number | null }[]
     type Rec = { w: number; d: number; l: number; pf: number }
     const recs = new Map<string, Rec>()
     const add = (id: string, pts: number, pf: number) => {
@@ -60,7 +67,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
       r.pf += pf
       recs.set(id, r)
     }
-    for (const m of matchups ?? []) {
+    for (const m of matchups) {
       add(m.user_a, Number(m.points_a), Number(m.score_a ?? 0))
       add(m.user_b, Number(m.points_b), Number(m.score_b ?? 0))
     }
@@ -74,14 +81,8 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
       }
     })
   } else if (view === 'weekly') {
-    const { data: latest } = await supabase
-      .from('user_scores')
-      .select('round_id, rounds!inner(round_number, grade)')
-      .eq('grade', grade)
-      .order('rounds(round_number)', { ascending: false })
-      .limit(1)
     type LatestRow = { round_id: string; rounds: { round_number: number } }
-    const latestRow = (latest?.[0] ?? null) as unknown as LatestRow | null
+    const latestRow = ((primary.data as unknown[] | null)?.[0] ?? null) as LatestRow | null
     if (latestRow) {
       weeklyRoundNumber = latestRow.rounds.round_number
       const { data: scores } = await supabase
@@ -93,10 +94,9 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
       }))
     }
   } else {
-    const { data: scores } = await supabase
-      .from('user_scores').select('owner_id, points').eq('grade', grade)
+    const scores = (primary.data ?? []) as { owner_id: string; points: number }[]
     const userTotals = new Map<string, number>()
-    for (const s of scores ?? []) {
+    for (const s of scores) {
       userTotals.set(s.owner_id, (userTotals.get(s.owner_id) ?? 0) + Number(s.points))
     }
     type ClubAgg = { users: number; total: number }
@@ -121,14 +121,12 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
     rows.sort((a, b) =>
       Number(!!a.unranked) - Number(!!b.unranked) || b.sortKey - a.sortKey || b.tieKey - a.tieKey)
   }
+
   if (view !== 'clubs') rows.sort((a, b) => b.sortKey - a.sortKey || b.tieKey - a.tieKey)
-
   const champion = view === 'weekly' && rows.length > 0 ? rows[0] : null
-
   const CAP = view === 'weekly' ? 10 : 20
   let listRows: Row[]
   let pinned: { row: Row; rank: number } | null = null
-
   if (view === 'clubs') {
     listRows = rows
   } else if (view === 'weekly') {
@@ -141,14 +139,10 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
     }
   }
 
-  
-
   const titles: Record<string, string> = {
     points: 'Season Ladder', h2h: 'H2H Standings', weekly: 'Weekly High Score', clubs: 'Club Champion',
   }
-
   let rankCounter = 0
-
   return (
     <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
       <Nav />
@@ -181,7 +175,6 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
               </div>
             </div>
           </div>
-
           {/* Weekly champion honour board */}
           {champion && (
             <div className="relative rounded-2xl overflow-hidden text-center mb-8 pinstripe-fine"
@@ -204,7 +197,6 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
               </div>
             </div>
           )}
-
           {listRows.length > 0 && (
             <div className="rounded-2xl overflow-hidden" style={{ background: T.surface, border: '1px solid #ffffff12' }}>
               <div className="flex items-center justify-between" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a', padding: '16px 28px' }}>
@@ -248,7 +240,6 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
                   </div>
                 )
               })}
-
               {pinned && (
                 <>
                   <div className="text-center" style={{ borderBottom: '1px solid #ffffff08', padding: '4px 28px' }}>
@@ -270,7 +261,6 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
               )}
             </div>
           )}
-
           {rows.length === 0 && (
             <div className="rounded-2xl overflow-hidden pinstripe" style={{ background: T.surface, border: '1px solid #ffffff12' }}>
               <div style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a', padding: '16px 28px' }}>
@@ -289,7 +279,6 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
               </div>
             </div>
           )}
-
           <p className="text-[11px] text-center mt-6" style={{ color: T.textDim }}>
             {view === 'points' && 'Top 20 shown. Cumulative points from all scored rounds. Provisional scores update once official stats are confirmed.'}
             {view === 'h2h' && 'Top 20 shown. Win percentage: W=1, D=0.5, L=0. Ties broken by total points scored. Minimum half a season to qualify for the title.'}
