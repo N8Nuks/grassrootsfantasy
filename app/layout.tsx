@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Oxanium, Rajdhani, Archivo, Nunito, Graduate } from 'next/font/google'
 import './globals.css'
+import { Analytics } from '@vercel/analytics/next'
 
 const heading = Oxanium({ subsets: ['latin'], weight: ['600', '700', '800'], variable: '--font-heading' })
 const label = Rajdhani({ subsets: ['latin'], weight: ['500', '600', '700'], variable: '--font-label' })
@@ -25,7 +26,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${heading.variable} ${label.variable} ${wordmark.variable} ${body.variable} ${numberFont.variable}`}>
-      <body style={{ fontFamily: 'var(--font-body)' }}>{children}</body>
+      <body style={{ fontFamily: 'var(--font-body)' }}>{children}<Analytics /></body>
     </html>
   )
 }
