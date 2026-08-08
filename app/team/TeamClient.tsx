@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { theme, THEMES, THEME_ORDER, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
@@ -136,7 +136,51 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   const [reveal, setReveal] = useState<{ packName: string; cards: RevealCard[] } | null>(null)
   const [packBusy, setPackBusy] = useState(false)
   const [themeSaving, setThemeSaving] = useState(false)
+  // ── Lineup self-repair ──
+  // A scoring slot can become empty (e.g. a player removed from the competition).
+  // On load: promote the first eligible bench player into any empty scoring slot,
+  // backfill bench from reserves, save silently. Scoring already handles vacancies
+  // at points time — this keeps the visible lineup whole too.
+  const [repaired, setRepaired] = useState(false)
+  useEffect(() => {
+    if (repaired) return
+    setRepaired(true)
+    const present = new Set(slots.map(s => s.slot))
+    const missingStarters = STARTER_SLOTS.filter(sl => !present.has(sl))
+    if (missingStarters.length === 0) return
 
+    const working = [...slots]
+    const cardOf = (id: string) => cards.find(c => c.id === id)
+    let changed = false
+    for (const slot of missingStarters) {
+      // First bench card eligible for the slot
+      const benchIdx = working.findIndex(s =>
+        s.slot.startsWith('BENCH') && cardOf(s.card_id) && isEligible(cardOf(s.card_id)!, slot))
+      if (benchIdx === -1) continue
+      const promotedCard = working[benchIdx].card_id
+      const vacatedBench = working[benchIdx].slot
+      working.splice(benchIdx, 1)
+      working.push({ slot, card_id: promotedCard, batting_order: null })
+      changed = true
+      // First reserve backfills the vacated bench spot
+      const resIdx = working.findIndex(s => s.slot.startsWith('RES'))
+      if (resIdx !== -1) {
+        const resCard = working[resIdx].card_id
+        working.splice(resIdx, 1)
+        working.push({ slot: vacatedBench, card_id: resCard, batting_order: null })
+      }
+    }
+    if (!changed) return
+    setSlots(working)
+    setMessage('Your lineup had an open spot — we promoted from your bench to fill it.')
+    // Persist silently
+    fetch('/api/save-lineup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ grade, slots: working }),
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   async function setSiteTheme(next: string) {
     if (themeSaving || next === siteTheme) return
     setThemeSaving(true)
