@@ -3,6 +3,7 @@ import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/server'
 import { theme, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
+import PageGuide from '@/components/PageGuide'
 
 export default async function Ladder({ searchParams }: { searchParams: Promise<{ grade?: string; view?: string }> }) {
   const params = await searchParams
