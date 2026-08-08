@@ -139,6 +139,11 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
     const reserves = rows.filter(r => r.slot.startsWith('RES'))
 
     const { scored } = resolveSubs(starters, bench, reserves, played)
+    if (starters.some(s => s.player_id === '__vacant__')) {
+      console.log('[VACANCY]', lu.owner_id,
+        'vacant:', starters.filter(s => s.player_id === '__vacant__').map(s => s.slot).join(','),
+        'scored slots:', scored.map(s => s.slot + (s.promoted ? '*' : '')).join(','))
+    }
 
     let total = 0
     for (const sc of scored) {
