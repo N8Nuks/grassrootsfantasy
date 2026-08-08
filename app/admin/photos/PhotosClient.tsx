@@ -80,6 +80,23 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
   const [playingNumber, setPlayingNumber] = useState('')
   const [revealPos, setRevealPos] = useState('')
   const [under18, setUnder18] = useState(false)
+  const [bulkText, setBulkText] = useState('')
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [bulkResult, setBulkResult] = useState<{ matched: { name: string; number: number; had: number | null }[]; unmatched: string[]; wrote: number } | null>(null)
+
+  async function runBulk(confirm: boolean) {
+    setBulkBusy(true)
+    const res = await fetch('/api/bulk-numbers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: bulkText, grade, confirm }),
+    })
+    const data = await res.json()
+    setBulkBusy(false)
+    if (!res.ok) { setBulkResult(null); setStatus('ERROR: ' + data.error); return }
+    setBulkResult(data)
+    setStatus(confirm ? `✓ Wrote ${data.wrote} numbers` : `Preview: ${data.matched.length} matched, ${data.unmatched.length} unmatched`)
+  }
 
   const gradePlayers = useMemo(
     () => players.filter(p => p.grade === grade),
@@ -285,7 +302,48 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
               </div>
             </>
           )}
-
+          
+          {/* Bulk numbers — September team confirmations */}
+          <div className="rounded-2xl" style={{ background: P.panel, border: `1px solid ${P.panelEdge}`, padding: '28px', marginTop: '48px', boxShadow: `0 0 40px ${P.purple}12` }}>
+            <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: P.purple, marginBottom: '8px' }}>Bulk numbers · {grade === 'mens' ? "Men's" : "Women's"}</p>
+            <p className="text-xs" style={{ color: P.dim, marginBottom: '16px' }}>
+              Paste one player per line as “Name, Number”. Preview shows matches before anything is written. Writing overwrites existing numbers.
+            </p>
+            <textarea value={bulkText} onChange={e => setBulkText(e.target.value)}
+              placeholder={"Floyd Nola, 99\nThomas Enoka, 7"}
+              className="w-full rounded-xl px-4 py-3.5 text-sm"
+              style={{ ...field, minHeight: '140px', fontFamily: 'monospace' }} />
+            <div className="flex gap-4" style={{ marginTop: '16px' }}>
+              <button onClick={() => runBulk(false)} disabled={bulkBusy || !bulkText.trim()}
+                className="text-xs font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] disabled:opacity-40"
+                style={{ color: P.blue, border: `1px solid ${P.blue}70`, padding: '13px 30px' }}>
+                Preview
+              </button>
+              <button onClick={() => runBulk(true)} disabled={bulkBusy || !bulkResult || bulkResult.matched.length === 0}
+                className="text-xs font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] disabled:opacity-40"
+                style={{ color: P.ink, background: `linear-gradient(120deg, ${P.purple} 0%, ${P.orange} 100%)`, padding: '13px 30px' }}>
+                Write numbers
+              </button>
+            </div>
+            {bulkResult && (
+              <div style={{ marginTop: '20px' }}>
+                {bulkResult.matched.length > 0 && (
+                  <div className="text-xs" style={{ color: P.text, marginBottom: '12px' }}>
+                    <p className="font-black uppercase tracking-widest" style={{ color: P.blue, marginBottom: '6px' }}>Matched ({bulkResult.matched.length})</p>
+                    {bulkResult.matched.map((m, i) => (
+                      <p key={i}>{m.name} → #{m.number}{m.had != null && m.had !== m.number ? ` (was #${m.had})` : ''}</p>
+                    ))}
+                  </div>
+                )}
+                {bulkResult.unmatched.length > 0 && (
+                  <div className="text-xs" style={{ color: '#FF9B9B' }}>
+                    <p className="font-black uppercase tracking-widest" style={{ marginBottom: '6px' }}>Unmatched — fix by hand ({bulkResult.unmatched.length})</p>
+                    {bulkResult.unmatched.map((u, i) => <p key={i}>{u}</p>)}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           {status && (
             <pre className="rounded-xl text-xs leading-relaxed whitespace-pre-wrap" style={{
               marginTop: '30px', padding: '20px 24px',
