@@ -3,6 +3,7 @@ import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/server'
 import { theme, type Grade } from '@/lib/clubhouse'
 import TeamClient, { TeamCard } from './TeamClient'
+import SandboxBanner from '@/components/SandboxBanner'
 
 export default async function Team({ searchParams }: { searchParams: Promise<{ grade?: string }> }) {
   const params = await searchParams
@@ -111,7 +112,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
-      <Nav />
+      <Nav /><SandboxBanner />
       <section className="flex-1 px-4 sm:px-6" style={{ paddingTop: "70px", paddingBottom: "100px" }}>
         <TeamClient
           teamName={profile?.team_name ?? 'Your team'}

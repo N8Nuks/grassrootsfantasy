@@ -1,6 +1,7 @@
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import FactsTicker from '@/components/FactsTicker'
+import SandboxBanner from '@/components/SandboxBanner'
 
 const COBALT = '#2456E6'
 const GOLD = '#E8C15A'
@@ -10,7 +11,7 @@ const GREEN = '#2D9E4E'
 export default function NFS() {
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#0D0D0F' }}>
-      <Nav />
+      <Nav /><SandboxBanner />
 
       {/* Hero */}
       <section className="relative px-6 sm:px-12 overflow-hidden" style={{ paddingTop: "90px", paddingBottom: "80px" }}>

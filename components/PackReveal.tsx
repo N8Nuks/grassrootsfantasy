@@ -446,52 +446,39 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
           </div>
         )}
 
-        {/* Stage 5 — fanned haul: rares centre-front, commons to the edges */}
-        {stage === 'haul' && (() => {
-          // Order: commons outermost, rares dead centre
-          const centreOrder = [...sorted].sort((a, b) => REVEAL_ORDER.indexOf(a.tier) - REVEAL_ORDER.indexOf(b.tier))
-          const fan: RevealCard[] = []
-          centreOrder.forEach((c, i) => { if (i % 2 === 0) fan.push(c); else fan.unshift(c) })
-          const n = fan.length
-          const mid = (n - 1) / 2
-          return (
-            <div className="gf-pop w-full">
-              <p className="text-sm font-black uppercase tracking-[0.35em] mb-4" style={{ color: T.accent }}>Your Haul</p>
-              <div className="relative w-full" style={{ height: 'min(46vh, 340px)' }}>
-                {fan.map((c, i) => {
-                  const m = TIER_META[c.tier] ?? TIER_META.common
-                  const off = i - mid
-                  const isRareCard = c.tier.startsWith('rare')
-                  const spreadPct = Math.min(78 / Math.max(n - 1, 1), 9)
-                  return (
-                    <div key={i} className="absolute"
-                      style={{
-                        left: `calc(50% + ${off * spreadPct}%)`,
-                        top: '50%',
-                        width: 'min(150px, 38vw)',
-                        transform: `translate(-50%, -50%) rotate(${off * 3.2}deg) translateY(${Math.abs(off) * 9}px) scale(${isRareCard ? 1.12 : 1})`,
-                        zIndex: 100 - Math.round(Math.abs(off) * 2) + (isRareCard ? 10 : 0),
-                        filter: isRareCard ? `drop-shadow(0 0 22px ${m.accent}70)` : 'drop-shadow(0 6px 14px #00000080)',
-                      }}>
-                      <PlayerCard
-                        player={toFullPlayer(c)}
-                        grade={grade}
-                        owned={true}
-                        cardStyle={cardStyle}
-                      />
-                    </div>
-                  )
-                })}
-              </div>
-              <span className="inline-block rounded-full gf-pulse" style={{ border: `1px solid ${T.accent}60`, background: `${T.accent}15`, padding: '8px 20px', marginTop: '18px' }}>
-                <span className="text-xs font-bold uppercase tracking-[0.3em]" style={{ color: T.text }}>
-                  {finishing ? 'Loading your team…' : 'Tap to finish'}
-                </span>
-              </span>
+        {/* Stage 5 — haul: dense scroll, rares lead */}
+        {stage === 'haul' && (
+          <div className="gf-pop w-full">
+            <p className="text-sm font-black uppercase tracking-[0.35em] mb-4" style={{ color: T.accent }}>Your Haul</p>
+            <div className="flex gap-3 overflow-x-auto pb-4 gf-noscroll" style={{ scrollSnapType: 'x proximity', padding: '0 24px' }}
+              onClick={(e) => e.stopPropagation()}>
+              {sorted.slice().reverse().map((c, i) => {
+                const m = TIER_META[c.tier] ?? TIER_META.common
+                const isRareCard = c.tier.startsWith('rare')
+                return (
+                  <div key={i} className="gf-slide-in shrink-0" style={{
+                    width: 'min(132px, 30vw)', scrollSnapAlign: 'start', animationDelay: `${Math.min(i * 60, 600)}ms`,
+                    filter: isRareCard ? `drop-shadow(0 0 16px ${m.accent}60)` : 'none',
+                  }}>
+                    <PlayerCard
+                      player={toFullPlayer(c)}
+                      grade={grade}
+                      owned={true}
+                      cardStyle={cardStyle}
+                    />
+                  </div>
+                )
+              })}
             </div>
-          )
-        })()}
-        </div>
+            <p className="text-[10px] font-bold mt-1 mb-4" style={{ color: T.textDim }}>Swipe to browse — rares first</p>
+            <span className="inline-block rounded-full gf-pulse" style={{ border: `1px solid ${T.accent}60`, background: `${T.accent}15`, padding: '8px 20px' }}>
+              <span className="text-xs font-bold uppercase tracking-[0.3em]" style={{ color: T.text }}>
+                {finishing ? 'Loading your team…' : 'Tap to finish'}
+              </span>
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

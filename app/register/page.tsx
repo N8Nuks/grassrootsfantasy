@@ -4,6 +4,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/client'
 import PackReveal, { RevealCard } from '@/components/PackReveal'
+import SandboxBanner from '@/components/SandboxBanner'
 
 type PackQueueItem = { grade: 'mens' | 'womens'; cards: RevealCard[]; packName?: string }
 
@@ -118,7 +119,7 @@ export default function Register() {
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#141210' }}>
-      <Nav />
+      <Nav /><SandboxBanner />
       <section className="relative flex-1 px-6 overflow-hidden" style={{ paddingTop: "90px", paddingBottom: "100px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
         <div className="relative z-10" style={{ maxWidth: "440px", marginLeft: "auto", marginRight: "auto" }}>
