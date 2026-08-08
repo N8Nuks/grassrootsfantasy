@@ -81,18 +81,17 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  let siteTheme = 'grade'
-  if (user) {
-    const { data: prof } = await supabase.from('profiles').select('site_theme').eq('id', user.id).single()
-    siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
-  }
+  const [{ data: prof }, { data: round }, { data: teams }] = await Promise.all([
+    user
+      ? supabase.from('profiles').select('site_theme').eq('id', user.id).single()
+      : Promise.resolve({ data: null }),
+    supabase.from('rounds').select('id, round_number, lock_at')
+      .eq('grade', grade).lte('lock_at', new Date().toISOString())
+      .order('round_number', { ascending: false }).limit(1).maybeSingle(),
+    supabase.from('public_teams').select('id, team_name'),
+  ])
+  const siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
   const T = theme(grade, siteTheme)
-
-  const { data: round } = await supabase
-    .from('rounds').select('id, round_number, lock_at')
-    .eq('grade', grade).lte('lock_at', new Date().toISOString())
-    .order('round_number', { ascending: false }).limit(1).maybeSingle()
-
   type Matchup = { user_a: string; user_b: string; score_a: number | null; score_b: number | null }
   let myMatchup: Matchup | null = null
   let allMatchups: Matchup[] = []
@@ -101,6 +100,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
   let pointsByPlayer: Map<string, number> | null = null
   let pointsRoundNumber: number | null = null
 
+  const seasonTotals = new Map<string, number>()
   if (round) {
     await supabase.rpc('pair_round', { p_round_id: round.id })
 
@@ -153,19 +153,14 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
     }
   }
 
-  const { data: teams } = await supabase.from('public_teams').select('id, team_name')
-
-  // Season totals for the two H2H teams (from public user_scores)
-  const seasonTotals = new Map<string, number>()
   if (myMatchup) {
-    const { data: allScores } = await supabase
-      .from('user_scores').select('owner_id, points').eq('grade', grade)
-      .in('owner_id', [myMatchup.user_a, myMatchup.user_b])
-    for (const s of allScores ?? []) {
-      seasonTotals.set(s.owner_id, (seasonTotals.get(s.owner_id) ?? 0) + Number(s.points))
-    }
-  }
-  const nameOf = (id: string) =>
+      const { data: lineups } = await supabase
+        .from('lineups')
+        .select('id, owner_id, rounds!inner(round_number), lineup_slots(slot, batting_order, cards(player_id, players(full_name)))')
+        .eq('grade', grade)
+        .in('owner_id', [myMatchup.user_a, myMatchup.user_b])
+
+    const nameOf = (id: string) =>
     (teams ?? []).find(t => t.id === id)?.team_name ?? 'Unknown team'
 
   const scored = myMatchup?.score_a != null && myMatchup?.score_b != null
