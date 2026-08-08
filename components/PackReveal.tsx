@@ -279,6 +279,8 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
     e.stopPropagation()
     setStage('haul')
   }
+
+  function advance() {
     if (stage === 'pack') {
       setStage('tearing')
       setTimeout(() => setStage('back'), 460)
