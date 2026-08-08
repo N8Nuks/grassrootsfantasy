@@ -77,7 +77,6 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
   const params = await searchParams
   const grade: Grade = params.grade === 'womens' ? 'womens' : 'mens'
   const isW = grade === 'womens'
-
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -92,6 +91,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
   ])
   const siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
   const T = theme(grade, siteTheme)
+
   type Matchup = { user_a: string; user_b: string; score_a: number | null; score_b: number | null }
   let myMatchup: Matchup | null = null
   let allMatchups: Matchup[] = []
@@ -99,11 +99,10 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
   let lineupB: LineupRec | null = null
   let pointsByPlayer: Map<string, number> | null = null
   let pointsRoundNumber: number | null = null
-
   const seasonTotals = new Map<string, number>()
+
   if (round) {
     await supabase.rpc('pair_round', { p_round_id: round.id })
-
     const { data: matchups } = await supabase
       .from('matchups').select('user_a, user_b, score_a, score_b')
       .eq('round_id', round.id)
@@ -111,11 +110,18 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
     if (user) myMatchup = allMatchups.find(m => m.user_a === user.id || m.user_b === user.id) ?? null
 
     if (myMatchup) {
-      const { data: lineups } = await supabase
-        .from('lineups')
-        .select('id, owner_id, rounds!inner(round_number), lineup_slots(slot, batting_order, cards(player_id, players(full_name)))')
-        .eq('grade', grade)
-        .in('owner_id', [myMatchup.user_a, myMatchup.user_b])
+      const [{ data: lineups }, { data: seasonScores }] = await Promise.all([
+        supabase
+          .from('lineups')
+          .select('id, owner_id, rounds!inner(round_number), lineup_slots(slot, batting_order, cards(player_id, players(full_name)))')
+          .eq('grade', grade)
+          .in('owner_id', [myMatchup.user_a, myMatchup.user_b]),
+        supabase.from('user_scores').select('owner_id, points').eq('grade', grade)
+          .in('owner_id', [myMatchup.user_a, myMatchup.user_b]),
+      ])
+      for (const s of seasonScores ?? []) {
+        seasonTotals.set(s.owner_id, (seasonTotals.get(s.owner_id) ?? 0) + Number(s.points))
+      }
       const rows = ((lineups ?? []) as unknown as LineupRec[])
         .filter(l => l.rounds.round_number <= round.round_number)
       const latest = (owner: string) =>
@@ -123,7 +129,6 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
           .sort((a, b) => b.rounds.round_number - a.rounds.round_number)[0] ?? null
       lineupA = latest(myMatchup.user_a)
       lineupB = latest(myMatchup.user_b)
-
       const ids = [...(lineupA?.lineup_slots ?? []), ...(lineupB?.lineup_slots ?? [])]
         .map(s => s.cards?.player_id).filter(Boolean) as string[]
       if (ids.length) {
@@ -153,20 +158,11 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
     }
   }
 
-  if (myMatchup) {
-      const { data: lineups } = await supabase
-        .from('lineups')
-        .select('id, owner_id, rounds!inner(round_number), lineup_slots(slot, batting_order, cards(player_id, players(full_name)))')
-        .eq('grade', grade)
-        .in('owner_id', [myMatchup.user_a, myMatchup.user_b])
-
-    const nameOf = (id: string) =>
+  const nameOf = (id: string) =>
     (teams ?? []).find(t => t.id === id)?.team_name ?? 'Unknown team'
-
   const scored = myMatchup?.score_a != null && myMatchup?.score_b != null
   const aWins = scored && Number(myMatchup!.score_a) > Number(myMatchup!.score_b)
   const bWins = scored && Number(myMatchup!.score_b) > Number(myMatchup!.score_a)
-
   const otherMatchups = allMatchups.filter(m => !myMatchup || m.user_a !== myMatchup.user_a || m.user_b !== myMatchup.user_b)
 
   return (
@@ -186,11 +182,9 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
               <GradeSwitch grade={grade} mensHref="/matchups?grade=mens" womensHref="/matchups?grade=womens" palette={siteTheme !== 'grade' ? T : undefined} />
             </div>
           </div>
-
           {!round && (
             <p className="text-sm text-center" style={{ color: T.textDim }}>Matchups appear once the first round locks.</p>
           )}
-
           {round && myMatchup && (
             <>
               {/* Scoreboard banner */}
@@ -216,18 +210,15 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
                   </div>
                 </div>
               </div>
-
               <div className="flex flex-col sm:flex-row gap-6 mb-12">
                 <TeamCard title={nameOf(myMatchup.user_a)} slots={lineupA?.lineup_slots ?? []} T={T} winner={!!aWins} pointsByPlayer={pointsByPlayer} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber} Pts` : null} />
                 <TeamCard title={nameOf(myMatchup.user_b)} slots={lineupB?.lineup_slots ?? []} T={T} winner={!!bWins} pointsByPlayer={pointsByPlayer} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber} Pts` : null} />
               </div>
             </>
           )}
-
           {round && user && !myMatchup && (
             <p className="text-sm text-center mb-12" style={{ color: T.textDim }}>No matchup for your team this round.</p>
           )}
-
           {round && otherMatchups.length > 0 && (
             <div className="rounded-2xl overflow-hidden" style={{ background: T.surface, border: '1px solid #ffffff12' }}>
               <div style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a', padding: '16px 28px' }}>
