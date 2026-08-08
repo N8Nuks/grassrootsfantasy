@@ -704,7 +704,15 @@ player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.
         )
       })()}
 
-      <PageGuide pageKey="team" steps={TEAM_GUIDE} accent={T.accent} textColor={T.text} />
+      {view === 'lineup' && <PageGuide pageKey="team" steps={TEAM_GUIDE} accent={T.accent} textColor={T.text} />}
+      {view === 'collection' && (
+        <PageGuide pageKey="team-collection" accent={T.accent} textColor={T.text} steps={[
+          {
+            title: 'Your collection',
+            body: 'Every card you own. Tap any card to open it full size — scroll on the open card to see this season, career stats, and prior seasons. Sort by tier, batting average, or points using the buttons up top.',
+          },
+        ]} />
+      )}
       {reveal && (
         <PackReveal
           grade={grade}

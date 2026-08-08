@@ -67,8 +67,8 @@ export default function PageGuide({ pageKey, steps, accent, textColor }: {
                 Skip
               </button>
               <button onClick={next}
-                className="text-xs font-black uppercase tracking-widest rounded-full px-7 py-3 transition-all hover:scale-[1.03]"
-                style={{ color: '#141210', background: accent }}>
+                className="text-xs font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] whitespace-nowrap"
+                style={{ color: '#141210', background: accent, padding: '14px 36px' }}>
                 {step + 1 >= steps.length ? 'Got it' : 'Next'}
               </button>
             </div>
