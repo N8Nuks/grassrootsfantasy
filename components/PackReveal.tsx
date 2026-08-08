@@ -275,7 +275,10 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
     }, 2200)
   }
 
-  function advance() {
+  function revealAll(e: React.MouseEvent) {
+    e.stopPropagation()
+    setStage('haul')
+  }
     if (stage === 'pack') {
       setStage('tearing')
       setTimeout(() => setStage('back'), 460)
@@ -362,6 +365,13 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
               style={{ border: `1px solid ${meta.accent}60`, background: `${meta.accent}15`, padding: '8px 20px' }}>
               <span className="text-xs font-bold uppercase tracking-[0.3em]" style={{ color: T.text }}>Tap to reveal</span>
             </span>
+            <p style={{ marginTop: '14px' }}>
+              <button onClick={revealAll}
+                className="text-[10px] font-bold uppercase tracking-[0.25em] transition-all hover:opacity-100"
+                style={{ color: T.textDim, opacity: 0.7, background: 'none', border: 'none', cursor: 'pointer' }}>
+                Reveal all →
+              </button>
+            </p>
           </div>
         )}
 
@@ -421,6 +431,15 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
                   {idx + 1 < sorted.length ? 'Tap for the next card' : 'Tap to see your haul'}
                 </span>
               </span>
+            )}
+            {stage === 'front' && idx + 1 < sorted.length && (
+              <p style={{ marginTop: '14px' }}>
+                <button onClick={revealAll}
+                  className="text-[10px] font-bold uppercase tracking-[0.25em] transition-all hover:opacity-100"
+                  style={{ color: T.textDim, opacity: 0.7, background: 'none', border: 'none', cursor: 'pointer' }}>
+                  Reveal all →
+                </button>
+              </p>
             )}
           </div>
         )}
