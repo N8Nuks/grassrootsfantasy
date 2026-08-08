@@ -3,6 +3,7 @@ import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/server'
 import { theme, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
+import PageGuide from '@/components/PageGuide'
 
 const SLOT_ORDER = ['P', 'C', 'B1', 'B2', 'B3', 'SS', 'LF', 'CF', 'RF', 'DP', 'PB', 'DR',
   'BENCH1', 'BENCH2', 'BENCH3', 'BENCH4']
@@ -252,6 +253,16 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
           )}
         </div>
       </section>
+      <PageGuide pageKey="matchups" accent={T.accent} textColor={T.text} steps={[
+        {
+          title: 'Head to Head',
+          body: "Every round you're drawn against another team — highest points on the weekend wins the matchup. Wins build your record on the H2H standings.",
+        },
+        {
+          title: 'The two lineups',
+          body: "Your card against theirs, player by player, with each player's round points once games are scored. Scroll down for every other matchup around the grounds.",
+        },
+      ]} />
       <Footer />
     </main>
   )

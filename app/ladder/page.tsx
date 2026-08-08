@@ -297,6 +297,16 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
           </p>
         </div>
       </section>
+      <PageGuide pageKey="ladder" accent={T.accent} textColor={T.text} steps={[
+        {
+          title: 'Four competitions, one page',
+          body: 'Ladder is season-long total points. H2H is your win-loss record. Weekly crowns the biggest single-round score. Clubs races club against club on average points.',
+        },
+        {
+          title: 'Find yourself',
+          body: "Your team is highlighted wherever you sit — and if you're outside the top 20, you're pinned at the bottom with your true rank.",
+        },
+      ]} />
       <Footer />
     </main>
   )
