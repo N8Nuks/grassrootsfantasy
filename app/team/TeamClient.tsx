@@ -7,6 +7,22 @@ import PlayerCard from '@/components/PlayerCard'
 import PlayerCardFull from '@/components/PlayerCardFull'
 import FieldPicker from '@/components/FieldPicker'
 import PackReveal, { RevealCard } from '@/components/PackReveal'
+import PageGuide, { GuideStep } from '@/components/PageGuide'
+
+const TEAM_GUIDE: GuideStep[] = [
+  {
+    title: 'This is your team',
+    body: 'Your Lineup Card is your batting order — the players who score points for you each round. Tap a number to swap batting positions, tap a name to see their full card, and tap a yellow position chip to change who fills that spot.',
+  },
+  {
+    title: 'Starters, bench, reserve',
+    body: 'Starters score full points. Bench players score at 0.75× and step in automatically at full value if a starter misses the round. Reserves are your depth — no score, but ready to promote.',
+  },
+  {
+    title: 'Packs and lock day',
+    body: "Claim your free pack every week to grow your collection. Set your lineup any time while the round is open — it locks Friday 4pm before the weekend's games, then your players' real performances earn your points.",
+  },
+]
 
 export type TeamCard = {
   id: string
@@ -688,6 +704,7 @@ player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.
         )
       })()}
 
+      <PageGuide pageKey="team" steps={TEAM_GUIDE} accent={T.accent} textColor={T.text} />
       {reveal && (
         <PackReveal
           grade={grade}
