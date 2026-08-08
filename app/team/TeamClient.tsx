@@ -118,6 +118,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   const [sortBy, setSortBy] = useState<'tier' | 'ba' | 'points'>('tier')
   const [t4Code, setT4Code] = useState('')
   const [reveal, setReveal] = useState<{ packName: string; cards: RevealCard[] } | null>(null)
+  const [packBusy, setPackBusy] = useState(false)
   const [themeSaving, setThemeSaving] = useState(false)
 
   async function setSiteTheme(next: string) {
@@ -202,22 +203,31 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     setSaving(false)
   }
   async function openT2() {
+    if (packBusy) return
+    setPackBusy(true)
     const r = await fetch('/api/deal-t2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade }) })
     const data = await r.json()
+    setPackBusy(false)
     if (r.ok && data.cards?.length) {
       setReveal({ packName: 'Pre-Season Pack', cards: data.cards })
     } else alert(data.error ?? 'Could not open the pack')
   }
   async function redeemT4() {
+    if (packBusy) return
+    setPackBusy(true)
     const r = await fetch('/api/redeem-t4', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: t4Code }) })
     const data = await r.json()
+    setPackBusy(false)
     if (r.ok) {
       setReveal({ packName: 'Bonus Pack', cards: data.cards ?? data.players.map((p: { name: string; tier: string }) => ({ name: p.name, tier: p.tier })) })
     } else alert(data.error)
   }
   async function claimT3() {
+    if (packBusy) return
+    setPackBusy(true)
     const r = await fetch('/api/deal-t3', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade }) })
     const data = await r.json()
+    setPackBusy(false)
     if (r.ok) {
       const cards: RevealCard[] = (data.cards ?? data.players.map((n: string) => ({ name: n, tier: 'common' })))
       setReveal({ packName: 'Weekly Pack', cards })
@@ -387,7 +397,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           <button onClick={openT2}
             className="text-xs font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] flex items-center gf-pulse"
             style={{ padding: '14px 32px', minHeight: '48px', color: '#141210', background: '#FFD700', boxShadow: '0 0 24px #FFD70060' }}>
-            Open Pre-Season Pack · 9 cards
+            {packBusy ? 'Opening…' : 'Open Pre-Season Pack · 9 cards'}
           </button>
         )}
         {cards.length >= 21 && (
@@ -400,7 +410,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                 ? { color: T.textDim, border: '1px solid #ffffff25', background: 'transparent' }
                 : { color: T.buttonText, background: T.button, boxShadow: T.glow }),
             }}>
-            {t3Claimed ? 'Weekly Pack Claimed ✓' : 'Claim Weekly Pack · 2 cards'}
+            {t3Claimed ? 'Weekly Pack Claimed ✓' : packBusy ? 'Opening…' : 'Claim Weekly Pack · 2 cards'}
           </button>
         )}
         <div className="inline-flex rounded-full overflow-hidden" style={{ border: '1px solid #ffffff25', minHeight: '48px' }}>
