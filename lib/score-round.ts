@@ -127,7 +127,14 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
         positions: r.cards!.players?.positions ?? [],
       })) as SlotAssignment[]
 
-    const starters = rows.filter(r => !r.slot.startsWith('BENCH') && !r.slot.startsWith('RES'))
+    // Reconstruct vacant scoring slots (e.g. a card removed mid-season) so the
+    // substitution cascade can fill them like any absent starter
+    const SCORING_SLOTS = ['P','C','B1','B2','B3','SS','LF','CF','RF','DP','PB','DR']
+    const presentSlots = new Set(rows.map(r => r.slot))
+    const vacancies: SlotAssignment[] = SCORING_SLOTS
+      .filter(sl => !presentSlots.has(sl))
+      .map(sl => ({ slot: sl, player_id: '__vacant__', positions: [] }))
+    const starters = [...rows.filter(r => !r.slot.startsWith('BENCH') && !r.slot.startsWith('RES')), ...vacancies]
     const bench = rows.filter(r => r.slot.startsWith('BENCH'))
     const reserves = rows.filter(r => r.slot.startsWith('RES'))
 
