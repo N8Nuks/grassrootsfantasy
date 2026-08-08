@@ -15,7 +15,7 @@ export default function Register() {
   const [clubCode, setClubCode] = useState('')
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
-  const [grades, setGrades] = useState<('mens'|'womens')[]>(['mens', 'womens'])
+  const [grades, setGrades] = useState<('mens'|'womens')[]>(['womens', 'mens'])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [packQueue, setPackQueue] = useState<PackQueueItem[]>([])
@@ -79,7 +79,9 @@ export default function Register() {
 
     const queue: PackQueueItem[] = []
     if (dealRes.ok && dealData?.packs?.length) {
-      for (const p of dealData.packs as PackQueueItem[]) {
+      const orderedPacks = [...(dealData.packs as PackQueueItem[])].sort((a, b) =>
+        (a.grade === 'womens' ? 0 : 1) - (b.grade === 'womens' ? 0 : 1))
+      for (const p of orderedPacks) {
         queue.push({ ...p, packName: 'Starter Pack' })
       }
     }
@@ -162,7 +164,7 @@ export default function Register() {
             <div>
               <label className={label}>Leagues — you&apos;re in both unless you opt out</label>
               <div className="flex gap-3">
-                {(['mens','womens'] as const).map(g => (
+                {(['womens','mens'] as const).map(g => (
                   <button key={g} type="button"
                     onClick={() => toggleGrade(g)}
                     className="flex-1 rounded-xl px-4 py-5 text-base font-black transition-all"
