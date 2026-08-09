@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+const FAR_FUTURE = () => new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString()
+
 export async function POST(req: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -26,8 +28,9 @@ export async function POST(req: Request) {
 
   if (action === 'advance') {
     const nextNumber = (round?.round_number ?? 0) + 1
+    // New rounds open with lineups hidden from opponents until Lock stamps lock_at
     const { error: advErr } = await admin.from('rounds')
-      .insert({ grade, round_number: nextNumber, lock_at: new Date().toISOString(), status: 'open' })
+      .insert({ grade, round_number: nextNumber, lock_at: FAR_FUTURE(), status: 'open' })
     if (advErr) return NextResponse.json({ error: 'Advance failed: ' + advErr.message }, { status: 500 })
     return NextResponse.json({ ok: true, round_number: nextNumber, status: 'open' })
   }
@@ -38,7 +41,10 @@ export async function POST(req: Request) {
   }
 
   const status = action === 'open' ? 'open' : action === 'provisional' ? 'provisional' : 'locked'
-  const { error } = await admin.from('rounds').update({ status }).eq('id', round.id)
+  const patch: Record<string, string> = { status }
+  if (action === 'lock') patch.lock_at = new Date().toISOString()   // reveal lineups
+  if (action === 'open') patch.lock_at = FAR_FUTURE()               // hide lineups again
+  const { error } = await admin.from('rounds').update(patch).eq('id', round.id)
   if (error) return NextResponse.json({ error: 'Update failed: ' + error.message }, { status: 500 })
 
   return NextResponse.json({ ok: true, round_number: round.round_number, status })
