@@ -332,7 +332,8 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
       
       {/* Skip controls — top corner, clear of the reveal tap zone */}
       {stage !== 'haul' && stage !== 'pack' && stage !== 'tearing' && (
-        <div className="fixed top-3 right-3 z-[75] flex flex-col items-end gap-2">
+        <div className="fixed left-3 right-3 z-[75] flex items-start" style={{ top: '64px' }}>
+          {/* then on the Reveal all button add marginLeft: 'auto' to its style */}
           {raresAhead && (
             <button onClick={skipToRares}
               className="text-[10px] font-bold uppercase tracking-[0.2em] rounded-full"
