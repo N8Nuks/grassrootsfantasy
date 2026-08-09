@@ -8,6 +8,7 @@ import PlayerCardFull from '@/components/PlayerCardFull'
 import FieldPicker from '@/components/FieldPicker'
 import PackReveal, { RevealCard } from '@/components/PackReveal'
 import PageGuide, { GuideStep } from '@/components/PageGuide'
+import SandboxBanner from '@/components/SandboxBanner'
 
 const TEAM_GUIDE: GuideStep[] = [
   {
