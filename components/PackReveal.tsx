@@ -450,14 +450,14 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
         {stage === 'haul' && (
           <div className="gf-pop w-full">
             <p className="text-sm font-black uppercase tracking-[0.35em] mb-4" style={{ color: T.accent }}>Your Haul</p>
-            <div className="flex gap-3 overflow-x-auto pb-4 gf-noscroll" style={{ scrollSnapType: 'x proximity', padding: '0 24px' }}
+            <div className="flex gap-4 overflow-x-auto pb-4 gf-noscroll" style={{ scrollSnapType: 'x mandatory', padding: '0 48px' }}
               onClick={(e) => e.stopPropagation()}>
               {sorted.slice().reverse().map((c, i) => {
                 const m = TIER_META[c.tier] ?? TIER_META.common
                 const isRareCard = c.tier.startsWith('rare')
                 return (
                   <div key={i} className="gf-slide-in shrink-0" style={{
-                    width: 'min(132px, 30vw)', scrollSnapAlign: 'start', animationDelay: `${Math.min(i * 60, 600)}ms`,
+                    width: '190px', scrollSnapAlign: 'center', animationDelay: `${Math.min(i * 60, 600)}ms`,
                     filter: isRareCard ? `drop-shadow(0 0 16px ${m.accent}60)` : 'none',
                   }}>
                     <PlayerCard
