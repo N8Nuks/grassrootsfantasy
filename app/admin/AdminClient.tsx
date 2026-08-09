@@ -324,12 +324,12 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
               <button onClick={() => roundControl('mens', 'lock')} disabled={rcBusy}
                 className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
                 style={{ color: P.red, border: `1px solid ${P.red}70`, padding: '16px 0' }}>Lock Men&apos;s</button>
-              <button onClick={() => { if (confirm('Start the next Men\'s round? This opens a new week and a fresh Weekly Pack for everyone.')) roundControl('mens', 'advance') }} disabled={rcBusy}
-                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
-                style={{ color: P.purple, border: `1px solid ${P.purple}70`, padding: '16px 0' }}>Next Round M</button>
               <button onClick={() => roundControl('mens', 'provisional')} disabled={rcBusy}
                 className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
                 style={{ color: P.orange, border: `1px solid ${P.orange}70`, padding: '16px 0' }}>Scores Live M</button>
+              <button onClick={() => { if (confirm('Start the next Men\'s round? This opens a new week and a fresh Weekly Pack for everyone.')) roundControl('mens', 'advance') }} disabled={rcBusy}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
+                style={{ color: P.purple, border: `1px solid ${P.purple}70`, padding: '16px 0' }}>Next Round M</button>
             </div>
             <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: P.blue, marginBottom: '10px' }}>Women&apos;s</p>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
@@ -342,12 +342,12 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
               <button onClick={() => roundControl('womens', 'lock')} disabled={rcBusy}
                 className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
                 style={{ color: P.red, border: `1px solid ${P.red}70`, padding: '16px 0' }}>Lock Women&apos;s</button>
-              <button onClick={() => { if (confirm('Start the next Women\'s round? This opens a new week and a fresh Weekly Pack for everyone.')) roundControl('womens', 'advance') }} disabled={rcBusy}
-                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
-                style={{ color: P.purple, border: `1px solid ${P.purple}70`, padding: '16px 0' }}>Next Round W</button>
               <button onClick={() => roundControl('womens', 'provisional')} disabled={rcBusy}
                 className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
                 style={{ color: P.orange, border: `1px solid ${P.orange}70`, padding: '16px 0' }}>Scores Live W</button>
+              <button onClick={() => { if (confirm('Start the next Women\'s round? This opens a new week and a fresh Weekly Pack for everyone.')) roundControl('womens', 'advance') }} disabled={rcBusy}
+                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
+                style={{ color: P.purple, border: `1px solid ${P.purple}70`, padding: '16px 0' }}>Next Round W</button>
             </div>
             <LogBox lines={rcLog} error={rcLog[rcLog.length - 1]?.startsWith('ERROR')} />
           </Panel>
