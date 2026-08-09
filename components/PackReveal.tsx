@@ -279,7 +279,15 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
     e.stopPropagation()
     setStage('haul')
   }
+  function skipToRares(e: React.MouseEvent) {
+    e.stopPropagation()
+    const rareIdx = sorted.findIndex(c => c.tier.startsWith('rare'))
+    if (rareIdx === -1 || rareIdx <= idx) return
+    setIdx(rareIdx)
+    setStage('back')
+  }
 
+  const raresAhead = sorted.some((c, i) => i > idx && c.tier.startsWith('rare')) && !sorted[idx]?.tier.startsWith('rare')
   function advance() {
     if (stage === 'pack') {
       setStage('tearing')
@@ -321,7 +329,24 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
     <div className="fixed inset-0 z-[70] flex items-center justify-center cursor-pointer select-none overflow-hidden"
       style={{ background: '#000000E8', backdropFilter: 'blur(6px)', padding: '16px' }}
       onClick={advance}>
-
+      
+      {/* Skip controls — top corner, clear of the reveal tap zone */}
+      {stage !== 'haul' && stage !== 'pack' && stage !== 'tearing' && (
+        <div className="fixed top-3 right-3 z-[75] flex flex-col items-end gap-2">
+          {raresAhead && (
+            <button onClick={skipToRares}
+              className="text-[10px] font-bold uppercase tracking-[0.2em] rounded-full"
+              style={{ color: T.text, background: '#000000A0', border: `1px solid ${T.accent}50`, padding: '8px 14px', backdropFilter: 'blur(4px)' }}>
+              Skip to Rares ⚡
+            </button>
+          )}
+          <button onClick={revealAll} aria-label="Reveal all cards"
+            className="text-[10px] font-bold uppercase tracking-[0.2em] rounded-full"
+            style={{ color: T.textDim, background: '#000000A0', border: '1px solid #ffffff25', padding: '8px 14px', backdropFilter: 'blur(4px)' }}>
+            Reveal all →
+          </button>
+        </div>
+      )}
       {/* Tier word wall backdrop */}
       {wallStages.includes(stage) && current && (
         <WordWall key={`wall-${current.tier}`} word={meta.word} accent={meta.accent} />
@@ -367,13 +392,6 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
               style={{ border: `1px solid ${meta.accent}60`, background: `${meta.accent}15`, padding: '8px 20px' }}>
               <span className="text-xs font-bold uppercase tracking-[0.3em]" style={{ color: T.text }}>Tap to reveal</span>
             </span>
-            <p style={{ marginTop: '14px' }}>
-              <button onClick={revealAll}
-                className="text-[10px] font-bold uppercase tracking-[0.25em] transition-all hover:opacity-100"
-                style={{ color: T.textDim, opacity: 0.7, background: 'none', border: 'none', cursor: 'pointer' }}>
-                Reveal all →
-              </button>
-            </p>
           </div>
         )}
 
@@ -433,15 +451,6 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
                   {idx + 1 < sorted.length ? 'Tap for the next card' : 'Tap to see your haul'}
                 </span>
               </span>
-            )}
-            {stage === 'front' && idx + 1 < sorted.length && (
-              <p style={{ marginTop: '14px' }}>
-                <button onClick={revealAll}
-                  className="text-[10px] font-bold uppercase tracking-[0.25em] transition-all hover:opacity-100"
-                  style={{ color: T.textDim, opacity: 0.7, background: 'none', border: 'none', cursor: 'pointer' }}>
-                  Reveal all →
-                </button>
-              </p>
             )}
           </div>
         )}
