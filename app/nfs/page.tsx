@@ -2,7 +2,6 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import FactsTicker from '@/components/FactsTicker'
 import SandboxBanner from '@/components/SandboxBanner'
-import InstallPrompt from '@/components/InstallPrompt'
 
 const COBALT = '#2456E6'
 const GOLD = '#E8C15A'
@@ -208,7 +207,6 @@ export default function NFS() {
         </div>
       </section>
       
-      <InstallPrompt />
       <Footer />
     </main>
   )
