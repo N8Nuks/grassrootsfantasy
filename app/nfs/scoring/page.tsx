@@ -33,8 +33,9 @@ const slots = [
   { slot: 'C · 1B · 2B · 3B · SS · LF · CF · RF', rule: 'Batting stats.' },
   { slot: 'DP', rule: 'Offence only — a bat in the lineup.' },
   { slot: 'DR', rule: 'Steals and caught stealing only. The speed gamble.' },
-  { slot: 'Bench (4)', rule: 'Scores at 0.75×. Steps into your starting card at FULL points if a starter doesn\'t take the field.' },
-  { slot: 'Reserve (5)', rule: 'No score — your depth, one tap from the action.' },
+  { slot: 'Bench (4)', rule: 'Scores at 0.75×. Steps into your starting card at FULL points if a starter is ruled out prior to the game and the round is locked.' },
+  { slot: 'Reserve (5)', rule: 'First cab off the rank. Steps into the bench should a bench player move to a starting spot, or is ruled out prior to the game and the round is locked.' },
+  { slot: 'Squad', rule: 'Depth in your squad. Don\'t forget to check for your nuggets having great seasons, and factor in byes and double-header rounds. Two new players added every week!' },
 ]
 
 const boards = [
