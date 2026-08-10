@@ -66,8 +66,8 @@ export default function Scoring() {
       </section>
 
       {/* Point tables */}
-      <section className="px-6 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "22px", paddingBottom: "22px" }}>
-        <div className="grid gap-8 sm:grid-cols-2" style={{ maxWidth: "820px", marginLeft: "auto", marginRight: "auto" }}>
+      <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "48px", paddingBottom: "48px" }}>
+        <div className="grid gap-6 sm:gap-8 sm:grid-cols-2" style={{ maxWidth: "820px", marginLeft: "auto", marginRight: "auto" }}>
           {[{ title: 'Batting', rows: batting }, { title: 'Pitching', rows: pitching }].map(table => (
             <div key={table.title} className="rounded-2xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${COBALT}30` }}>
               <div className="px-6 py-4" style={{ background: '#10214D', borderBottom: '1px solid #ffffff0a' }}>
@@ -94,7 +94,7 @@ export default function Scoring() {
       </section>
 
       {/* Slot rules */}
-      <section className="px-6 sm:px-12" style={{ background: '#101013', borderTop: '1px solid #ffffff0a', paddingTop: "22px", paddingBottom: "22px" }}>
+      <section className="px-5 sm:px-12" style={{ background: '#101013', borderTop: '1px solid #ffffff0a', paddingTop: "56px", paddingBottom: "56px" }}>
         <div style={{ maxWidth: "720px", marginLeft: "auto", marginRight: "auto" }}>
           <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "48px" }}>How your card scores.</h2>
           <div className="flex flex-col gap-3">
@@ -109,10 +109,10 @@ export default function Scoring() {
       </section>
 
       {/* Leaderboards */}
-      <section className="px-6 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "22px", paddingBottom: "22px" }}>
+      <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "56px", paddingBottom: "56px" }}>
         <div style={{ maxWidth: "720px", marginLeft: "auto", marginRight: "auto" }}>
           <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "48px" }}>The competitions.</h2>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             {boards.map(b => (
               <div key={b.t} className="rounded-xl px-6 py-5" style={{ background: '#121215', border: '1px solid #ffffff0a' }}>
                 <h3 className="text-base font-black text-white mb-1" style={{ fontFamily: 'var(--font-heading)' }}>{b.t}</h3>
