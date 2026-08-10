@@ -54,6 +54,26 @@ export default function NFS() {
       {/* Facts ticker */}
       <FactsTicker />
 
+{/* Scoring & Competitions — prominent, high on the page */}
+      <section className="px-6 sm:px-12" style={{ background: '#101828', borderBottom: '1px solid #ffffff0a', paddingTop: "44px", paddingBottom: "44px" }}>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-5" style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
+          <div className="text-center sm:text-left">
+            <p className="text-xs font-black uppercase tracking-[0.3em] mb-2" style={{ color: GOLD }}>How it all scores</p>
+            <p className="text-lg sm:text-xl font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+              Every event, every point, every competition.
+            </p>
+            <p className="text-xs text-white/55 mt-1">
+              The full point table, how each lineup slot scores, and the five ways to win.
+            </p>
+          </div>
+          <a href="/nfs/scoring"
+            className="inline-block text-sm font-black uppercase tracking-widest transition-all hover:scale-[1.03] shrink-0 rounded-full"
+            style={{ color: '#0D0D0F', background: GOLD, padding: '16px 34px', boxShadow: `0 0 22px ${GOLD}40` }}>
+            Scoring &amp; Competitions
+          </a>
+        </div>
+      </section>
+      
       {/* The competition */}
       <section className="px-6 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "90px", paddingBottom: "90px" }}>
         <div className="grid gap-6 sm:grid-cols-3" style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
