@@ -366,24 +366,24 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           </p>
           <p className="text-[10px]" style={{ color: T.textDim }}>{c.club}</p>
         </button>
-        <span className="hidden sm:flex w-20 justify-center shrink-0">
+        <span className="hidden sm:flex landscape:flex w-20 justify-center shrink-0">
           <span className="text-[9px] font-black tracking-widest px-2 py-1 rounded-full" style={{ color: meta.accent, background: meta.accent + '15' }}>
             {meta.label}
           </span>
         </span>
-        <span className="hidden sm:block w-20 text-center text-[11px] shrink-0" style={{ color: T.textDim }}>
+        <span className="hidden sm:block landscape:block w-20 text-center text-[11px] shrink-0" style={{ color: T.textDim }}>
           {c.stats.season_ba != null ? Number(c.stats.season_ba).toFixed(3) : '—'}
         </span>
-        <span className="hidden sm:block w-12 text-right text-[11px] shrink-0" style={{ color: T.textDim }}>
+        <span className="hidden sm:block landscape:block w-12 text-right text-[11px] shrink-0" style={{ color: T.textDim }}>
           {c.stats.season_sb ?? 0}
         </span>
-        <span className="hidden sm:block w-14 text-right text-[11px] shrink-0" style={{ color: T.textDim }}>
+        <span className="hidden sm:block landscape:block w-14 text-right text-[11px] shrink-0" style={{ color: T.textDim }}>
           {lastRoundPoints[c.playerId] ?? '—'}
         </span>
-        <span className="hidden sm:block w-14 text-right text-[11px] shrink-0" style={{ color: T.text }}>
+        <span className="hidden sm:block landscape:block w-14 text-right text-[11px] shrink-0" style={{ color: T.text }}>
           {thisRoundPoints[c.playerId] ?? '—'}
         </span>
-        <span className="hidden sm:block w-14 text-right text-[11px] font-black shrink-0" style={{ color: T.text }}>
+        <span className="hidden sm:block landscape:block w-14 text-right text-[11px] font-black shrink-0" style={{ color: T.text }}>
           {c.stats.season_points ?? 0}
         </span>
       </div>
@@ -528,12 +528,12 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               <p className="text-lg sm:text-xl font-black uppercase tracking-[0.35em]" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
                 Official Lineup Card
               </p>
-              <p className="sm:hidden text-[10px] font-bold uppercase tracking-[0.2em] mt-2" style={{ color: T.textDim }}>
+              <p className="sm:hidden landscape:hidden text-[10px] font-bold uppercase tracking-[0.2em] mt-2" style={{ color: T.textDim }}>
                 ↻ Rotate your phone for full stats
               </p>
             </div>
             {/* Column titles */}
-            <div className="hidden sm:flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff0a', padding: '10px 28px' }}>
+            <div className="hidden sm:flex landscape:flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff0a', padding: '10px 28px' }}>
               <span className="w-9 shrink-0" />
               <span className="w-11 shrink-0" />
               <span className="flex-1" />
