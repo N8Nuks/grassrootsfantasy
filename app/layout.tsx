@@ -62,7 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             href={`/splash/splash-${h}x${w}.png`} />,
         ])}
       </head>
-      <body style={{ fontFamily: 'var(--font-body)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <body style={{ fontFamily: 'var(--font-body)' }}>
         {children}
         <InstallPrompt />
         <Analytics />
