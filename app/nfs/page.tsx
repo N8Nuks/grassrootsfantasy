@@ -19,7 +19,7 @@ export default function NFS() {
         <div className="relative z-10 text-center" style={{ maxWidth: "760px", marginLeft: "auto", marginRight: "auto" }}>
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-6" style={{ color: GOLD }}>League One · Now Live</p>
           <h1 className="text-4xl sm:text-5xl font-black text-white mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
-            NFS Premier<br/>Softball League
+            NFS Premier League
           </h1>
           <p className="text-sm text-white/60 leading-relaxed" style={{ maxWidth: "480px", marginLeft: "auto", marginRight: "auto", marginBottom: "32px" }}>
             The Northern Fastpitch Series — Auckland's premier softball competition, running since 2005 on nearly ninety years of Auckland softball history. Now with a fantasy league of its own, endorsed by the Auckland Softball Association.
@@ -73,7 +73,7 @@ export default function NFS() {
           </a>
         </div>
       </section>
-      
+
       {/* The competition */}
       <section className="px-6 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "90px", paddingBottom: "90px" }}>
         <div className="grid gap-6 sm:grid-cols-3" style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
