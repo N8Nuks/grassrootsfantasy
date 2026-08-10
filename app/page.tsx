@@ -79,7 +79,7 @@ export default function Home() {
               Our first Fantasy League — Built for the Northern Fastpitch Series endorsed by the Auckland Softball Association.
             </p>
             <a href="/nfs" className="inline-block text-base font-bold tracking-wide transition-all hover:scale-[1.02]" style={{ color: '#4D7FFF', border: '1px solid #4D7FFF', background: 'transparent', padding: "22px 64px" }}>
-              Enter NFS League
+              Enter NFS Premier League
             </a>
           </div>
         </div>
