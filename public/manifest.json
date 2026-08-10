@@ -3,11 +3,22 @@
   "short_name": "GF",
   "description": "Fantasy softball for the NFS Premier League — collect, select, compete.",
   "start_url": "/team",
+  "scope": "/",
+  "id": "/",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#141210",
   "theme_color": "#141210",
+  "categories": ["sports", "games", "entertainment"],
+  "lang": "en-NZ",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "My Team", "short_name": "Team", "url": "/team", "description": "Set your lineup" },
+    { "name": "Matchups", "short_name": "Matchups", "url": "/matchups", "description": "This round's head-to-head" },
+    { "name": "Ladder", "short_name": "Ladder", "url": "/ladder", "description": "Standings and competitions" }
   ]
 }
