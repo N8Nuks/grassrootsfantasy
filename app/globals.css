@@ -355,3 +355,7 @@ input[type="number"] {
 .gf-noscroll::-webkit-scrollbar {
   display: none;
 }
+/* PWA: push all page content below the notch so the taller Nav never covers it */
+main {
+  padding-top: env(safe-area-inset-top, 0px);
+}
