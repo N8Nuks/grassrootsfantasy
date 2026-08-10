@@ -66,7 +66,7 @@ export default function Leagues() {
               The Northern Fastpitch Series, endorsed by the Auckland Softball Association. Collect the players, build your lineup, and play along every weekend — free, in both grades.
             </p>
             <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#4DA6FF' }}>
-              Sandbox season running now · Season One starts October
+              Sandbox season running now · Season One starts September
             </p>
             <a href="/nfs" className="w-full text-center text-base font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.02]"
               style={{ color: '#0D0D0F', background: '#E8C15A', padding: "20px 24px", maxWidth: '420px', boxShadow: '0 0 26px #E8C15A45' }}>
