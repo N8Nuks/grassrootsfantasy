@@ -55,10 +55,12 @@ export default function Nav() {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 sm:px-12 py-4 bg-[#141210]/40 backdrop-blur-md border-b border-white/5">
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 sm:px-12 bg-[#141210]/40 backdrop-blur-md border-b border-white/5"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)', paddingBottom: '16px' }}>
         {/* Left: logo + Join GF + Leagues */}
         <div className="flex items-center gap-6">
           <a href="/" className="flex items-center gap-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/gf-mark.png" alt="" className="h-9 w-auto" />
             <span className="flex flex-col leading-none gap-0.5">
               <span className="text-[12px] sm:text-[13px] font-bold tracking-wide" style={{ color: '#3FBF63', fontFamily: 'var(--font-heading)' }}>GRASSROOTS</span>
@@ -119,7 +121,7 @@ export default function Nav() {
       {/* Mobile menu */}
       {open && (
         <div className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 md:hidden"
-          style={{ background: '#141210F5' }}
+          style={{ background: '#141210F5', paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
           onClick={() => setOpen(false)}>
           <a href="/join"
             className="text-2xl font-black uppercase tracking-widest"
