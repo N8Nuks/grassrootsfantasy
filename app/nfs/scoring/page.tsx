@@ -51,9 +51,13 @@ export default function Scoring() {
       <Nav />
 
       {/* Hero */}
-      <section className="relative px-6 sm:px-12 overflow-hidden" style={{ paddingTop: "70px", paddingBottom: "60px" }}>
+      <section className="relative px-6 sm:px-12 overflow-hidden" style={{ paddingTop: "70px", paddingBottom: "40px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 75% 55% at 50% 0%, #10214D 0%, #0D0D0F 70%)' }} />
         <div className="relative z-10 text-center" style={{ maxWidth: "760px", marginLeft: "auto", marginRight: "auto" }}>
+          <a href="/nfs" className="inline-block text-xs font-black uppercase tracking-[0.2em] transition-all hover:opacity-100"
+            style={{ color: SILVER, opacity: 0.75, marginBottom: '18px' }}>
+            ← Back to the NFS League
+          </a>
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>NFS Premier Softball League</p>
           <div className="mx-auto mb-6 h-px w-24" style={{ background: COBALT }} />
           <h1 className="text-4xl sm:text-5xl font-black text-white mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
@@ -66,7 +70,7 @@ export default function Scoring() {
       </section>
 
       {/* Point tables — scoreboard grid */}
-      <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "48px", paddingBottom: "48px" }}>
+      <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "36px", paddingBottom: "36px" }}>
         <div className="grid gap-6 sm:gap-8 sm:grid-cols-2" style={{ maxWidth: "820px", marginLeft: "auto", marginRight: "auto" }}>
           {[{ title: 'Batting', rows: batting, accent: GOLD }, { title: 'Pitching', rows: pitching, accent: COBALT }].map(table => (
             <div key={table.title} className="rounded-2xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${table.accent}45`, boxShadow: `0 0 24px ${table.accent}15` }}>
@@ -84,24 +88,19 @@ export default function Scoring() {
                   )
                 })}
               </div>
-              <p className="text-center text-[11px] leading-relaxed text-white/60" style={{ padding: '16px 20px' }}>
-                {table.title === 'Batting'
-                  ? 'A batting week never scores below zero — strikeouts and caught stealing can cost points, not bury you.'
-                  : 'A pitching week never scores below zero — earned runs can cost points, not bury you.'}
-              </p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Slot rules */}
-      <section className="px-5 sm:px-12" style={{ background: '#101013', borderTop: '1px solid #ffffff0a', paddingTop: "56px", paddingBottom: "56px" }}>
+      <section className="px-5 sm:px-12" style={{ background: '#101013', borderTop: '1px solid #ffffff0a', paddingTop: "36px", paddingBottom: "36px" }}>
         <div style={{ maxWidth: "720px", marginLeft: "auto", marginRight: "auto" }}>
-          <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "40px" }}>How your card scores.</h2>
+          <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "32px" }}>How your card scores.</h2>
           <div className="flex flex-col gap-4">
             {slots.map(s => (
-              <div key={s.slot} className="rounded-xl px-6 py-5 text-center" style={{ background: '#121215', border: `1px solid ${COBALT}35` }}>
-                <span className="block text-xs font-black uppercase tracking-[0.2em] mb-2" style={{ color: COBALT }}>{s.slot}</span>
+              <div key={s.slot} className="rounded-xl px-6 py-5 text-center" style={{ background: '#121215', border: `2px solid ${COBALT}70` }}>
+                <span className="block text-sm font-black uppercase tracking-[0.2em] mb-2 text-white">{s.slot}</span>
                 <span className="block text-sm text-white/70 leading-relaxed" style={{ maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>{s.rule}</span>
               </div>
             ))}
@@ -110,9 +109,9 @@ export default function Scoring() {
       </section>
 
       {/* Competitions */}
-      <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "56px", paddingBottom: "56px" }}>
+      <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "36px", paddingBottom: "36px" }}>
         <div style={{ maxWidth: "720px", marginLeft: "auto", marginRight: "auto" }}>
-          <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "40px" }}>The competitions.</h2>
+          <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "32px" }}>The competitions.</h2>
           <div className="flex flex-col gap-4">
             {boards.map(b => (
               <div key={b.t} className="rounded-xl px-6 py-6 text-center" style={{ background: '#121215', border: `1px solid ${b.c}40`, boxShadow: `0 0 20px ${b.c}12` }}>
@@ -121,10 +120,14 @@ export default function Scoring() {
               </div>
             ))}
           </div>
-          <div className="text-center" style={{ marginTop: '40px' }}>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4" style={{ marginTop: '36px' }}>
             <a href="/register" className="inline-block text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03]"
               style={{ color: '#0D0D0F', background: GOLD, padding: '18px 44px', boxShadow: `0 0 24px ${GOLD}40` }}>
               Register your team
+            </a>
+            <a href="/nfs" className="inline-block text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03]"
+              style={{ color: 'white', border: '1px solid #ffffff35', padding: '18px 44px' }}>
+              Back to the League
             </a>
           </div>
         </div>
