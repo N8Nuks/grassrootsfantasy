@@ -14,15 +14,15 @@ const batting = [
   { event: 'Home Run', pts: '+15' },
   { event: 'RBI', pts: '+3' },
   { event: 'Run scored', pts: '+3' },
-  { event: 'Walk / Hit by pitch', pts: '+2' },
+  { event: 'Walk / HBP', pts: '+2' },
   { event: 'Stolen Base', pts: '+10' },
   { event: 'Caught Stealing', pts: '-2' },
-  { event: 'Strikeout (batting)', pts: '-1' },
+  { event: 'Strikeout', pts: '-1' },
 ]
 
 const pitching = [
   { event: 'Inning Pitched', pts: '+3' },
-  { event: 'Strikeout (pitching)', pts: '+2' },
+  { event: 'Strikeout', pts: '+2' },
   { event: 'Win', pts: '+10' },
   { event: 'Earned Run', pts: '-1' },
 ]
@@ -51,7 +51,7 @@ export default function Scoring() {
       <Nav />
 
       {/* Hero */}
-      <section className="relative px-6 sm:px-12 overflow-hidden" style={{ paddingTop: "70px", paddingBottom: "70px" }}>
+      <section className="relative px-6 sm:px-12 overflow-hidden" style={{ paddingTop: "70px", paddingBottom: "60px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 75% 55% at 50% 0%, #10214D 0%, #0D0D0F 70%)' }} />
         <div className="relative z-10 text-center" style={{ maxWidth: "760px", marginLeft: "auto", marginRight: "auto" }}>
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>NFS Premier Softball League</p>
@@ -59,66 +59,73 @@ export default function Scoring() {
           <h1 className="text-4xl sm:text-5xl font-black text-white mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
             Scoring &amp; Competitions
           </h1>
-          <p className="text-sm text-white/50 leading-relaxed" style={{ maxWidth: "480px", marginLeft: "auto", marginRight: "auto" }}>
+          <p className="text-sm text-white/70 leading-relaxed" style={{ maxWidth: "480px", marginLeft: "auto", marginRight: "auto" }}>
             Every point your card earns comes from a real event in a real game. Here&apos;s exactly what everything is worth.
           </p>
         </div>
       </section>
 
-      {/* Point tables */}
+      {/* Point tables — scoreboard grid */}
       <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "48px", paddingBottom: "48px" }}>
         <div className="grid gap-6 sm:gap-8 sm:grid-cols-2" style={{ maxWidth: "820px", marginLeft: "auto", marginRight: "auto" }}>
-          {[{ title: 'Batting', rows: batting }, { title: 'Pitching', rows: pitching }].map(table => (
-            <div key={table.title} className="rounded-2xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${COBALT}30` }}>
-              <div className="px-6 py-4" style={{ background: '#10214D', borderBottom: '1px solid #ffffff0a' }}>
-                <span className="text-xs font-black uppercase tracking-[0.25em] text-white">{table.title}</span>
+          {[{ title: 'Batting', rows: batting, accent: GOLD }, { title: 'Pitching', rows: pitching, accent: COBALT }].map(table => (
+            <div key={table.title} className="rounded-2xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${table.accent}45`, boxShadow: `0 0 24px ${table.accent}15` }}>
+              <div className="text-center" style={{ background: `linear-gradient(180deg, ${table.accent}25 0%, transparent 100%)`, borderBottom: `1px solid ${table.accent}40`, padding: '18px 20px 14px' }}>
+                <span className="text-sm font-black uppercase tracking-[0.35em]" style={{ color: table.accent, textShadow: `0 0 14px ${table.accent}60` }}>{table.title}</span>
               </div>
-              {table.rows.map(r => (
-                <div key={r.event} className="flex items-center justify-between px-6 py-3" style={{ borderBottom: '1px solid #ffffff06' }}>
-                  <span className="text-sm text-white/70">{r.event}</span>
-                  <span className="text-sm font-black" style={{ color: r.pts.startsWith('-') ? RED : GREEN }}>{r.pts}</span>
-                </div>
-              ))}
-              {table.title === 'Batting' && (
-                <p className="px-8 pt-3 pb-5 text-[11px] leading-relaxed text-white/35">A batting week never scores below zero — strikeouts and caught stealing can cost points, not bury you.</p>
-              )}
-              {table.title === 'Pitching' && (
-                <p className="px-8 pt-3 pb-5 text-[11px] leading-relaxed text-white/35">A pitching week never scores below zero — earned runs can cost points, not bury you.</p>
-              )}
+              <div className="grid grid-cols-2" style={{ gap: '1px', background: '#ffffff0a' }}>
+                {table.rows.map(r => {
+                  const neg = r.pts.startsWith('-')
+                  return (
+                    <div key={r.event} className="flex flex-col items-center justify-center text-center" style={{ background: '#121215', padding: '18px 10px' }}>
+                      <span className="text-2xl font-black leading-none" style={{ fontFamily: 'var(--font-heading)', color: neg ? RED : GREEN, textShadow: `0 0 12px ${neg ? RED : GREEN}40` }}>{r.pts}</span>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-white/70 mt-2 leading-tight">{r.event}</span>
+                    </div>
+                  )
+                })}
+              </div>
+              <p className="text-center text-[11px] leading-relaxed text-white/60" style={{ padding: '16px 20px' }}>
+                {table.title === 'Batting'
+                  ? 'A batting week never scores below zero — strikeouts and caught stealing can cost points, not bury you.'
+                  : 'A pitching week never scores below zero — earned runs can cost points, not bury you.'}
+              </p>
             </div>
           ))}
         </div>
-        <p className="text-xs text-center italic" style={{ color: SILVER, opacity: 0.6, maxWidth: "560px", margin: "48px auto 0" }}>
-          Point values are provisional through the opening rounds of Season One and may be tuned before being locked for the season.
-        </p>
       </section>
 
       {/* Slot rules */}
       <section className="px-5 sm:px-12" style={{ background: '#101013', borderTop: '1px solid #ffffff0a', paddingTop: "56px", paddingBottom: "56px" }}>
         <div style={{ maxWidth: "720px", marginLeft: "auto", marginRight: "auto" }}>
-          <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "48px" }}>How your card scores.</h2>
-          <div className="flex flex-col gap-3">
+          <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "40px" }}>How your card scores.</h2>
+          <div className="flex flex-col gap-4">
             {slots.map(s => (
               <div key={s.slot} className="rounded-xl px-6 py-5 text-center" style={{ background: '#121215', border: `1px solid ${COBALT}35` }}>
-                <span className="block text-xs font-black uppercase tracking-[0.2em] mb-1.5" style={{ color: COBALT }}>{s.slot}</span>
-                <span className="block text-sm text-white/55 leading-relaxed" style={{ maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>{s.rule}</span>
+                <span className="block text-xs font-black uppercase tracking-[0.2em] mb-2" style={{ color: COBALT }}>{s.slot}</span>
+                <span className="block text-sm text-white/70 leading-relaxed" style={{ maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>{s.rule}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Leaderboards */}
+      {/* Competitions */}
       <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "56px", paddingBottom: "56px" }}>
         <div style={{ maxWidth: "720px", marginLeft: "auto", marginRight: "auto" }}>
-          <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "48px" }}>The competitions.</h2>
+          <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "40px" }}>The competitions.</h2>
           <div className="flex flex-col gap-4">
             {boards.map(b => (
               <div key={b.t} className="rounded-xl px-6 py-6 text-center" style={{ background: '#121215', border: `1px solid ${b.c}40`, boxShadow: `0 0 20px ${b.c}12` }}>
                 <h3 className="text-base font-black mb-2" style={{ fontFamily: 'var(--font-heading)', color: b.c, textShadow: `0 0 12px ${b.c}50` }}>{b.t}</h3>
-                <p className="text-sm text-white/50 leading-relaxed" style={{ maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>{b.d}</p>
+                <p className="text-sm text-white/70 leading-relaxed" style={{ maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>{b.d}</p>
               </div>
             ))}
+          </div>
+          <div className="text-center" style={{ marginTop: '40px' }}>
+            <a href="/register" className="inline-block text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03]"
+              style={{ color: '#0D0D0F', background: GOLD, padding: '18px 44px', boxShadow: `0 0 24px ${GOLD}40` }}>
+              Register your team
+            </a>
           </div>
         </div>
       </section>
@@ -126,7 +133,7 @@ export default function Scoring() {
       {/* Integrity note */}
       <section className="px-6 sm:px-12" style={{ background: '#101013', borderTop: `1px solid ${COBALT}40`, paddingTop: "40px", paddingBottom: "40px" }}>
         <div className="text-center" style={{ maxWidth: "640px", marginLeft: "auto", marginRight: "auto" }}>
-          <p className="text-xs leading-relaxed" style={{ color: SILVER, opacity: 0.6 }}>
+          <p className="text-xs leading-relaxed" style={{ color: SILVER, opacity: 0.8 }}>
             Fantasy scoring reflects what happens on the field — it must never influence it. Players play for their teams and their coaches make the calls. Grassroots Fantasy just keeps score. All points come from official game records; never fan voting, never popularity.
           </p>
         </div>
