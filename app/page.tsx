@@ -76,7 +76,7 @@ export default function Home() {
               NFS Premier Softball League
             </h2>
             <p className="text-sm sm:text-base text-[#F5F1E8]/45 leading-relaxed" style={{ maxWidth: "420px", marginLeft: "auto", marginRight: "auto", marginBottom: "56px", textAlign: "center" }}>
-              Our first league — built for the Northern Fastpitch Series with the Auckland Softball Association. Men&apos;s competition launching this season.
+              Our first Fantasy League — Built for the Northern Fastpitch Series endorsed by the Auckland Softball Association.
             </p>
             <a href="/nfs" className="inline-block text-base font-bold tracking-wide transition-all hover:scale-[1.02]" style={{ color: '#4D7FFF', border: '1px solid #4D7FFF', background: 'transparent', padding: "22px 64px" }}>
               Enter NFS League
