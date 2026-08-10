@@ -57,9 +57,9 @@ export default function Scoring() {
         <div className="relative z-10 text-center" style={{ maxWidth: "760px", marginLeft: "auto", marginRight: "auto" }}>
           <a href="/nfs" className="inline-block text-xs font-black uppercase tracking-[0.2em] transition-all hover:opacity-100"
             style={{ color: SILVER, opacity: 0.75, marginBottom: '18px' }}>
-            ← Back to the NFS League
+            ← Back to the NFSPL
           </a>
-          <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>NFS Premier Softball League</p>
+          <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>NFS Premier League</p>
           <div className="mx-auto mb-6 h-px w-24" style={{ background: COBALT }} />
           <h1 className="text-4xl sm:text-5xl font-black text-white mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
             Scoring &amp; Competitions
@@ -128,7 +128,7 @@ export default function Scoring() {
             </a>
             <a href="/nfs" className="inline-block text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03]"
               style={{ color: 'white', border: '1px solid #ffffff35', padding: '18px 44px' }}>
-              Back to the League
+              Back to the NFSPL
             </a>
           </div>
         </div>
