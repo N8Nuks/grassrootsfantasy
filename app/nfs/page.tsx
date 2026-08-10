@@ -22,7 +22,7 @@ export default function NFS() {
             NFS Premier League
           </h1>
           <p className="text-sm text-white/70 leading-relaxed" style={{ maxWidth: "480px", marginLeft: "auto", marginRight: "auto", marginBottom: "28px" }}>
-            The Northern Fastpitch Series — Auckland&apos;s premier fastpitch competition, running since 2005 on nearly ninety years of Auckland softball history. Now with a fantasy league of its own, endorsed by the Auckland Softball Association.
+            The Northern Fastpitch Series — Auckland&apos;s Premier Fastpitch competition, running since 2005 on nearly ninety years of Auckland Softball history. Now with a Fantasy League of its own, endorsed by the Auckland Softball Association.
           </p>
           <div className="flex items-center justify-center gap-8 flex-wrap" style={{ marginBottom: "32px" }}>
             <div className="flex items-center gap-2">
