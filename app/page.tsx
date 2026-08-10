@@ -73,7 +73,7 @@ export default function Home() {
               <p className="text-xs font-black uppercase tracking-[0.3em]" style={{ color: '#E8D5A3' }}>Now Live</p>
             </div>
             <h2 className="text-3xl sm:text-5xl font-black text-[#F5F1E8] mb-8 leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
-              NFS Premier Softball League
+              NFS Premier League
             </h2>
             <p className="text-sm sm:text-base text-[#F5F1E8]/45 leading-relaxed" style={{ maxWidth: "420px", marginLeft: "auto", marginRight: "auto", marginBottom: "56px", textAlign: "center" }}>
               Our first Fantasy League — Built for the Northern Fastpitch Series endorsed by the Auckland Softball Association.
