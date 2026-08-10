@@ -46,6 +46,7 @@ export default function NFS() {
               Log in
             </a>
           </div>
+          <p className="text-[11px] text-white/60 mt-5">Free to play. One account covers both Men&apos;s and Women&apos;s grades.</p>
         </div>
       </section>
 
@@ -98,7 +99,7 @@ export default function NFS() {
               { t: 'Starter Pack on signup', d: '12 cards land the moment you register — including the only two-way player cards dealt all season. Your lineup auto-assigns so you can score from day one.' },
               { t: 'Weekly rhythm', d: 'Results confirm Tuesday, lineups lock Friday night, games play out on the weekend. A living league that moves with the real one.' },
               { t: 'Five ways to win', d: 'Season ladder, weekly head-to-head, Weekly High Score, Club Champion, and the Finals Challenge with its own packs and title — and one account can chase them in both grades.', href: '/nfs/scoring', link: 'See how each competition works →' },
-              { t: 'Back your club', d: 'Register with your club\'s code and every point you score counts toward their Club Champion campaign.' },
+              { t: 'Back your club', d: 'Playing in the competition? Your access comes with your Association registration. Got a club code? Register with it and every point you score counts toward their Club Champion campaign.' },
             ].map((f) => (
               <div key={f.t} className="rounded-2xl p-6 flex flex-col gap-3 text-left" style={{ background: '#1A1A22', border: '1px solid #ffffff0a', borderLeft: `3px solid ${COBALT}` }}>
                 <h3 className="text-base font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>{f.t}</h3>
@@ -150,26 +151,8 @@ export default function NFS() {
         </div>
       </section>
 
-      {/* Register */}
-      <section id="register" className="relative px-5 sm:px-12 overflow-hidden text-center" style={{ background: '#0D0D0F', borderTop: `1px solid ${COBALT}60`, borderBottom: `1px solid ${COBALT}60`, paddingTop: "56px", paddingBottom: "60px" }}>
-        <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse 55% 65% at 50% 50%, ${COBALT}28 0%, transparent 70%)` }} />
-        <div className="relative z-10" style={{ maxWidth: "576px", marginLeft: "auto", marginRight: "auto" }}>
-          <p className="text-xs font-black uppercase tracking-[0.3em] mb-4" style={{ color: GOLD }}>Season One · Live Now</p>
-          <h2 className="text-3xl font-black text-white mb-4" style={{ fontFamily: 'var(--font-heading)' }}>Your Starter Pack is waiting.</h2>
-          <p className="text-sm text-white/70 leading-relaxed" style={{ maxWidth: "460px", marginLeft: "auto", marginRight: "auto", marginBottom: "32px" }}>
-            Register free and your Starter Pack lands instantly. Playing in the competition? Your access comes with your Association registration. Got a club code? It counts toward your club.
-          </p>
-          <a href="/register"
-            className="inline-block w-full text-center text-base font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.02]"
-            style={{ color: '#0D0D0F', background: GOLD, padding: "20px 44px", maxWidth: '360px', boxShadow: `0 0 28px ${GOLD}45` }}>
-            Register your team
-          </a>
-          <p className="text-[11px] text-white/60 mt-5">Free to play. One account covers both Men&apos;s and Women&apos;s grades.</p>
-        </div>
-      </section>
-
       {/* ── NFS League FAQ ── */}
-      <section className="px-5 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: "48px", paddingBottom: "56px" }}>
+      <section id="register" className="px-5 sm:px-12" style={{ background: '#0D0D0F', borderTop: `1px solid ${COBALT}40`, paddingTop: "48px", paddingBottom: "56px" }}>
         <div style={{ maxWidth: "700px", marginLeft: "auto", marginRight: "auto" }}>
           <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "12px" }}>NFS League questions.</h2>
           <div className="text-center" style={{ marginBottom: "28px" }}>
@@ -213,11 +196,13 @@ export default function NFS() {
               </details>
             ))}
           </div>
-          <div className="text-center" style={{ marginTop: "32px" }}>
+          <div className="text-center" style={{ marginTop: "36px" }}>
+            <p className="text-xs font-black uppercase tracking-[0.3em] mb-4" style={{ color: GOLD }}>Season One · Live Now</p>
             <a href="/register" className="inline-block w-full text-center text-base font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.02]"
-              style={{ color: '#0D0D0F', background: GOLD, padding: "18px 44px", maxWidth: '360px', boxShadow: `0 0 24px ${GOLD}40` }}>
+              style={{ color: '#0D0D0F', background: GOLD, padding: "20px 44px", maxWidth: '360px', boxShadow: `0 0 28px ${GOLD}45` }}>
               Register your team
             </a>
+            <p className="text-[11px] text-white/60 mt-4">Your Starter Pack lands instantly.</p>
           </div>
         </div>
       </section>
