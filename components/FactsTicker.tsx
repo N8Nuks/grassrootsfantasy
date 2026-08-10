@@ -145,7 +145,7 @@ export default function FactsTicker() {
       <div className="flex items-center justify-center gap-5 flex-wrap text-center" style={{ maxWidth: '820px', margin: '0 auto' }}>
         <span className="text-[10px] font-black uppercase tracking-[0.35em] shrink-0"
           style={{ color: facts[idx]?.announcement ? '#4DA6FF' : '#E8C15A' }}>
-          {facts[idx]?.announcement ? 'Announcement' : 'Did you know'}
+          {facts[idx]?.announcement ? 'Fantasy Announcement' : 'Did you know'}
         </span>
         <p className={facts[idx]?.announcement ? 'text-base font-black transition-opacity duration-400' : 'text-sm font-bold text-white/85 transition-opacity duration-400'}
           style={{ opacity: visible ? 1 : 0, minHeight: '20px', color: facts[idx]?.announcement ? '#FFFFFF' : undefined, textShadow: facts[idx]?.announcement ? '0 0 14px #4DA6FF60' : undefined }}>
