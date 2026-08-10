@@ -48,7 +48,7 @@ export default function Leagues() {
           <h1 className="text-4xl sm:text-5xl font-black text-[#F5F1E8] mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
             Every competition.<br/>Its own league.
           </h1>
-          <p className="text-sm sm:text-base text-[#F5F1E8]/45 max-w-lg mx-auto leading-relaxed">
+          <p className="text-sm sm:text-base text-[#F5F1E8]/70 max-w-lg mx-auto leading-relaxed">
             Each Grassroots Fantasy league is built for a real competition — its players, its clubs, its season. Pick your league, or bring your competition on board.
           </p>
         </div>
@@ -58,19 +58,23 @@ export default function Leagues() {
         <div className="w-full grid gap-8 sm:grid-cols-2" style={{ maxWidth: '900px', marginLeft: 'auto', marginRight: 'auto' }}>
 
           {/* NFS League — live */}
-          <div className="group relative rounded-[2rem] p-10 flex flex-col gap-5 transition-all hover:scale-[1.01]" style={{ background: 'linear-gradient(160deg, #1A2E1F 0%, #141210 100%)', border: '1px solid #2D9E4E40', paddingTop: "48px" }}>
+          <div className="group relative rounded-[2rem] p-10 flex flex-col gap-5 transition-all hover:scale-[1.01] sm:col-span-2" style={{ background: 'linear-gradient(160deg, #10214D 0%, #141210 100%)', border: '2px solid #E8C15A70', boxShadow: '0 0 40px #E8C15A20', paddingTop: "48px" }}>
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full animate-pulse" style={{ background: '#2D9E4E' }} />
-              <span className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: '#E8D5A3', lineHeight: "1.6" }}>Now Live</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: '#E8C15A', lineHeight: "1.6" }}>Now Live · Men&apos;s &amp; Women&apos;s</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-[#F5F1E8] leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
-              NFS Premier<br/>Softball League
+            <h2 className="text-3xl sm:text-4xl font-black text-[#F5F1E8] leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
+              NFS Premier League
             </h2>
-            <p className="text-sm text-[#F5F1E8]/45 leading-relaxed">
-              The Northern Fastpitch Series — Premier Softball League, endorsed by the Auckland Softball Association. Men&apos;s launching this season.
+            <p className="text-sm sm:text-base text-[#F5F1E8]/70 leading-relaxed" style={{ maxWidth: '520px' }}>
+              The Northern Fastpitch Series, endorsed by the Auckland Softball Association. Collect the players, build your lineup, and play along every weekend — free, in both grades.
             </p>
-            <a href="/nfs" className="mt-auto text-center text-base font-bold tracking-wide transition-all hover:scale-[1.02]" style={{ color: '#4D7FFF', border: '1px solid #4D7FFF', background: 'transparent', padding: "22px 24px" }}>
-              Enter NFS Premier Softball League
+            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#4DA6FF' }}>
+              Sandbox season running now · Season One starts October
+            </p>
+            <a href="/nfs" className="mt-auto text-center text-base font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.02]"
+              style={{ color: '#0D0D0F', background: '#E8C15A', padding: "22px 24px", boxShadow: '0 0 26px #E8C15A45' }}>
+              Enter the NFSPL
             </a>
           </div>
 
@@ -80,7 +84,7 @@ export default function Leagues() {
             <h2 className="text-2xl sm:text-3xl font-black text-[#F5F1E8]/70 leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
               Your competition<br/>here
             </h2>
-            <p className="text-sm text-[#F5F1E8]/35 leading-relaxed">
+            <p className="text-sm text-[#F5F1E8]/60 leading-relaxed">
               Run a league or association? Any sport, any format, any number of teams — Grassroots Fantasy can build a fantasy league around your competition.
             </p>
             <a href="/join" className="mt-auto rounded-full text-center font-black uppercase tracking-widest text-[#F5F1E8]/80 border border-[#F5F1E8]/30 hover:border-[#F5F1E8]/60 hover:text-[#F5F1E8] transition-all" style={{ padding: "20px 24px", fontSize: "14px", lineHeight: "1.4" }}>
