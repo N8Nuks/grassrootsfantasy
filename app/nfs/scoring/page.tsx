@@ -38,11 +38,11 @@ const slots = [
 ]
 
 const boards = [
-  { t: 'Season Ladder', d: 'Cumulative points across the whole season. The long game.' },
-  { t: 'Head-to-Head', d: 'A matchup every round with its own win-percentage standings. Anyone can beat anyone on the weekend.' },
-  { t: 'Weekly High Score', d: 'The biggest single-round score in the league. One perfect weekend is all it takes.' },
-  { t: 'Club Champion', d: 'Every point you score counts toward your club\'s campaign. Back your people.' },
-  { t: 'Finals Challenge', d: 'A separate competition across the finals series — fresh packs every round, its own champion.' },
+  { t: 'Season Ladder', c: '#E8C15A', d: 'Cumulative points across the whole season. The long game.' },
+  { t: 'Head-to-Head', c: '#4DA6FF', d: 'A matchup every round with its own win-percentage standings. Anyone can beat anyone on the weekend.' },
+  { t: 'Weekly High Score', c: '#FF8C42', d: 'The biggest single-round score in the league. One perfect weekend is all it takes.' },
+  { t: 'Club Champion', c: '#3FBF63', d: 'Every point you score counts toward your Club\'s campaign. Back your people.' },
+  { t: 'Finals Challenge', c: '#B57BFF', d: 'A separate competition across the finals series — fresh packs every round, its own champion.' },
 ]
 
 export default function Scoring() {
@@ -99,9 +99,9 @@ export default function Scoring() {
           <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "48px" }}>How your card scores.</h2>
           <div className="flex flex-col gap-3">
             {slots.map(s => (
-              <div key={s.slot} className="rounded-xl px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6" style={{ background: '#121215', borderLeft: `3px solid ${COBALT}` }}>
-                <span className="text-xs font-black uppercase tracking-wider text-white sm:w-56 shrink-0">{s.slot}</span>
-                <span className="text-sm text-white/50">{s.rule}</span>
+              <div key={s.slot} className="rounded-xl px-6 py-5 text-center" style={{ background: '#121215', border: `1px solid ${COBALT}35` }}>
+                <span className="block text-xs font-black uppercase tracking-[0.2em] mb-1.5" style={{ color: COBALT }}>{s.slot}</span>
+                <span className="block text-sm text-white/55 leading-relaxed" style={{ maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>{s.rule}</span>
               </div>
             ))}
           </div>
@@ -114,9 +114,9 @@ export default function Scoring() {
           <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "48px" }}>The competitions.</h2>
           <div className="flex flex-col gap-4">
             {boards.map(b => (
-              <div key={b.t} className="rounded-xl px-6 py-5" style={{ background: '#121215', border: '1px solid #ffffff0a' }}>
-                <h3 className="text-base font-black text-white mb-1" style={{ fontFamily: 'var(--font-heading)' }}>{b.t}</h3>
-                <p className="text-sm text-white/45 leading-relaxed">{b.d}</p>
+              <div key={b.t} className="rounded-xl px-6 py-6 text-center" style={{ background: '#121215', border: `1px solid ${b.c}40`, boxShadow: `0 0 20px ${b.c}12` }}>
+                <h3 className="text-base font-black mb-2" style={{ fontFamily: 'var(--font-heading)', color: b.c, textShadow: `0 0 12px ${b.c}50` }}>{b.t}</h3>
+                <p className="text-sm text-white/50 leading-relaxed" style={{ maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>{b.d}</p>
               </div>
             ))}
           </div>
