@@ -147,7 +147,7 @@ export default function FactsTicker() {
           style={{ color: facts[idx]?.announcement ? '#4DA6FF' : '#E8C15A' }}>
           {facts[idx]?.announcement ? 'Fantasy Announcement' : 'Did you know'}
         </span>
-        <p className={facts[idx]?.announcement ? 'text-base font-black transition-opacity duration-400' : 'text-sm font-bold text-white/85 transition-opacity duration-400'}
+        <p className={facts[idx]?.announcement ? 'text-base font-medium transition-opacity duration-400' : 'text-sm font-bold text-white/85 transition-opacity duration-400'}
           style={{ opacity: visible ? 1 : 0, minHeight: '20px', color: facts[idx]?.announcement ? '#FFFFFF' : undefined, textShadow: facts[idx]?.announcement ? '0 0 14px #4DA6FF60' : undefined }}>
           {facts[idx]?.text}
         </p>
