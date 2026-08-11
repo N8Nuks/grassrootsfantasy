@@ -76,7 +76,6 @@ const steps: { n: string; h: string; ps: string[]; shots: Shot[] }[] = [
     ],
     shots: [
       { src: '/how-starter-women.png', alt: 'Starter Pack ready to tear open', caption: 'Tap to tear open' },
-      { src: '/how-card-front-rare-floyd.png', alt: 'A revealed Rare card', caption: 'A Rare pull — the finale of every Starter Pack' },
     ],
   },
   {
