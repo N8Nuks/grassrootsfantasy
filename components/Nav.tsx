@@ -56,7 +56,7 @@ export default function Nav() {
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 sm:px-12 bg-[#141210]/40 backdrop-blur-md border-b border-white/5"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 28px)', paddingBottom: '16px' }}>
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 14px)', paddingBottom: '14px' }}>
         {/* Left: logo + Join GF + Leagues */}
         <div className="flex items-center gap-6">
           <a href="/" className="flex items-center gap-2.5">
