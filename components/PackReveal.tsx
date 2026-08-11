@@ -327,7 +327,7 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center cursor-pointer select-none overflow-hidden"
-      style={{ background: '#000000E8', backdropFilter: 'blur(6px)', padding: '16px' }}
+      style={{ background: '#000000E8', backdropFilter: 'blur(6px)', padding: '16px', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
       onClick={advance}>
       
       {/* Skip controls — top corner, clear of the reveal tap zone */}
