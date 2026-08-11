@@ -140,15 +140,48 @@ export default function FactsTicker() {
     return () => clearInterval(t)
   }, [facts.length])
 
+  const isNews = !!facts[idx]?.announcement
+  const accent = isNews ? '#4DA6FF' : '#E8C15A'
+
   return (
-    <section className="px-6 sm:px-12 pinstripe" style={{ background: '#10192E', borderTop: '1px solid #2456E640', borderBottom: '1px solid #2456E640', padding: '28px 24px' }}>
-      <div className="flex items-center justify-center gap-5 flex-wrap text-center" style={{ maxWidth: '820px', margin: '0 auto' }}>
-        <span className="text-[10px] font-black uppercase tracking-[0.35em] shrink-0"
-          style={{ color: facts[idx]?.announcement ? '#4DA6FF' : '#E8C15A' }}>
-          {facts[idx]?.announcement ? 'Fantasy Announcement' : 'Did you know'}
+    <section className="relative px-5 sm:px-12 pinstripe overflow-hidden"
+      style={{
+        background: 'radial-gradient(ellipse 80% 120% at 50% 50%, #16264C 0%, #0B1226 70%)',
+        borderTop: `1px solid ${accent}55`,
+        borderBottom: `1px solid ${accent}55`,
+        padding: '38px 20px',
+        transition: 'border-color 0.4s ease',
+      }}>
+
+      {/* Accent glow behind the fact — colour tracks the slot type */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse 60% 90% at 50% 50%, ${accent}18 0%, transparent 70%)`,
+          transition: 'background 0.4s ease',
+        }} />
+
+      <div className="relative flex flex-col items-center text-center gap-3" style={{ maxWidth: '820px', margin: '0 auto' }}>
+        <span className="text-[11px] font-black uppercase tracking-[0.4em]"
+          style={{ color: accent, textShadow: `0 0 16px ${accent}70`, transition: 'color 0.4s ease' }}>
+          {isNews ? 'Fantasy Announcement' : 'Did you know'}
         </span>
-        <p className={facts[idx]?.announcement ? 'text-base font-medium transition-opacity duration-400' : 'text-sm font-bold text-white/85 transition-opacity duration-400'}
-          style={{ opacity: visible ? 1 : 0, minHeight: '20px', color: facts[idx]?.announcement ? '#FFFFFF' : undefined, textShadow: facts[idx]?.announcement ? '0 0 14px #4DA6FF60' : undefined }}>
+
+        {/* Glowing rule under the label */}
+        <span style={{
+          width: '54px', height: '2px', borderRadius: '2px',
+          background: accent, boxShadow: `0 0 12px ${accent}`, opacity: 0.8,
+          transition: 'background 0.4s ease',
+        }} />
+
+        <p className="text-lg sm:text-2xl font-black leading-snug transition-opacity duration-400"
+          style={{
+            fontFamily: 'var(--font-heading)',
+            color: '#FFFFFF',
+            opacity: visible ? 1 : 0,
+            minHeight: '58px',
+            textShadow: `0 0 22px ${accent}55`,
+            maxWidth: '700px',
+          }}>
           {facts[idx]?.text}
         </p>
       </div>
