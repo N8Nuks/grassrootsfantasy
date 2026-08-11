@@ -321,8 +321,9 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
         background: '#000000E8',
         backdropFilter: 'blur(6px)',
         padding: '16px',
-        // Content starts below the status bar, welcome banner and skip pills
+        // Reserve the space taken by the status bar, welcome banner and skip pills
         paddingTop: `calc(env(safe-area-inset-top, 0px) + ${isStarter && stage !== 'haul' ? 128 : showChrome ? 108 : 24}px)`,
+        paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + 24px)`,
         justifyContent: 'flex-start',
       }}
       onClick={advance}>
@@ -371,8 +372,10 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
         ? <LightningStorm color={meta.accent} />
         : <LightningVideo color={meta.accent} onFail={() => setVideoFailed(true)} />)}
 
+      {/* Auto margins centre the stage in the space left below the chrome.
+          Auto margins never go negative, so short screens can't push it back up under the banner. */}
       <div className="relative text-center flex flex-col items-center"
-        style={{ width: '100%', maxWidth: 'min(420px, calc(100vw - 24px))', perspective: '900px' }}>
+        style={{ width: '100%', maxWidth: 'min(420px, calc(100vw - 24px))', perspective: '900px', marginTop: 'auto', marginBottom: 'auto' }}>
 
         {/* Stage 1 — the foil packet */}
         {(stage === 'pack' || stage === 'tearing') && (
