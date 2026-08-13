@@ -7,6 +7,8 @@ import { PLACINGS, HERITAGE_MEN, HERITAGE_WOMEN, SERIES_TEAMS, CAREER_MEN, CAREE
 const ANNOUNCEMENTS = [
   'Season One of the NFS Premier Fantasy League starts October 3.',
   'Sandbox season is running now — practice rounds, simulated stats, all teams reset in September.',
+  "Sandbox rounds use last season's team lists — the real 2026/27 lists are patched in for the proper competition.",
+  'The September patch brings real team lists, player photos, and full card details.',
   "One account plays both the Men's and Women's grades.",
   'Free to play.',
   'Endorsed by the Auckland Softball Association.',
