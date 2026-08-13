@@ -123,22 +123,6 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
     setRcBusy(false)
   }
 
-  // Matchups — pairs every team for the latest round. Safe to re-run after a new intake.
-  const [muLog, setMuLog] = useState<string[]>([])
-  const [muBusy, setMuBusy] = useState(false)
-
-  async function generateMatchups(g: 'mens' | 'womens') {
-    const label = g === 'mens' ? "Men's" : "Women's"
-    if (!confirm(`Generate ${label} matchups for the latest round? Any existing pairings for that round are replaced.`)) return
-    setMuBusy(true)
-    const r = await fetch('/api/generate-matchups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade: g }) })
-    const data = await r.json()
-    if (!r.ok) { setMuLog(prev => [...prev, 'ERROR: ' + data.error]); setMuBusy(false); return }
-    setMuLog(prev => [...prev, `${label} R${data.round_number}: ${data.teams} teams → ${data.matchups} matchups`])
-    if (data.unpaired) setMuLog(prev => [...prev, `  ⚠ No opponent for "${data.unpaired}" — add a filler team and run again`])
-    setMuBusy(false)
-  }
-
   const [t2Log, setT2Log] = useState<string[]>([])
   const [t2Busy, setT2Busy] = useState(false)
 
@@ -313,7 +297,7 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
 
           {/* Round Control */}
           <Panel number="3" title="Round Control" accent={P.red}
-            sub="Open lets users save lineups for the latest round; Lock rejects saves. Check shows the current status.">
+            sub="Open lets users save lineups for the latest round; Lock rejects saves and pairs the H2H matchups. Check shows the current status.">
             {/* The weekly ritual */}
             <div className="rounded-xl" style={{ background: P.ink, border: `1px solid ${P.purple}30`, padding: '16px 20px', marginBottom: '20px' }}>
               <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: P.dim, marginBottom: '12px' }}>The weekly ritual</p>
@@ -368,26 +352,8 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
             <LogBox lines={rcLog} error={rcLog[rcLog.length - 1]?.startsWith('ERROR')} />
           </Panel>
 
-          {/* 4 · Matchups */}
-          <Panel number="4" title="Generate Matchups" accent={P.blue}
-            sub="Pairs every team for the LATEST round. Run after Next Round, and again after a new intake of users — existing pairings for that round are replaced, never duplicated. An odd number of teams leaves one unpaired: add a filler team and run again.">
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => generateMatchups('mens')} disabled={muBusy}
-                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
-                style={{ color: P.green, border: `1px solid ${P.green}70`, padding: '16px 0' }}>
-                {muBusy ? 'Working…' : "Pair Men's"}
-              </button>
-              <button onClick={() => generateMatchups('womens')} disabled={muBusy}
-                className="text-sm font-black uppercase tracking-widest rounded-xl transition-all hover:scale-[1.01] disabled:opacity-40"
-                style={{ color: P.blue, border: `1px solid ${P.blue}70`, padding: '16px 0' }}>
-                {muBusy ? 'Working…' : "Pair Women's"}
-              </button>
-            </div>
-            <LogBox lines={muLog} error={muLog[muLog.length - 1]?.startsWith('ERROR')} />
-          </Panel>
-
-          {/* 5 · Pre-Season Packs */}
-          <Panel number="5" title="Pre-Season Packs" accent={P.orange}
+          {/* 4 · Pre-Season Packs */}
+          <Panel number="4" title="Pre-Season Packs" accent={P.orange}
             sub="Release lets users open their T2 with the full reveal. Force-open bulk-deals any still unopened — run it 12 hours before Round 1 lock.">
             <div className="grid grid-cols-2 gap-3">
               <button onClick={() => releaseT2('mens')} disabled={t2Busy}
@@ -406,8 +372,8 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
             <LogBox lines={t2Log} />
           </Panel>
 
-          {/* 6 · Availability */}
-          <Panel number="6" title="Player Availability" accent={P.green}
+          {/* 5 · Availability */}
+          <Panel number="5" title="Player Availability" accent={P.green}
             sub="Mark players unavailable for a round — users see it on their team cards immediately.">
             <div className="flex gap-4" style={{ marginBottom: '16px' }}>
               <select value={availGrade} onChange={e => setAvailGrade(e.target.value as 'mens' | 'womens')}
@@ -436,8 +402,8 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
             <LogBox lines={availLog} error={availLog[0]?.startsWith('ERROR')} />
           </Panel>
 
-          {/* 7 · Card Style */}
-          <Panel number="7" title="Card Style" accent={P.purple}
+          {/* 6 · Card Style */}
+          <Panel number="6" title="Card Style" accent={P.purple}
             sub="Premium shows the full designed cards (backdrops, marks). Standard is the clean build for testing and trial weeks.">
             <div className="grid grid-cols-2 gap-3">
               <button type="button" onClick={() => setCardStyle('standard')}
