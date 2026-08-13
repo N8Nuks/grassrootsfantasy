@@ -53,8 +53,8 @@ export default function NFS() {
       {/* Facts ticker */}
       <FactsTicker />
 
-      {/* Scoring & Competitions — prominent, high on the page */}
-      <section className="px-5 sm:px-12" style={{ background: '#101828', borderBottom: '1px solid #ffffff0a', paddingTop: "36px", paddingBottom: "36px" }}>
+      {/* Scoring & Competitions — warm charcoal so it never blends into the ticker's navy */}
+      <section className="px-5 sm:px-12" style={{ background: '#14141A', borderTop: `2px solid ${GOLD}35`, borderBottom: '1px solid #ffffff0a', paddingTop: "36px", paddingBottom: "36px" }}>
         <div className="flex flex-col sm:flex-row items-center justify-between gap-5" style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
           <div className="text-center sm:text-left">
             <p className="text-xs font-black uppercase tracking-[0.3em] mb-2" style={{ color: GOLD }}>How it all scores</p>
