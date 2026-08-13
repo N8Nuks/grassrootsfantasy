@@ -18,7 +18,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
     user
       ? supabase.from('profiles').select('site_theme').eq('id', user.id).single()
       : Promise.resolve({ data: null }),
-    supabase.from('public_teams').select('id, team_name, clubs(name)'),
+    supabase.from('public_teams').select('id, team_name, is_house, clubs(name)'),
     view === 'h2h'
       ? supabase.from('matchups').select('user_a, user_b, points_a, points_b, score_a, score_b')
           .eq('grade', grade).not('points_a', 'is', null)
@@ -35,11 +35,13 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
   const isW = grade === 'womens'
   const shimmer = T.shimmer ? ' gf-shimmer' : ''
 
-  type TeamRow = { id: string; team_name: string; clubs: { name: string } | null }
+  type TeamRow = { id: string; team_name: string; is_house: boolean | null; clubs: { name: string } | null }
   const teamRows = (teams ?? []) as unknown as TeamRow[]
   const teamById = new Map(teamRows.map(t => [t.id, t]))
   const nameOf = (id: string) => teamById.get(id)?.team_name ?? 'Unknown team'
   const clubOf = (id: string) => teamById.get(id)?.clubs?.name ?? ''
+  // GF House fills odd matchup slots — it plays, but it never ranks
+  const isHouse = (id: string) => teamById.get(id)?.is_house === true
 
   type Row = { id: string; team: string; club: string; main: string; sub: string; sortKey: number; tieKey: number; unranked?: boolean }
   let rows: Row[] = []
@@ -49,6 +51,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
     const scores = (primary.data ?? []) as { owner_id: string; points: number }[]
     const totals = new Map<string, number>()
     for (const s of scores) {
+      if (isHouse(s.owner_id)) continue
       totals.set(s.owner_id, (totals.get(s.owner_id) ?? 0) + Number(s.points))
     }
     rows = [...totals.entries()].map(([id, points]) => ({
@@ -60,6 +63,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
     type Rec = { w: number; d: number; l: number; pf: number }
     const recs = new Map<string, Rec>()
     const add = (id: string, pts: number, pf: number) => {
+      if (isHouse(id)) return
       const r = recs.get(id) ?? { w: 0, d: 0, l: 0, pf: 0 }
       if (pts === 1) r.w++
       else if (pts === 0.5) r.d++
@@ -88,7 +92,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
       const { data: scores } = await supabase
         .from('user_scores').select('owner_id, points')
         .eq('grade', grade).eq('round_id', latestRow.round_id)
-      rows = (scores ?? []).map(s => ({
+      rows = (scores ?? []).filter(s => !isHouse(s.owner_id)).map(s => ({
         id: s.owner_id, team: nameOf(s.owner_id), club: clubOf(s.owner_id),
         main: String(s.points), sub: '', sortKey: Number(s.points), tieKey: 0,
       }))
@@ -97,11 +101,13 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
     const scores = (primary.data ?? []) as { owner_id: string; points: number }[]
     const userTotals = new Map<string, number>()
     for (const s of scores) {
+      if (isHouse(s.owner_id)) continue
       userTotals.set(s.owner_id, (userTotals.get(s.owner_id) ?? 0) + Number(s.points))
     }
     type ClubAgg = { users: number; total: number }
     const clubs = new Map<string, ClubAgg>()
     for (const t of teamRows) {
+      if (t.is_house === true) continue
       const club = t.clubs?.name
       if (!club) continue
       const agg = clubs.get(club) ?? { users: 0, total: 0 }
