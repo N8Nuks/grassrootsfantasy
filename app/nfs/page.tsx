@@ -163,6 +163,14 @@ export default function NFS() {
           <div className="flex flex-col gap-3">
             {[
               {
+                q: 'What is the Sandbox Season?',
+                a: 'A practice run before the real thing. Sandbox rounds use last season\u2019s team lists, and the game stats are simulated \u2014 nothing you see reflects a real 2026/27 result. It exists so you can open packs, set lineups, and learn the weekly rhythm before it counts. Everything resets in September.',
+              },
+              {
+                q: 'So when do the real teams arrive?',
+                a: 'The real 2026/27 team lists are patched in for the proper competition, along with player photos and the additional card details \u2014 career badges, positions, and full stat lines. Sandbox squads and scores are wiped at that point; everyone starts the real season level.',
+              },
+              {
                 q: 'What\u2019s in my Starter Pack?',
                 a: 'Twelve cards when you register: two two-way players (one full 2WP who scores batting and pitching, one pitching-only), a spread of Elite and Common players, and always enough position coverage to field a legal lineup from day one.',
               },
