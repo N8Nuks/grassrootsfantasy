@@ -359,3 +359,26 @@ input[type="number"] {
 main {
   padding-top: env(safe-area-inset-top, 0px);
 }
+/* ── Diamond: cold shimmer with a travelling glint, for record numbers ── */
+@keyframes gf-diamond {
+  0% { background-position: -140% 0; }
+  100% { background-position: 240% 0; }
+}
+.gf-diamond-text {
+  background-image: linear-gradient(
+    100deg,
+    #BFD4E8 0%,
+    #E6F0FA 32%,
+    #FFFFFF 44%,
+    #DCEBFF 50%,
+    #FFFFFF 56%,
+    #E6F0FA 68%,
+    #BFD4E8 100%
+  );
+  background-size: 260% 100%;
+  animation: gf-diamond 4.2s ease-in-out infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 18px #BFD4E870) drop-shadow(0 0 40px #7FA8D420);
+}

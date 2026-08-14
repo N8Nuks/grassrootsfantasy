@@ -88,8 +88,8 @@ function FeatureCard({ c }: { c: Card }) {
           </svg>
         </div>
 
-        <p className="text-7xl sm:text-8xl font-black leading-none"
-          style={{ fontFamily: 'var(--font-heading)', color: PLATINUM, textShadow: `0 0 34px ${PLATINUM}55` }}>
+        <p className="text-7xl sm:text-8xl font-black leading-none gf-diamond-text"
+          style={{ fontFamily: 'var(--font-heading)' }}>
           {c.games}
         </p>
         <p className="text-[10px] font-black uppercase tracking-[0.4em]" style={{ color: `${PLATINUM}90`, marginTop: '8px' }}>
