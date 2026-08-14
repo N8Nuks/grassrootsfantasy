@@ -302,7 +302,7 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
 
           {/* Round Control */}
           <Panel number="3" title="Round Control" accent={P.red}
-            sub="Open lets users save lineups for the latest round; Lock rejects saves and pairs the H2H matchups. Check shows the current status.">
+            sub="Open lets users save lineups for the latest round; Lock rejects saves. Matchups are drawn by the Matchups page itself, so after locking you must load /matchups?grade=mens AND /matchups?grade=womens — each grade pairs separately, and an unvisited grade stays unpaired. Next Round auto-deals any unclaimed Weekly Packs.">
             {/* The weekly ritual */}
             <div className="rounded-xl" style={{ background: P.ink, border: `1px solid ${P.purple}30`, padding: '16px 20px', marginBottom: '20px' }}>
               <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: P.dim, marginBottom: '12px' }}>The weekly ritual</p>
@@ -310,6 +310,8 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
                 <span className="rounded-full px-3 py-1.5" style={{ color: P.green, border: `1px solid ${P.green}60` }}>Tue · Open</span>
                 <span style={{ color: P.dim }}>→</span>
                 <span className="rounded-full px-3 py-1.5" style={{ color: P.red, border: `1px solid ${P.red}60` }}>Fri 4pm · Lock</span>
+                <span style={{ color: P.dim }}>→</span>
+                <span className="rounded-full px-3 py-1.5" style={{ color: P.blue, border: `1px solid ${P.blue}60` }}>Load /matchups · BOTH grades</span>
                 <span style={{ color: P.dim }}>→</span>
                 <span className="rounded-full px-3 py-1.5" style={{ color: P.purple, border: `1px solid ${P.purple}60` }}>Sat · Upload &amp; Score</span>
                 <span style={{ color: P.dim }}>→</span>
