@@ -18,6 +18,8 @@ const ANNOUNCEMENTS = [
   'A Pre-Season Pack takes your squad to 21 cards before Round 1.',
   "Register with your club's code.",
   'Lineups lock on Friday night, before the weekend games.',
+  'Your new matchup appears the moment the round locks — until then you see how the last one finished.',
+  'Round locked? Check Matchups. Your opponent and both lineups are revealed.',
   'Claim a free Weekly Pack every round.',
   'Results confirm Tuesday, when the new round opens.',
   'Provisional scores land over the weekend; official stats confirm them.',
