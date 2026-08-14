@@ -119,7 +119,12 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
     const data = await r.json()
     if (!r.ok) setRcLog(prev => [...prev, 'ERROR: ' + data.error])
     else if (action === 'status') setRcLog(prev => [...prev, data.round ? `${g === 'mens' ? "Men's" : "Women's"} R${data.round.round_number}: ${data.round.status}` : `${g === 'mens' ? "Men's" : "Women's"}: no rounds yet`])
-    else setRcLog(prev => [...prev, `${g === 'mens' ? "Men's" : "Women's"} R${data.round_number} → ${data.status}`])
+    else {
+      setRcLog(prev => [...prev, `${g === 'mens' ? "Men's" : "Women's"} R${data.round_number} → ${data.status}`])
+      if (action === 'advance' && data.auto_dealt > 0) {
+        setRcLog(prev => [...prev, `  ↳ auto-dealt ${data.auto_cards} cards to ${data.auto_dealt} unclaimed team(s)`])
+      }
+    }
     setRcBusy(false)
   }
 
