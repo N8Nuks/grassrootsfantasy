@@ -100,22 +100,32 @@ export default function NFS() {
             </h2>
           </div>
           <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
-            <a href="/nfs/honours" className="rounded-2xl p-6 flex flex-col gap-3 text-left transition-all hover:scale-[1.01]"
-              style={{ background: '#1A1A22', border: '1px solid #ffffff0a', borderLeft: `3px solid ${GOLD}` }}>
-              <h3 className="text-base font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>Honours Board</h3>
-              <p className="text-xs text-white/70 leading-relaxed">
-                Every Premier award winner since 2004-05 — batters, pitchers and MVPs, season by season, with the most-decorated names in each category.
-              </p>
-              <span className="text-xs font-bold" style={{ color: GOLD }}>See the Honours Board →</span>
-            </a>
-            <a href="/nfs/officials" className="rounded-2xl p-6 flex flex-col gap-3 text-left transition-all hover:scale-[1.01]"
-              style={{ background: '#1A1A22', border: '1px solid #ffffff0a', borderLeft: `3px solid ${SILVER}` }}>
-              <h3 className="text-base font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>The Officials Wing</h3>
-              <p className="text-xs text-white/70 leading-relaxed">
-                No game happens without them. The umpires and scorers who have worked hundreds of Premier games — including the only official ever to reach 400.
-              </p>
-              <span className="text-xs font-bold" style={{ color: SILVER }}>Enter the Wing →</span>
-            </a>
+            {[
+              { href: '/nfs/honours', accent: GOLD, title: 'Honours Board', cta: 'See the Honours Board',
+                d: 'Every Premier award winner since 2004-05 — batters, pitchers and MVPs, season by season, with the most-decorated names in each category.' },
+              { href: '/nfs/officials', accent: SILVER, title: 'The Officials Wing', cta: 'Enter the Wing',
+                d: 'No game happens without them. The umpires and scorers who have worked hundreds of Premier games — including the only official ever to reach 400.' },
+            ].map(c => (
+              <a key={c.href} href={c.href}
+                className="group rounded-2xl flex flex-col text-left transition-all hover:scale-[1.015]"
+                style={{
+                  background: `linear-gradient(165deg, ${c.accent}14 0%, #16161C 55%, #121215 100%)`,
+                  border: `1px solid ${c.accent}55`,
+                  boxShadow: `0 0 24px ${c.accent}12`,
+                  padding: '26px 26px 22px',
+                }}>
+                <h3 className="text-lg font-black text-white" style={{ fontFamily: 'var(--font-heading)', marginBottom: '10px' }}>
+                  {c.title}
+                </h3>
+                <p className="text-xs text-white/70 leading-relaxed" style={{ marginBottom: '20px' }}>{c.d}</p>
+                {/* Reads as a button, not a footnote */}
+                <span className="inline-flex items-center gap-2 self-start rounded-full text-xs font-black uppercase tracking-widest transition-all"
+                  style={{ color: '#0D0D0F', background: c.accent, padding: '11px 22px', boxShadow: `0 0 18px ${c.accent}45` }}>
+                  {c.cta}
+                  <span className="transition-transform group-hover:translate-x-1">→</span>
+                </span>
+              </a>
+            ))}
           </div>
         </div>
       </section>
