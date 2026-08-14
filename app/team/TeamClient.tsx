@@ -21,7 +21,7 @@ const TEAM_GUIDE: GuideStep[] = [
   },
   {
     title: 'Packs and lock day',
-    body: "Claim your free pack every week to grow your collection. Set your lineup any time while the round is open — it locks Friday 4pm before the weekend's games, then your players' real performances earn your points.",
+    body: "Claim your free Weekly Pack at the top of this page every round — if you don't, the cards are added automatically when the next round starts, but you miss the reveal. Set your lineup any time while the round is open; it locks before the games, then your players' real performances earn your points.",
   },
 ]
 
@@ -319,8 +319,10 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   })
 
   const pickerCandidates = pickerSlot ? cards.filter(c => isEligible(c, pickerSlot)) : []
- 
-    function chipTone(slot: string) {
+
+  const weeklyReady = cards.length >= 21 && !t3Claimed
+
+  function chipTone(slot: string) {
     if (slot.startsWith('RES')) return T.chipReserve ?? CHIP_TONES.reserve
     if (slot.startsWith('BENCH')) return T.chipBench ?? CHIP_TONES.bench
     if (NON_BATTING.includes(slot)) return T.chipNonBatting ?? CHIP_TONES.nonBatting
@@ -414,6 +416,45 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
 
   return (
     <div style={{ maxWidth: "860px", marginLeft: "auto", marginRight: "auto" }}>
+
+      {/* ── Waiting packs — first thing on the page, before anything else ── */}
+      {(t2Available || weeklyReady) && (
+        <div className="rounded-2xl overflow-hidden text-center"
+          style={{
+            background: `linear-gradient(180deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`,
+            border: `2px solid ${T.accent}70`,
+            boxShadow: `0 0 30px ${T.accent}25`,
+            padding: '26px 22px 24px',
+            marginBottom: '26px',
+          }}>
+          <p className="text-[10px] font-black uppercase tracking-[0.35em]" style={{ color: T.accent, marginBottom: '14px' }}>
+            {t2Available && weeklyReady ? 'Two packs waiting' : 'A pack is waiting'}
+          </p>
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            {t2Available && (
+              <button onClick={openT2}
+                className="text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] flex items-center gf-pulse"
+                style={{ padding: '16px 34px', minHeight: '52px', color: '#141210', background: '#FFD700', boxShadow: '0 0 26px #FFD70070' }}>
+                {packBusy ? 'Opening…' : 'Open Pre-Season Pack · 9 cards'}
+              </button>
+            )}
+            {weeklyReady && (
+              <button onClick={claimT3}
+                className={"text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] flex items-center gf-pulse" + shimmer}
+                style={{ padding: '16px 34px', minHeight: '52px', color: T.buttonText, background: T.button, boxShadow: T.glow }}>
+                {packBusy ? 'Opening…' : 'Claim Weekly Pack · 2 cards'}
+              </button>
+            )}
+          </div>
+          {weeklyReady && (
+            <p className="text-[11px] leading-relaxed" style={{ color: T.textDim, marginTop: '14px', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto' }}>
+              Claim it now for the full reveal. Leave it and the cards are added to your collection
+              automatically when the next round starts — you&apos;ll still get them, you just miss the opening.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Jersey nameplate header */}
       <div className="rounded-2xl overflow-hidden pinstripe-fine text-center mb-6"
         style={{ background: `linear-gradient(180deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`, border: `3px solid ${T.button}` }}>
@@ -452,27 +493,13 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         </div>
       </div>
 
-      {/* Packs strip */}
+      {/* Claimed state + bonus code */}
       <div className="flex items-center justify-center gap-4 flex-wrap" style={{ margin: '32px 0' }}>
-        {t2Available && (
-          <button onClick={openT2}
-            className="text-xs font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] flex items-center gf-pulse"
-            style={{ padding: '14px 32px', minHeight: '48px', color: '#141210', background: '#FFD700', boxShadow: '0 0 24px #FFD70060' }}>
-            {packBusy ? 'Opening…' : 'Open Pre-Season Pack · 9 cards'}
-          </button>
-        )}
-        {cards.length >= 21 && (
-          <button onClick={t3Claimed ? undefined : claimT3} disabled={t3Claimed}
-            className={"text-xs font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.02] disabled:hover:scale-100 flex items-center" + (t3Claimed ? '' : shimmer)}
-            style={{
-              padding: '14px 32px',
-              minHeight: '48px',
-              ...(t3Claimed
-                ? { color: T.textDim, border: '1px solid #ffffff25', background: 'transparent' }
-                : { color: T.buttonText, background: T.button, boxShadow: T.glow }),
-            }}>
-            {t3Claimed ? 'Weekly Pack Claimed ✓' : packBusy ? 'Opening…' : 'Claim Weekly Pack · 2 cards'}
-          </button>
+        {cards.length >= 21 && t3Claimed && (
+          <span className="text-xs font-black uppercase tracking-widest rounded-full flex items-center"
+            style={{ padding: '14px 32px', minHeight: '48px', color: T.textDim, border: '1px solid #ffffff25' }}>
+            Weekly Pack Claimed ✓
+          </span>
         )}
         <div className="inline-flex rounded-full overflow-hidden" style={{ border: '1px solid #ffffff25', minHeight: '48px' }}>
           <input
