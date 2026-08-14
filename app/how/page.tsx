@@ -96,7 +96,7 @@ const steps: { n: string; h: string; ps: string[]; shots: Shot[] }[] = [
     h: 'New cards, all season',
     ps: [
       'Packs keep dropping throughout the season — a free pack every week, a pre-season tranche to complete your squad, club code bonuses, a mid-season drop, and a Finals Challenge with its own packs and its own champion.',
-      'Unopened packs stack. Miss a week? Your cards wait for you.',
+      "You never miss out. Open your Weekly Pack yourself for the full reveal — or if the round rolls over before you get to it, those cards are dealt straight into your collection automatically. The cards are always yours.",
     ],
     shots: [
       { src: '/how-preseason-pack.png', alt: 'Pre-Season Pack', caption: 'The Pre-Season Pack completes your 20-card squad' },
@@ -145,6 +145,10 @@ const groups = [
       {
         q: 'How do teams and cards work?',
         a: 'You build a squad of player cards — starters who score in full, a bench that scores reduced and covers absences, and reserves for depth. Cards arrive through packs: a starter pack when you register, a pre-season pack, and free packs through the season.',
+      },
+      {
+        q: 'What if I don\u2019t open my Weekly Pack in time?',
+        a: 'You keep the cards either way. Open it yourself and you get the full reveal, card by card. If the next round starts before you get to it, those two cards are dealt straight into your collection automatically — you just miss the reveal, never the players.',
       },
       {
         q: 'How does scoring work?',
