@@ -40,7 +40,7 @@ function build() {
         retired: o.retired,
         since: seasonOf(o.name, o.role, tier),
         featured: isTama || isLyn,
-        strap: isTama ? 'First to 400 games' : isLyn ? 'First scorer to 300' : null,
+        strap: isTama ? 'First umpire to 400 games' : isLyn ? 'First scorer to 300 games' : null,
       }
     })
 
@@ -58,18 +58,26 @@ const verb = (r: string) => (r === 'umpire' ? 'umpired' : 'scored')
 
 /* Featured — the two records that sit above the wing */
 function FeatureCard({ c }: { c: Card }) {
+  // Each record gets its own colour so the pair reads as two achievements, not one grey block
+  const hue = c.role === 'umpire' ? SILVER : GOLD
   return (
     <div className="relative rounded-3xl overflow-hidden text-center"
       style={{
-        background: `linear-gradient(170deg, ${PLATINUM}16 0%, #121215 45%, #0D0D0F 100%)`,
-        border: `2px solid ${PLATINUM}70`,
-        boxShadow: `0 0 46px ${PLATINUM}20`,
+        background: `linear-gradient(165deg, ${hue}22 0%, #14141C 42%, #0B0B0F 100%)`,
+        border: `2px solid ${hue}`,
+        boxShadow: `0 0 34px ${hue}45, 0 0 90px ${hue}18, inset 0 0 44px ${hue}10`,
         padding: '38px 26px 32px',
       }}>
+      {/* Colour bloom behind the number */}
       <div className="absolute inset-0 pointer-events-none"
-        style={{ background: `radial-gradient(ellipse 70% 55% at 50% 0%, ${PLATINUM}12 0%, transparent 70%)` }} />
+        style={{ background: `radial-gradient(ellipse 66% 46% at 50% 52%, ${hue}26 0%, transparent 72%)` }} />
+      {/* Bright rule across the top edge */}
+      <div className="absolute top-0 left-0 right-0 pointer-events-none"
+        style={{ height: '3px', background: `linear-gradient(90deg, transparent, ${hue}, transparent)`, boxShadow: `0 0 14px ${hue}` }} />
+
       <div className="relative">
-        <p className="text-[10px] font-black uppercase tracking-[0.35em]" style={{ color: PLATINUM, marginBottom: '20px' }}>
+        <p className="text-[10px] font-black uppercase tracking-[0.35em]"
+          style={{ color: hue, textShadow: `0 0 16px ${hue}90`, marginBottom: '20px' }}>
           {c.strap}
         </p>
 
@@ -77,14 +85,14 @@ function FeatureCard({ c }: { c: Card }) {
         <div className="mx-auto rounded-full overflow-hidden flex items-center justify-center"
           style={{
             width: '128px', height: '128px',
-            background: 'linear-gradient(180deg, #16161B 0%, #0D0D0F 100%)',
-            border: `2px solid ${PLATINUM}55`,
-            boxShadow: `0 0 26px ${PLATINUM}22`,
+            background: `radial-gradient(circle at 50% 30%, ${hue}30 0%, #14141C 62%, #0B0B0F 100%)`,
+            border: `2px solid ${hue}`,
+            boxShadow: `0 0 28px ${hue}55, inset 0 0 22px ${hue}22`,
             marginBottom: '20px',
           }}>
           <svg width="62" height="62" viewBox="0 0 60 80" fill="none">
-            <circle cx="30" cy="22" r="13" fill={`${PLATINUM}55`} />
-            <path d="M6 80 C6 52 54 52 54 80 Z" fill={`${PLATINUM}55`} />
+            <circle cx="30" cy="22" r="13" fill={`${hue}90`} />
+            <path d="M6 80 C6 52 54 52 54 80 Z" fill={`${hue}90`} />
           </svg>
         </div>
 
@@ -92,13 +100,18 @@ function FeatureCard({ c }: { c: Card }) {
           style={{ fontFamily: 'var(--font-heading)' }}>
           {c.games}
         </p>
-        <p className="text-[10px] font-black uppercase tracking-[0.4em]" style={{ color: `${PLATINUM}90`, marginTop: '8px' }}>
+        <p className="text-[10px] font-black uppercase tracking-[0.4em]"
+          style={{ color: hue, textShadow: `0 0 12px ${hue}70`, marginTop: '10px' }}>
           Games {verb(c.role)}
         </p>
-        <p className="text-3xl sm:text-4xl font-black" style={{ fontFamily: 'var(--font-heading)', color: 'white', marginTop: '20px' }}>
+
+        {/* Divider */}
+        <div className="mx-auto" style={{ width: '58px', height: '2px', background: hue, boxShadow: `0 0 12px ${hue}`, margin: '20px auto 18px', borderRadius: '2px' }} />
+
+        <p className="text-3xl sm:text-4xl font-black" style={{ fontFamily: 'var(--font-heading)', color: 'white' }}>
           {c.name}
         </p>
-        <p className="text-xs uppercase tracking-[0.25em]" style={{ color: 'rgba(255,255,255,0.55)', marginTop: '8px' }}>
+        <p className="text-xs uppercase tracking-[0.25em]" style={{ color: 'rgba(255,255,255,0.6)', marginTop: '8px' }}>
           {c.role === 'umpire' ? 'Umpire' : 'Scorer'}{c.since ? ` · reached ${c.since}` : ''}{c.retired ? ' · retired' : ''}
         </p>
       </div>
