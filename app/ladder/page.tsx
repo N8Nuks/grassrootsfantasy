@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { theme, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
 import PageGuide from '@/components/PageGuide'
+import FactsTicker from '@/components/FactsTicker'
 
 export default async function Ladder({ searchParams }: { searchParams: Promise<{ grade?: string; view?: string }> }) {
   const params = await searchParams
@@ -285,6 +286,9 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
               </div>
             </div>
           )}
+          <div style={{ marginTop: '32px' }}>
+            <FactsTicker compact />
+          </div>
           <p className="text-[11px] text-center mt-6" style={{ color: T.textDim }}>
             {view === 'points' && 'Top 20 shown. Cumulative points from all scored rounds. Provisional scores update once official stats are confirmed.'}
             {view === 'h2h' && 'Top 20 shown. Win percentage: W=1, D=0.5, L=0. Ties broken by total points scored. Minimum half a season to qualify for the title.'}

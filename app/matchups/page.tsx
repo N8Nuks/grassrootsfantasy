@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { theme, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
 import PageGuide from '@/components/PageGuide'
+import FactsTicker from '@/components/FactsTicker'
 
 const SLOT_ORDER = ['P', 'C', 'B1', 'B2', 'B3', 'SS', 'LF', 'CF', 'RF', 'DP', 'PB', 'DR',
   'BENCH1', 'BENCH2', 'BENCH3', 'BENCH4']
@@ -262,6 +263,9 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
               ))}
             </div>
           )}
+        <div style={{ marginTop: '40px' }}>
+            <FactsTicker compact />
+          </div>
         </div>
       </section>
       <PageGuide pageKey="matchups" accent={T.accent} textColor={T.text} steps={[
