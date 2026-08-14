@@ -2,6 +2,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import FactsTicker from '@/components/FactsTicker'
 import GradeSwitch from '@/components/GradeSwitch'
+import HonoursTicker from '@/components/HonoursTicker'
 import { HONOURS, AWARD_LABELS, MEN_AWARDS, WOMEN_AWARDS } from '@/lib/nfsHonours'
 
 const COBALT = '#2456E6'
@@ -106,18 +107,8 @@ export default async function Honours({ searchParams }: { searchParams: Promise<
         </div>
       </section>
 
-      {/* MVP leader strip for the grade on screen */}
-      {mvpTop.length > 0 && (
-        <section className="px-5 sm:px-12 pinstripe text-center"
-          style={{ background: '#10192E', borderTop: `1px solid ${COBALT}40`, borderBottom: `1px solid ${COBALT}40`, padding: '26px 20px' }}>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-2" style={{ color: accent }}>
-            Most Premier {isWomen ? "Women's" : "Men's"} MVPs
-          </p>
-          <p className="text-lg sm:text-xl font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>
-            {mvpTop.map(l => l[0]).join(' & ')} <span style={{ color: GOLD }}>· {mvp[0][1]}</span>
-          </p>
-        </section>
-      )}
+      {/* Every winner, every category, for the grade on screen */}
+      <HonoursTicker key={grade} grade={grade} accent={accent} />
 
       {/* Honours roll */}
       <section className="flex-1 px-5 sm:px-12" style={{ paddingTop: '44px', paddingBottom: '48px' }}>
