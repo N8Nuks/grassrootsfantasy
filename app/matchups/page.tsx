@@ -80,7 +80,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [{ data: prof }, { data: round }, { data: teams }] = await Promise.all([
+  const [{ data: prof }, { data: round }, { data: teams }, { data: newestRound }] = await Promise.all([
     user
       ? supabase.from('profiles').select('site_theme').eq('id', user.id).single()
       : Promise.resolve({ data: null }),
@@ -88,9 +88,17 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
       .eq('grade', grade).lte('lock_at', new Date().toISOString())
       .order('round_number', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('public_teams').select('id, team_name'),
+    // The live round, locked or not — used to explain why an open round isn't shown yet
+    supabase.from('rounds').select('round_number, status')
+      .eq('grade', grade).order('round_number', { ascending: false }).limit(1).maybeSingle(),
   ])
   const siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
   const T = theme(grade, siteTheme)
+
+  // An open round sitting above the one on screen: matchups aren't drawn until it locks
+  const pendingRound = newestRound && newestRound.status === 'open'
+    && (!round || newestRound.round_number > round.round_number)
+    ? newestRound.round_number : null
 
   type Matchup = { user_a: string; user_b: string; score_a: number | null; score_b: number | null }
   let myMatchup: Matchup | null = null
@@ -182,6 +190,21 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
               <GradeSwitch grade={grade} mensHref="/matchups?grade=mens" womensHref="/matchups?grade=womens" palette={siteTheme !== 'grade' ? T : undefined} />
             </div>
           </div>
+
+          {/* Round open but not locked — explain why the new draw isn't here yet */}
+          {pendingRound !== null && (
+            <div className="rounded-2xl text-center mb-8"
+              style={{ background: T.surface, border: `1px solid ${T.accent}40`, padding: '20px 24px' }}>
+              <p className="text-[11px] font-black uppercase tracking-[0.25em] mb-2" style={{ color: T.accent }}>
+                Round {pendingRound} is open
+              </p>
+              <p className="text-sm leading-relaxed" style={{ color: T.textDim, maxWidth: '520px', margin: '0 auto' }}>
+                Your new matchup is drawn when lineups lock. Until then you&apos;re looking at how
+                {round ? ` Round ${round.round_number}` : ' the last round'} finished — so get your lineup set.
+              </p>
+            </div>
+          )}
+
           {!round && (
             <p className="text-sm text-center" style={{ color: T.textDim }}>Matchups appear once the first round locks.</p>
           )}
@@ -217,7 +240,9 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
             </>
           )}
           {round && user && !myMatchup && (
-            <p className="text-sm text-center mb-12" style={{ color: T.textDim }}>No matchup for your team this round.</p>
+            <p className="text-sm text-center mb-12" style={{ color: T.textDim }}>
+              No matchup for your team in Round {round.round_number} — you&apos;ll be drawn in when the next round locks.
+            </p>
           )}
           {round && otherMatchups.length > 0 && (
             <div className="rounded-2xl overflow-hidden" style={{ background: T.surface, border: '1px solid #ffffff12' }}>
@@ -243,6 +268,10 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
         {
           title: 'Head to Head',
           body: "Every round you're drawn against another team — highest points on the weekend wins the matchup. Wins build your record on the H2H standings.",
+        },
+        {
+          title: 'When your matchup appears',
+          body: "The draw happens when lineups lock, not when the round opens. While a round is open you'll see how the last one finished — that's your window to set your lineup.",
         },
         {
           title: 'The two lineups',
