@@ -73,7 +73,7 @@ export default function NFS() {
         </div>
       </section>
 
-      {/* The competition */}
+      {/* The Competition */}
       <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "48px", paddingBottom: "48px" }}>
         <div className="grid gap-4 sm:gap-6 sm:grid-cols-3" style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
           {[
@@ -90,8 +90,38 @@ export default function NFS() {
         </div>
       </section>
 
-      {/* What you get */}
+      {/* ── The Record Books ── */}
       <section className="px-5 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: "48px", paddingBottom: "48px" }}>
+        <div style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
+          <div className="text-center" style={{ marginBottom: '32px' }}>
+            <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>The Record Books</p>
+            <h2 className="text-2xl sm:text-3xl font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+              Twenty-two seasons, on the record.
+            </h2>
+          </div>
+          <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
+            <a href="/nfs/honours" className="rounded-2xl p-6 flex flex-col gap-3 text-left transition-all hover:scale-[1.01]"
+              style={{ background: '#1A1A22', border: '1px solid #ffffff0a', borderLeft: `3px solid ${GOLD}` }}>
+              <h3 className="text-base font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>Honours Board</h3>
+              <p className="text-xs text-white/70 leading-relaxed">
+                Every Premier award winner since 2004-05 — batters, pitchers and MVPs, season by season, with the most-decorated names in each category.
+              </p>
+              <span className="text-xs font-bold" style={{ color: GOLD }}>See the Honours Board →</span>
+            </a>
+            <a href="/nfs/officials" className="rounded-2xl p-6 flex flex-col gap-3 text-left transition-all hover:scale-[1.01]"
+              style={{ background: '#1A1A22', border: '1px solid #ffffff0a', borderLeft: `3px solid ${SILVER}` }}>
+              <h3 className="text-base font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>The Officials Wing</h3>
+              <p className="text-xs text-white/70 leading-relaxed">
+                No game happens without them. The umpires and scorers who have worked hundreds of Premier games — including the only official ever to reach 400.
+              </p>
+              <span className="text-xs font-bold" style={{ color: SILVER }}>Enter the Wing →</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* What you get */}
+      <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "48px", paddingBottom: "48px" }}>
         <div style={{ maxWidth: "820px", marginLeft: "auto", marginRight: "auto" }}>
           <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "32px" }}>Your season, inside the season.</h2>
           <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
@@ -112,7 +142,7 @@ export default function NFS() {
       </section>
 
       {/* NFS card tiers */}
-      <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "48px", paddingBottom: "48px" }}>
+      <section className="px-5 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: "48px", paddingBottom: "48px" }}>
         <div className="flex flex-col items-center" style={{ maxWidth: "1000px", marginLeft: "auto", marginRight: "auto" }}>
           <h2 className="text-2xl sm:text-3xl font-black text-white text-center mb-4" style={{ fontFamily: 'var(--font-heading)' }}>The NFS card tiers.</h2>
           <p className="text-sm text-white/70 text-center leading-relaxed" style={{ maxWidth: "540px", marginBottom: "32px" }}>
@@ -143,7 +173,7 @@ export default function NFS() {
       </section>
 
       {/* Wellbeing / trust strip */}
-      <section className="px-5 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: "36px", paddingBottom: "36px" }}>
+      <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "36px", paddingBottom: "36px" }}>
         <div className="text-center" style={{ maxWidth: "680px", marginLeft: "auto", marginRight: "auto" }}>
           <p className="text-xs leading-relaxed text-white/70">
             Grassroots Fantasy scoring is built entirely on on-field statistics from official game records — never fan voting or popularity. Players under 18 appear only with written parent or guardian consent, and any player can opt out at any time. Endorsed by the Auckland Softball Association.
@@ -180,7 +210,7 @@ export default function NFS() {
               },
               {
                 q: 'When do lineups lock?',
-                a: 'Lineups open each Tuesday once the previous round\u2019s stats are confirmed, and lock Friday night ahead of the weekend\u2019s games. Provisional scores land over the weekend; confirmed scores follow official stats on Tuesday.',
+                a: 'Lineups open each Tuesday once the previous round\u2019s stats are confirmed, and lock Friday night ahead of the weekend\u2019s games. Your head-to-head matchup is drawn at lock \u2014 that\u2019s when you find out who you\u2019re playing. Provisional scores land over the weekend; confirmed scores follow official stats on Tuesday.',
               },
               {
                 q: 'What are the card tiers?',
