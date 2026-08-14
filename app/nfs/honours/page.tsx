@@ -73,7 +73,7 @@ export default function NFS() {
         </div>
       </section>
 
-      {/* The competition */}
+      {/* The Competition */}
       <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "48px", paddingBottom: "48px" }}>
         <div className="grid gap-4 sm:gap-6 sm:grid-cols-3" style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
           {[
@@ -90,7 +90,7 @@ export default function NFS() {
         </div>
       </section>
 
-      {/* ── The record books ── */}
+      {/* ── The Record Books ── */}
       <section className="px-5 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: "48px", paddingBottom: "48px" }}>
         <div style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
           <div className="text-center" style={{ marginBottom: '32px' }}>
