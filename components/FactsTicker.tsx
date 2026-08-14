@@ -134,11 +134,12 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
-export default function FactsTicker({ compact = false }: { compact?: boolean }) {
+export default function FactsTicker({ compact = false, historyOnly = false }: { compact?: boolean; historyOnly?: boolean }) {
   // Every 4th slot is an announcement; the rest are history facts
   const slots = useMemo(() => {
     const history = shuffle(buildFacts())
-    const news = shuffle(ANNOUNCEMENTS)
+    // Honours Board and other heritage pages run history only — no promo lines
+    const news = historyOnly ? [] : shuffle(ANNOUNCEMENTS)
     const out: { text: string; announcement: boolean }[] = []
     let h = 0, n = 0
     for (let i = 0; i < history.length + news.length; i++) {
@@ -151,7 +152,8 @@ export default function FactsTicker({ compact = false }: { compact?: boolean }) 
       }
     }
     return out
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historyOnly])
   const facts = slots
   const [idx, setIdx] = useState(0)
   const [visible, setVisible] = useState(true)
@@ -191,7 +193,7 @@ export default function FactsTicker({ compact = false }: { compact?: boolean }) 
       <div className="relative flex flex-col items-center text-center gap-3" style={{ maxWidth: '820px', margin: '0 auto' }}>
         <span className="text-[11px] font-black uppercase tracking-[0.4em]"
           style={{ color: accent, textShadow: `0 0 16px ${accent}70`, transition: 'color 0.4s ease' }}>
-          {isNews ? 'Fantasy Announcement' : 'Did you know'}
+          {isNews ? 'Fantasy Announcement' : historyOnly ? 'From the archive' : 'Did you know'}
         </span>
 
         {/* Glowing rule under the label */}
