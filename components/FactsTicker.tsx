@@ -41,6 +41,7 @@ const ANNOUNCEMENTS = [
   'Auckland softball has been played since 1939.',
   'Only eight players have reached 300 career games — their cards carry the badge.',
   'Every Premier award winner since 2004-05 is on the Honours Board.',
+  'Over 1,500 moments of NFS history live in this ticker.',
   'Black Diamond Labs presents Grassroots Fantasy.',
   'Grassroots Fantasy and the GF NFS Premier League are brought to you by Black Diamond Labs.',
   'Players are selected randomly for you in Starter and Pre-Season Packs.',
