@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { autoDealUnclaimed } from '@/lib/dealT3'
 
 const FAR_FUTURE = () => new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString()
 
@@ -27,12 +28,29 @@ export async function POST(req: Request) {
   }
 
   if (action === 'advance') {
+    // Anyone who never claimed the closing round's Weekly Pack gets it dealt
+    // straight into their collection — no reveal, but nobody loses cards.
+    let auto = { dealt: 0, cards: 0 }
+    if (round) {
+      try {
+        auto = await autoDealUnclaimed(admin, grade, round.id)
+      } catch (e) {
+        return NextResponse.json(
+          { error: 'Auto-deal failed, round not advanced: ' + (e as Error).message },
+          { status: 500 })
+      }
+    }
+
     const nextNumber = (round?.round_number ?? 0) + 1
     // New rounds open with lineups hidden from opponents until Lock stamps lock_at
     const { error: advErr } = await admin.from('rounds')
       .insert({ grade, round_number: nextNumber, lock_at: FAR_FUTURE(), status: 'open' })
     if (advErr) return NextResponse.json({ error: 'Advance failed: ' + advErr.message }, { status: 500 })
-    return NextResponse.json({ ok: true, round_number: nextNumber, status: 'open' })
+
+    return NextResponse.json({
+      ok: true, round_number: nextNumber, status: 'open',
+      auto_dealt: auto.dealt, auto_cards: auto.cards,
+    })
   }
 
   if (!round) return NextResponse.json({ error: 'No rounds exist for this grade yet' }, { status: 400 })
