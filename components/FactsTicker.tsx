@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { HONOURS, AWARD_LABELS } from '@/lib/nfsHonours'
 import { PLACINGS, HERITAGE_MEN, HERITAGE_WOMEN, SERIES_TEAMS, CAREER_MEN, CAREER_WOMEN } from '@/lib/nfsHistory'
+import { MILESTONES, SHIELD_EVENTS, SHIELD_HOLDERS } from '@/lib/nfsMilestones'
 
 // Announcements — every 4th ticker slot. Louder styling, current news.
 const ANNOUNCEMENTS = [
@@ -39,7 +40,6 @@ const ANNOUNCEMENTS = [
   'The NFS has crowned Premier champions since 2005.',
   'Auckland softball has been played since 1939.',
   'Only eight players have reached 300 career games — their cards carry the badge.',
-  'Over 1,100 moments of NFS history live in this ticker.',
   'Every Premier award winner since 2004-05 is on the Honours Board.',
   'Black Diamond Labs presents Grassroots Fantasy.',
   'Grassroots Fantasy and the GF NFS Premier League are brought to you by Black Diamond Labs.',
@@ -98,6 +98,28 @@ function buildFacts(): string[] {
       ? `${c.name} has played ${c.games} Premier games — the most of any woman in Auckland softball history.`
       : `${c.name} has played ${c.games} Premier career games (#${i + 1} all-time among the women).`)
   })
+
+  // Milestone games — the season each player crossed 100, 200 and 300
+  const TIER_WORD: Record<number, string> = { 100: 'Veteran', 200: 'Club Legend', 300: 'Icon' }
+  for (const m of MILESTONES) {
+    const g = m.grade === 'men' ? "Men's" : "Women's"
+    const club = m.club ? ` with ${m.club}` : ''
+    facts.push(m.tier === 300
+      ? `${m.season}: ${m.name} passed 300 Premier games${club} — ${g} Icon status, reached by only a handful in the game's history.`
+      : `${m.season}: ${m.name} passed ${m.tier} Premier games${club} in the ${g} grade — ${TIER_WORD[m.tier]}.`)
+  }
+
+  // Challenge shields — every defence and every change of hands
+  for (const e of SHIELD_EVENTS) {
+    const when = e.date ? ` — ${e.date}` : ''
+    facts.push(e.result === 'Lost'
+      ? `${e.challenger} took the ${e.shield} off ${e.holder}${when}.`
+      : `${e.holder} defended the ${e.shield} against ${e.challenger}${when}.`)
+  }
+  for (const h of SHIELD_HOLDERS) {
+    facts.push(`${h.holder} hold the ${h.shield}, won ${h.since}. It changes hands only when a challenger wins it.`)
+  }
+  facts.push('The Trevor Rouse Shield and the Collen Callaghan Shield are challenge trophies — hold them until someone beats you.')
 
   return facts
 }
