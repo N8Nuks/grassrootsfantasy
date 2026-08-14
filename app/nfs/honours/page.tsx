@@ -1,5 +1,6 @@
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
+import FactsTicker from '@/components/FactsTicker'
 import { HONOURS, AWARD_LABELS, MEN_AWARDS, WOMEN_AWARDS } from '@/lib/nfsHonours'
 
 const COBALT = '#2456E6'
@@ -81,6 +82,10 @@ export default function Honours() {
       <section className="relative px-6 sm:px-12 overflow-hidden" style={{ paddingTop: '90px', paddingBottom: '70px' }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 75% 55% at 50% 0%, #10214D 0%, #0D0D0F 70%)' }} />
         <div className="relative z-10 text-center" style={{ maxWidth: '760px', marginLeft: 'auto', marginRight: 'auto' }}>
+          <a href="/nfs" className="inline-block text-xs font-black uppercase tracking-[0.2em]"
+            style={{ color: SILVER, opacity: 0.75, marginBottom: '18px' }}>
+            ← Back to the NFSPL
+          </a>
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-5" style={{ color: GOLD }}>NFS Premier League</p>
           <h1 className="text-4xl sm:text-5xl font-black text-white mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
             Honours Board
@@ -110,13 +115,34 @@ export default function Honours() {
       </section>
 
       {/* Honours rolls */}
-      <section className="flex-1 px-6 sm:px-12" style={{ paddingTop: '80px', paddingBottom: '90px' }}>
+      <section className="flex-1 px-6 sm:px-12" style={{ paddingTop: '80px', paddingBottom: '70px' }}>
         <div style={{ maxWidth: '700px', marginLeft: 'auto', marginRight: 'auto' }}>
           <GradeHonours grade="men" awards={MEN_AWARDS} accent={GREEN} />
           <GradeHonours grade="women" awards={WOMEN_AWARDS} accent={COBALT} />
+
+          {/* History only — no promo lines on a heritage page */}
+          <div style={{ marginBottom: '28px' }}>
+            <FactsTicker compact historyOnly />
+          </div>
+
           <p className="text-xs text-white/35 text-center italic">
             Records from the Auckland Softball Association. Seasons without a competition or award are omitted from each roll.
           </p>
+        </div>
+      </section>
+
+      {/* More history */}
+      <section className="px-6 sm:px-12 text-center" style={{ background: '#14141A', borderTop: `1px solid ${COBALT}40`, paddingTop: '44px', paddingBottom: '52px' }}>
+        <p className="text-xs font-black uppercase tracking-[0.3em] mb-5" style={{ color: GOLD }}>More NFS History</p>
+        <div className="flex items-center justify-center gap-4 flex-wrap">
+          <a href="/nfs/officials" className="inline-block text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03]"
+            style={{ color: '#0D0D0F', background: GOLD, padding: '16px 34px', boxShadow: `0 0 22px ${GOLD}40` }}>
+            The Officials Wing
+          </a>
+          <a href="/nfs" className="inline-block text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03]"
+            style={{ color: 'white', border: '1px solid #ffffff35', padding: '16px 34px' }}>
+            Back to the NFSPL
+          </a>
         </div>
       </section>
 
