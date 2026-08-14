@@ -208,10 +208,11 @@ export default function Officials() {
       <section className="px-5 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: '36px', paddingBottom: '36px' }}>
         <div className="text-center" style={{ maxWidth: '640px', marginLeft: 'auto', marginRight: 'auto' }}>
           <p className="text-xs leading-relaxed text-white/65">
-            The thresholds differ because the roles do. Far more umpires than scorers work a Premier
-            season, so 300 games behind the plate and 150 in the book represent a similar commitment
-            over a similar span. Figures cover NFC, AFC and NFS from 2005 to 2026, and are supplied by
-            the Auckland Softball Association.
+            The thresholds differ because the roles do. Every game needs two to four umpires but only
+            one official scorer, so there are far more umpiring appointments to go around in a season.
+            300 games on the field and 150 in the book represent a similar commitment over a similar
+            span. Figures cover NFC, AFC and NFS from 2005 to 2026, and are supplied by the Auckland
+            Softball Association.
           </p>
         </div>
       </section>
