@@ -134,7 +134,7 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
-export default function FactsTicker() {
+export default function FactsTicker({ compact = false }: { compact?: boolean }) {
   // Every 4th slot is an announcement; the rest are history facts
   const slots = useMemo(() => {
     const history = shuffle(buildFacts())
@@ -176,7 +176,8 @@ export default function FactsTicker() {
         background: 'radial-gradient(ellipse 80% 120% at 50% 50%, #16264C 0%, #0B1226 70%)',
         borderTop: `1px solid ${accent}55`,
         borderBottom: `1px solid ${accent}55`,
-        padding: '38px 20px',
+        padding: compact ? '24px 18px' : '38px 20px',
+        borderRadius: compact ? '18px' : undefined,
         transition: 'border-color 0.4s ease',
       }}>
 
@@ -200,12 +201,12 @@ export default function FactsTicker() {
           transition: 'background 0.4s ease',
         }} />
 
-        <p className="text-lg sm:text-2xl font-black leading-snug transition-opacity duration-400"
+        <p className={(compact ? 'text-sm sm:text-base' : 'text-lg sm:text-2xl') + ' font-black leading-snug transition-opacity duration-400'}
           style={{
             fontFamily: 'var(--font-heading)',
             color: '#FFFFFF',
             opacity: visible ? 1 : 0,
-            minHeight: '58px',
+            minHeight: compact ? '42px' : '58px',
             textShadow: `0 0 22px ${accent}55`,
             maxWidth: '700px',
           }}>
