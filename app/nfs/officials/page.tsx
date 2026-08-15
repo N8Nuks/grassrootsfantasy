@@ -1,6 +1,7 @@
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { OFFICIALS, OFFICIAL_MILESTONES } from '@/lib/nfsOfficials'
+import OfficialCard from '@/components/OfficialCard'
 
 const COBALT = '#2456E6'
 const GOLD = '#E8C15A'
@@ -119,38 +120,9 @@ function FeatureCard({ c }: { c: Card }) {
   )
 }
 
-/* Wing — everyone else past the bar */
+/* Wing — everyone else past the bar, in the shared official card */
 function WingCard({ c }: { c: Card }) {
-  const accent = c.role === 'umpire' ? SILVER : GOLD
-  return (
-    <div className="rounded-2xl overflow-hidden text-center"
-      style={{ background: '#121215', border: `1px solid ${accent}45`, boxShadow: `0 0 20px ${accent}10`, padding: '26px 18px 22px' }}>
-      <div className="mx-auto rounded-full overflow-hidden flex items-center justify-center"
-        style={{
-          width: '84px', height: '84px',
-          background: 'linear-gradient(180deg, #16161B 0%, #0D0D0F 100%)',
-          border: `1px solid ${accent}50`, marginBottom: '16px',
-        }}>
-        <svg width="42" height="42" viewBox="0 0 60 80" fill="none">
-          <circle cx="30" cy="22" r="13" fill={`${accent}55`} />
-          <path d="M6 80 C6 52 54 52 54 80 Z" fill={`${accent}55`} />
-        </svg>
-      </div>
-      <p className="text-5xl font-black leading-none"
-        style={{ fontFamily: 'var(--font-heading)', color: accent, textShadow: `0 0 20px ${accent}45` }}>
-        {c.games}
-      </p>
-      <p className="text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: `${accent}A0`, marginTop: '6px' }}>
-        Games {verb(c.role)}
-      </p>
-      <p className="text-lg font-black" style={{ fontFamily: 'var(--font-heading)', color: 'white', marginTop: '14px' }}>
-        {c.name}
-      </p>
-      <p className="text-[10px] uppercase tracking-[0.2em]" style={{ color: 'rgba(255,255,255,0.5)', marginTop: '5px' }}>
-        {c.since ? `Reached ${c.since}` : c.role === 'umpire' ? 'Umpire' : 'Scorer'}{c.retired ? ' · retired' : ''}
-      </p>
-    </div>
-  )
+  return <OfficialCard o={{ name: c.name, games: c.games, role: c.role, retired: c.retired, since: c.since }} />
 }
 
 export default function Officials() {
