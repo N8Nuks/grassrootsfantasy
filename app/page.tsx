@@ -1,6 +1,16 @@
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 
+// The weekly loop — each stage carries the trigger that moves it to the next.
+// Stage 05 closes back to 01, which is the whole point of the section.
+const ROUND_CYCLE = [
+  { n: '01', t: 'Round opens', d: 'Your free Weekly Pack drops. New cards, new options.', trigger: 'You make your calls', accent: '#E8D5A3' },
+  { n: '02', t: 'Set your lineup', d: 'Starters, bench, reserves — your call.', trigger: 'Lineups lock', accent: '#4D7FFF' },
+  { n: '03', t: 'Matchup revealed', d: 'Your squad against theirs, side by side.', trigger: 'The games are played', accent: '#4D7FFF' },
+  { n: '04', t: 'Scores land', d: 'Every hit, run, steal and strikeout counts.', trigger: 'Official stats reviewed', accent: '#3FBF63' },
+  { n: '05', t: 'Standings update', d: 'Ladder, head-to-head, weekly high score, clubs.', trigger: 'Back to the top', accent: '#E8D5A3' },
+]
+
 export default function Home() {
   return (
     <main className="min-h-screen w-full" style={{ background: '#141210' }}>
@@ -59,6 +69,60 @@ export default function Home() {
                 <p className="text-sm text-[#F5F1E8]/45 leading-relaxed">{f.d}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* HOW A ROUND WORKS — the five-stage loop */}
+      <section className="w-full py-28 sm:py-36 px-6" style={{ borderTop: '1px solid #ffffff08' }}>
+        <div className="w-full" style={{ maxWidth: "1060px", marginLeft: "auto", marginRight: "auto" }}>
+
+          <div className="text-center" style={{ marginBottom: "56px" }}>
+            <p className="text-xs font-black uppercase tracking-[0.3em] mb-4" style={{ color: '#2D9E4E' }}>How a round works</p>
+            <h2 className="text-3xl sm:text-5xl font-black text-[#F5F1E8] leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
+              Five stages. Every round<br className="hidden sm:block" /> of the season.
+            </h2>
+          </div>
+
+          {/* The five stages — one column on a phone, five across on a desktop */}
+          <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
+            {ROUND_CYCLE.map((s, i) => (
+              <div key={s.n} className="rounded-2xl flex flex-col text-left"
+                style={{
+                  background: `linear-gradient(170deg, ${s.accent}12 0%, #1A1A1F 55%, #141210 100%)`,
+                  border: `1px solid ${s.accent}40`,
+                  padding: '22px 20px 18px',
+                }}>
+                <span className="text-3xl font-black leading-none"
+                  style={{ fontFamily: 'var(--font-heading)', color: s.accent, textShadow: `0 0 16px ${s.accent}45` }}>
+                  {s.n}
+                </span>
+                <h3 className="text-base font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)', marginTop: '14px' }}>
+                  {s.t}
+                </h3>
+                <p className="text-xs text-[#F5F1E8]/50 leading-relaxed" style={{ marginTop: '8px', flex: 1 }}>
+                  {s.d}
+                </p>
+                {/* The trigger that moves this stage to the next */}
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-1.5"
+                  style={{ color: `${s.accent}C0`, marginTop: '18px', paddingTop: '12px', borderTop: '1px solid #ffffff10' }}>
+                  <span>{i === ROUND_CYCLE.length - 1 ? '↻' : '→'}</span>
+                  {s.trigger}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* The loop closes */}
+          <div className="text-center rounded-2xl"
+            style={{ marginTop: '24px', padding: '22px 24px', border: '1px solid #E8D5A340', background: '#E8D5A30A' }}>
+            <p className="text-[11px] font-black uppercase tracking-[0.3em]" style={{ color: '#E8D5A3' }}>
+              Stats confirmed — the next round opens
+            </p>
+            <p className="text-xs text-[#F5F1E8]/45 leading-relaxed" style={{ marginTop: '10px', maxWidth: '520px', marginLeft: 'auto', marginRight: 'auto' }}>
+              It runs on a weekly rhythm through the season, so there&apos;s always a lineup to set and a
+              result coming. Miss a week and your cards still land — you just miss the reveal.
+            </p>
           </div>
         </div>
       </section>
