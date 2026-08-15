@@ -804,6 +804,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                     siteTheme={siteTheme}
                     cardStyle={cardStyle}
                     flippable={true}
+                    doubled={doubled.has(c.playerId)}
                   />
                 </div>
                 <div>

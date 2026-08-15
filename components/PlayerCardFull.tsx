@@ -84,13 +84,14 @@ function lineFor(raw: Record<string, number>): string {
   return parts.join(' · ')
 }
 
-export default function PlayerCardFull({ player, grade, owned, siteTheme, cardStyle = 'premium', flippable = false }: {
+export default function PlayerCardFull({ player, grade, owned, siteTheme, cardStyle = 'premium', flippable = false, doubled = false }: {
   player: FullCardPlayer
   grade: Grade
   owned: boolean
   siteTheme?: string
   cardStyle?: 'standard' | 'premium'
   flippable?: boolean
+  doubled?: boolean       // cycle or perfect game last round — scores 2x this round
 }) {
   const T = theme(grade, siteTheme)
   const meta = TIER_META[player.tier] ?? TIER_META.common
@@ -181,11 +182,17 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
     )
   }
 
+  // A doubled card takes the achievement colour so it can't be mistaken for its tier
+  const DOUBLE = '#FF8C42'
   const shellStyle = {
     backfaceVisibility: 'hidden' as const, WebkitBackfaceVisibility: 'hidden' as const,
     padding: '7px',
-    background: `linear-gradient(165deg, ${meta.accent} 0%, ${meta.accent}55 40%, ${meta.accent}25 100%)`,
-    boxShadow: `0 0 36px ${meta.accent}30`,
+    background: doubled
+      ? `linear-gradient(165deg, ${DOUBLE} 0%, ${DOUBLE}70 45%, ${DOUBLE}30 100%)`
+      : `linear-gradient(165deg, ${meta.accent} 0%, ${meta.accent}55 40%, ${meta.accent}25 100%)`,
+    boxShadow: doubled
+      ? `0 0 30px ${DOUBLE}70, 0 0 70px ${DOUBLE}28`
+      : `0 0 36px ${meta.accent}30`,
   }
 
   /* ── FACE: the player card itself ── */
@@ -261,6 +268,12 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
           )}
           <span className="absolute top-3 left-3.5 text-[10px] font-black tracking-widest"
             style={{ color: meta.accent, textShadow: `0 0 8px ${meta.accent}90, 0 0 16px ${meta.accent}50` }}>{meta.label}</span>
+          {doubled && (
+            <span className="absolute top-3 right-3.5 text-[10px] font-black uppercase tracking-widest rounded-full gf-pulse"
+              style={{ color: '#141210', background: DOUBLE, padding: '3px 10px', boxShadow: `0 0 14px ${DOUBLE}` }}>
+              Double Points
+            </span>
+          )}
           {!owned && (
             <span className="absolute top-3 right-3.5 text-[9px] font-black uppercase tracking-widest"
               style={{ color: T.textDim, textShadow: '0 0 8px #00000090' }}>Unowned</span>
