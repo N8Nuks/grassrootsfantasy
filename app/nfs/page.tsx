@@ -33,6 +33,18 @@ export default function NFS() {
       <section className="relative px-5 sm:px-12 overflow-hidden" style={{ paddingTop: "56px", paddingBottom: "48px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 75% 55% at 50% 0%, #10214D 0%, #0D0D0F 70%)' }} />
         <div className="relative z-10 text-center" style={{ maxWidth: "760px", marginLeft: "auto", marginRight: "auto" }}>
+          {/* League crest — sits on a lit disc so the black roundel reads on a dark page */}
+          <div className="mx-auto rounded-full flex items-center justify-center"
+            style={{
+              width: '104px', height: '104px', marginBottom: '22px',
+              background: 'radial-gradient(circle at 50% 35%, #ffffff14 0%, #0D0D0F 72%)',
+              border: `1px solid ${SILVER}45`,
+              boxShadow: `0 0 30px ${COBALT}35`,
+            }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/NFS-logo.png" alt="Northern Fastpitch Series"
+              style={{ width: '86%', height: '86%', objectFit: 'contain' }} />
+          </div>
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-5" style={{ color: GOLD }}>League One · Now Live</p>
           <h1 className="text-4xl sm:text-5xl font-black text-white mb-5" style={{ fontFamily: 'var(--font-heading)' }}>
             NFS Premier League
