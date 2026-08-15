@@ -105,7 +105,7 @@ export default function NFS() {
 
         {/* ── The History ── */}
         <section className="relative z-10 px-5 sm:px-12"
-          style={{ background: OVER_BACKDROP, borderTop: '1px solid #ffffff0a', paddingTop: "56px", paddingBottom: "56px" }}>
+          style={{ background: OVER_BACKDROP, borderTop: '1px solid #ffffff0a', paddingTop: "28px", paddingBottom: "56px" }}>
           <div style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
 
             <div className="text-center" style={{ marginBottom: '28px' }}>
