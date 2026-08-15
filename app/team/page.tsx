@@ -41,7 +41,10 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
   const cardStyle = (styleRow?.value ?? 'premium') as 'standard' | 'premium'
   const T = theme(grade, siteTheme)
 
-  const t2Available = !!t2Config?.t2_released && !t2Count
+  // A user who already holds a full squad has opened their T2, whatever a stale
+  // count says. Registration deals T1 and T2 together, so the first load after
+  // signup can otherwise show a button for a pack they've already revealed.
+  const t2Available = !!t2Config?.t2_released && !t2Count && (cards?.length ?? 0) < 21
 
   let unavailableIds: string[] = []
   let t3Claimed = false
