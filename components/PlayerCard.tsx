@@ -10,6 +10,9 @@ export const TIER_META: Record<string, { label: string; accent: string }> = {
 const SLOT_LABELS: Record<string, string> = { B1: '1B', B2: '2B', B3: '3B', PB: 'P(B)' }
 const posLabel = (p: string) => SLOT_LABELS[p] ?? p
 
+// Achievement double — the card is lit for the round the bonus applies to
+export const DOUBLE_ACCENT = '#FF8C42'
+
 const CLUB_TINTS: Record<string, string> = {
   'Bandits': '#5B2D8E', 'Howick': '#8A1E41', 'Marist': '#2456E6',
   'Otahuhu': '#2B5C9E', 'Patriots': '#B49759', 'Pukekohe': '#2D9E4E',
@@ -30,7 +33,7 @@ export type PlayerCardData = {
   playingNumber?: number | null
 }
 
-export default function PlayerCard({ player, grade, owned, chip, onClick, siteTheme, cardStyle = 'premium' }: {
+export default function PlayerCard({ player, grade, owned, chip, onClick, siteTheme, cardStyle = 'premium', doubled = false }: {
   player: PlayerCardData
   grade: Grade
   owned: boolean            // owned = lit face; unowned = greyed
@@ -38,6 +41,7 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
   onClick?: () => void
   siteTheme?: string
   cardStyle?: 'standard' | 'premium'
+  doubled?: boolean         // scores 2x this round — cycle or perfect game
 }) {
   const T = theme(grade, siteTheme)
   const meta = TIER_META[player.tier] ?? TIER_META.common
@@ -46,13 +50,18 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
 
   return (
     <button onClick={onClick}
-      className="rounded-xl text-left transition-all hover:scale-[1.03] flex flex-col"
+      className={"rounded-xl text-left transition-all hover:scale-[1.03] flex flex-col" + (doubled ? ' gf-rim' : '')}
       style={{
         padding: '4px',
-        background: owned
-          ? `linear-gradient(165deg, ${meta.accent} 0%, ${meta.accent}50 40%, ${meta.accent}20 100%)`
-          : `linear-gradient(165deg, #ffffff20 0%, #ffffff10 100%)`,
-        boxShadow: owned ? `0 0 18px ${meta.accent}25` : 'none',
+        background: doubled
+          ? `linear-gradient(165deg, ${DOUBLE_ACCENT} 0%, ${DOUBLE_ACCENT}70 45%, ${DOUBLE_ACCENT}30 100%)`
+          : owned
+            ? `linear-gradient(165deg, ${meta.accent} 0%, ${meta.accent}50 40%, ${meta.accent}20 100%)`
+            : `linear-gradient(165deg, #ffffff20 0%, #ffffff10 100%)`,
+        boxShadow: doubled
+          ? `0 0 22px ${DOUBLE_ACCENT}70, 0 0 46px ${DOUBLE_ACCENT}30`
+          : owned ? `0 0 18px ${meta.accent}25` : 'none',
+        ...(doubled ? { ['--rim' as string]: `${DOUBLE_ACCENT}90` } : {}),
       }}>
       {/* Inner card */}
       <div className="flex-1 rounded-lg overflow-hidden flex flex-col min-h-0 w-full"
@@ -60,7 +69,7 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
 
         {/* Mini banner — crest + name */}
         <div className="flex items-center gap-2 pinstripe-fine"
-          style={{ background: T.headerBg, borderBottom: `1px solid ${meta.accent}35`, padding: '7px 10px' }}>
+          style={{ background: T.headerBg, borderBottom: `1px solid ${(doubled ? DOUBLE_ACCENT : meta.accent)}35`, padding: '7px 10px' }}>
           <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0"
             style={{ width: '24px', height: '24px', background: '#141210', border: `1px solid ${tint}70` }}>
             {player.club ? (
@@ -135,20 +144,29 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
               Unowned
             </span>
           )}
-          {owned && chip && (
+          {owned && chip && !doubled && (
             <span className="absolute top-1.5 right-2 text-[8px] font-black uppercase tracking-widest"
               style={{ color: T.accent, textShadow: `0 0 6px ${T.accent}90` }}>
               {chip}
             </span>
           )}
+          {/* Doubled this round — takes the corner so it can't be missed */}
+          {doubled && (
+            <span className="absolute top-1.5 right-2 text-[9px] font-black uppercase tracking-widest rounded-full gf-pulse"
+              style={{ color: '#141210', background: DOUBLE_ACCENT, padding: '2px 7px', boxShadow: `0 0 10px ${DOUBLE_ACCENT}` }}>
+              2×
+            </span>
+          )}
         </div>
 
         {/* Mini stat band */}
-        <div style={{ background: T.headerBg, borderTop: `1px solid ${meta.accent}35`, padding: '7px 10px 9px' }}>
+        <div style={{ background: T.headerBg, borderTop: `1px solid ${(doubled ? DOUBLE_ACCENT : meta.accent)}35`, padding: '7px 10px 9px' }}>
           <p className="text-[9px] truncate" style={{ color: T.textDim, marginBottom: '3px' }}>
             {player.positions.map(posLabel).join(' ')}{player.speedStar ? ' · ★' : ''}
           </p>
-          <p className="text-xs font-black" style={{ color: meta.accent, marginBottom: '3px' }}>{st.season_points ?? 0} pts</p>
+          <p className="text-xs font-black" style={{ color: doubled ? DOUBLE_ACCENT : meta.accent, marginBottom: '3px' }}>
+            {st.season_points ?? 0} pts
+          </p>
           <div className="flex justify-between text-[10px] items-center" style={{ color: T.textDim }}>
             {st.season_ba != null && <span>BA <b>{Number(st.season_ba).toFixed(3)}</b></span>}
             <span>HR <b>{st.season_hr ?? 0}</b></span>
