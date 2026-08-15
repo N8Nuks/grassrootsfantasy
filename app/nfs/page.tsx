@@ -93,10 +93,10 @@ export default function NFS() {
       {/* ── The Record Books ── */}
       <section className="px-5 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: "48px", paddingBottom: "48px" }}>
         <div style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
-          <div className="text-center" style={{ marginBottom: '32px' }}>
-            <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>The Record Books</p>
-            <h2 className="text-2xl sm:text-3xl font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>
-              Twenty-two seasons, on the record.
+          <div className="text-center" style={{ marginBottom: '28px' }}>
+            <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>The History</p>
+            <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
+              Twenty-two seasons.<br className="sm:hidden" /> And everyone who made them.
             </h2>
           </div>
           <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
