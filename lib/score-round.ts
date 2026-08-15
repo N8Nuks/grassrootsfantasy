@@ -1,8 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { slotPoints, applyBench, updateSeasonTotals, battingPoints, pitchingPoints, resolveSubs, StatLine, PointValues, SlotAssignment } from '@/lib/scoring'
+import { slotPoints, applyBench, applyDouble, isCycle, updateSeasonTotals, battingPoints, pitchingPoints, resolveSubs, StatLine, PointValues, SlotAssignment } from '@/lib/scoring'
 
 export type ScoreRoundResult =
-  | { ok: true; players_scored: number; teams_scored: number; matchups_resolved: number }
+  | { ok: true; players_scored: number; teams_scored: number; matchups_resolved: number; cycles: number; doubled: number }
   | { ok: false; error: string; status: number }
 
 // Scores a round end-to-end: player scores, season totals, team scores
@@ -35,6 +35,29 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
     }
   })
   await admin.from('player_scores').upsert(playerScores, { onConflict: 'player_id,round_id' })
+
+  // 1b. Cycles earned this round — the double lands NEXT round.
+  // Perfect games are entered by hand in Admin; only the cycle is computable.
+  const cycleRows = stats
+    .filter(s => isCycle(s.raw as StatLine))
+    .map(s => ({
+      player_id: s.player_id,
+      grade: round.grade,
+      kind: 'cycle',
+      earned_round_id: round_id,
+      applies_round_number: round.round_number + 1,
+    }))
+  if (cycleRows.length) {
+    await admin.from('player_achievements')
+      .upsert(cycleRows, { onConflict: 'player_id,earned_round_id,kind' })
+  }
+
+  // 1c. Who is doubled IN this round — earned in an earlier round, applying now
+  const { data: dueRows } = await admin.from('player_achievements')
+    .select('player_id')
+    .eq('grade', round.grade)
+    .eq('applies_round_number', round.round_number)
+  const doubledPlayers = new Set((dueRows ?? []).map(r => r.player_id))
 
   // 2. Season totals with display floors
   for (const ps of playerScores) {
@@ -152,13 +175,15 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
     const reserves = rows.filter(r => r.slot.startsWith('RES'))
 
     const { scored } = resolveSubs(starters, bench, reserves, played)
-   
+
     let total = 0
     for (const sc of scored) {
       const line = statByPlayer.get(sc.player_id)
       if (!line) continue
       const effectiveSlot = sc.slot === 'BENCH' ? 'DP' : sc.slot
-      const raw = slotPoints(effectiveSlot, line, v)
+      // Floor first, then the achievement double, then the bench multiplier —
+      // so a doubled bench player scores points x2 x0.75.
+      const raw = applyDouble(slotPoints(effectiveSlot, line, v), doubledPlayers.has(sc.player_id))
       total += sc.slot === 'BENCH' ? applyBench(raw, 'BENCH1', v, false) : raw
     }
     userScores.push({ owner_id: lu.owner_id, round_id, grade: round.grade, points: total })
@@ -185,5 +210,12 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
     resolved++
   }
 
-  return { ok: true, players_scored: playerScores.length, teams_scored: userScores.length, matchups_resolved: resolved }
+  return {
+    ok: true,
+    players_scored: playerScores.length,
+    teams_scored: userScores.length,
+    matchups_resolved: resolved,
+    cycles: cycleRows.length,
+    doubled: doubledPlayers.size,
+  }
 }

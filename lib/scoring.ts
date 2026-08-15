@@ -66,6 +66,22 @@ export function applyBench(points: number, slot: string, v: PointValues, promote
   return promoted ? points : points * (v.bench_mult ?? 0.75)
 }
 
+// ── Achievement double ──
+// A player who hits for the cycle, or pitches a perfect game, scores double in the
+// FOLLOWING round. Applied after the round floor (so it can only ever help) and
+// before the bench multiplier — a doubled bench player scores points x2 x0.75.
+export function applyDouble(points: number, doubled: boolean): number {
+  return doubled ? points * 2 : points
+}
+
+// Hitting for the cycle: a single, a double, a triple and a home run in one round.
+export function isCycle(s: StatLine): boolean {
+  return (Number(s.singles) || 0) > 0
+    && (Number(s.doubles) || 0) > 0
+    && (Number(s.triples) || 0) > 0
+    && (Number(s.hr) || 0) > 0
+}
+
 // Display floor ladder: 0 / 5 / 10 / 15 / 20, ratchet stops at 20
 // (Round floor means roundPoints is never negative now; negative-guard retained
 // for safety against direct calls with raw values.)
