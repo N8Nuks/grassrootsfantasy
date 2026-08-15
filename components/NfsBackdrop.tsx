@@ -34,10 +34,13 @@ export default function NfsBackdrop() {
 
         {/* NFS crest — the source PNG carries a wide transparent margin, so it's
             oversized and clipped by its own box to fill the space */}
-        <div className="overflow-hidden shrink-0 flex items-center justify-center"
-          style={{ width: 'min(34vw, 300px)', aspectRatio: '1' }}>
+        {/* The source PNG is mostly transparent margin, so the box is oversized
+            and the image scaled to fill it — the crest ends up the right size
+            even though the file is not cropped. */}
+        <div className="shrink-0 flex items-center justify-center overflow-hidden"
+          style={{ width: 'min(70vw, 620px)', aspectRatio: '1', margin: 'min(-18vw, -160px)' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/NFS-logo.png" alt="" style={{ width: '900%', height: '900%', objectFit: 'contain' }} />
+          <img src="/NFS-logo.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
 
         <div className="shrink-0" style={{ width: '1px', height: 'min(30vw, 250px)', background: '#F5F1E8', opacity: 0.28 }} />
