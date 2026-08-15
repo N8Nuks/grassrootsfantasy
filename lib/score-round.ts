@@ -98,7 +98,20 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
 
   // 3. Team scores with carry-forward + full substitution cascade
   const statByPlayer = new Map(stats.map(s => [s.player_id, s.raw as StatLine]))
-  const played = new Set(stats.map(s => s.player_id))
+
+  // Appearing in the upload isn't the same as playing. A player named on the
+  // sheet who never reached the plate or the mound can't score, so they're
+  // treated as absent and the substitution cascade fills their slot.
+  // Plate appearance = AB + BB + HBP (AB alone misses a walk-only game).
+  const hasPlayed = (line: StatLine) => {
+    const n = (x: unknown) => Number(x) || 0
+    const plateAppearances = n(line.ab) + n(line.bb) + n(line.hbp)
+    const pitched = n(line.ip) + n(line.k_pit) + n(line.win) + n(line.er)
+    return plateAppearances > 0 || pitched > 0
+  }
+  const played = new Set(
+    stats.filter(s => hasPlayed(s.raw as StatLine)).map(s => s.player_id)
+  )
 
   const { data: allLineups } = await admin.from('lineups')
     .select('id, owner_id, grade, rounds!inner(round_number), lineup_slots(slot, card_id, cards(player_id, players(positions)))')
