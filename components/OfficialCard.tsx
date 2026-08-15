@@ -11,35 +11,53 @@ export type OfficialCardData = {
   since: string | null
   level?: number | null      // officials grade by passing Levels 1–7
   photoUrl?: string | null
+  strap?: string | null      // record cards carry a headline above the banner
+  featured?: boolean         // the two records — bigger, lit, shimmering
 }
 
 /* Officials get the same card language as players — tier-style frame, banner,
    portrait area, gem corner — with career games where the stat table sits and
-   the officiating Level where a player's number goes. */
+   the officiating Level where a player's number goes.
+
+   `featured` is the record treatment: crackling rim, shimmering name, diamond
+   career figure. Same card, turned up. */
 export default function OfficialCard({ o }: { o: OfficialCardData }) {
   const accent = o.role === 'umpire' ? SILVER : GOLD
   const roleWord = o.role === 'umpire' ? 'Umpire' : 'Scorer'
   const verb = o.role === 'umpire' ? 'Umpired' : 'Scored'
+  const big = !!o.featured
 
   return (
-    <div className="w-full rounded-2xl flex flex-col"
+    <div className={"w-full rounded-2xl flex flex-col relative" + (big ? ' gf-rim' : '')}
       style={{
-        aspectRatio: '5 / 7',
-        padding: '5px',
+        aspectRatio: big ? '5 / 6.6' : '5 / 7',
+        padding: big ? '7px' : '5px',
         background: `linear-gradient(165deg, ${accent} 0%, ${accent}55 40%, ${accent}25 100%)`,
-        boxShadow: `0 0 22px ${accent}28`,
+        boxShadow: big ? `0 0 40px ${accent}55, 0 0 90px ${accent}22` : `0 0 22px ${accent}28`,
+        ...(big ? { ['--rim' as string]: `${accent}90` } : {}),
       }}>
       <div className="flex-1 rounded-xl overflow-hidden flex flex-col min-h-0"
         style={{ background: '#121215', border: '1px solid #F5F1E820' }}>
 
+        {/* Record headline */}
+        {big && o.strap && (
+          <div className="text-center" style={{ background: '#0D0D0F', borderBottom: `1px solid ${accent}30`, padding: '10px 10px 8px' }}>
+            <p className="text-[9px] font-black uppercase tracking-[0.3em]"
+              style={{ color: accent, textShadow: `0 0 14px ${accent}90` }}>{o.strap}</p>
+          </div>
+        )}
+
         {/* Banner — role, name, level gem */}
         <div className="flex items-center gap-2 pinstripe-fine"
-          style={{ flex: '0 0 auto', background: '#0D0D0F', borderBottom: `1px solid ${accent}40`, padding: '9px 10px' }}>
+          style={{ flex: '0 0 auto', background: '#0D0D0F', borderBottom: `1px solid ${accent}40`, padding: big ? '12px 14px' : '9px 10px' }}>
           <div className="flex-1 min-w-0">
             <p className="text-[8px] font-black uppercase tracking-[0.25em] truncate" style={{ color: `${accent}B0` }}>
               {roleWord}
             </p>
-            <p className="text-sm font-black leading-tight truncate" style={{ fontFamily: 'var(--font-heading)', color: '#F5F1E8' }}>
+            <p className={(big ? 'text-xl sm:text-2xl' : 'text-sm') + ' font-black leading-tight' + (big ? ' gf-shimmer-text' : '')}
+              style={big
+                ? { fontFamily: 'var(--font-heading)' }
+                : { fontFamily: 'var(--font-heading)', color: '#F5F1E8' }}>
               {o.name}
             </p>
           </div>
@@ -47,16 +65,17 @@ export default function OfficialCard({ o }: { o: OfficialCardData }) {
           {/* Gem corner — the officiating Level, where a player's number sits */}
           <div className="shrink-0 flex items-center justify-center"
             style={{
-              width: '40px', height: '40px',
+              width: big ? '54px' : '40px', height: big ? '54px' : '40px',
               background: `linear-gradient(150deg, ${accent} 0%, ${accent}60 100%)`,
               clipPath: 'polygon(50% 0%, 100% 28%, 100% 72%, 50% 100%, 0% 72%, 0% 28%)',
-              boxShadow: `0 0 12px ${accent}60`,
+              boxShadow: `0 0 ${big ? 18 : 12}px ${accent}70`,
               padding: '2px',
             }}>
             <span className="w-full h-full flex flex-col items-center justify-center"
               style={{ background: '#0D0D0F', clipPath: 'polygon(50% 0%, 100% 28%, 100% 72%, 50% 100%, 0% 72%, 0% 28%)' }}>
-              <span className="text-[5px] font-black uppercase tracking-[0.15em]" style={{ color: `${accent}C0` }}>Level</span>
-              <span className="text-base font-black leading-none"
+              <span className={(big ? 'text-[6px]' : 'text-[5px]') + ' font-black uppercase tracking-[0.15em]'}
+                style={{ color: `${accent}C0` }}>Level</span>
+              <span className={(big ? 'text-xl' : 'text-base') + ' font-black leading-none'}
                 style={{ fontFamily: 'var(--font-heading)', color: accent, textShadow: `0 0 8px ${accent}70` }}>
                 {o.level ?? '#'}
               </span>
@@ -71,6 +90,12 @@ export default function OfficialCard({ o }: { o: OfficialCardData }) {
             background: `linear-gradient(115deg, transparent 0%, transparent 44%, ${accent}22 44%, ${accent}22 54%, transparent 54%),
                          linear-gradient(180deg, ${accent}18 0%, #121215 88%)`,
           }} />
+          {big && (
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div className="gf-sheen absolute top-0 bottom-0"
+                style={{ width: '70px', background: `linear-gradient(90deg, transparent, ${accent}30, transparent)` }} />
+            </div>
+          )}
           {o.photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={o.photoUrl} alt={o.name} className="relative"
@@ -92,16 +117,20 @@ export default function OfficialCard({ o }: { o: OfficialCardData }) {
 
         {/* Career games — the single figure, where a player's stat table sits */}
         <div className="text-center"
-          style={{ flex: '0 0 auto', background: '#0D0D0F', borderTop: `1px solid ${accent}40`, padding: '10px 10px 12px' }}>
-          <p className="text-3xl font-black leading-none"
-            style={{ fontFamily: 'var(--font-heading)', color: accent, textShadow: `0 0 14px ${accent}55` }}>
+          style={{ flex: '0 0 auto', background: '#0D0D0F', borderTop: `1px solid ${accent}40`, padding: big ? '14px 10px 16px' : '10px 10px 12px' }}>
+          <p className={(big ? 'text-6xl sm:text-7xl gf-diamond-text' : 'text-3xl') + ' font-black leading-none'}
+            style={big
+              ? { fontFamily: 'var(--font-heading)' }
+              : { fontFamily: 'var(--font-heading)', color: accent, textShadow: `0 0 14px ${accent}55` }}>
             {o.games}
           </p>
-          <p className="text-[8px] font-black uppercase tracking-[0.28em]" style={{ color: `${accent}A0`, marginTop: '5px' }}>
+          <p className={(big ? 'text-[10px]' : 'text-[8px]') + ' font-black uppercase tracking-[0.28em]'}
+            style={{ color: `${accent}A0`, marginTop: big ? '8px' : '5px' }}>
             Games {verb}
           </p>
           {o.since && (
-            <p className="text-[8px] uppercase tracking-widest" style={{ color: '#F5F1E855', marginTop: '4px' }}>
+            <p className={(big ? 'text-[9px]' : 'text-[8px]') + ' uppercase tracking-widest'}
+              style={{ color: '#F5F1E855', marginTop: '4px' }}>
               Reached {o.since}
             </p>
           )}

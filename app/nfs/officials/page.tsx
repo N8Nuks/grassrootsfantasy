@@ -55,74 +55,20 @@ function build() {
   }
 }
 
-const verb = (r: string) => (r === 'umpire' ? 'umpired' : 'scored')
-
-/* Featured — the two records that sit above the wing */
+/* Featured — the same card as the wing, turned up: crackling rim, shimmering
+   name, diamond career figure, bigger Level gem */
 function FeatureCard({ c }: { c: Card }) {
-  // Each record gets its own colour so the pair reads as two achievements, not one grey block
-  const hue = c.role === 'umpire' ? SILVER : GOLD
-  return (
-    <div className="relative rounded-3xl overflow-hidden text-center"
-      style={{
-        background: `linear-gradient(165deg, ${hue}22 0%, #14141C 42%, #0B0B0F 100%)`,
-        border: `2px solid ${hue}`,
-        boxShadow: `0 0 34px ${hue}45, 0 0 90px ${hue}18, inset 0 0 44px ${hue}10`,
-        padding: '38px 26px 32px',
-      }}>
-      {/* Colour bloom behind the number */}
-      <div className="absolute inset-0 pointer-events-none"
-        style={{ background: `radial-gradient(ellipse 66% 46% at 50% 52%, ${hue}26 0%, transparent 72%)` }} />
-      {/* Bright rule across the top edge */}
-      <div className="absolute top-0 left-0 right-0 pointer-events-none"
-        style={{ height: '3px', background: `linear-gradient(90deg, transparent, ${hue}, transparent)`, boxShadow: `0 0 14px ${hue}` }} />
-
-      <div className="relative">
-        <p className="text-[10px] font-black uppercase tracking-[0.35em]"
-          style={{ color: hue, textShadow: `0 0 16px ${hue}90`, marginBottom: '20px' }}>
-          {c.strap}
-        </p>
-
-        {/* Portrait slot — an in-game shot lands here for the real season */}
-        <div className="mx-auto rounded-full overflow-hidden flex items-center justify-center"
-          style={{
-            width: '128px', height: '128px',
-            background: `radial-gradient(circle at 50% 30%, ${hue}30 0%, #14141C 62%, #0B0B0F 100%)`,
-            border: `2px solid ${hue}`,
-            boxShadow: `0 0 28px ${hue}55, inset 0 0 22px ${hue}22`,
-            marginBottom: '20px',
-          }}>
-          <svg width="62" height="62" viewBox="0 0 60 80" fill="none">
-            <circle cx="30" cy="22" r="13" fill={`${hue}90`} />
-            <path d="M6 80 C6 52 54 52 54 80 Z" fill={`${hue}90`} />
-          </svg>
-        </div>
-
-        <p className="text-7xl sm:text-8xl font-black leading-none gf-diamond-text"
-          style={{ fontFamily: 'var(--font-heading)' }}>
-          {c.games}
-        </p>
-        <p className="text-[10px] font-black uppercase tracking-[0.4em]"
-          style={{ color: hue, textShadow: `0 0 12px ${hue}70`, marginTop: '10px' }}>
-          Games {verb(c.role)}
-        </p>
-
-        {/* Divider */}
-        <div className="mx-auto" style={{ width: '58px', height: '2px', background: hue, boxShadow: `0 0 12px ${hue}`, margin: '20px auto 18px', borderRadius: '2px' }} />
-
-        <p className="text-3xl sm:text-4xl font-black" style={{ fontFamily: 'var(--font-heading)', color: 'white' }}>
-          {c.name}
-        </p>
-        <p className="text-xs uppercase tracking-[0.25em]" style={{ color: 'rgba(255,255,255,0.6)', marginTop: '8px' }}>
-          {c.role === 'umpire' ? 'Umpire' : 'Scorer'}{c.since ? ` · reached ${c.since}` : ''}{c.retired ? ' · retired' : ''}
-        </p>
-      </div>
-    </div>
-  )
+  return <OfficialCard o={{
+    name: c.name, games: c.games, role: c.role, retired: c.retired,
+    since: c.since, strap: c.strap, featured: true,
+  }} />
 }
 
-/* Wing — everyone else past the bar, in the shared official card */
+/* Wing — everyone else past the bar */
 function WingCard({ c }: { c: Card }) {
-  return <OfficialCard o={{ name: c.name, games: c.games, role: c.role, retired: c.retired, since: c.since }} />
+  return <OfficialCard o={{
+    name: c.name, games: c.games, role: c.role, retired: c.retired, since: c.since,
+  }} />
 }
 
 export default function Officials() {
@@ -133,7 +79,7 @@ export default function Officials() {
       <Nav />
 
       {/* Hero */}
-      <section className="relative px-5 sm:px-12 overflow-hidden" style={{ paddingTop: '70px', paddingBottom: '44px' }}>
+      <section className="relative px-6 sm:px-12 overflow-hidden" style={{ paddingTop: '70px', paddingBottom: '40px' }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 75% 55% at 50% 0%, #10214D 0%, #0D0D0F 70%)' }} />
         <div className="relative z-10 text-center" style={{ maxWidth: '740px', marginLeft: 'auto', marginRight: 'auto' }}>
           <a href="/nfs" className="inline-block text-xs font-black uppercase tracking-[0.2em]"
@@ -154,43 +100,43 @@ export default function Officials() {
       </section>
 
       {/* The two records */}
-      <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: '44px', paddingBottom: '44px' }}>
-        <div className="text-center" style={{ marginBottom: '30px' }}>
+      <section className="px-6 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: '36px', paddingBottom: '40px' }}>
+        <div className="text-center" style={{ marginBottom: '26px' }}>
           <p className="text-[11px] font-black uppercase tracking-[0.35em]" style={{ color: PLATINUM }}>The Records</p>
         </div>
-        <div className="grid gap-6 sm:grid-cols-2" style={{ maxWidth: '860px', marginLeft: 'auto', marginRight: 'auto' }}>
+        <div className="grid gap-5 sm:gap-6 grid-cols-2" style={{ maxWidth: '760px', marginLeft: 'auto', marginRight: 'auto' }}>
           {featured.map(c => <FeatureCard key={`${c.role}-${c.name}`} c={c} />)}
         </div>
       </section>
 
       {/* Umpires */}
-      <section className="px-5 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: '48px', paddingBottom: '44px' }}>
+      <section className="px-6 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: '44px', paddingBottom: '40px' }}>
         <div style={{ maxWidth: '1000px', marginLeft: 'auto', marginRight: 'auto' }}>
-          <div className="text-center" style={{ marginBottom: '30px' }}>
+          <div className="text-center" style={{ marginBottom: '26px' }}>
             <h2 className="text-2xl sm:text-3xl font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>Umpires</h2>
             <p className="text-xs text-white/55" style={{ marginTop: '8px' }}>300 or more Premier games</p>
           </div>
-          <div className="grid gap-4 grid-cols-2 sm:gap-5 lg:grid-cols-3">
+          <div className="grid gap-3 grid-cols-2 sm:gap-5 lg:grid-cols-3">
             {umpires.map(c => <WingCard key={c.name} c={c} />)}
           </div>
         </div>
       </section>
 
       {/* Scorers */}
-      <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: '48px', paddingBottom: '44px' }}>
+      <section className="px-6 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: '44px', paddingBottom: '40px' }}>
         <div style={{ maxWidth: '1000px', marginLeft: 'auto', marginRight: 'auto' }}>
-          <div className="text-center" style={{ marginBottom: '30px' }}>
+          <div className="text-center" style={{ marginBottom: '26px' }}>
             <h2 className="text-2xl sm:text-3xl font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>Scorers</h2>
             <p className="text-xs text-white/55" style={{ marginTop: '8px' }}>150 or more Premier games</p>
           </div>
-          <div className="grid gap-4 grid-cols-2 sm:gap-5 lg:grid-cols-3">
+          <div className="grid gap-3 grid-cols-2 sm:gap-5 lg:grid-cols-3">
             {scorers.map(c => <WingCard key={c.name} c={c} />)}
           </div>
         </div>
       </section>
 
       {/* Why the bars differ */}
-      <section className="px-5 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: '36px', paddingBottom: '36px' }}>
+      <section className="px-6 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: '36px', paddingBottom: '36px' }}>
         <div className="text-center" style={{ maxWidth: '640px', marginLeft: 'auto', marginRight: 'auto' }}>
           <p className="text-xs leading-relaxed text-white/65">
             The thresholds differ because the roles do. Every game needs two to four umpires but only
@@ -203,7 +149,7 @@ export default function Officials() {
       </section>
 
       {/* CTA back */}
-      <section className="px-5 sm:px-12 text-center" style={{ background: '#0D0D0F', borderTop: `1px solid ${COBALT}40`, paddingTop: '44px', paddingBottom: '52px' }}>
+      <section className="px-6 sm:px-12 text-center" style={{ background: '#0D0D0F', borderTop: `1px solid ${COBALT}40`, paddingTop: '44px', paddingBottom: '52px' }}>
         <p className="text-xs font-black uppercase tracking-[0.3em] mb-5" style={{ color: GOLD }}>More NFS History</p>
         <div className="flex items-center justify-center gap-4 flex-wrap">
           <a href="/nfs/honours" className="inline-block text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03]"
