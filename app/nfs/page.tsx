@@ -9,187 +9,184 @@ const GOLD = '#E8C15A'
 const SILVER = '#4DA6FF'
 const GREEN = '#2D9E4E'
 
+// Sections that sit over the logo backdrop are translucent so it shows through
+const OVER_BACKDROP = 'rgba(20,20,26,0.72)'
+
 export default function NFS() {
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#0D0D0F' }}>
       <Nav /><SandboxBanner />
 
-      {/* Hero */}
-      <section className="relative px-5 sm:px-12 overflow-hidden" style={{ paddingTop: "56px", paddingBottom: "48px" }}>
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 75% 55% at 50% 0%, #10214D 0%, #0D0D0F 70%)' }} />
+      {/* ══ Everything from the hero down to The History runs over one backdrop ══ */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 75% 40% at 50% 0%, #10214D 0%, #0D0D0F 70%)' }} />
         <NfsBackdrop />
-        <div className="relative z-10 text-center" style={{ maxWidth: "760px", marginLeft: "auto", marginRight: "auto" }}>
-          {/* Crest sits in a lit disc so the black roundel reads on a dark page.
-              The source PNG carries a large transparent margin, so it's scaled up
-              and clipped by the disc rather than fitted inside it. */}
-          <div className="rounded-full flex items-center justify-center overflow-hidden"
-            style={{
-              width: '112px', height: '112px',
-              marginLeft: 'auto', marginRight: 'auto', marginBottom: '22px',
-              background: 'radial-gradient(circle at 50% 35%, #ffffff14 0%, #0D0D0F 72%)',
-              border: `1px solid ${SILVER}45`,
-              boxShadow: `0 0 30px ${COBALT}35`,
-            }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/NFS-logo.png" alt="Northern Fastpitch Series"
-              style={{ width: '300%', height: '300%', objectFit: 'contain' }} />
-          </div>
-          <p className="text-xs font-black uppercase tracking-[0.3em] mb-5" style={{ color: GOLD }}>League One · Now Live</p>
-          <h1 className="text-4xl sm:text-5xl font-black text-white mb-5" style={{ fontFamily: 'var(--font-heading)' }}>
-            NFS Premier League
-          </h1>
-          <p className="text-sm text-white/70 leading-relaxed" style={{ maxWidth: "480px", marginLeft: "auto", marginRight: "auto", marginBottom: "28px" }}>
-            The Northern Fastpitch Series — Auckland&apos;s Premier Fastpitch competition, running since 2005 on nearly ninety years of Auckland Softball history. Now with a Fantasy League of its own, endorsed by the Auckland Softball Association.
-          </p>
-          <div className="flex items-center justify-center gap-8 flex-wrap" style={{ marginBottom: "32px" }}>
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full animate-pulse" style={{ backgroundColor: GREEN }} />
-              <span className="text-xs text-white/70 uppercase tracking-wider font-bold">Men&apos;s — Live</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full animate-pulse" style={{ backgroundColor: COBALT }} />
-              <span className="text-xs text-white/70 uppercase tracking-wider font-bold">Women&apos;s — Live</span>
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="/register"
-              className="w-full sm:w-auto text-center text-base font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.02]"
-              style={{ color: '#0D0D0F', background: GOLD, padding: "18px 44px", maxWidth: '360px', boxShadow: `0 0 24px ${GOLD}40` }}>
-              Register your team
-            </a>
-            <a href="/login"
-              className="w-full sm:w-auto text-center text-base font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.02]"
-              style={{ color: 'white', border: '1px solid #ffffff35', background: 'transparent', padding: "18px 44px", maxWidth: '360px' }}>
-              Log in
-            </a>
-          </div>
-          <p className="text-[11px] text-white/60 mt-5">Free to play. One account covers both Men&apos;s and Women&apos;s grades.</p>
-        </div>
-      </section>
 
-      {/* Facts ticker */}
-      <FactsTicker />
-
-      {/* Scoring & Competitions — warm charcoal so it never blends into the ticker's navy */}
-      <section className="px-5 sm:px-12" style={{ background: '#14141A', borderTop: `2px solid ${GOLD}35`, borderBottom: '1px solid #ffffff0a', paddingTop: "36px", paddingBottom: "36px" }}>
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-5" style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
-          <div className="text-center sm:text-left">
-            <p className="text-xs font-black uppercase tracking-[0.3em] mb-2" style={{ color: GOLD }}>How it all scores</p>
-            <p className="text-lg sm:text-xl font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>
-              Every event, every point, every competition.
+        {/* Hero */}
+        <section className="relative z-10 px-5 sm:px-12" style={{ paddingTop: "56px", paddingBottom: "48px" }}>
+          <div className="text-center" style={{ maxWidth: "760px", marginLeft: "auto", marginRight: "auto" }}>
+            <p className="text-xs font-black uppercase tracking-[0.3em] mb-5" style={{ color: GOLD }}>League One · Now Live</p>
+            <h1 className="text-4xl sm:text-5xl font-black text-white mb-5" style={{ fontFamily: 'var(--font-heading)' }}>
+              NFS Premier League
+            </h1>
+            <p className="text-sm text-white/70 leading-relaxed" style={{ maxWidth: "480px", marginLeft: "auto", marginRight: "auto", marginBottom: "28px" }}>
+              The Northern Fastpitch Series — Auckland&apos;s Premier Fastpitch competition, running since 2005 on nearly ninety years of Auckland Softball history. Now with a Fantasy League of its own, endorsed by the Auckland Softball Association.
             </p>
-            <p className="text-xs text-white/70 mt-1">
-              The full point table, how each lineup slot scores, and the five ways to win.
-            </p>
+            <div className="flex items-center justify-center gap-8 flex-wrap" style={{ marginBottom: "32px" }}>
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full animate-pulse" style={{ backgroundColor: GREEN }} />
+                <span className="text-xs text-white/70 uppercase tracking-wider font-bold">Men&apos;s — Live</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full animate-pulse" style={{ backgroundColor: COBALT }} />
+                <span className="text-xs text-white/70 uppercase tracking-wider font-bold">Women&apos;s — Live</span>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <a href="/register"
+                className="w-full sm:w-auto text-center text-base font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.02]"
+                style={{ color: '#0D0D0F', background: GOLD, padding: "18px 44px", maxWidth: '360px', boxShadow: `0 0 24px ${GOLD}40` }}>
+                Register your team
+              </a>
+              <a href="/login"
+                className="w-full sm:w-auto text-center text-base font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.02]"
+                style={{ color: 'white', border: '1px solid #ffffff35', background: 'transparent', padding: "18px 44px", maxWidth: '360px' }}>
+                Log in
+              </a>
+            </div>
+            <p className="text-[11px] text-white/60 mt-5">Free to play. One account covers both Men&apos;s and Women&apos;s grades.</p>
           </div>
-          <a href="/nfs/scoring"
-            className="w-full sm:w-auto text-center text-sm font-black uppercase tracking-widest transition-all hover:scale-[1.03] shrink-0 rounded-full"
-            style={{ color: '#0D0D0F', background: GOLD, padding: '16px 34px', maxWidth: '360px', boxShadow: `0 0 22px ${GOLD}40` }}>
-            Scoring &amp; Competitions
-          </a>
-        </div>
-      </section>
+        </section>
 
-      {/* The Competition */}
-      <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "48px", paddingBottom: "48px" }}>
-        <div className="grid gap-4 sm:gap-6 sm:grid-cols-3" style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
-          {[
-            { big: '2005', label: 'NFS founded', d: 'Twenty-one seasons of Northern Premier fastpitch.' },
-            { big: '1939', label: 'Auckland softball begins', d: 'Nearly ninety years of history behind ASA every game.' },
-            { big: '300+', label: 'Career games club', d: 'Only eight players have ever been recorded as reaching it. Their cards carry the badge.' },
-          ].map((s) => (
-            <div key={s.label} className="rounded-2xl p-6 flex flex-col gap-2 items-center text-center" style={{ background: '#121215', border: `1px solid ${COBALT}30` }}>
-              <span className="text-4xl font-black" style={{ color: COBALT, fontFamily: 'var(--font-heading)' }}>{s.big}</span>
-              <span className="text-xs font-black uppercase tracking-widest" style={{ color: SILVER }}>{s.label}</span>
-              <p className="text-xs text-white/70 leading-relaxed mt-1">{s.d}</p>
+        {/* Facts ticker */}
+        <div className="relative z-10">
+          <FactsTicker />
+        </div>
+
+        {/* Scoring & Competitions */}
+        <section className="relative z-10 px-5 sm:px-12"
+          style={{ background: OVER_BACKDROP, borderTop: `2px solid ${GOLD}35`, borderBottom: '1px solid #ffffff0a', paddingTop: "36px", paddingBottom: "36px" }}>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-5" style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
+            <div className="text-center sm:text-left">
+              <p className="text-xs font-black uppercase tracking-[0.3em] mb-2" style={{ color: GOLD }}>How it all scores</p>
+              <p className="text-lg sm:text-xl font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+                Every event, every point, every competition.
+              </p>
+              <p className="text-xs text-white/70 mt-1">
+                The full point table, how each lineup slot scores, and the five ways to win.
+              </p>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── The History ── */}
-      <section className="px-5 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: "56px", paddingBottom: "56px" }}>
-        <div style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
-
-          <div className="text-center" style={{ marginBottom: '28px' }}>
-            <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>The History</p>
-            <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
-              Twenty-two seasons.<br className="sm:hidden" /> And everyone who made them.
-            </h2>
+            <a href="/nfs/scoring"
+              className="w-full sm:w-auto text-center text-sm font-black uppercase tracking-widest transition-all hover:scale-[1.03] shrink-0 rounded-full"
+              style={{ color: '#0D0D0F', background: GOLD, padding: '16px 34px', maxWidth: '360px', boxShadow: `0 0 22px ${GOLD}40` }}>
+              Scoring &amp; Competitions
+            </a>
           </div>
+        </section>
 
-          {/* Honours Board — the feature. Engraved plaque treatment, full width. */}
-          <a href="/nfs/honours" className="block rounded-3xl overflow-hidden transition-all hover:scale-[1.008]"
-            style={{
-              background: `linear-gradient(168deg, ${GOLD}22 0%, #1A1710 42%, #0E0D0B 100%)`,
-              border: `1px solid ${GOLD}70`,
-              boxShadow: `0 0 46px ${GOLD}1F`,
-              padding: '5px',
-              marginBottom: '16px',
-            }}>
-            {/* Inner frame — the engraved edge of a trophy plaque */}
-            <div className="relative rounded-[1.3rem] pinstripe-fine text-center overflow-hidden"
-              style={{ border: `1px solid ${GOLD}38`, padding: '40px 24px 36px' }}>
-              {/* Sheen across the top of the plaque */}
-              <div className="absolute inset-0 pointer-events-none"
-                style={{ background: `radial-gradient(ellipse 80% 50% at 50% 0%, ${GOLD}18 0%, transparent 70%)` }} />
-
-              <div className="relative">
-                <p className="text-[10px] font-black uppercase tracking-[0.4em]"
-                  style={{ color: GOLD, textShadow: `0 0 14px ${GOLD}70` }}>
-                  Honours Board
-                </p>
-                <div className="mx-auto" style={{ width: '52px', height: '2px', background: GOLD, boxShadow: `0 0 10px ${GOLD}`, margin: '14px auto 22px', borderRadius: '2px' }} />
-
-                <h3 className="text-2xl sm:text-4xl font-black text-white leading-tight"
-                  style={{ fontFamily: 'var(--font-heading)' }}>
-                  Every winner. Every season.
-                </h3>
-                <p className="text-xs sm:text-sm text-white/60 leading-relaxed"
-                  style={{ maxWidth: '460px', marginLeft: 'auto', marginRight: 'auto', marginTop: '14px', marginBottom: '30px' }}>
-                  Every Premier award since 2004-05 — batters, pitchers and MVPs, season by season.
-                </p>
-
-                <span className="inline-flex items-center gap-2 rounded-full text-sm font-black uppercase tracking-widest"
-                  style={{ color: '#0D0D0F', background: GOLD, padding: '15px 32px', boxShadow: `0 0 22px ${GOLD}50` }}>
-                  See the Honours Board <span>→</span>
-                </span>
+        {/* The Competition */}
+        <section className="relative z-10 px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "48px", paddingBottom: "48px" }}>
+          <div className="grid gap-4 sm:gap-6 sm:grid-cols-3" style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
+            {[
+              { big: '2005', label: 'NFS founded', d: 'Twenty-one seasons of Northern Premier fastpitch.' },
+              { big: '1939', label: 'Auckland softball begins', d: 'Nearly ninety years of history behind ASA every game.' },
+              { big: '300+', label: 'Career games club', d: 'Only eight players have ever been recorded as reaching it. Their cards carry the badge.' },
+            ].map((s) => (
+              <div key={s.label} className="rounded-2xl p-6 flex flex-col gap-2 items-center text-center"
+                style={{ background: 'rgba(18,18,21,0.78)', border: `1px solid ${COBALT}30` }}>
+                <span className="text-4xl font-black" style={{ color: COBALT, fontFamily: 'var(--font-heading)' }}>{s.big}</span>
+                <span className="text-xs font-black uppercase tracking-widest" style={{ color: SILVER }}>{s.label}</span>
+                <p className="text-xs text-white/70 leading-relaxed mt-1">{s.d}</p>
               </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── The History ── */}
+        <section className="relative z-10 px-5 sm:px-12"
+          style={{ background: OVER_BACKDROP, borderTop: '1px solid #ffffff0a', paddingTop: "56px", paddingBottom: "56px" }}>
+          <div style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
+
+            <div className="text-center" style={{ marginBottom: '28px' }}>
+              <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>The History</p>
+              <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
+                Twenty-two seasons.<br className="sm:hidden" /> And everyone who made them.
+              </h2>
             </div>
-          </a>
 
-          {/* Officials Wing — photograph carries it */}
-          <a href="/nfs/officials" className="block rounded-3xl overflow-hidden transition-all hover:scale-[1.008]"
-            style={{ border: `1px solid ${SILVER}50`, background: '#111319', boxShadow: `0 0 26px ${SILVER}12` }}>
-            <div className="grid sm:grid-cols-2">
-              <div className="relative" style={{ minHeight: '210px' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/officials-umpire.jpg" alt="An umpire calls the play at second"
-                  className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: 'center 40%' }} />
-                <div className="absolute inset-0"
-                  style={{ background: `linear-gradient(180deg, #0D0D0F10 0%, #0D0D0F55 60%, #111319E6 100%)` }} />
-                <div className="absolute inset-0 sm:block hidden"
-                  style={{ background: `linear-gradient(90deg, transparent 40%, #111319 100%)` }} />
-              </div>
+            {/* Honours Board — the feature. Engraved plaque treatment, full width. */}
+            <a href="/nfs/honours" className="block rounded-3xl overflow-hidden transition-all hover:scale-[1.008]"
+              style={{
+                background: `linear-gradient(168deg, ${GOLD}22 0%, #1A1710 42%, #0E0D0B 100%)`,
+                border: `1px solid ${GOLD}70`,
+                boxShadow: `0 0 46px ${GOLD}1F`,
+                padding: '5px',
+                marginBottom: '16px',
+              }}>
+              {/* Inner frame — the engraved edge of a trophy plaque */}
+              <div className="relative rounded-[1.3rem] pinstripe-fine text-center overflow-hidden"
+                style={{ border: `1px solid ${GOLD}38`, padding: '40px 24px 36px' }}>
+                <div className="absolute inset-0 pointer-events-none"
+                  style={{ background: `radial-gradient(ellipse 80% 50% at 50% 0%, ${GOLD}18 0%, transparent 70%)` }} />
 
-              <div className="text-left" style={{ padding: '28px 24px 30px' }}>
-                <p className="text-[10px] font-black uppercase tracking-[0.35em]" style={{ color: SILVER }}>The Officials Wing</p>
-                <h3 className="text-xl sm:text-2xl font-black text-white leading-tight" style={{ fontFamily: 'var(--font-heading)', marginTop: '12px' }}>
-                  No game happens without them.
-                </h3>
-                <p className="text-xs text-white/65 leading-relaxed" style={{ marginTop: '12px' }}>
-                  The umpires and scorers who have worked hundreds of Premier games — including the
-                  only official ever to reach 400.
-                </p>
-                <span className="inline-flex items-center gap-2 rounded-full text-sm font-black uppercase tracking-widest"
-                  style={{ color: '#0D0D0F', background: SILVER, padding: '14px 28px', boxShadow: `0 0 20px ${SILVER}45`, marginTop: '22px' }}>
-                  Enter the Wing <span>→</span>
-                </span>
+                <div className="relative">
+                  <p className="text-[10px] font-black uppercase tracking-[0.4em]"
+                    style={{ color: GOLD, textShadow: `0 0 14px ${GOLD}70` }}>
+                    Honours Board
+                  </p>
+                  <div className="mx-auto" style={{ width: '52px', height: '2px', background: GOLD, boxShadow: `0 0 10px ${GOLD}`, margin: '14px auto 22px', borderRadius: '2px' }} />
+
+                  <h3 className="text-2xl sm:text-4xl font-black text-white leading-tight"
+                    style={{ fontFamily: 'var(--font-heading)' }}>
+                    Every winner. Every season.
+                  </h3>
+                  <p className="text-xs sm:text-sm text-white/60 leading-relaxed"
+                    style={{ maxWidth: '460px', marginLeft: 'auto', marginRight: 'auto', marginTop: '14px', marginBottom: '30px' }}>
+                    Every Premier award since 2004-05 — batters, pitchers and MVPs, season by season.
+                  </p>
+
+                  <span className="inline-flex items-center gap-2 rounded-full text-sm font-black uppercase tracking-widest"
+                    style={{ color: '#0D0D0F', background: GOLD, padding: '15px 32px', boxShadow: `0 0 22px ${GOLD}50` }}>
+                    See the Honours Board <span>→</span>
+                  </span>
+                </div>
               </div>
-            </div>
-          </a>
-        </div>
-      </section>
+            </a>
+
+            {/* Officials Wing — photograph carries it */}
+            <a href="/nfs/officials" className="block rounded-3xl overflow-hidden transition-all hover:scale-[1.008]"
+              style={{ border: `1px solid ${SILVER}50`, background: '#111319', boxShadow: `0 0 26px ${SILVER}12` }}>
+              <div className="grid sm:grid-cols-2">
+                <div className="relative" style={{ minHeight: '210px' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/officials-umpire.jpg" alt="An umpire calls the play at second"
+                    className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: 'center 40%' }} />
+                  <div className="absolute inset-0"
+                    style={{ background: `linear-gradient(180deg, #0D0D0F10 0%, #0D0D0F55 60%, #111319E6 100%)` }} />
+                  <div className="absolute inset-0 sm:block hidden"
+                    style={{ background: `linear-gradient(90deg, transparent 40%, #111319 100%)` }} />
+                </div>
+
+                <div className="text-left" style={{ padding: '28px 24px 30px' }}>
+                  <p className="text-[10px] font-black uppercase tracking-[0.35em]" style={{ color: SILVER }}>The Officials Wing</p>
+                  <h3 className="text-xl sm:text-2xl font-black text-white leading-tight" style={{ fontFamily: 'var(--font-heading)', marginTop: '12px' }}>
+                    No game happens without them.
+                  </h3>
+                  <p className="text-xs text-white/65 leading-relaxed" style={{ marginTop: '12px' }}>
+                    The umpires and scorers who have worked hundreds of Premier games — including the
+                    only official ever to reach 400.
+                  </p>
+                  <span className="inline-flex items-center gap-2 rounded-full text-sm font-black uppercase tracking-widest"
+                    style={{ color: '#0D0D0F', background: SILVER, padding: '14px 28px', boxShadow: `0 0 20px ${SILVER}45`, marginTop: '22px' }}>
+                    Enter the Wing <span>→</span>
+                  </span>
+                </div>
+              </div>
+            </a>
+          </div>
+        </section>
+      </div>
+      {/* ══ backdrop ends ══ */}
 
       {/* What you get */}
       <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "48px", paddingBottom: "48px" }}>
