@@ -106,7 +106,7 @@ export default function NFS() {
 
         {/* ── The History ── */}
         <section className="relative z-10 px-5 sm:px-12"
-          style={{ background: OVER_BACKDROP, borderTop: '1px solid #ffffff0a', paddingTop: "28px", paddingBottom: "56px" }}>
+          style={{ background: OVER_BACKDROP, borderTop: '1px solid #ffffff0a', paddingTop: "28px", paddingBottom: "28px" }}>
           <div style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
 
             <div className="text-center" style={{ marginBottom: '28px' }}>
@@ -132,8 +132,8 @@ export default function NFS() {
                   style={{ background: `radial-gradient(ellipse 80% 50% at 50% 0%, ${GOLD}18 0%, transparent 70%)` }} />
 
                 <div className="relative">
-                  <p className="text-[10px] font-black uppercase tracking-[0.4em]"
-                    style={{ color: GOLD, textShadow: `0 0 14px ${GOLD}70` }}>
+                  <p className="text-base sm:text-lg font-black uppercase tracking-[0.3em]"
+                    style={{ color: GOLD, textShadow: `0 0 16px ${GOLD}70` }}>
                     Honours Board
                   </p>
                   <div className="mx-auto" style={{ width: '52px', height: '2px', background: GOLD, boxShadow: `0 0 10px ${GOLD}`, margin: '14px auto 22px', borderRadius: '2px' }} />
@@ -170,7 +170,8 @@ export default function NFS() {
                 </div>
 
                 <div className="text-center sm:text-left" style={{ padding: '28px 24px 30px' }}>
-                  <p className="text-[10px] font-black uppercase tracking-[0.35em]" style={{ color: SILVER }}>The Officials Wing</p>
+                  <p className="text-base sm:text-lg font-black uppercase tracking-[0.3em]"
+                    style={{ color: SILVER, textShadow: `0 0 16px ${SILVER}70` }}>The Officials Wing</p>
                   <h3 className="text-xl sm:text-2xl font-black text-white leading-tight" style={{ fontFamily: 'var(--font-heading)', marginTop: '12px' }}>
                     No game happens without them.
                   </h3>
