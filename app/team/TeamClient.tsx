@@ -153,27 +153,47 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     const working = [...slots]
     const cardOf = (id: string) => cards.find(c => c.id === id)
     let changed = false
-    for (const slot of missingStarters) {
-      // First bench card eligible for the slot
-      const benchIdx = working.findIndex(s =>
-        s.slot.startsWith('BENCH') && cardOf(s.card_id) && isEligible(cardOf(s.card_id)!, slot))
-      if (benchIdx === -1) continue
-      const promotedCard = working[benchIdx].card_id
-      const vacatedBench = working[benchIdx].slot
-      working.splice(benchIdx, 1)
-      working.push({ slot, card_id: promotedCard, batting_order: null })
+    const unfilled: string[] = []
+
+    // Pull the first card from a band that can legally play the slot.
+    // Returns the vacated slot name, or null if nothing eligible was found.
+    const takeFrom = (band: 'BENCH' | 'RES', slot: string): string | null => {
+      const i = working.findIndex(s =>
+        s.slot.startsWith(band) && cardOf(s.card_id) && isEligible(cardOf(s.card_id)!, slot))
+      if (i === -1) return null
+      const vacated = working[i].slot
+      const card = working[i].card_id
+      working.splice(i, 1)
+      working.push({ slot, card_id: card, batting_order: null })
       changed = true
-      // First reserve backfills the vacated bench spot
-      const resIdx = working.findIndex(s => s.slot.startsWith('RES'))
-      if (resIdx !== -1) {
-        const resCard = working[resIdx].card_id
-        working.splice(resIdx, 1)
-        working.push({ slot: vacatedBench, card_id: resCard, batting_order: null })
-      }
+      return vacated
     }
-    if (!changed) return
+
+    // 1 — fill empty starting slots, bench first, then straight from reserves
+    for (const slot of missingStarters) {
+      const vacatedBench = takeFrom('BENCH', slot)
+      if (vacatedBench) {
+        // a reserve steps up into the bench spot that just opened
+        takeFrom('RES', vacatedBench)
+        continue
+      }
+      // no eligible bench player — try a reserve directly
+      if (takeFrom('RES', slot)) continue
+      // genuinely nobody can play it
+      unfilled.push(SLOT_LABELS[slot] ?? slot)
+    }
+
+    // 2 — any bench slot still empty (e.g. its card was removed) backfills from reserves
+    const after = new Set(working.map(s => s.slot))
+    for (const b of BENCH_SLOTS.filter(x => !after.has(x))) {
+      takeFrom('RES', b)
+    }
+
+    if (!changed && unfilled.length === 0) return
     setSlots(working)
-    setMessage('Your lineup had an open spot — we promoted from your bench to fill it.')
+    setMessage(unfilled.length > 0
+      ? `Your lineup had open spots. We filled what we could — ${unfilled.join(', ')} still needs a player you don't currently hold. Claim a pack to fill it.`
+      : 'Your lineup had an open spot — we promoted from your bench to fill it.')
     // Persist silently
     fetch('/api/save-lineup', {
       method: 'POST',
