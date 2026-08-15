@@ -30,7 +30,7 @@ export default function OfficialCard({ o }: { o: OfficialCardData }) {
   return (
     <div className={"w-full rounded-2xl flex flex-col relative" + (big ? ' gf-rim' : '')}
       style={{
-        aspectRatio: big ? '5 / 6.6' : '5 / 7',
+        aspectRatio: big ? '5 / 8.2' : '5 / 7.4',
         padding: big ? '7px' : '5px',
         background: `linear-gradient(165deg, ${accent} 0%, ${accent}55 40%, ${accent}25 100%)`,
         boxShadow: big ? `0 0 40px ${accent}55, 0 0 90px ${accent}22` : `0 0 22px ${accent}28`,
@@ -42,19 +42,19 @@ export default function OfficialCard({ o }: { o: OfficialCardData }) {
         {/* Record headline */}
         {big && o.strap && (
           <div className="text-center" style={{ background: '#0D0D0F', borderBottom: `1px solid ${accent}30`, padding: '10px 10px 8px' }}>
-            <p className="text-[9px] font-black uppercase tracking-[0.3em]"
+            <p className="text-[9px] font-black uppercase tracking-[0.25em] leading-tight"
               style={{ color: accent, textShadow: `0 0 14px ${accent}90` }}>{o.strap}</p>
           </div>
         )}
 
         {/* Banner — role, name, level gem */}
         <div className="flex items-center gap-2 pinstripe-fine"
-          style={{ flex: '0 0 auto', background: '#0D0D0F', borderBottom: `1px solid ${accent}40`, padding: big ? '12px 14px' : '9px 10px' }}>
+          style={{ flex: '0 0 auto', background: '#0D0D0F', borderBottom: `1px solid ${accent}40`, padding: big ? '11px 12px' : '9px 10px' }}>
           <div className="flex-1 min-w-0">
             <p className="text-[8px] font-black uppercase tracking-[0.25em] truncate" style={{ color: `${accent}B0` }}>
               {roleWord}
             </p>
-            {/* Long names wrap rather than clip — the gem shrinks instead */}
+            {/* Long names wrap rather than clip */}
             <p className={(big ? 'text-base sm:text-xl' : 'text-sm') + ' font-black leading-tight break-words' + (big ? ' gf-shimmer-text' : '')}
               style={big
                 ? { fontFamily: 'var(--font-heading)' }
@@ -69,13 +69,12 @@ export default function OfficialCard({ o }: { o: OfficialCardData }) {
               width: big ? '46px' : '38px', height: big ? '46px' : '38px',
               background: `linear-gradient(150deg, ${accent} 0%, ${accent}60 100%)`,
               clipPath: 'polygon(50% 0%, 100% 28%, 100% 72%, 50% 100%, 0% 72%, 0% 28%)',
-              boxShadow: `0 0 ${big ? 18 : 12}px ${accent}70`,
+              boxShadow: `0 0 ${big ? 16 : 12}px ${accent}70`,
               padding: '2px',
             }}>
             <span className="w-full h-full flex flex-col items-center justify-center"
               style={{ background: '#0D0D0F', clipPath: 'polygon(50% 0%, 100% 28%, 100% 72%, 50% 100%, 0% 72%, 0% 28%)' }}>
-              <span className={(big ? 'text-[6px]' : 'text-[5px]') + ' font-black uppercase tracking-[0.15em]'}
-                style={{ color: `${accent}C0` }}>Level</span>
+              <span className="text-[5px] font-black uppercase tracking-[0.15em]" style={{ color: `${accent}C0` }}>Level</span>
               <span className={(big ? 'text-lg' : 'text-base') + ' font-black leading-none'}
                 style={{ fontFamily: 'var(--font-heading)', color: accent, textShadow: `0 0 8px ${accent}70` }}>
                 {o.level ?? '#'}
@@ -118,20 +117,19 @@ export default function OfficialCard({ o }: { o: OfficialCardData }) {
 
         {/* Career games — the single figure, where a player's stat table sits */}
         <div className="text-center"
-          style={{ flex: '0 0 auto', background: '#0D0D0F', borderTop: `1px solid ${accent}40`, padding: big ? '14px 10px 16px' : '10px 10px 12px' }}>
-          <p className={(big ? 'text-6xl sm:text-7xl gf-diamond-text' : 'text-3xl') + ' font-black leading-none'}
+          style={{ flex: '0 0 auto', background: '#0D0D0F', borderTop: `1px solid ${accent}40`, padding: big ? '13px 10px 15px' : '10px 10px 12px' }}>
+          <p className={(big ? 'text-5xl sm:text-6xl gf-diamond-text' : 'text-3xl') + ' font-black leading-none'}
             style={big
               ? { fontFamily: 'var(--font-heading)' }
               : { fontFamily: 'var(--font-heading)', color: accent, textShadow: `0 0 14px ${accent}55` }}>
             {o.games}
           </p>
-          <p className={(big ? 'text-[10px]' : 'text-[8px]') + ' font-black uppercase tracking-[0.28em]'}
+          <p className={(big ? 'text-[9px]' : 'text-[8px]') + ' font-black uppercase tracking-[0.25em]'}
             style={{ color: `${accent}A0`, marginTop: big ? '8px' : '5px' }}>
             Games {verb}
           </p>
           {o.since && (
-            <p className={(big ? 'text-[9px]' : 'text-[8px]') + ' uppercase tracking-widest'}
-              style={{ color: '#F5F1E855', marginTop: '4px' }}>
+            <p className="text-[8px] uppercase tracking-widest" style={{ color: '#F5F1E855', marginTop: '4px' }}>
               Reached {o.since}
             </p>
           )}
