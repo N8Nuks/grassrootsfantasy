@@ -48,10 +48,14 @@ export async function POST(request: Request) {
   const opened = new Set((t2Cards ?? []).map(c => c.owner_id))
   const pending = holders.filter(h => !opened.has(h))
 
-  if (pending.length === 0) return NextResponse.json({ forced: 0, message: 'All Pre-Season Packs already opened' })
+  if (pending.length === 0) {
+    return NextResponse.json({ forced: 0, pending: 0, failures: 0, message: 'All Pre-Season Packs already opened' })
+  }
 
+  // Under-18 players never enter the pool unless consent is on record
   const { data: pool, error } = await admin.from('players')
-    .select('id, full_name, tier, positions, stats').eq('grade', grade).eq('active', true)
+    .select('id, full_name, tier, positions, stats')
+    .eq('grade', grade).eq('active', true).or('is_under18.eq.false,has_consent.eq.true')
   if (error || !pool) return NextResponse.json({ error: 'Player pool unavailable' }, { status: 500 })
 
   let forced = 0

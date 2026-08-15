@@ -143,7 +143,11 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
     setT2Busy(true)
     const r = await fetch('/api/force-open-t2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade: g }) })
     const data = await r.json()
-    setT2Log(prev => [...prev, r.ok ? `Force-opened ${data.forced}/${data.pending} (${g}), failures: ${data.failures}` : 'ERROR: ' + data.error])
+    setT2Log(prev => [...prev, r.ok
+      ? (data.pending === 0
+          ? `${g === 'mens' ? "Men's" : "Women's"}: every Pre-Season Pack is already open — nothing to force`
+          : `Force-opened ${data.forced}/${data.pending} (${g}), failures: ${data.failures}`)
+      : 'ERROR: ' + data.error])
     setT2Busy(false)
   }
 
