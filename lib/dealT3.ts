@@ -79,7 +79,7 @@ export async function loadPoolAndCirculation(admin: SupabaseClient, grade: 'mens
   const [{ data: pool, error }, { data: allCards }] = await Promise.all([
     admin.from('players')
       .select('id, full_name, tier, positions, stats, photo_url, playing_number, reveal_pos, clubs(name)')
-      .eq('grade', grade).eq('active', true).eq('is_under18', false),
+      .eq('grade', grade).eq('active', true).or('is_under18.eq.false,has_consent.eq.true'),
     admin.from('cards').select('player_id').eq('grade', grade),
   ])
   if (error || !pool) return null

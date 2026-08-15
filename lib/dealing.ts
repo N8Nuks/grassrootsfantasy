@@ -109,7 +109,7 @@ export async function dealAndPersistT1(admin: SupabaseClient, userId: string, gr
   // Under-18 players never enter the pool, whatever `active` says.
   const { data: pool, error: poolError } = await admin.from('players')
     .select('id, full_name, tier, positions, stats, photo_url, playing_number, reveal_pos, clubs(name)')
-    .eq('grade', grade).eq('active', true).eq('is_under18', false)
+    .eq('grade', grade).eq('active', true).or('is_under18.eq.false,has_consent.eq.true')
   if (poolError || !pool || pool.length === 0) {
     // roll back the claim so the user can try again
     await admin.from('lineups').delete().eq('id', lineupRow.id)
