@@ -53,6 +53,18 @@ export default function Register() {
     setBusy(true)
     const supabase = createClient()
 
+    // Team names are unique, case-insensitively — checked here so the user gets a
+    // clear message, and enforced by a database constraint so two people submitting
+    // the same name at the same moment can't both get through.
+    const wanted = teamName.trim()
+    const { data: taken } = await supabase.from('public_teams')
+      .select('id').ilike('team_name', wanted).maybeSingle()
+    if (taken) {
+      setError(`"${wanted}" is already taken. Pick another team name.`)
+      setBusy(false)
+      return
+    }
+
     const { data: club } = await supabase.from('clubs').select('id').eq('code', clubCode.trim().toUpperCase()).single()
     if (!club) {
       setError('Club code not recognised. Check with your Team Manager or Club.')
@@ -75,7 +87,12 @@ export default function Register() {
       phone: phone.trim() || null,
     })
     if (profileError) {
-      setError('Account created but profile failed: ' + profileError.message)
+      // The unique constraint fires if someone claimed the name in the seconds
+      // between the check above and this insert.
+      const clash = profileError.code === '23505' || /duplicate key/i.test(profileError.message)
+      setError(clash
+        ? `"${wanted}" was just taken by someone else. Pick another team name and try again.`
+        : 'Account created but profile failed: ' + profileError.message)
       setBusy(false)
       return
     }
