@@ -128,6 +128,36 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
     setRcBusy(false)
   }
 
+  // Perfect games — reported by the scorer, recorded here. The player scores
+  // double in the FOLLOWING round. Cycles are detected automatically at scoring.
+  const [pgNames, setPgNames] = useState('')
+  const [pgRound, setPgRound] = useState('0')
+  const [pgGrade, setPgGrade] = useState<'mens' | 'womens'>('mens')
+  const [pgLog, setPgLog] = useState<string[]>([])
+  const [pgBusy, setPgBusy] = useState(false)
+
+  async function recordPerfectGame(remove: boolean) {
+    setPgBusy(true); setPgLog([])
+    const r = await fetch('/api/achievements', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        names: pgNames.split('\n').map(n => n.trim()).filter(Boolean),
+        grade: pgGrade,
+        round_number: Number(pgRound),
+        remove,
+      }),
+    })
+    const data = await r.json()
+    if (!r.ok) { setPgLog(['ERROR: ' + data.error]); setPgBusy(false); return }
+    const lines = [remove
+      ? `Removed ${data.marked} perfect game(s)`
+      : `Recorded ${data.marked} perfect game(s) — double points apply in Round ${Number(pgRound) + 1}`]
+    data.matched?.forEach((n: string) => lines.push('  ✓ ' + n))
+    data.unmatched?.forEach((n: string) => lines.push('  ⚠ no player match: ' + n))
+    setPgLog(lines)
+    setPgBusy(false)
+  }
+
   const [t2Log, setT2Log] = useState<string[]>([])
   const [t2Busy, setT2Busy] = useState(false)
 
@@ -413,8 +443,38 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
             <LogBox lines={availLog} error={availLog[0]?.startsWith('ERROR')} />
           </Panel>
 
-          {/* 6 · Card Style */}
-          <Panel number="6" title="Card Style" accent={P.purple}
+          {/* 7 · Perfect Games */}
+          <Panel number="7" title="Perfect Games" accent={P.orange}
+            sub="Enter the round the perfect game was pitched IN — the double applies the round after. Cycles are picked up automatically during scoring; only perfect games need entering here.">
+            <div className="flex gap-4" style={{ marginBottom: '16px' }}>
+              <select value={pgGrade} onChange={e => setPgGrade(e.target.value as 'mens' | 'womens')}
+                className="rounded-xl px-4 py-3.5 text-sm flex-1" style={field}>
+                <option value="mens">Men&apos;s</option>
+                <option value="womens">Women&apos;s</option>
+              </select>
+              <input type="number" value={pgRound} onChange={e => setPgRound(e.target.value)}
+                placeholder="Round #" className="rounded-xl px-4 py-3.5 text-sm w-32" style={field} />
+            </div>
+            <textarea value={pgNames} onChange={e => setPgNames(e.target.value)}
+              placeholder={"One pitcher per line:\nAlexia Lacatena"}
+              rows={4} className="w-full rounded-xl px-4 py-3.5 text-xs font-mono" style={field} />
+            <div className="text-center flex justify-center gap-4 flex-wrap" style={{ marginTop: '22px' }}>
+              <button onClick={() => recordPerfectGame(false)} disabled={pgBusy || !pgNames.trim()}
+                className="text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] disabled:opacity-40"
+                style={{ color: P.orange, border: `1px solid ${P.orange}`, background: 'transparent', padding: '16px 44px' }}>
+                {pgBusy ? 'Working…' : 'Record Perfect Game'}
+              </button>
+              <button onClick={() => recordPerfectGame(true)} disabled={pgBusy || !pgNames.trim()}
+                className="text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] disabled:opacity-40"
+                style={{ color: P.red, border: `1px solid ${P.red}`, background: 'transparent', padding: '16px 44px' }}>
+                {pgBusy ? 'Working…' : 'Remove'}
+              </button>
+            </div>
+            <LogBox lines={pgLog} error={pgLog[0]?.startsWith('ERROR')} />
+          </Panel>
+
+          {/* 8 · Card Style */}
+          <Panel number="8" title="Card Style" accent={P.purple}
             sub="Premium shows the full designed cards (backdrops, marks). Standard is the clean build for testing and trial weeks.">
             <div className="grid grid-cols-2 gap-3">
               <button type="button" onClick={() => setCardStyle('standard')}
