@@ -8,6 +8,7 @@ const COBALT = '#2456E6'
 const GOLD = '#E8C15A'
 const SILVER = '#4DA6FF'
 const GREEN = '#2D9E4E'
+const ELITE = '#1D3FBE'   // matches the Elite tier on the cards
 
 // Sections that sit over the logo backdrop are translucent so it shows through
 const OVER_BACKDROP = 'rgba(20,20,26,0.72)'
@@ -222,7 +223,7 @@ export default function NFS() {
             {[
               { tier: 'RARE 2WP A', accent: '#FFD700', desc: 'The complete two-way players — they pitch AND hit at the top level. The rarest cards in the game, dealt only in Starter Packs.' },
               { tier: 'RARE 2WP B', accent: GOLD, desc: 'Pitchers whose value lives on the mound. Rare, specialist, and game-changing in the right matchup.' },
-              { tier: 'ELITE', accent: SILVER, desc: 'The proven performers — season after season at the top of the stats. Silver treatment, serious points.' },
+              { tier: 'ELITE', accent: ELITE, desc: 'The proven performers — season after season at the top of the stats. Serious points.' },
               { tier: 'COMMON', accent: GREEN, desc: 'The backbone of every Club and every fantasy squad. Smart Managers know: Championships are won with great Commons.' },
             ].map((c) => (
               <div key={c.tier} className="rounded-2xl flex flex-col gap-3 items-center text-center" style={{ background: '#121215', border: `1px solid ${c.accent}45`, padding: '20px 14px' }}>
