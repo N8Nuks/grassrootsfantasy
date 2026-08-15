@@ -84,19 +84,20 @@ export default function NFS() {
           </div>
         </section>
 
-        {/* The Competition */}
-        <section className="relative z-10 px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "48px", paddingBottom: "48px" }}>
-          <div className="grid gap-4 sm:gap-6 sm:grid-cols-3" style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
+        {/* The Competition — three across on a phone so it stays one band deep */}
+        <section className="relative z-10 px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "32px", paddingBottom: "32px" }}>
+          <div className="grid grid-cols-3 gap-2 sm:gap-6" style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
             {[
               { big: '2005', label: 'NFS founded', d: 'Twenty-one seasons of Northern Premier fastpitch.' },
               { big: '1939', label: 'Auckland softball begins', d: 'Nearly ninety years of history behind ASA every game.' },
               { big: '300+', label: 'Career games club', d: 'Only eight players have ever been recorded as reaching it. Their cards carry the badge.' },
             ].map((s) => (
-              <div key={s.label} className="rounded-2xl p-6 flex flex-col gap-2 items-center text-center"
-                style={{ background: 'rgba(18,18,21,0.78)', border: `1px solid ${COBALT}30` }}>
-                <span className="text-4xl font-black" style={{ color: COBALT, fontFamily: 'var(--font-heading)' }}>{s.big}</span>
-                <span className="text-xs font-black uppercase tracking-widest" style={{ color: SILVER }}>{s.label}</span>
-                <p className="text-xs text-white/70 leading-relaxed mt-1">{s.d}</p>
+              <div key={s.label} className="rounded-2xl flex flex-col gap-1 sm:gap-2 items-center text-center justify-center"
+                style={{ background: 'rgba(18,18,21,0.78)', border: `1px solid ${COBALT}30`, padding: '16px 8px' }}>
+                <span className="text-2xl sm:text-4xl font-black leading-none" style={{ color: COBALT, fontFamily: 'var(--font-heading)' }}>{s.big}</span>
+                <span className="text-[9px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest leading-tight" style={{ color: SILVER }}>{s.label}</span>
+                {/* Detail is desktop only — on a phone the number and label carry it */}
+                <p className="hidden sm:block text-xs text-white/70 leading-relaxed mt-1">{s.d}</p>
               </div>
             ))}
           </div>
