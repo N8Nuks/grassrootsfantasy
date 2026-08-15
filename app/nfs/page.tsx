@@ -147,7 +147,7 @@ export default function NFS() {
 
                   <span className="inline-flex items-center gap-2 rounded-full text-sm font-black uppercase tracking-widest"
                     style={{ color: '#0D0D0F', background: GOLD, padding: '15px 32px', boxShadow: `0 0 22px ${GOLD}50` }}>
-                    See the Honours Board <span>→</span>
+                    See the Honours Board
                   </span>
                 </div>
               </div>
@@ -167,7 +167,7 @@ export default function NFS() {
                     style={{ background: `linear-gradient(90deg, transparent 40%, #111319 100%)` }} />
                 </div>
 
-                <div className="text-left" style={{ padding: '28px 24px 30px' }}>
+                <div className="text-center sm:text-left" style={{ padding: '28px 24px 30px' }}>
                   <p className="text-[10px] font-black uppercase tracking-[0.35em]" style={{ color: SILVER }}>The Officials Wing</p>
                   <h3 className="text-xl sm:text-2xl font-black text-white leading-tight" style={{ fontFamily: 'var(--font-heading)', marginTop: '12px' }}>
                     No game happens without them.
@@ -178,7 +178,7 @@ export default function NFS() {
                   </p>
                   <span className="inline-flex items-center gap-2 rounded-full text-sm font-black uppercase tracking-widest"
                     style={{ color: '#0D0D0F', background: SILVER, padding: '14px 28px', boxShadow: `0 0 20px ${SILVER}45`, marginTop: '22px' }}>
-                    Enter the Wing <span>→</span>
+                    Enter the Wing
                   </span>
                 </div>
               </div>
