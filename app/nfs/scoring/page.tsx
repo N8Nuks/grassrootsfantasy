@@ -14,7 +14,7 @@ const batting = [
   { event: 'Home Run', pts: '+15' },
   { event: 'RBI', pts: '+3' },
   { event: 'Run scored', pts: '+3' },
-  { event: 'Walk / HBP', pts: '+2' },
+  { event: 'Walk / HBP', pts: '+3' },
   { event: 'Stolen Base', pts: '+10' },
   { event: 'Caught Stealing', pts: '-2' },
   { event: 'Strikeout', pts: '-1' },
