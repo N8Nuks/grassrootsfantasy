@@ -57,10 +57,13 @@ export default function Register() {
     // clear message, and enforced by a database constraint so two people submitting
     // the same name at the same moment can't both get through.
     const wanted = teamName.trim()
-    const { data: taken } = await supabase.from('public_teams')
-      .select('id').ilike('team_name', wanted).maybeSingle()
-    if (taken) {
-      setError(`"${wanted}" is already taken. Pick another team name.`)
+    const nameCheck = await fetch('/api/check-team-name', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: wanted }),
+    })
+    const nameData = await nameCheck.json().catch(() => null)
+    if (nameData && nameData.available === false) {
+      setError(`"${wanted}" is already taken. Choose a different team name.`)
       setBusy(false)
       return
     }
@@ -89,10 +92,11 @@ export default function Register() {
     if (profileError) {
       // The unique constraint fires if someone claimed the name in the seconds
       // between the check above and this insert.
-      const clash = profileError.code === '23505' || /duplicate key/i.test(profileError.message)
+      const clash = profileError.code === '23505'
+        || /duplicate key|team_name/i.test(profileError.message)
       setError(clash
-        ? `"${wanted}" was just taken by someone else. Pick another team name and try again.`
-        : 'Account created but profile failed: ' + profileError.message)
+        ? `"${wanted}" is already taken. Choose a different team name and press Register again.`
+        : 'Something went wrong setting up your team. Try again, or email info@grassrootsfantasy.co.nz.')
       setBusy(false)
       return
     }
