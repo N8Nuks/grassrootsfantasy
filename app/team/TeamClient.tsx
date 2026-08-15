@@ -40,7 +40,7 @@ export type TeamCard = {
 const TIER_META: Record<string, { label: string; accent: string }> = {
   rare_2wp_a: { label: '2WP A', accent: '#FFD700' },
   rare_2wp_b: { label: '2WP B', accent: '#E8C15A' },
-  elite: { label: 'ELITE', accent: '#4DA6FF' },
+  elite: { label: 'ELITE', accent: '#1D3FBE' },
   common: { label: 'COMMON', accent: '#2D9E4E' },
 }
 

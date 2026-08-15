@@ -1,6 +1,6 @@
 'use client'
 
-const SILVER = '#1D3FBE'
+const SILVER = '#7FC4FF'
 const GOLD = '#E8C15A'
 
 export type OfficialCardData = {

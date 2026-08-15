@@ -5,7 +5,7 @@ import OfficialCard from '@/components/OfficialCard'
 
 const COBALT = '#2456E6'
 const GOLD = '#E8C15A'
-const SILVER = '#1D3FBE'
+const SILVER = '#7FC4FF'
 const PLATINUM = '#E8E4DC'
 
 // An umpire works far more games than a scorer in the same era, so the bars

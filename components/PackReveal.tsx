@@ -18,7 +18,7 @@ export type RevealCard = {
 const TIER_META: Record<string, { label: string; word: string; accent: string; announce: string }> = {
   rare_2wp_a: { label: '2WP A', word: 'RARE', accent: '#FFD700', announce: 'RARE PULL!' },
   rare_2wp_b: { label: '2WP B', word: 'RARE', accent: '#E8C15A', announce: 'RARE PULL!' },
-  elite: { label: 'ELITE', word: 'ELITE', accent: '#4DA6FF', announce: 'Elite' },
+  elite: { label: 'ELITE', word: 'ELITE', accent: '#1D3FBE', announce: 'Elite' },
   common: { label: 'COMMON', word: 'COMMON', accent: '#2D9E4E', announce: 'Common' },
 }
 
