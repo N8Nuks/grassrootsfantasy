@@ -291,7 +291,12 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     setPackBusy(false)
     if (r.ok && data.cards?.length) {
       setReveal({ packName: 'Pre-Season Pack', cards: data.cards })
-    } else alert(data.error ?? 'Could not open the pack')
+    } else {
+      alert(data.error ?? 'Could not open the pack')
+      // The server disagreed with what this page is showing — pull fresh state
+      // so a stale button doesn't sit there after being told it's already open.
+      router.refresh()
+    }
   }
   async function redeemT4() {
     if (packBusy) return
@@ -312,7 +317,10 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     if (r.ok) {
       const cards: RevealCard[] = (data.cards ?? data.players.map((n: string) => ({ name: n, tier: 'common' })))
       setReveal({ packName: 'Weekly Pack', cards })
-    } else alert(data.error)
+    } else {
+      alert(data.error)
+      router.refresh()
+    }
   }
 
   function statBlock(cardList: TeamCard[]) {
