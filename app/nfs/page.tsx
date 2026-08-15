@@ -102,9 +102,9 @@ export default function NFS() {
           <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
             {[
               { href: '/nfs/honours', accent: GOLD, title: 'Honours Board', cta: 'See the Honours Board',
-                d: 'Every Premier award winner since 2004-05 — batters, pitchers and MVPs, season by season, with the most-decorated names in each category.' },
+                d: 'Every Premier Award Winner since 2004-05 — Batters, Pitchers and MVPs, Season by Season, with the most-decorated names in each category.' },
               { href: '/nfs/officials', accent: SILVER, title: 'The Officials Wing', cta: 'Enter the Wing',
-                d: 'No game happens without them. The umpires and scorers who have worked hundreds of Premier games — including the only official ever to reach 400.' },
+                d: 'No game happens without them. The Umpires and Scorers who have worked hundreds of Premier games — including the only official ever to reach 400.' },
             ].map(c => (
               <a key={c.href} href={c.href}
                 className="group rounded-2xl flex flex-col text-left transition-all hover:scale-[1.015]"
@@ -164,7 +164,7 @@ export default function NFS() {
               { tier: 'RARE 2WP A', accent: '#FFD700', desc: 'The complete two-way players — they pitch AND hit at the top level. The rarest cards in the game, dealt only in Starter Packs.' },
               { tier: 'RARE 2WP B', accent: GOLD, desc: 'Pitchers whose value lives on the mound. Rare, specialist, and game-changing in the right matchup.' },
               { tier: 'ELITE', accent: SILVER, desc: 'The proven performers — season after season at the top of the stats. Silver treatment, serious points.' },
-              { tier: 'COMMON', accent: GREEN, desc: 'The backbone of every Club and every fantasy squad. Smart Managers know: championships are won with great Commons.' },
+              { tier: 'COMMON', accent: GREEN, desc: 'The backbone of every Club and every fantasy squad. Smart Managers know: Championships are won with great Commons.' },
             ].map((c) => (
               <div key={c.tier} className="rounded-2xl flex flex-col gap-3 items-center text-center" style={{ background: '#121215', border: `1px solid ${c.accent}45`, padding: '20px 14px' }}>
                 <span className="text-[9px] sm:text-[10px] font-black tracking-widest px-2.5 py-1 rounded-full whitespace-nowrap" style={{ color: c.accent, background: c.accent + '18', lineHeight: "1.6" }}>{c.tier}</span>
