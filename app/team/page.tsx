@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { theme, type Grade } from '@/lib/clubhouse'
 import TeamClient, { TeamCard } from './TeamClient'
 import SandboxBanner from '@/components/SandboxBanner'
+import { doubledInRound } from '@/lib/achievements'
 
 export default async function Team({ searchParams }: { searchParams: Promise<{ grade?: string }> }) {
   const params = await searchParams
@@ -113,6 +114,10 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
 
   const slots = (lineup?.lineup_slots ?? []) as { slot: string; card_id: string; batting_order: number | null }[]
 
+  // Players scoring double this round — cycle or perfect game earned last round
+  const doubledMap = await doubledInRound(supabase, grade, latestRound?.round_number ?? null)
+  const doubledIds = [...doubledMap.keys()]
+
   return (
     <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
       <Nav /><SandboxBanner />
@@ -134,6 +139,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
           thisRoundLabel={thisRoundLabel}
           cardStyle={cardStyle}
           lastRoundLabel={lastRoundLabel}
+          doubledIds={doubledIds}
         />
       </section>
       <Footer />

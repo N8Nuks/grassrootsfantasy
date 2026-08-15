@@ -91,7 +91,7 @@ function SoftballSwatch({ colors, seam, selected, ringColor }: {
   )
 }
 
-export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen, thisRoundPoints, lastRoundPoints, thisRoundLabel, lastRoundLabel, cardStyle }: {
+export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen, thisRoundPoints, lastRoundPoints, thisRoundLabel, lastRoundLabel, cardStyle, doubledIds = [] }: {
   teamName: string
   clubName: string
   cards: TeamCard[]
@@ -108,12 +108,15 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   thisRoundLabel: string | null
   lastRoundLabel: string | null
   cardStyle: 'standard' | 'premium'
+  doubledIds?: string[]
 }) {
   const router = useRouter()
   const T = theme(grade, siteTheme)
   const accentBright = T.electric ?? T.accent
   const shimmer = T.shimmer ? ' gf-shimmer' : ''
   const unavailable = new Set(unavailableIds)
+  // Cycle or perfect game last round — this player scores 2x this round
+  const doubled = new Set(doubledIds)
   const [view, setView] = useState<'lineup' | 'collection'>('lineup')
   const [slots, setSlots] = useState<SlotState[]>(() => {
     const withOrder = [...initialSlots]
@@ -368,6 +371,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     const meta = TIER_META[c.tier] ?? TIER_META.common
     const selected = swapTarget === s.batting_order
     const isOut = unavailable.has(c.playerId)
+    const isDoubled = doubled.has(c.playerId)
     return (
       <div
         draggable={showOrder}
@@ -375,7 +379,16 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         onDragOver={e => e.preventDefault()}
         onDrop={() => { if (dragOrder != null && s.batting_order != null) swapOrders(dragOrder, s.batting_order); setDragOrder(null) }}
         className="flex items-center gap-3"
-        style={{ borderBottom: '1px solid #ffffff08', opacity: isOut ? 0.4 : 1, cursor: showOrder ? 'grab' : 'default', padding: '14px 28px' }}>
+        style={{
+          borderBottom: '1px solid #ffffff08',
+          opacity: isOut ? 0.4 : 1,
+          cursor: showOrder ? 'grab' : 'default',
+          padding: '14px 28px',
+          ...(isDoubled ? {
+            background: '#FF8C4212',
+            boxShadow: 'inset 3px 0 0 #FF8C42, 0 0 20px #FF8C4218',
+          } : {}),
+        }}>
         {showOrder ? (
           <button onClick={() => tapOrder(s.batting_order!)}
             className={"w-9 h-9 shrink-0 rounded-full text-sm font-black flex items-center justify-center transition-all" + (selected ? shimmer : '')}
@@ -392,7 +405,9 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         </button>
         <button onClick={() => setDetailCard(c)} className="flex-1 min-w-0 text-left">
           <p className="text-sm font-black truncate" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
-            {c.name} {isOut && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1" style={{ background: '#FF6B6B', color: '#141210' }}>OUT</span>}
+            {c.name}
+            {isOut && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1" style={{ background: '#FF6B6B', color: '#141210' }}>OUT</span>}
+            {isDoubled && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1 gf-pulse" style={{ background: '#FF8C42', color: '#141210', boxShadow: '0 0 10px #FF8C42' }}>2×</span>}
           </p>
           <p className="text-[10px]" style={{ color: T.textDim }}>{c.club}</p>
         </button>
@@ -717,6 +732,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                   siteTheme={siteTheme}
                   cardStyle={cardStyle}
                   chip={inLineup ? `IN ${SLOT_LABELS[slot ?? ''] ?? ''}` : undefined}
+                  doubled={doubled.has(c.playerId)}
                   onClick={() => setDetailCard(c)}
                 />
               )
