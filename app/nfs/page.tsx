@@ -2,6 +2,22 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import FactsTicker from '@/components/FactsTicker'
 import SandboxBanner from '@/components/SandboxBanner'
+import { HONOURS } from '@/lib/nfsHonours'
+
+// Most Premier MVPs in a grade — pulled live so the card shows the record,
+// not a description of where to find it.
+function topMvp(grade: 'men' | 'women'): { names: string[]; wins: number } | null {
+  const counts = new Map<string, number>()
+  for (const s of HONOURS) {
+    const w = s[grade]['mvp']
+    if (!w) continue
+    counts.set(w, (counts.get(w) ?? 0) + 1)
+  }
+  const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1])
+  if (sorted.length === 0) return null
+  const top = sorted[0][1]
+  return { names: sorted.filter(s => s[1] === top).map(s => s[0]), wins: top }
+}
 
 const COBALT = '#2456E6'
 const GOLD = '#E8C15A'
@@ -90,43 +106,112 @@ export default function NFS() {
         </div>
       </section>
 
-      {/* ── The Record Books ── */}
-      <section className="px-5 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: "48px", paddingBottom: "48px" }}>
+      {/* ── The History ── */}
+      <section className="px-5 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: "56px", paddingBottom: "56px" }}>
         <div style={{ maxWidth: "900px", marginLeft: "auto", marginRight: "auto" }}>
+
           <div className="text-center" style={{ marginBottom: '28px' }}>
             <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>The History</p>
             <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
               Twenty-two seasons.<br className="sm:hidden" /> And everyone who made them.
             </h2>
           </div>
-          <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
-            {[
-              { href: '/nfs/honours', accent: GOLD, title: 'Honours Board', cta: 'See the Honours Board',
-                d: 'Every Premier Award Winner since 2004-05 — Batters, Pitchers and MVPs, Season by Season, with the most-decorated names in each category.' },
-              { href: '/nfs/officials', accent: SILVER, title: 'The Officials Wing', cta: 'Enter the Wing',
-                d: 'No game happens without them. The Umpires and Scorers who have worked hundreds of Premier games — including the only official ever to reach 400.' },
-            ].map(c => (
-              <a key={c.href} href={c.href}
-                className="group rounded-2xl flex flex-col text-left transition-all hover:scale-[1.015]"
+
+          {/* Honours Board — the feature. Engraved plaque treatment, full width. */}
+          {(() => {
+            const men = topMvp('men')
+            const women = topMvp('women')
+            return (
+              <a href="/nfs/honours" className="block rounded-3xl overflow-hidden transition-all hover:scale-[1.008]"
                 style={{
-                  background: `linear-gradient(165deg, ${c.accent}14 0%, #16161C 55%, #121215 100%)`,
-                  border: `1px solid ${c.accent}55`,
-                  boxShadow: `0 0 24px ${c.accent}12`,
-                  padding: '26px 26px 22px',
+                  background: `linear-gradient(168deg, ${GOLD}22 0%, #1A1710 42%, #0E0D0B 100%)`,
+                  border: `1px solid ${GOLD}70`,
+                  boxShadow: `0 0 46px ${GOLD}1F`,
+                  padding: '5px',
+                  marginBottom: '16px',
                 }}>
-                <h3 className="text-lg font-black text-white" style={{ fontFamily: 'var(--font-heading)', marginBottom: '10px' }}>
-                  {c.title}
-                </h3>
-                <p className="text-xs text-white/70 leading-relaxed" style={{ marginBottom: '20px' }}>{c.d}</p>
-                {/* Reads as a button, not a footnote */}
-                <span className="inline-flex items-center gap-2 self-start rounded-full text-xs font-black uppercase tracking-widest transition-all"
-                  style={{ color: '#0D0D0F', background: c.accent, padding: '11px 22px', boxShadow: `0 0 18px ${c.accent}45` }}>
-                  {c.cta}
-                  <span className="transition-transform group-hover:translate-x-1">→</span>
-                </span>
+                {/* Inner frame — the engraved edge of a trophy plaque */}
+                <div className="relative rounded-[1.3rem] pinstripe-fine text-center overflow-hidden"
+                  style={{ border: `1px solid ${GOLD}38`, padding: '36px 24px 32px' }}>
+                  {/* Sheen across the top of the plaque */}
+                  <div className="absolute inset-0 pointer-events-none"
+                    style={{ background: `radial-gradient(ellipse 80% 50% at 50% 0%, ${GOLD}18 0%, transparent 70%)` }} />
+
+                  <div className="relative">
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em]"
+                      style={{ color: GOLD, textShadow: `0 0 14px ${GOLD}70` }}>
+                      Honours Board
+                    </p>
+                    <div className="mx-auto" style={{ width: '52px', height: '2px', background: GOLD, boxShadow: `0 0 10px ${GOLD}`, margin: '14px auto 22px', borderRadius: '2px' }} />
+
+                    <h3 className="text-2xl sm:text-4xl font-black text-white leading-tight"
+                      style={{ fontFamily: 'var(--font-heading)' }}>
+                      Every winner. Every season.
+                    </h3>
+                    <p className="text-xs sm:text-sm text-white/60 leading-relaxed"
+                      style={{ maxWidth: '460px', marginLeft: 'auto', marginRight: 'auto', marginTop: '14px' }}>
+                      Every Premier award since 2004-05 — batters, pitchers and MVPs, season by season.
+                    </p>
+
+                    {/* The record itself, not a description of it */}
+                    {(men || women) && (
+                      <div className="grid gap-3 sm:grid-cols-2" style={{ marginTop: '28px', marginBottom: '30px' }}>
+                        {[{ r: men, label: "Most Men's MVPs", accent: GREEN },
+                          { r: women, label: "Most Women's MVPs", accent: COBALT }].map(x => x.r && (
+                          <div key={x.label} className="rounded-2xl"
+                            style={{ background: '#00000045', border: `1px solid ${x.accent}35`, padding: '16px 14px' }}>
+                            <p className="text-[9px] font-black uppercase tracking-[0.25em]" style={{ color: x.accent }}>{x.label}</p>
+                            <p className="text-base sm:text-lg font-black text-white leading-tight" style={{ fontFamily: 'var(--font-heading)', marginTop: '7px' }}>
+                              {x.r!.names.join(' & ')}
+                            </p>
+                            <p className="text-2xl font-black" style={{ fontFamily: 'var(--font-heading)', color: GOLD, textShadow: `0 0 14px ${GOLD}50`, marginTop: '2px' }}>
+                              {x.r!.wins}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <span className="inline-flex items-center gap-2 rounded-full text-sm font-black uppercase tracking-widest"
+                      style={{ color: '#0D0D0F', background: GOLD, padding: '15px 32px', boxShadow: `0 0 22px ${GOLD}50` }}>
+                      See the Honours Board <span>→</span>
+                    </span>
+                  </div>
+                </div>
               </a>
-            ))}
-          </div>
+            )
+          })()}
+
+          {/* Officials Wing — photograph carries it */}
+          <a href="/nfs/officials" className="block rounded-3xl overflow-hidden transition-all hover:scale-[1.008]"
+            style={{ border: `1px solid ${SILVER}50`, background: '#111319', boxShadow: `0 0 26px ${SILVER}12` }}>
+            <div className="grid sm:grid-cols-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <div className="relative" style={{ minHeight: '210px' }}>
+                <img src="/officials-umpire.jpg" alt="An umpire calls the play at second"
+                  className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: 'center 40%' }} />
+                <div className="absolute inset-0"
+                  style={{ background: `linear-gradient(180deg, #0D0D0F10 0%, #0D0D0F55 60%, #111319E6 100%)` }} />
+                <div className="absolute inset-0 sm:block hidden"
+                  style={{ background: `linear-gradient(90deg, transparent 40%, #111319 100%)` }} />
+              </div>
+
+              <div className="text-left" style={{ padding: '28px 24px 30px' }}>
+                <p className="text-[10px] font-black uppercase tracking-[0.35em]" style={{ color: SILVER }}>The Officials Wing</p>
+                <h3 className="text-xl sm:text-2xl font-black text-white leading-tight" style={{ fontFamily: 'var(--font-heading)', marginTop: '12px' }}>
+                  No game happens without them.
+                </h3>
+                <p className="text-xs text-white/65 leading-relaxed" style={{ marginTop: '12px' }}>
+                  The umpires and scorers who have worked hundreds of Premier games — including the
+                  only official ever to reach 400.
+                </p>
+                <span className="inline-flex items-center gap-2 rounded-full text-sm font-black uppercase tracking-widest"
+                  style={{ color: '#0D0D0F', background: SILVER, padding: '14px 28px', boxShadow: `0 0 20px ${SILVER}45`, marginTop: '22px' }}>
+                  Enter the Wing <span>→</span>
+                </span>
+              </div>
+            </div>
+          </a>
         </div>
       </section>
 
