@@ -19,17 +19,20 @@ export default function NFS() {
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 75% 55% at 50% 0%, #10214D 0%, #0D0D0F 70%)' }} />
         <NfsBackdrop />
         <div className="relative z-10 text-center" style={{ maxWidth: "760px", marginLeft: "auto", marginRight: "auto" }}>
-          {/* League crest — sits on a lit disc so the black roundel reads on a dark page */}
-          <div className="mx-auto rounded-full flex items-center justify-center"
+          {/* Crest sits in a lit disc so the black roundel reads on a dark page.
+              The source PNG carries a large transparent margin, so it's scaled up
+              and clipped by the disc rather than fitted inside it. */}
+          <div className="rounded-full flex items-center justify-center overflow-hidden"
             style={{
-              width: '104px', height: '104px', marginBottom: '22px',
+              width: '112px', height: '112px',
+              marginLeft: 'auto', marginRight: 'auto', marginBottom: '22px',
               background: 'radial-gradient(circle at 50% 35%, #ffffff14 0%, #0D0D0F 72%)',
               border: `1px solid ${SILVER}45`,
               boxShadow: `0 0 30px ${COBALT}35`,
             }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/NFS-logo.png" alt="Northern Fastpitch Series"
-              style={{ width: '86%', height: '86%', objectFit: 'contain' }} />
+              style={{ width: '300%', height: '300%', objectFit: 'contain' }} />
           </div>
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-5" style={{ color: GOLD }}>League One · Now Live</p>
           <h1 className="text-4xl sm:text-5xl font-black text-white mb-5" style={{ fontFamily: 'var(--font-heading)' }}>
@@ -116,57 +119,51 @@ export default function NFS() {
           </div>
 
           {/* Honours Board — the feature. Engraved plaque treatment, full width. */}
-          {(() => {
-            const men = topMvp('men')
-            const women = topMvp('women')
-            return (
-              <a href="/nfs/honours" className="block rounded-3xl overflow-hidden transition-all hover:scale-[1.008]"
-                style={{
-                  background: `linear-gradient(168deg, ${GOLD}22 0%, #1A1710 42%, #0E0D0B 100%)`,
-                  border: `1px solid ${GOLD}70`,
-                  boxShadow: `0 0 46px ${GOLD}1F`,
-                  padding: '5px',
-                  marginBottom: '16px',
-                }}>
-                {/* Inner frame — the engraved edge of a trophy plaque */}
-                <div className="relative rounded-[1.3rem] pinstripe-fine text-center overflow-hidden"
-                  style={{ border: `1px solid ${GOLD}38`, padding: '36px 24px 32px' }}>
-                  {/* Sheen across the top of the plaque */}
-                  <div className="absolute inset-0 pointer-events-none"
-                    style={{ background: `radial-gradient(ellipse 80% 50% at 50% 0%, ${GOLD}18 0%, transparent 70%)` }} />
+          <a href="/nfs/honours" className="block rounded-3xl overflow-hidden transition-all hover:scale-[1.008]"
+            style={{
+              background: `linear-gradient(168deg, ${GOLD}22 0%, #1A1710 42%, #0E0D0B 100%)`,
+              border: `1px solid ${GOLD}70`,
+              boxShadow: `0 0 46px ${GOLD}1F`,
+              padding: '5px',
+              marginBottom: '16px',
+            }}>
+            {/* Inner frame — the engraved edge of a trophy plaque */}
+            <div className="relative rounded-[1.3rem] pinstripe-fine text-center overflow-hidden"
+              style={{ border: `1px solid ${GOLD}38`, padding: '40px 24px 36px' }}>
+              {/* Sheen across the top of the plaque */}
+              <div className="absolute inset-0 pointer-events-none"
+                style={{ background: `radial-gradient(ellipse 80% 50% at 50% 0%, ${GOLD}18 0%, transparent 70%)` }} />
 
-                  <div className="relative">
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em]"
-                      style={{ color: GOLD, textShadow: `0 0 14px ${GOLD}70` }}>
-                      Honours Board
-                    </p>
-                    <div className="mx-auto" style={{ width: '52px', height: '2px', background: GOLD, boxShadow: `0 0 10px ${GOLD}`, margin: '14px auto 22px', borderRadius: '2px' }} />
+              <div className="relative">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em]"
+                  style={{ color: GOLD, textShadow: `0 0 14px ${GOLD}70` }}>
+                  Honours Board
+                </p>
+                <div className="mx-auto" style={{ width: '52px', height: '2px', background: GOLD, boxShadow: `0 0 10px ${GOLD}`, margin: '14px auto 22px', borderRadius: '2px' }} />
 
-                    <h3 className="text-2xl sm:text-4xl font-black text-white leading-tight"
-                      style={{ fontFamily: 'var(--font-heading)' }}>
-                      Every winner. Every season.
-                    </h3>
-                    <p className="text-xs sm:text-sm text-white/60 leading-relaxed"
-                      style={{ maxWidth: '460px', marginLeft: 'auto', marginRight: 'auto', marginTop: '14px' }}>
-                      Every Premier award since 2004-05 — batters, pitchers and MVPs, season by season.
-                    </p>
+                <h3 className="text-2xl sm:text-4xl font-black text-white leading-tight"
+                  style={{ fontFamily: 'var(--font-heading)' }}>
+                  Every winner. Every season.
+                </h3>
+                <p className="text-xs sm:text-sm text-white/60 leading-relaxed"
+                  style={{ maxWidth: '460px', marginLeft: 'auto', marginRight: 'auto', marginTop: '14px', marginBottom: '30px' }}>
+                  Every Premier award since 2004-05 — batters, pitchers and MVPs, season by season.
+                </p>
 
-                    <span className="inline-flex items-center gap-2 rounded-full text-sm font-black uppercase tracking-widest"
-                      style={{ color: '#0D0D0F', background: GOLD, padding: '15px 32px', boxShadow: `0 0 22px ${GOLD}50` }}>
-                      See the Honours Board <span>→</span>
-                    </span>
-                  </div>
-                </div>
-              </a>
-            )
-          })()}
+                <span className="inline-flex items-center gap-2 rounded-full text-sm font-black uppercase tracking-widest"
+                  style={{ color: '#0D0D0F', background: GOLD, padding: '15px 32px', boxShadow: `0 0 22px ${GOLD}50` }}>
+                  See the Honours Board <span>→</span>
+                </span>
+              </div>
+            </div>
+          </a>
 
           {/* Officials Wing — photograph carries it */}
           <a href="/nfs/officials" className="block rounded-3xl overflow-hidden transition-all hover:scale-[1.008]"
             style={{ border: `1px solid ${SILVER}50`, background: '#111319', boxShadow: `0 0 26px ${SILVER}12` }}>
             <div className="grid sm:grid-cols-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <div className="relative" style={{ minHeight: '210px' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/officials-umpire.jpg" alt="An umpire calls the play at second"
                   className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: 'center 40%' }} />
                 <div className="absolute inset-0"
