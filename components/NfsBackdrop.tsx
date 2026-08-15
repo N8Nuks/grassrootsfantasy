@@ -5,10 +5,10 @@ import { useEffect, useRef, useState } from 'react'
    GF crystal. Dim while the page is moving; if the visitor stops, it lifts to a
    brighter hold. Any scroll drops it back. Never loops.
 
-   Note: NFS-logo.png carries a wide transparent margin, so its box is oversized
-   and pulled back with horizontal negative margins — the crest renders large
-   without the two marks colliding. Cropping the source PNG would remove the need
-   for all of this. */
+   NFS-logo.png carries a wide transparent margin, so the image is scaled up
+   inside a normally-sized box and clipped by it. No negative margins, so the two
+   marks can't collide at any width. Cropping the source PNG would remove the
+   need for the transform entirely. */
 export default function NfsBackdrop() {
   const [lit, setLit] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -34,33 +34,33 @@ export default function NfsBackdrop() {
         transition: lit ? 'opacity 3.5s ease-in-out' : 'opacity 0.5s ease-out',
         paddingTop: '4vh',
       }}>
-      <div className="flex items-center justify-center gap-2 sm:gap-10 w-full"
+      <div className="flex items-center justify-center gap-3 sm:gap-10 w-full"
         style={{
-          maxWidth: '1000px',
+          maxWidth: '980px',
           filter: lit ? 'drop-shadow(0 0 26px #4DA6FF30)' : 'none',
           transition: 'filter 3.5s ease-in-out',
         }}>
 
-        {/* NFS crest */}
-        <div className="shrink-0 flex items-center justify-center overflow-hidden"
-          style={{
-            width: 'min(46vw, 480px)',
-            aspectRatio: '1',
-            marginLeft: 'min(-12vw, -110px)',
-            marginRight: 'min(-12vw, -110px)',
-          }}>
+        {/* NFS crest — box stays a normal size, the artwork inside is blown up
+            and clipped, so nothing overlaps its neighbour */}
+        <div className="shrink-0 overflow-hidden"
+          style={{ width: 'min(40vw, 300px)', aspectRatio: '1' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/NFS-logo.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          <img src="/NFS-logo.png" alt=""
+            style={{
+              width: '100%', height: '100%', objectFit: 'contain',
+              transform: 'scale(2.6)', transformOrigin: 'center',
+            }} />
         </div>
 
-        {/* Divider — desktop only, there isn't room for it on a phone */}
+        {/* Divider — desktop only, no room on a phone */}
         <div className="shrink-0 hidden sm:block"
-          style={{ width: '1px', height: 'min(26vw, 230px)', background: '#F5F1E8', opacity: 0.28 }} />
+          style={{ width: '1px', height: 'min(26vw, 220px)', background: '#F5F1E8', opacity: 0.28 }} />
 
         {/* GF crystal */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/gf-mark.png" alt="" className="shrink-0"
-          style={{ width: 'min(26vw, 230px)', height: 'auto', objectFit: 'contain' }} />
+          style={{ width: 'min(30vw, 230px)', height: 'auto', objectFit: 'contain' }} />
       </div>
     </div>
   )
