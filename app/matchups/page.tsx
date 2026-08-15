@@ -5,6 +5,7 @@ import { theme, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
 import PageGuide from '@/components/PageGuide'
 import FactsTicker from '@/components/FactsTicker'
+import { doubledInRound } from '@/lib/achievements'
 
 const SLOT_ORDER = ['P', 'C', 'B1', 'B2', 'B3', 'SS', 'LF', 'CF', 'RF', 'DP', 'PB', 'DR',
   'BENCH1', 'BENCH2', 'BENCH3', 'BENCH4']
@@ -28,13 +29,14 @@ type LineupRec = {
 }
 type Palette = ReturnType<typeof theme>
 
-function TeamCard({ title, slots, T, winner, pointsByPlayer, pointsRoundLabel }: {
+function TeamCard({ title, slots, T, winner, pointsByPlayer, pointsRoundLabel, doubled }: {
   title: string
   slots: SlotRow[]
   T: Palette
   winner: boolean
   pointsByPlayer: Map<string, number> | null
   pointsRoundLabel: string | null
+  doubled: Set<string>
 }) {
   const sorted = slots.filter(s => !s.slot.startsWith('RES'))
     .sort((a, b) => slotRank(a.slot) - slotRank(b.slot))
@@ -57,11 +59,22 @@ function TeamCard({ title, slots, T, winner, pointsByPlayer, pointsRoundLabel }:
       {sorted.map((s, i) => {
         const pid = s.cards?.player_id
         const pts = pointsByPlayer && pid ? pointsByPlayer.get(pid) : undefined
+        // The double belongs to the player, so it lights on whichever team holds them
+        const isDoubled = !!pid && doubled.has(pid)
         return (
-          <div key={i} className="flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff08', padding: '10px 24px' }}>
+          <div key={i} className="flex items-center gap-3"
+            style={{
+              borderBottom: '1px solid #ffffff08',
+              padding: '10px 24px',
+              ...(isDoubled ? { background: '#FF8C4212', boxShadow: 'inset 3px 0 0 #FF8C42' } : {}),
+            }}>
             <span className="w-12 text-[10px] font-black uppercase shrink-0" style={{ color: T.textDim }}>{slotLabel(s.slot)}</span>
             <span className="flex-1 min-w-0 text-sm font-bold truncate" style={{ color: T.text }}>
               {s.cards?.players?.full_name ?? '—'}
+              {isDoubled && (
+                <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1.5 gf-pulse"
+                  style={{ background: '#FF8C42', color: '#141210', boxShadow: '0 0 10px #FF8C42' }}>2×</span>
+              )}
             </span>
             {pointsByPlayer && (
               <span className="w-14 text-center text-sm font-black shrink-0" style={{ color: pts != null ? T.accent : T.textDim }}>{pts ?? '—'}</span>
@@ -174,6 +187,10 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
   const bWins = scored && Number(myMatchup!.score_b) > Number(myMatchup!.score_a)
   const otherMatchups = allMatchups.filter(m => !myMatchup || m.user_a !== myMatchup.user_a || m.user_b !== myMatchup.user_b)
 
+  // Players scoring double in the round on screen
+  const doubledMap = await doubledInRound(supabase, grade, round?.round_number ?? null)
+  const doubled = new Set(doubledMap.keys())
+
   return (
     <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
       <Nav />
@@ -235,8 +252,8 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-6 mb-12">
-                <TeamCard title={nameOf(myMatchup.user_a)} slots={lineupA?.lineup_slots ?? []} T={T} winner={!!aWins} pointsByPlayer={pointsByPlayer} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber} Pts` : null} />
-                <TeamCard title={nameOf(myMatchup.user_b)} slots={lineupB?.lineup_slots ?? []} T={T} winner={!!bWins} pointsByPlayer={pointsByPlayer} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber} Pts` : null} />
+                <TeamCard title={nameOf(myMatchup.user_a)} slots={lineupA?.lineup_slots ?? []} T={T} winner={!!aWins} pointsByPlayer={pointsByPlayer} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber} Pts` : null} doubled={doubled} />
+                <TeamCard title={nameOf(myMatchup.user_b)} slots={lineupB?.lineup_slots ?? []} T={T} winner={!!bWins} pointsByPlayer={pointsByPlayer} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber} Pts` : null} doubled={doubled} />
               </div>
             </>
           )}
