@@ -69,7 +69,7 @@ export async function POST(request: Request) {
 
   const { data: pool, error } = await admin.from('players')
     .select('id, full_name, tier, positions, stats, photo_url, playing_number, reveal_pos, clubs(name)')
-    .eq('grade', grade).eq('active', true)
+    .eq('grade', grade).eq('active', true).eq('is_under18', false),
   if (error || !pool) return NextResponse.json({ error: 'Player pool unavailable' }, { status: 500 })
 
   const picks = dealT2(pool as unknown as Player[], ownedIds)

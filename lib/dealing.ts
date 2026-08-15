@@ -86,30 +86,54 @@ export function dealT1(pool: Player[], grade: Grade): { cards: Player[]; lineup:
 }
 
 export async function dealAndPersistT1(admin: SupabaseClient, userId: string, grade: Grade) {
-  // Guard: already dealt?
+  // Guard 1 — cheap check, catches the ordinary "already registered" case.
   const { count } = await admin.from('cards').select('id', { count: 'exact', head: true })
     .eq('owner_id', userId).eq('grade', grade).eq('source', 't1')
   if (count && count > 0) throw new Error('T1 already dealt for this grade')
 
-  const { data: pool, error: poolError } = await admin.from('players')
-    .select('id, full_name, tier, positions, stats, photo_url, playing_number, reveal_pos, clubs(name)')
-    .eq('grade', grade).eq('active', true)
-  if (poolError || !pool || pool.length === 0) throw new Error('Player pool unavailable')
-
-  const { cards, lineup } = dealT1(pool as unknown as Player[], grade)
-
-  const { data: inserted, error: cardError } = await admin.from('cards')
-    .insert(cards.map(p => ({ owner_id: userId, player_id: p.id, grade, source: 't1' })))
-    .select('id, player_id')
-  if (cardError || !inserted) throw new Error('Card insert failed: ' + cardError?.message)
-
+  // Guard 2 — claim the deal before doing any work.
+  // Two requests arriving together both pass Guard 1 (neither has inserted yet),
+  // which is how a user ends up with 24 T1 cards. The pre-season lineup row is
+  // unique per owner+grade+round, so inserting it FIRST makes the second request
+  // fail here instead of dealing a duplicate pack.
   const { data: round } = await admin.from('rounds')
     .select('id').eq('grade', grade).eq('round_number', 0).single()
   if (!round) throw new Error('Pre-season round missing')
 
   const { data: lineupRow, error: lineupError } = await admin.from('lineups')
     .insert({ owner_id: userId, round_id: round.id, grade }).select('id').single()
-  if (lineupError || !lineupRow) throw new Error('Lineup insert failed: ' + lineupError?.message)
+  if (lineupError || !lineupRow) {
+    throw new Error('T1 already in progress or dealt for this grade')
+  }
+
+  // Under-18 players never enter the pool, whatever `active` says.
+  const { data: pool, error: poolError } = await admin.from('players')
+    .select('id, full_name, tier, positions, stats, photo_url, playing_number, reveal_pos, clubs(name)')
+    .eq('grade', grade).eq('active', true).eq('is_under18', false)
+  if (poolError || !pool || pool.length === 0) {
+    // roll back the claim so the user can try again
+    await admin.from('lineups').delete().eq('id', lineupRow.id)
+    throw new Error('Player pool unavailable')
+  }
+
+  let cards: Player[]
+  let lineup: Map<string, Player>
+  try {
+    const dealt = dealT1(pool as unknown as Player[], grade)
+    cards = dealt.cards
+    lineup = dealt.lineup
+  } catch (e) {
+    await admin.from('lineups').delete().eq('id', lineupRow.id)
+    throw e
+  }
+
+  const { data: inserted, error: cardError } = await admin.from('cards')
+    .insert(cards.map(p => ({ owner_id: userId, player_id: p.id, grade, source: 't1' })))
+    .select('id, player_id')
+  if (cardError || !inserted) {
+    await admin.from('lineups').delete().eq('id', lineupRow.id)
+    throw new Error('Card insert failed: ' + cardError?.message)
+  }
 
   const cardIdByPlayer = new Map(inserted.map(c => [c.player_id, c.id]))
   const slotRows = [...lineup.entries()].map(([slot, player]) => ({
@@ -127,7 +151,7 @@ export async function dealAndPersistT1(admin: SupabaseClient, userId: string, gr
       club: p.clubs?.name ?? '',
       stats: p.stats ?? {},
       photoUrl: p.photo_url ?? null,
-     playingNumber: p.playing_number ?? null,
+      playingNumber: p.playing_number ?? null,
       revealPos: p.reveal_pos ?? null,
     })),
   }
