@@ -93,7 +93,7 @@ export default function Officials() {
           </h1>
           <p className="text-sm text-white/70 leading-relaxed" style={{ maxWidth: '540px', marginLeft: 'auto', marginRight: 'auto' }}>
             Umpires and scorers work every game the Premier grade plays. These {count} have
-            worked {total.toLocaleString()} of them between&nbsp;2005 and&nbsp;2026 — in some cases more games
+            worked {total.toLocaleString()}{' '}of them between&nbsp;2005 and&nbsp;2026 — in some cases more games
             than any player has ever taken the field for.
           </p>
         </div>

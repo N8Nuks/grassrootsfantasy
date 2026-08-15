@@ -54,7 +54,8 @@ export default function OfficialCard({ o }: { o: OfficialCardData }) {
             <p className="text-[8px] font-black uppercase tracking-[0.25em] truncate" style={{ color: `${accent}B0` }}>
               {roleWord}
             </p>
-            <p className={(big ? 'text-xl sm:text-2xl' : 'text-sm') + ' font-black leading-tight' + (big ? ' gf-shimmer-text' : '')}
+            {/* Long names wrap rather than clip — the gem shrinks instead */}
+            <p className={(big ? 'text-base sm:text-xl' : 'text-sm') + ' font-black leading-tight break-words' + (big ? ' gf-shimmer-text' : '')}
               style={big
                 ? { fontFamily: 'var(--font-heading)' }
                 : { fontFamily: 'var(--font-heading)', color: '#F5F1E8' }}>
@@ -65,7 +66,7 @@ export default function OfficialCard({ o }: { o: OfficialCardData }) {
           {/* Gem corner — the officiating Level, where a player's number sits */}
           <div className="shrink-0 flex items-center justify-center"
             style={{
-              width: big ? '54px' : '40px', height: big ? '54px' : '40px',
+              width: big ? '46px' : '38px', height: big ? '46px' : '38px',
               background: `linear-gradient(150deg, ${accent} 0%, ${accent}60 100%)`,
               clipPath: 'polygon(50% 0%, 100% 28%, 100% 72%, 50% 100%, 0% 72%, 0% 28%)',
               boxShadow: `0 0 ${big ? 18 : 12}px ${accent}70`,
@@ -75,7 +76,7 @@ export default function OfficialCard({ o }: { o: OfficialCardData }) {
               style={{ background: '#0D0D0F', clipPath: 'polygon(50% 0%, 100% 28%, 100% 72%, 50% 100%, 0% 72%, 0% 28%)' }}>
               <span className={(big ? 'text-[6px]' : 'text-[5px]') + ' font-black uppercase tracking-[0.15em]'}
                 style={{ color: `${accent}C0` }}>Level</span>
-              <span className={(big ? 'text-xl' : 'text-base') + ' font-black leading-none'}
+              <span className={(big ? 'text-lg' : 'text-base') + ' font-black leading-none'}
                 style={{ fontFamily: 'var(--font-heading)', color: accent, textShadow: `0 0 8px ${accent}70` }}>
                 {o.level ?? '#'}
               </span>
