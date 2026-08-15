@@ -37,7 +37,7 @@ export default function NfsBackdrop() {
         <div className="overflow-hidden shrink-0 flex items-center justify-center"
           style={{ width: 'min(34vw, 300px)', aspectRatio: '1' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/NFS-logo.png" alt="" style={{ width: '300%', height: '300%', objectFit: 'contain' }} />
+          <img src="/NFS-logo.png" alt="" style={{ width: '900%', height: '900%', objectFit: 'contain' }} />
         </div>
 
         <div className="shrink-0" style={{ width: '1px', height: 'min(30vw, 250px)', background: '#F5F1E8', opacity: 0.28 }} />
