@@ -2,22 +2,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import FactsTicker from '@/components/FactsTicker'
 import SandboxBanner from '@/components/SandboxBanner'
-import { HONOURS } from '@/lib/nfsHonours'
-
-// Most Premier MVPs in a grade — pulled live so the card shows the record,
-// not a description of where to find it.
-function topMvp(grade: 'men' | 'women'): { names: string[]; wins: number } | null {
-  const counts = new Map<string, number>()
-  for (const s of HONOURS) {
-    const w = s[grade]['mvp']
-    if (!w) continue
-    counts.set(w, (counts.get(w) ?? 0) + 1)
-  }
-  const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1])
-  if (sorted.length === 0) return null
-  const top = sorted[0][1]
-  return { names: sorted.filter(s => s[1] === top).map(s => s[0]), wins: top }
-}
+import NfsBackdrop from '@/components/NfsBackdrop'
 
 const COBALT = '#2456E6'
 const GOLD = '#E8C15A'
@@ -32,6 +17,7 @@ export default function NFS() {
       {/* Hero */}
       <section className="relative px-5 sm:px-12 overflow-hidden" style={{ paddingTop: "56px", paddingBottom: "48px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 75% 55% at 50% 0%, #10214D 0%, #0D0D0F 70%)' }} />
+        <NfsBackdrop />
         <div className="relative z-10 text-center" style={{ maxWidth: "760px", marginLeft: "auto", marginRight: "auto" }}>
           {/* League crest — sits on a lit disc so the black roundel reads on a dark page */}
           <div className="mx-auto rounded-full flex items-center justify-center"
@@ -164,25 +150,6 @@ export default function NFS() {
                       style={{ maxWidth: '460px', marginLeft: 'auto', marginRight: 'auto', marginTop: '14px' }}>
                       Every Premier award since 2004-05 — batters, pitchers and MVPs, season by season.
                     </p>
-
-                    {/* The record itself, not a description of it */}
-                    {(men || women) && (
-                      <div className="grid gap-3 sm:grid-cols-2" style={{ marginTop: '28px', marginBottom: '30px' }}>
-                        {[{ r: men, label: "Most Men's MVPs", accent: GREEN },
-                          { r: women, label: "Most Women's MVPs", accent: COBALT }].map(x => x.r && (
-                          <div key={x.label} className="rounded-2xl"
-                            style={{ background: '#00000045', border: `1px solid ${x.accent}35`, padding: '16px 14px' }}>
-                            <p className="text-[9px] font-black uppercase tracking-[0.25em]" style={{ color: x.accent }}>{x.label}</p>
-                            <p className="text-base sm:text-lg font-black text-white leading-tight" style={{ fontFamily: 'var(--font-heading)', marginTop: '7px' }}>
-                              {x.r!.names.join(' & ')}
-                            </p>
-                            <p className="text-2xl font-black" style={{ fontFamily: 'var(--font-heading)', color: GOLD, textShadow: `0 0 14px ${GOLD}50`, marginTop: '2px' }}>
-                              {x.r!.wins}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
 
                     <span className="inline-flex items-center gap-2 rounded-full text-sm font-black uppercase tracking-widest"
                       style={{ color: '#0D0D0F', background: GOLD, padding: '15px 32px', boxShadow: `0 0 22px ${GOLD}50` }}>
