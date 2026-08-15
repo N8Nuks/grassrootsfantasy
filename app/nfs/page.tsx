@@ -212,7 +212,7 @@ export default function NFS() {
               },
               {
                 q: 'What\u2019s in my Starter Pack?',
-                a: 'Twelve cards when you register: two two-way players (one full 2WP who scores batting and pitching, one pitching-only), a spread of Elite and Common players, and always enough position coverage to field a legal lineup from day one.',
+                a: 'Twelve cards when you register: two two-way players (one full 2WP who scores batting and pitching, one pitching-only), a spread of Elite and Common players, and always enough position coverage to field a legal lineup from day one. This is the only place the rarest cards are dealt\u2026 or is it?',
               },
               {
                 q: 'How big is my squad?',

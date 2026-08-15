@@ -71,7 +71,7 @@ const steps: { n: string; h: string; ps: string[]; shots: Shot[] }[] = [
     n: '02',
     h: 'Open your Starter Pack',
     ps: [
-      'The moment you register, your first tranche lands — 12 player cards, including your two-way players, elites, and the backbone of your squad. This is the only place the rarest cards are dealt, so every Starter Pack matters.',
+      'The moment you register, your first tranche lands — 12 player cards, including your two-way players, elites, and the backbone of your squad. This is the only place the rarest cards are dealt… or is it?',
       "And here's the good part: your starting lineup is auto-assigned instantly. You could register on Friday and score points that weekend without touching a thing. The squad is yours to fine-tune whenever you're ready.",
     ],
     shots: [
