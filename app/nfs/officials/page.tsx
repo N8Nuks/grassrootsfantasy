@@ -21,6 +21,7 @@ type Card = {
   since: string | null
   featured: boolean
   strap: string | null
+  level?: number
 }
 
 function build() {
@@ -42,6 +43,8 @@ function build() {
         since: seasonOf(o.name, o.role, tier),
         featured: isTama || isLyn,
         strap: isTama ? 'First umpire to 400 games' : isLyn ? 'First scorer to 300 games' : null,
+        // Officiating level, where it's on record — the gem shows # otherwise
+        level: o.level,
       }
     })
 
@@ -60,14 +63,15 @@ function build() {
 function FeatureCard({ c }: { c: Card }) {
   return <OfficialCard o={{
     name: c.name, games: c.games, role: c.role, retired: c.retired,
-    since: c.since, strap: c.strap, featured: true,
+    since: c.since, strap: c.strap, featured: true, level: c.level,
   }} />
 }
 
 /* Wing — everyone else past the bar */
 function WingCard({ c }: { c: Card }) {
   return <OfficialCard o={{
-    name: c.name, games: c.games, role: c.role, retired: c.retired, since: c.since,
+    name: c.name, games: c.games, role: c.role, retired: c.retired,
+    since: c.since, level: c.level,
   }} />
 }
 
