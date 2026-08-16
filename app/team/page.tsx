@@ -114,6 +114,12 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
   }))
 
   const slots = (lineup?.lineup_slots ?? []) as { slot: string; card_id: string; batting_order: number | null }[]
+  const { data: noticeRows } = await supabase.from('armband_notices')
+    .select('id, round_number, bonus_player_name, moved_to_name')
+    .eq('owner_id', user!.id).eq('grade', grade).eq('seen', false)
+    .order('created_at', { ascending: false })
+  const notices = (noticeRows ?? []) as { id: string; round_number: number; bonus_player_name: string; moved_to_name: string | null }[]
+  notices={notices}
   const armbands = lineup as unknown as { captain_card_id: string | null; vice_captain_card_id: string | null } | null
 
   // Players scoring double this round — cycle or perfect game earned last round
