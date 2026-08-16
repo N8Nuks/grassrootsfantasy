@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { slotPoints, applyBench, applyDouble, isCycle, updateSeasonTotals, battingPoints, pitchingPoints, resolveSubs, StatLine, PointValues, SlotAssignment } from '@/lib/scoring'
+import { slotPoints, applyBench, applyDouble, armbandHolder, isCycle, updateSeasonTotals, battingPoints, pitchingPoints, resolveSubs, StatLine, PointValues, SlotAssignment } from '@/lib/scoring'
 
 export type ScoreRoundResult =
   | { ok: true; players_scored: number; teams_scored: number; matchups_resolved: number; cycles: number; doubled: number }
@@ -137,11 +137,11 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
   )
 
   const { data: allLineups } = await admin.from('lineups')
-    .select('id, owner_id, grade, rounds!inner(round_number), lineup_slots(slot, card_id, cards(player_id, players(positions)))')
+    .select('id, owner_id, grade, captain_card_id, vice_captain_card_id, rounds!inner(round_number), lineup_slots(slot, card_id, cards(player_id, players(positions)))')
     .eq('grade', round.grade)
 
-  type SlotRow = { slot: string; cards: { player_id: string; players: { positions: string[] } | null } | null }
-  type LineupRec = { id: string; owner_id: string; rounds: { round_number: number }; lineup_slots: SlotRow[] }
+  type SlotRow = { slot: string; card_id: string; cards: { player_id: string; players: { positions: string[] } | null } | null }
+  type LineupRec = { id: string; owner_id: string; captain_card_id: string | null; vice_captain_card_id: string | null; rounds: { round_number: number }; lineup_slots: SlotRow[] }
 
   const latestByOwner = new Map<string, LineupRec>()
   for (const lu of (allLineups ?? []) as unknown as LineupRec[]) {
@@ -176,14 +176,28 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
 
     const { scored } = resolveSubs(starters, bench, reserves, played)
 
+    // Armbands are stored as card ids — map to the player who holds them.
+    // A Captain who didn't score (absent, or sitting in reserve and never
+    // promoted) hands the double to the Vice Captain.
+    const playerOfCard = new Map(
+      ((lu.lineup_slots ?? []) as SlotRow[])
+        .filter(r => r.cards?.player_id)
+        .map(r => [r.card_id, r.cards!.player_id]))
+    const captainPlayer = lu.captain_card_id ? playerOfCard.get(lu.captain_card_id) ?? null : null
+    const vicePlayer = lu.vice_captain_card_id ? playerOfCard.get(lu.vice_captain_card_id) ?? null : null
+    const scoredIds = new Set(scored.map(sc => sc.player_id))
+    const armband = armbandHolder(scoredIds, captainPlayer, vicePlayer)
+
     let total = 0
     for (const sc of scored) {
       const line = statByPlayer.get(sc.player_id)
       if (!line) continue
       const effectiveSlot = sc.slot === 'BENCH' ? 'DP' : sc.slot
-      // Floor first, then the achievement double, then the bench multiplier —
-      // so a doubled bench player scores points x2 x0.75.
-      const raw = applyDouble(slotPoints(effectiveSlot, line, v), doubledPlayers.has(sc.player_id))
+      // Floor first, then the achievement double OR the armband double (never both
+      // — a doubled player can't wear an armband), then the bench multiplier.
+      // So a Captain on the bench scores points x2 x0.75 = 1.5x.
+      const isDoubled = doubledPlayers.has(sc.player_id)
+      const raw = applyDouble(slotPoints(effectiveSlot, line, v), isDoubled || sc.player_id === armband)
       total += sc.slot === 'BENCH' ? applyBench(raw, 'BENCH1', v, false) : raw
     }
     userScores.push({ owner_id: lu.owner_id, round_id, grade: round.grade, points: total })
