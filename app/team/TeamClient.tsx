@@ -16,6 +16,10 @@ const TEAM_GUIDE: GuideStep[] = [
     body: 'Your Lineup Card shows your sixteen scoring players, numbered 1 to 16. Numbers 1 to 10 are your batting order — tap or drag them to reorder. P(B), DR and your bench hold 11 to 16 and stay put. Tap a name to see their full card, and tap a yellow position chip to change who fills that spot.',
   },
   {
+    title: 'Captain and Vice Captain',
+    body: "Tap C to name your Captain — they score double. Tap VC for your Vice Captain, who takes over the double if your Captain doesn't play or is sitting in your reserves. The double applies to everything, including negatives, so pick with care. A player already on a 2× bonus can't wear the armband.",
+  },
+  {
     title: 'Starters, bench, reserve',
     body: 'Starters score full points. Bench players score at 0.75× and step in automatically at full value if a starter misses the round. Reserves are your depth — no score, no number, but ready to promote.',
   },
@@ -62,6 +66,9 @@ const RES_SLOTS = ['RES1','RES2','RES3','RES4','RES5']
 const FIXED_NUMBERS: Record<string, number> = {
   PB: 11, DR: 12, BENCH1: 13, BENCH2: 14, BENCH3: 15, BENCH4: 16,
 }
+
+const CAPTAIN_GOLD = '#FFD700'
+const VICE_SILVER = '#C9D2DE'
 
 const CHIP_TONES = {
   nonBatting: '#E8C15A',
@@ -125,7 +132,7 @@ function SoftballSwatch({ colors, seam, selected, ringColor }: {
   )
 }
 
-export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen, thisRoundPoints, lastRoundPoints, thisRoundLabel, lastRoundLabel, cardStyle, doubledIds = [] }: {
+export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen, thisRoundPoints, lastRoundPoints, thisRoundLabel, lastRoundLabel, cardStyle, doubledIds = [], initialCaptainId = null, initialViceCaptainId = null }: {
   teamName: string
   clubName: string
   cards: TeamCard[]
@@ -143,6 +150,8 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   lastRoundLabel: string | null
   cardStyle: 'standard' | 'premium'
   doubledIds?: string[]
+  initialCaptainId?: string | null
+  initialViceCaptainId?: string | null
 }) {
   const router = useRouter()
   const T = theme(grade, siteTheme)
@@ -153,6 +162,8 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   const doubled = new Set(doubledIds)
   const [view, setView] = useState<'lineup' | 'collection'>('lineup')
   const [slots, setSlots] = useState<SlotState[]>(() => normaliseOrders(initialSlots))
+  const [captainId, setCaptainId] = useState<string | null>(initialCaptainId)
+  const [viceCaptainId, setViceCaptainId] = useState<string | null>(initialViceCaptainId)
   const [dirty, setDirty] = useState(false)
   const [swapTarget, setSwapTarget] = useState<number | null>(null)
   const [pickerSlot, setPickerSlot] = useState<string | null>(null)
@@ -228,7 +239,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     fetch('/api/save-lineup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ grade, slots: fixed }),
+      body: JSON.stringify({ grade, slots: fixed, captainCardId: captainId, viceCaptainCardId: viceCaptainId }),
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -252,6 +263,40 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     .filter(s => !s.slot.startsWith('RES'))
     .map(s => cardById.get(s.card_id))
     .filter(c => c && unavailable.has(c.playerId)) as TeamCard[]
+
+  // ── Armbands ──
+  // A player already on an achievement 2× can never hold one.
+  function canWearArmband(cardId: string): boolean {
+    const c = cardById.get(cardId)
+    return !!c && !doubled.has(c.playerId)
+  }
+
+  function toggleCaptain(cardId: string) {
+    if (!canWearArmband(cardId)) {
+      setMessage('That player is already scoring 2× this round — they can\'t wear the armband.')
+      return
+    }
+    setDirty(true)
+    setCaptainId(prev => {
+      if (prev === cardId) return null
+      // can't hold both armbands
+      if (viceCaptainId === cardId) setViceCaptainId(null)
+      return cardId
+    })
+  }
+
+  function toggleViceCaptain(cardId: string) {
+    if (!canWearArmband(cardId)) {
+      setMessage('That player is already scoring 2× this round — they can\'t wear the armband.')
+      return
+    }
+    setDirty(true)
+    setViceCaptainId(prev => {
+      if (prev === cardId) return null
+      if (captainId === cardId) setCaptainId(null)
+      return cardId
+    })
+  }
 
   // Only the batting order (1–10) can be reordered
   function swapOrders(a: number, b: number) {
@@ -300,6 +345,9 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
 
   function clearSlot(slot: string) {
     setDirty(true)
+    // a card leaving the lineup loses its armband
+    if (captainId && slots.find(s => s.slot === slot)?.card_id === captainId) setCaptainId(null)
+    if (viceCaptainId && slots.find(s => s.slot === slot)?.card_id === viceCaptainId) setViceCaptainId(null)
     setSlots(prev => normaliseOrders(prev.filter(s => s.slot !== slot)))
     setPickerSlot(null)
   }
@@ -309,7 +357,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     const res = await fetch('/api/save-lineup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ grade, slots }),
+      body: JSON.stringify({ grade, slots, captainCardId: captainId, viceCaptainCardId: viceCaptainId }),
     })
     const data = await res.json()
     if (res.ok) setDirty(false)
@@ -383,6 +431,11 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
 
   const weeklyReady = cards.length >= 21 && !t3Claimed
 
+  const captainCard = captainId ? cardById.get(captainId) : null
+  const viceCard = viceCaptainId ? cardById.get(viceCaptainId) : null
+  const captainSlot = captainId ? slotByCard.get(captainId) : null
+  const captainInReserve = captainSlot?.startsWith('RES') ?? false
+
   function chipTone(slot: string) {
     if (slot.startsWith('RES')) return T.chipReserve ?? CHIP_TONES.reserve
     if (slot.startsWith('BENCH')) return T.chipBench ?? CHIP_TONES.bench
@@ -395,6 +448,32 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     return ' gf-shimmer'
   }
 
+  function ArmbandButtons({ cardId }: { cardId: string }) {
+    const isCap = captainId === cardId
+    const isVice = viceCaptainId === cardId
+    const blocked = !canWearArmband(cardId)
+    return (
+      <span className="flex items-center gap-1 shrink-0">
+        <button onClick={() => toggleCaptain(cardId)} disabled={blocked || !roundOpen}
+          title={blocked ? 'Already scoring 2× — cannot be Captain' : 'Captain — scores double'}
+          className="w-7 h-7 rounded-full text-[10px] font-black flex items-center justify-center transition-all disabled:opacity-25"
+          style={isCap
+            ? { background: CAPTAIN_GOLD, color: '#141210', boxShadow: `0 0 12px ${CAPTAIN_GOLD}80` }
+            : { background: '#ffffff10', color: T.textDim, border: '1px solid #ffffff20' }}>
+          C
+        </button>
+        <button onClick={() => toggleViceCaptain(cardId)} disabled={blocked || !roundOpen}
+          title={blocked ? 'Already scoring 2× — cannot be Vice Captain' : 'Vice Captain — doubles if the Captain is out'}
+          className="w-7 h-7 rounded-full text-[9px] font-black flex items-center justify-center transition-all disabled:opacity-25"
+          style={isVice
+            ? { background: VICE_SILVER, color: '#141210', boxShadow: `0 0 10px ${VICE_SILVER}70` }
+            : { background: '#ffffff10', color: T.textDim, border: '1px solid #ffffff20' }}>
+          VC
+        </button>
+      </span>
+    )
+  }
+
   function PlayerRow({ s }: { s: SlotState }) {
     const c = cardById.get(s.card_id)
     if (!c) return null
@@ -405,6 +484,8 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     const selected = swappable && swapTarget === s.batting_order
     const isOut = unavailable.has(c.playerId)
     const isDoubled = doubled.has(c.playerId)
+    const isCap = captainId === s.card_id
+    const isVice = viceCaptainId === s.card_id
     return (
       <div
         draggable={swappable}
@@ -420,6 +501,9 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           ...(isDoubled ? {
             background: '#FF8C4212',
             boxShadow: 'inset 3px 0 0 #FF8C42, 0 0 20px #FF8C4218',
+          } : isCap ? {
+            background: `${CAPTAIN_GOLD}0E`,
+            boxShadow: `inset 3px 0 0 ${CAPTAIN_GOLD}`,
           } : {}),
         }}>
         {hasNumber ? (
@@ -448,9 +532,12 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
             {c.name}
             {isOut && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1" style={{ background: '#FF6B6B', color: '#141210' }}>OUT</span>}
             {isDoubled && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1 gf-pulse" style={{ background: '#FF8C42', color: '#141210', boxShadow: '0 0 10px #FF8C42' }}>2×</span>}
+            {isCap && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1" style={{ background: CAPTAIN_GOLD, color: '#141210' }}>C</span>}
+            {isVice && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1" style={{ background: VICE_SILVER, color: '#141210' }}>VC</span>}
           </p>
           <p className="text-[10px]" style={{ color: T.textDim }}>{c.club}</p>
         </button>
+        <ArmbandButtons cardId={s.card_id} />
         <span className="hidden sm:flex landscape:flex w-20 justify-center shrink-0">
           <span className="text-[9px] font-black tracking-widest px-2 py-1 rounded-full" style={{ color: meta.accent, background: meta.accent + '15' }}>
             {meta.label}
@@ -610,6 +697,26 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         </div>
       )}
 
+      {/* Armband status */}
+      {view === 'lineup' && (
+        <div className="rounded-xl mb-6 flex items-center justify-center gap-6 flex-wrap text-sm"
+          style={{ background: T.surface, border: '1px solid #ffffff12', padding: '16px 20px' }}>
+          <span style={{ color: T.textDim }}>
+            <b style={{ color: CAPTAIN_GOLD }}>Captain</b>{' '}
+            {captainCard ? <span style={{ color: T.text }}>{captainCard.name}</span> : <span style={{ opacity: 0.6 }}>not set</span>}
+          </span>
+          <span style={{ color: T.textDim }}>
+            <b style={{ color: VICE_SILVER }}>Vice Captain</b>{' '}
+            {viceCard ? <span style={{ color: T.text }}>{viceCard.name}</span> : <span style={{ opacity: 0.6 }}>not set</span>}
+          </span>
+          {captainInReserve && (
+            <span className="text-[11px] w-full text-center" style={{ color: '#FF9B9B' }}>
+              Your Captain is in your reserves and won&apos;t score — the Vice Captain will take the double.
+            </span>
+          )}
+        </div>
+      )}
+
       {unavailableRostered.length > 0 && view === 'lineup' && (
         <div className="rounded-xl px-5 py-4 mb-6 text-sm" style={{ background: '#FF6B6B15', border: '1px solid #FF6B6B50', color: '#FF9B9B' }}>
           <b>Unavailable this round:</b> {unavailableRostered.map(c => c.name).join(', ')} — swap them out before lock or the auto-sub will fill the gap from your bench.
@@ -651,6 +758,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               <span className="w-9 shrink-0" />
               <span className="w-11 shrink-0" />
               <span className="flex-1" />
+              <span className="w-[62px] shrink-0" />
               <span className="w-20 text-center text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Tier</span>
               <span className="w-20 text-center text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Bat Ave.</span>
               <span className="w-12 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>SB</span>
@@ -709,7 +817,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           </div>
 
           <p className="text-[11px] text-center mt-4" style={{ color: T.textDim }}>
-            Numbers 1–10 are your batting order — drag or tap them to reorder · 11–16 mark your other scoring players and stay put · Tap a name for the player card · Tap a position chip to change who fills it.
+            Numbers 1–10 are your batting order — drag or tap them to reorder · 11–16 mark your other scoring players and stay put · Tap C for Captain and VC for Vice Captain · Tap a name for the player card · Tap a position chip to change who fills it.
           </p>
 
           <div className="text-center" style={{ marginTop: "28px" }}>
