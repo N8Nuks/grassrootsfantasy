@@ -9,9 +9,11 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-  const { slots, grade } = await request.json() as {
+  const { slots, grade, captainCardId, viceCaptainCardId } = await request.json() as {
     grade: 'mens' | 'womens'
     slots: { slot: string; card_id: string; batting_order: number | null }[]
+    captainCardId?: string | null
+    viceCaptainCardId?: string | null
   }
 
   const admin = createAdminClient()
@@ -44,10 +46,22 @@ export async function POST(request: Request) {
     }
   }
 
+  // Armbands — must be cards in this lineup, and can't both be the same player
+  const inLineup = new Set(cardIds)
+  const captain = captainCardId && inLineup.has(captainCardId) ? captainCardId : null
+  let viceCaptain = viceCaptainCardId && inLineup.has(viceCaptainCardId) ? viceCaptainCardId : null
+  if (viceCaptain && viceCaptain === captain) viceCaptain = null
+
   // Upsert lineup then replace slots
   const { data: lineupRow, error: lineupError } = await admin.from('lineups')
-    .upsert({ owner_id: user.id, round_id: round.id, grade, submitted_at: new Date().toISOString() },
-            { onConflict: 'owner_id,round_id' })
+    .upsert({
+      owner_id: user.id,
+      round_id: round.id,
+      grade,
+      submitted_at: new Date().toISOString(),
+      captain_card_id: captain,
+      vice_captain_card_id: viceCaptain,
+    }, { onConflict: 'owner_id,round_id' })
     .select('id').single()
   if (lineupError || !lineupRow) return NextResponse.json({ error: 'Lineup save failed' }, { status: 500 })
 
@@ -56,5 +70,5 @@ export async function POST(request: Request) {
     .insert(slots.map(s => ({ lineup_id: lineupRow.id, slot: s.slot, card_id: s.card_id, batting_order: s.batting_order })))
   if (slotError) return NextResponse.json({ error: 'Slot save failed: ' + slotError.message }, { status: 500 })
 
-  return NextResponse.json({ saved: slots.length })
+  return NextResponse.json({ saved: slots.length, captain, viceCaptain })
 }
