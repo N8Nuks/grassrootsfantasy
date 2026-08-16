@@ -21,11 +21,16 @@ export type OfficialCardData = {
 
    `featured` is the record treatment: crackling rim, shimmering name, diamond
    career figure. Same card, turned up. */
-export default function OfficialCard({ o }: { o: OfficialCardData }) {
+export default function OfficialCard({ o, cardStyle = 'standard' }: {
+  o: OfficialCardData
+  cardStyle?: 'standard' | 'premium'
+}) {
   const accent = o.role === 'umpire' ? SILVER : GOLD
   const roleWord = o.role === 'umpire' ? 'Umpire' : 'Scorer'
   const verb = o.role === 'umpire' ? 'Umpired' : 'Scored'
   const big = !!o.featured
+  // Premium swaps the drawn motif for backdrop artwork, as the player cards do
+  const premium = cardStyle === 'premium'
 
   return (
     <div className={"w-full rounded-2xl flex flex-col relative" + (big ? ' gf-rim' : '')}
@@ -93,9 +98,14 @@ export default function OfficialCard({ o }: { o: OfficialCardData }) {
                          linear-gradient(180deg, #1A1A22 0%, #131318 46%, #0A0A0D 100%)`,
           }} />
 
-          {/* Role motif — scorers get the scorebook grid, umpires the chalked
-              plate and batter's boxes. Faint, so the portrait always leads. */}
-          {o.role === 'scorer' ? (
+          {/* Premium: backdrop artwork per role. Standard: the drawn motif. */}
+          {premium ? (
+            <div className="absolute inset-0" style={{
+              backgroundImage: `url(/card-bg-${o.role}.webp)`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center top',
+            }} />
+          ) : o.role === 'scorer' ? (
             <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice"
               viewBox="0 0 120 160" fill="none" style={{ opacity: 0.16 }}>
               <defs>

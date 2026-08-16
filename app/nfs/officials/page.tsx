@@ -2,6 +2,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { OFFICIALS, OFFICIAL_MILESTONES } from '@/lib/nfsOfficials'
 import OfficialCard from '@/components/OfficialCard'
+import { createClient } from '@/lib/supabase/server'
 
 const COBALT = '#2456E6'
 const GOLD = '#E8C15A'
@@ -60,23 +61,29 @@ function build() {
 
 /* Featured — the same card as the wing, turned up: crackling rim, shimmering
    name, diamond career figure, bigger Level gem */
-function FeatureCard({ c }: { c: Card }) {
-  return <OfficialCard o={{
+function FeatureCard({ c, cardStyle }: { c: Card; cardStyle: 'standard' | 'premium' }) {
+  return <OfficialCard cardStyle={cardStyle} o={{
     name: c.name, games: c.games, role: c.role, retired: c.retired,
     since: c.since, strap: c.strap, featured: true, level: c.level,
   }} />
 }
 
 /* Wing — everyone else past the bar */
-function WingCard({ c }: { c: Card }) {
-  return <OfficialCard o={{
+function WingCard({ c, cardStyle }: { c: Card; cardStyle: 'standard' | 'premium' }) {
+  return <OfficialCard cardStyle={cardStyle} o={{
     name: c.name, games: c.games, role: c.role, retired: c.retired,
     since: c.since, level: c.level,
   }} />
 }
 
-export default function Officials() {
+export default async function Officials() {
   const { featured, umpires, scorers, total, count } = build()
+
+  // Officials cards follow the same Command setting as the player cards
+  const supabase = await createClient()
+  const { data: styleRow } = await supabase.from('site_settings')
+    .select('value').eq('key', 'card_style').maybeSingle()
+  const cardStyle = (styleRow?.value === 'premium' ? 'premium' : 'standard') as 'standard' | 'premium'
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#0D0D0F' }}>
@@ -109,7 +116,7 @@ export default function Officials() {
           <p className="text-[11px] font-black uppercase tracking-[0.35em]" style={{ color: PLATINUM }}>The Records</p>
         </div>
         <div className="grid gap-5 sm:gap-6 grid-cols-2" style={{ maxWidth: '760px', marginLeft: 'auto', marginRight: 'auto' }}>
-          {featured.map(c => <FeatureCard key={`${c.role}-${c.name}`} c={c} />)}
+          {featured.map(c => <FeatureCard key={`${c.role}-${c.name}`} c={c} cardStyle={cardStyle} />)}
         </div>
       </section>
 
@@ -121,7 +128,7 @@ export default function Officials() {
             <p className="text-xs text-white/55" style={{ marginTop: '8px' }}>300 or more Premier games</p>
           </div>
           <div className="grid gap-3 grid-cols-2 sm:gap-5 lg:grid-cols-3">
-            {umpires.map(c => <WingCard key={c.name} c={c} />)}
+            {umpires.map(c => <WingCard key={c.name} c={c} cardStyle={cardStyle} />)}
           </div>
         </div>
       </section>
@@ -134,7 +141,7 @@ export default function Officials() {
             <p className="text-xs text-white/55" style={{ marginTop: '8px' }}>150 or more Premier games</p>
           </div>
           <div className="grid gap-3 grid-cols-2 sm:gap-5 lg:grid-cols-3">
-            {scorers.map(c => <WingCard key={c.name} c={c} />)}
+            {scorers.map(c => <WingCard key={c.name} c={c} cardStyle={cardStyle} />)}
           </div>
         </div>
       </section>
