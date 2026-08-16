@@ -65,6 +65,30 @@ const CHIP_TONES = {
 
 type SlotState = { slot: string; card_id: string; batting_order: number | null }
 
+// Assign batting numbers 1–10 with no duplicates and no gaps.
+// Existing numbers are kept when they're valid and unclaimed; nulls, duplicates
+// and out-of-range values get the lowest free number instead of a running max.
+function normaliseOrders(input: SlotState[]): SlotState[] {
+  const out = input.map(s => ({ ...s }))
+  const batting = BATTING_SLOTS
+    .map(bs => out.find(s => s.slot === bs))
+    .filter(Boolean) as SlotState[]
+  const taken = new Set<number>()
+  const needs: SlotState[] = []
+  for (const s of batting) {
+    const n = s.batting_order
+    if (n != null && n >= 1 && n <= BATTING_SLOTS.length && !taken.has(n)) taken.add(n)
+    else needs.push(s)
+  }
+  let free = 1
+  for (const s of needs) {
+    while (taken.has(free)) free++
+    s.batting_order = free
+    taken.add(free)
+  }
+  return out
+}
+
 function isEligible(card: TeamCard, slot: string): boolean {
   if (slot === 'DP' || slot === 'DR') return true
   if (slot.startsWith('BENCH') || slot.startsWith('RES')) return true
@@ -118,16 +142,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   // Cycle or perfect game last round — this player scores 2x this round
   const doubled = new Set(doubledIds)
   const [view, setView] = useState<'lineup' | 'collection'>('lineup')
-  const [slots, setSlots] = useState<SlotState[]>(() => {
-    const withOrder = [...initialSlots]
-    let next = 1
-    for (const bs of BATTING_SLOTS) {
-      const s = withOrder.find(x => x.slot === bs)
-      if (s && s.batting_order == null) s.batting_order = next
-      if (s?.batting_order != null) next = Math.max(next, s.batting_order + 1)
-    }
-    return withOrder
-  })
+  const [slots, setSlots] = useState<SlotState[]>(() => normaliseOrders(initialSlots))
   const [dirty, setDirty] = useState(false)
   const [swapTarget, setSwapTarget] = useState<number | null>(null)
   const [pickerSlot, setPickerSlot] = useState<string | null>(null)
@@ -193,7 +208,9 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     }
 
     if (!changed && unfilled.length === 0) return
-    setSlots(working)
+    // Promoted players arrive with no batting number — renumber before showing or saving
+    const fixed = normaliseOrders(working)
+    setSlots(fixed)
     setMessage(unfilled.length > 0
       ? `Your lineup had open spots. We filled what we could — ${unfilled.join(', ')} still needs a player you don't currently hold. Claim a pack to fill it.`
       : 'Your lineup had an open spot — we promoted from your bench to fill it.')
@@ -201,7 +218,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     fetch('/api/save-lineup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ grade, slots: working }),
+      body: JSON.stringify({ grade, slots: fixed }),
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -262,7 +279,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         }
         next.push({ slot, card_id: cardId, batting_order: null })
       }
-      return [...next]
+      return normaliseOrders(next)
     })
     setPickerSlot(null)
     setDetailCard(null)
@@ -270,7 +287,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
 
   function clearSlot(slot: string) {
     setDirty(true)
-    setSlots(prev => prev.filter(s => s.slot !== slot))
+    setSlots(prev => normaliseOrders(prev.filter(s => s.slot !== slot)))
     setPickerSlot(null)
   }
 
