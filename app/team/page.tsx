@@ -119,7 +119,6 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
     .eq('owner_id', user!.id).eq('grade', grade).eq('seen', false)
     .order('created_at', { ascending: false })
   const notices = (noticeRows ?? []) as { id: string; round_number: number; bonus_player_name: string; moved_to_name: string | null }[]
-  notices={notices}
   const armbands = lineup as unknown as { captain_card_id: string | null; vice_captain_card_id: string | null } | null
 
   // Players scoring double this round — cycle or perfect game earned last round
@@ -150,6 +149,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
           doubledIds={doubledIds}
           initialCaptainId={armbands?.captain_card_id ?? null}
           initialViceCaptainId={armbands?.vice_captain_card_id ?? null}
+          notices={notices}
         />
       </section>
       <Footer />
