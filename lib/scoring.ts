@@ -74,6 +74,21 @@ export function applyDouble(points: number, doubled: boolean): number {
   return doubled ? points * 2 : points
 }
 
+// ── Captain / Vice Captain ──
+// The Captain scores double. If the Captain didn't score this round — absent, or
+// sitting in a reserve slot and never promoted — the Vice Captain doubles instead.
+// A player already on an achievement double can't hold an armband, so the two
+// multipliers never stack. Applied on the same footing as applyDouble: after the
+// round floor, before the bench multiplier.
+export function armbandHolder(
+  scoredPlayerIds: Set<string>,
+  captainPlayerId: string | null,
+  vicePlayerId: string | null,
+): string | null {
+  if (captainPlayerId && scoredPlayerIds.has(captainPlayerId)) return captainPlayerId
+  if (vicePlayerId && scoredPlayerIds.has(vicePlayerId)) return vicePlayerId
+  return null
+}
 // Hitting for the cycle: a single, a double, a triple and a home run in one round.
 export function isCycle(s: StatLine): boolean {
   return (Number(s.singles) || 0) > 0
