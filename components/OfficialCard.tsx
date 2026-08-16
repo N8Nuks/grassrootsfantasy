@@ -86,9 +86,11 @@ export default function OfficialCard({ o }: { o: OfficialCardData }) {
         {/* Portrait area */}
         <div className="relative flex items-end justify-center overflow-hidden"
           style={{ flex: '1 1 auto', minHeight: 0, background: '#121215' }}>
-          {/* Base wash */}
+          {/* Premium base — pooled light from above, deep floor beneath, so the
+              portrait stands in a lit space rather than on a flat wash */}
           <div className="absolute inset-0" style={{
-            background: `linear-gradient(180deg, ${accent}18 0%, #121215 88%)`,
+            background: `radial-gradient(ellipse 78% 52% at 50% 6%, ${accent}42 0%, ${accent}12 42%, transparent 72%),
+                         linear-gradient(180deg, #1A1A22 0%, #131318 46%, #0A0A0D 100%)`,
           }} />
 
           {/* Role motif — scorers get the scorebook grid, umpires the chalked
@@ -103,30 +105,59 @@ export default function OfficialCard({ o }: { o: OfficialCardData }) {
                   <path d="M12 5 L19 12 L12 19 L5 12 Z" fill="none" stroke={accent} strokeWidth="0.6" />
                 </pattern>
               </defs>
-              <rect x="-4" y="-4" width="128" height="168" fill="url(#officials-scorebook)"
-                transform="rotate(-6 60 80)" />
-              {/* heavier rule, like the innings divider */}
-              <line x1="-10" y1="46" x2="130" y2="40" stroke={accent} strokeWidth="1.4" opacity="0.7" />
-              <line x1="-10" y1="118" x2="130" y2="112" stroke={accent} strokeWidth="1.4" opacity="0.7" />
+              <defs>
+                {/* Motif fades toward the base so it never fights the portrait */}
+                <linearGradient id="officials-fade-s" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#fff" stopOpacity="1" />
+                  <stop offset="58%" stopColor="#fff" stopOpacity="0.5" />
+                  <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+                </linearGradient>
+                <mask id="officials-mask-s">
+                  <rect x="-10" y="-10" width="140" height="180" fill="url(#officials-fade-s)" />
+                </mask>
+              </defs>
+              <g mask="url(#officials-mask-s)">
+                <rect x="-4" y="-4" width="128" height="168" fill="url(#officials-scorebook)"
+                  transform="rotate(-6 60 80)" />
+                <line x1="-10" y1="46" x2="130" y2="40" stroke={accent} strokeWidth="1.4" opacity="0.7" />
+                <line x1="-10" y1="118" x2="130" y2="112" stroke={accent} strokeWidth="1.4" opacity="0.7" />
+              </g>
             </svg>
           ) : (
             <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice"
               viewBox="0 0 120 160" fill="none" style={{ opacity: 0.18 }}>
               {/* Chalked home plate and batter's boxes, seen from behind the plate */}
-              <g stroke={accent} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" fill="none">
+              <defs>
+                <linearGradient id="officials-fade-u" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#fff" stopOpacity="0.35" />
+                  <stop offset="52%" stopColor="#fff" stopOpacity="1" />
+                  <stop offset="100%" stopColor="#fff" stopOpacity="0.15" />
+                </linearGradient>
+                <mask id="officials-mask-u">
+                  <rect x="-10" y="-10" width="140" height="180" fill="url(#officials-fade-u)" />
+                </mask>
+              </defs>
+              <g mask="url(#officials-mask-u)" stroke={accent} strokeWidth="1.6"
+                strokeLinejoin="round" strokeLinecap="round" fill="none">
                 <path d="M52 112 L68 112 L70 122 L60 130 L50 122 Z" />
                 <path d="M30 92 L48 92 L44 134 L22 134 Z" />
                 <path d="M90 92 L72 92 L76 134 L98 134 Z" />
-                {/* foul lines running away to the outfield */}
                 <path d="M50 112 L4 62" strokeWidth="1.1" opacity="0.6" />
                 <path d="M70 112 L116 62" strokeWidth="1.1" opacity="0.6" />
+                {/* dirt scuffed across the plate area */}
+                <path d="M18 140 Q60 132 102 140" strokeWidth="0.9" opacity="0.35" />
+                <path d="M24 150 Q60 143 96 150" strokeWidth="0.9" opacity="0.25" />
               </g>
             </svg>
           )}
 
-          {/* Energy slash, as on the player cards */}
+          {/* Light shaft, then a floor shadow the portrait can stand on */}
           <div className="absolute inset-0" style={{
-            background: `linear-gradient(115deg, transparent 0%, transparent 44%, ${accent}18 44%, ${accent}18 54%, transparent 54%)`,
+            background: `linear-gradient(112deg, transparent 0%, transparent 40%, ${accent}14 46%, ${accent}26 50%, ${accent}14 54%, transparent 60%)`,
+          }} />
+          <div className="absolute left-0 right-0 bottom-0 pointer-events-none" style={{
+            height: '42%',
+            background: `radial-gradient(ellipse 60% 100% at 50% 100%, #000000AA 0%, transparent 72%)`,
           }} />
           {big && (
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
