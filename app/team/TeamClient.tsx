@@ -13,7 +13,7 @@ import SandboxBanner from '@/components/SandboxBanner'
 const TEAM_GUIDE: GuideStep[] = [
   {
     title: 'This is your team',
-    body: 'Your Lineup Card is your batting order — the players who score points for you each round. Numbers run 1 to 16 across your starters, P(B), DR and bench. Tap a number to swap it with another, tap a name to see their full card, and tap a yellow position chip to change who fills that spot. Tap the open card itself to flip it over for their round-by-round stats.',
+    body: 'Your Lineup Card shows your sixteen scoring players, numbered 1 to 16. Numbers 1 to 10 are your batting order — tap or drag them to reorder. P(B), DR and your bench hold 11 to 16 and stay put. Tap a name to see their full card, and tap a yellow position chip to change who fills that spot.',
   },
   {
     title: 'Starters, bench, reserve',
@@ -56,9 +56,12 @@ const NON_BATTING = ['PB','DR']
 const STARTER_SLOTS = [...BATTING_SLOTS, ...NON_BATTING]
 const BENCH_SLOTS = ['BENCH1','BENCH2','BENCH3','BENCH4']
 const RES_SLOTS = ['RES1','RES2','RES3','RES4','RES5']
-// Every slot that carries a number on the card — 16 in all.
-// Purely a card-face number: it doesn't affect scoring or substitution order.
-const NUMBERED_SLOTS = [...BATTING_SLOTS, ...NON_BATTING, ...BENCH_SLOTS]
+
+// Numbers 11–16 are fixed to their slot. They mark the sixteen scoring players
+// and never move — only the batting order (1–10) is interchangeable.
+const FIXED_NUMBERS: Record<string, number> = {
+  PB: 11, DR: 12, BENCH1: 13, BENCH2: 14, BENCH3: 15, BENCH4: 16,
+}
 
 const CHIP_TONES = {
   nonBatting: '#E8C15A',
@@ -68,19 +71,19 @@ const CHIP_TONES = {
 
 type SlotState = { slot: string; card_id: string; batting_order: number | null }
 
-// Assign card numbers 1–16 with no duplicates and no gaps.
-// Existing numbers are kept when they're valid and unclaimed; nulls, duplicates
-// and out-of-range values get the lowest free number instead of a running max.
+// Batting slots take 1–10 with no duplicates and no gaps: valid unclaimed numbers
+// are kept, everything else gets the lowest free number (not a running max).
+// P(B), DR and bench always take their fixed number. Reserves take none.
 function normaliseOrders(input: SlotState[]): SlotState[] {
   const out = input.map(s => ({ ...s }))
-  const numbered = NUMBERED_SLOTS
-    .map(ns => out.find(s => s.slot === ns))
+  const batting = BATTING_SLOTS
+    .map(bs => out.find(s => s.slot === bs))
     .filter(Boolean) as SlotState[]
   const taken = new Set<number>()
   const needs: SlotState[] = []
-  for (const s of numbered) {
+  for (const s of batting) {
     const n = s.batting_order
-    if (n != null && n >= 1 && n <= NUMBERED_SLOTS.length && !taken.has(n)) taken.add(n)
+    if (n != null && n >= 1 && n <= BATTING_SLOTS.length && !taken.has(n)) taken.add(n)
     else needs.push(s)
   }
   let free = 1
@@ -89,9 +92,9 @@ function normaliseOrders(input: SlotState[]): SlotState[] {
     s.batting_order = free
     taken.add(free)
   }
-  // Reserves never carry a number
   for (const s of out) {
-    if (s.slot.startsWith('RES')) s.batting_order = null
+    if (FIXED_NUMBERS[s.slot] != null) s.batting_order = FIXED_NUMBERS[s.slot]
+    else if (s.slot.startsWith('RES')) s.batting_order = null
   }
   return out
 }
@@ -250,10 +253,13 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     .map(s => cardById.get(s.card_id))
     .filter(c => c && unavailable.has(c.playerId)) as TeamCard[]
 
+  // Only the batting order (1–10) can be reordered
   function swapOrders(a: number, b: number) {
     if (a === b) return
+    if (a > BATTING_SLOTS.length || b > BATTING_SLOTS.length) return
     setDirty(true)
     setSlots(prev => prev.map(s => {
+      if (!BATTING_SLOTS.includes(s.slot)) return s
       if (s.batting_order === a) return { ...s, batting_order: b }
       if (s.batting_order === b) return { ...s, batting_order: a }
       return s
@@ -389,39 +395,48 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     return ' gf-shimmer'
   }
 
-  function PlayerRow({ s, showOrder }: { s: SlotState; showOrder: boolean }) {
+  function PlayerRow({ s }: { s: SlotState }) {
     const c = cardById.get(s.card_id)
     if (!c) return null
     const meta = TIER_META[c.tier] ?? TIER_META.common
-    const numbered = showOrder && s.batting_order != null
-    const selected = numbered && swapTarget === s.batting_order
+    const hasNumber = s.batting_order != null
+    // Only the batting order can be tapped or dragged — 11–16 are fixed labels
+    const swappable = BATTING_SLOTS.includes(s.slot) && hasNumber
+    const selected = swappable && swapTarget === s.batting_order
     const isOut = unavailable.has(c.playerId)
     const isDoubled = doubled.has(c.playerId)
     return (
       <div
-        draggable={numbered}
-        onDragStart={() => setDragOrder(s.batting_order)}
-        onDragOver={e => e.preventDefault()}
-        onDrop={() => { if (dragOrder != null && s.batting_order != null) swapOrders(dragOrder, s.batting_order); setDragOrder(null) }}
+        draggable={swappable}
+        onDragStart={() => { if (swappable) setDragOrder(s.batting_order) }}
+        onDragOver={e => { if (swappable) e.preventDefault() }}
+        onDrop={() => { if (swappable && dragOrder != null && s.batting_order != null) swapOrders(dragOrder, s.batting_order); setDragOrder(null) }}
         className="flex items-center gap-3"
         style={{
           borderBottom: '1px solid #ffffff08',
           opacity: isOut ? 0.4 : 1,
-          cursor: numbered ? 'grab' : 'default',
+          cursor: swappable ? 'grab' : 'default',
           padding: '14px 28px',
           ...(isDoubled ? {
             background: '#FF8C4212',
             boxShadow: 'inset 3px 0 0 #FF8C42, 0 0 20px #FF8C4218',
           } : {}),
         }}>
-        {numbered ? (
-          <button onClick={() => tapOrder(s.batting_order!)}
-            className={"w-9 h-9 shrink-0 rounded-full text-sm font-black flex items-center justify-center transition-all" + (selected ? shimmer : '')}
-            style={selected
-              ? { background: T.button, color: T.buttonText, boxShadow: T.glow }
-              : { background: '#ffffff10', color: T.text }}>
-            {s.batting_order}
-          </button>
+        {hasNumber ? (
+          swappable ? (
+            <button onClick={() => tapOrder(s.batting_order!)}
+              className={"w-9 h-9 shrink-0 rounded-full text-sm font-black flex items-center justify-center transition-all" + (selected ? shimmer : '')}
+              style={selected
+                ? { background: T.button, color: T.buttonText, boxShadow: T.glow }
+                : { background: '#ffffff10', color: T.text }}>
+              {s.batting_order}
+            </button>
+          ) : (
+            <span className="w-9 h-9 shrink-0 rounded-full text-sm font-black flex items-center justify-center"
+              style={{ background: '#ffffff08', color: T.textDim }}>
+              {s.batting_order}
+            </span>
+          )
         ) : <span className="w-9 shrink-0" />}
         <button onClick={() => setPickerSlot(s.slot)}
           className={"w-11 shrink-0 text-xs font-black text-center px-2 py-1 rounded transition-all hover:scale-105" + chipShimmer(s.slot)}
@@ -461,9 +476,13 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   }
 
   function EmptyRow({ slot }: { slot: string }) {
+    const n = FIXED_NUMBERS[slot]
     return (
       <div className="flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff08', padding: '14px 28px' }}>
-        <span className="w-9 shrink-0" />
+        {n != null ? (
+          <span className="w-9 h-9 shrink-0 rounded-full text-sm font-black flex items-center justify-center"
+            style={{ background: '#ffffff08', color: T.textDim, opacity: 0.5 }}>{n}</span>
+        ) : <span className="w-9 shrink-0" />}
         <button onClick={() => setPickerSlot(slot)}
           className={"w-11 shrink-0 text-xs font-black text-center px-2 py-1 rounded transition-all hover:scale-105" + chipShimmer(slot)}
           style={{ color: T.buttonText, background: chipTone(slot) }}>
@@ -640,12 +659,12 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Season</span>
             </div>
 
-            {battingRows.map(s => <PlayerRow key={s.slot} s={s} showOrder={true} />)}
+            {battingRows.map(s => <PlayerRow key={s.slot} s={s} />)}
 
             <div style={{ background: '#00000025' }}>
               {NON_BATTING.map(slotName => {
                 const s = slots.find(x => x.slot === slotName)
-                return s ? <PlayerRow key={slotName} s={s} showOrder={true} /> : <EmptyRow key={slotName} slot={slotName} />
+                return s ? <PlayerRow key={slotName} s={s} /> : <EmptyRow key={slotName} slot={slotName} />
               })}
             </div>
 
@@ -653,7 +672,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               {bandLabel('Bench · 0.75× · covers absences at full points')}
               {BENCH_SLOTS.map(b => {
                 const s = slots.find(x => x.slot === b)
-                return s ? <PlayerRow key={b} s={s} showOrder={true} /> : <EmptyRow key={b} slot={b} />
+                return s ? <PlayerRow key={b} s={s} /> : <EmptyRow key={b} slot={b} />
               })}
             </div>
 
@@ -661,7 +680,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               {bandLabel('Reserve · No score · promoted automatically when the bench is used')}
               {RES_SLOTS.map(r => {
                 const s = slots.find(x => x.slot === r)
-                return s ? <PlayerRow key={r} s={s} showOrder={false} /> : <EmptyRow key={r} slot={r} />
+                return s ? <PlayerRow key={r} s={s} /> : <EmptyRow key={r} slot={r} />
               })}
             </div>
 
@@ -690,7 +709,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           </div>
 
           <p className="text-[11px] text-center mt-4" style={{ color: T.textDim }}>
-            Drag or tap card numbers 1–16 to swap them · Tap a name for the player card · Tap a position chip to change who fills it.
+            Numbers 1–10 are your batting order — drag or tap them to reorder · 11–16 mark your other scoring players and stay put · Tap a name for the player card · Tap a position chip to change who fills it.
           </p>
 
           <div className="text-center" style={{ marginTop: "28px" }}>
