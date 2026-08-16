@@ -13,11 +13,11 @@ import SandboxBanner from '@/components/SandboxBanner'
 const TEAM_GUIDE: GuideStep[] = [
   {
     title: 'This is your team',
-    body: 'Your Lineup Card is your batting order — the players who score points for you each round. Tap a number to swap batting positions, tap a name to see their full card, and tap a yellow position chip to change who fills that spot. Tap the open card itself to flip it over for their round-by-round stats.',
+    body: 'Your Lineup Card is your batting order — the players who score points for you each round. Numbers run 1 to 16 across your starters, P(B), DR and bench. Tap a number to swap it with another, tap a name to see their full card, and tap a yellow position chip to change who fills that spot. Tap the open card itself to flip it over for their round-by-round stats.',
   },
   {
     title: 'Starters, bench, reserve',
-    body: 'Starters score full points. Bench players score at 0.75× and step in automatically at full value if a starter misses the round. Reserves are your depth — no score, but ready to promote.',
+    body: 'Starters score full points. Bench players score at 0.75× and step in automatically at full value if a starter misses the round. Reserves are your depth — no score, no number, but ready to promote.',
   },
   {
     title: 'Packs and lock day',
@@ -56,6 +56,9 @@ const NON_BATTING = ['PB','DR']
 const STARTER_SLOTS = [...BATTING_SLOTS, ...NON_BATTING]
 const BENCH_SLOTS = ['BENCH1','BENCH2','BENCH3','BENCH4']
 const RES_SLOTS = ['RES1','RES2','RES3','RES4','RES5']
+// Every slot that carries a number on the card — 16 in all.
+// Purely a card-face number: it doesn't affect scoring or substitution order.
+const NUMBERED_SLOTS = [...BATTING_SLOTS, ...NON_BATTING, ...BENCH_SLOTS]
 
 const CHIP_TONES = {
   nonBatting: '#E8C15A',
@@ -65,19 +68,19 @@ const CHIP_TONES = {
 
 type SlotState = { slot: string; card_id: string; batting_order: number | null }
 
-// Assign batting numbers 1–10 with no duplicates and no gaps.
+// Assign card numbers 1–16 with no duplicates and no gaps.
 // Existing numbers are kept when they're valid and unclaimed; nulls, duplicates
 // and out-of-range values get the lowest free number instead of a running max.
 function normaliseOrders(input: SlotState[]): SlotState[] {
   const out = input.map(s => ({ ...s }))
-  const batting = BATTING_SLOTS
-    .map(bs => out.find(s => s.slot === bs))
+  const numbered = NUMBERED_SLOTS
+    .map(ns => out.find(s => s.slot === ns))
     .filter(Boolean) as SlotState[]
   const taken = new Set<number>()
   const needs: SlotState[] = []
-  for (const s of batting) {
+  for (const s of numbered) {
     const n = s.batting_order
-    if (n != null && n >= 1 && n <= BATTING_SLOTS.length && !taken.has(n)) taken.add(n)
+    if (n != null && n >= 1 && n <= NUMBERED_SLOTS.length && !taken.has(n)) taken.add(n)
     else needs.push(s)
   }
   let free = 1
@@ -85,6 +88,10 @@ function normaliseOrders(input: SlotState[]): SlotState[] {
     while (taken.has(free)) free++
     s.batting_order = free
     taken.add(free)
+  }
+  // Reserves never carry a number
+  for (const s of out) {
+    if (s.slot.startsWith('RES')) s.batting_order = null
   }
   return out
 }
@@ -208,7 +215,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     }
 
     if (!changed && unfilled.length === 0) return
-    // Promoted players arrive with no batting number — renumber before showing or saving
+    // Promoted players arrive with no number — renumber before showing or saving
     const fixed = normaliseOrders(working)
     setSlots(fixed)
     setMessage(unfilled.length > 0
@@ -386,12 +393,13 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     const c = cardById.get(s.card_id)
     if (!c) return null
     const meta = TIER_META[c.tier] ?? TIER_META.common
-    const selected = swapTarget === s.batting_order
+    const numbered = showOrder && s.batting_order != null
+    const selected = numbered && swapTarget === s.batting_order
     const isOut = unavailable.has(c.playerId)
     const isDoubled = doubled.has(c.playerId)
     return (
       <div
-        draggable={showOrder}
+        draggable={numbered}
         onDragStart={() => setDragOrder(s.batting_order)}
         onDragOver={e => e.preventDefault()}
         onDrop={() => { if (dragOrder != null && s.batting_order != null) swapOrders(dragOrder, s.batting_order); setDragOrder(null) }}
@@ -399,14 +407,14 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         style={{
           borderBottom: '1px solid #ffffff08',
           opacity: isOut ? 0.4 : 1,
-          cursor: showOrder ? 'grab' : 'default',
+          cursor: numbered ? 'grab' : 'default',
           padding: '14px 28px',
           ...(isDoubled ? {
             background: '#FF8C4212',
             boxShadow: 'inset 3px 0 0 #FF8C42, 0 0 20px #FF8C4218',
           } : {}),
         }}>
-        {showOrder ? (
+        {numbered ? (
           <button onClick={() => tapOrder(s.batting_order!)}
             className={"w-9 h-9 shrink-0 rounded-full text-sm font-black flex items-center justify-center transition-all" + (selected ? shimmer : '')}
             style={selected
@@ -637,7 +645,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
             <div style={{ background: '#00000025' }}>
               {NON_BATTING.map(slotName => {
                 const s = slots.find(x => x.slot === slotName)
-                return s ? <PlayerRow key={slotName} s={s} showOrder={false} /> : <EmptyRow key={slotName} slot={slotName} />
+                return s ? <PlayerRow key={slotName} s={s} showOrder={true} /> : <EmptyRow key={slotName} slot={slotName} />
               })}
             </div>
 
@@ -645,7 +653,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               {bandLabel('Bench · 0.75× · covers absences at full points')}
               {BENCH_SLOTS.map(b => {
                 const s = slots.find(x => x.slot === b)
-                return s ? <PlayerRow key={b} s={s} showOrder={false} /> : <EmptyRow key={b} slot={b} />
+                return s ? <PlayerRow key={b} s={s} showOrder={true} /> : <EmptyRow key={b} slot={b} />
               })}
             </div>
 
@@ -682,7 +690,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           </div>
 
           <p className="text-[11px] text-center mt-4" style={{ color: T.textDim }}>
-            Drag or tap batting numbers to reorder · Tap a name for the player card · Tap a position chip to change who fills it.
+            Drag or tap card numbers 1–16 to swap them · Tap a name for the player card · Tap a position chip to change who fills it.
           </p>
 
           <div className="text-center" style={{ marginTop: "28px" }}>
