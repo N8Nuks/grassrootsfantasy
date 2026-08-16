@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { slotPoints, applyBench, applyDouble, armbandHolder, isCycle, updateSeasonTotals, battingPoints, pitchingPoints, resolveSubs, StatLine, PointValues, SlotAssignment } from '@/lib/scoring'
+import { moveArmbandsOffDoubled } from '@/lib/armbands'
 
 export type ScoreRoundResult =
   | { ok: true; players_scored: number; teams_scored: number; matchups_resolved: number; cycles: number; doubled: number }
@@ -223,6 +224,9 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
     }).eq('id', m.id)
     resolved++
   }
+
+  // 5. Armbands off anyone due a bonus next round, and notify their managers
+  await moveArmbandsOffDoubled(admin, round.grade as 'mens' | 'womens', round.round_number)
 
   return {
     ok: true,
