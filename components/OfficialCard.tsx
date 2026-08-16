@@ -86,9 +86,47 @@ export default function OfficialCard({ o }: { o: OfficialCardData }) {
         {/* Portrait area */}
         <div className="relative flex items-end justify-center overflow-hidden"
           style={{ flex: '1 1 auto', minHeight: 0, background: '#121215' }}>
+          {/* Base wash */}
           <div className="absolute inset-0" style={{
-            background: `linear-gradient(115deg, transparent 0%, transparent 44%, ${accent}22 44%, ${accent}22 54%, transparent 54%),
-                         linear-gradient(180deg, ${accent}18 0%, #121215 88%)`,
+            background: `linear-gradient(180deg, ${accent}18 0%, #121215 88%)`,
+          }} />
+
+          {/* Role motif — scorers get the scorebook grid, umpires the chalked
+              plate and batter's boxes. Faint, so the portrait always leads. */}
+          {o.role === 'scorer' ? (
+            <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice"
+              viewBox="0 0 120 160" fill="none" style={{ opacity: 0.16 }}>
+              <defs>
+                <pattern id="officials-scorebook" width="24" height="24" patternUnits="userSpaceOnUse">
+                  <rect width="24" height="24" fill="none" stroke={accent} strokeWidth="0.7" />
+                  {/* the diamond inside every cell — the signature of a scoresheet */}
+                  <path d="M12 5 L19 12 L12 19 L5 12 Z" fill="none" stroke={accent} strokeWidth="0.6" />
+                </pattern>
+              </defs>
+              <rect x="-4" y="-4" width="128" height="168" fill="url(#officials-scorebook)"
+                transform="rotate(-6 60 80)" />
+              {/* heavier rule, like the innings divider */}
+              <line x1="-10" y1="46" x2="130" y2="40" stroke={accent} strokeWidth="1.4" opacity="0.7" />
+              <line x1="-10" y1="118" x2="130" y2="112" stroke={accent} strokeWidth="1.4" opacity="0.7" />
+            </svg>
+          ) : (
+            <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice"
+              viewBox="0 0 120 160" fill="none" style={{ opacity: 0.18 }}>
+              {/* Chalked home plate and batter's boxes, seen from behind the plate */}
+              <g stroke={accent} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" fill="none">
+                <path d="M52 112 L68 112 L70 122 L60 130 L50 122 Z" />
+                <path d="M30 92 L48 92 L44 134 L22 134 Z" />
+                <path d="M90 92 L72 92 L76 134 L98 134 Z" />
+                {/* foul lines running away to the outfield */}
+                <path d="M50 112 L4 62" strokeWidth="1.1" opacity="0.6" />
+                <path d="M70 112 L116 62" strokeWidth="1.1" opacity="0.6" />
+              </g>
+            </svg>
+          )}
+
+          {/* Energy slash, as on the player cards */}
+          <div className="absolute inset-0" style={{
+            background: `linear-gradient(115deg, transparent 0%, transparent 44%, ${accent}18 44%, ${accent}18 54%, transparent 54%)`,
           }} />
           {big && (
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
