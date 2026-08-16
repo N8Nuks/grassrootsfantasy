@@ -41,6 +41,13 @@ export type TeamCard = {
   playingNumber?: number | null
 }
 
+export type ArmbandNotice = {
+  id: string
+  round_number: number
+  bonus_player_name: string
+  moved_to_name: string | null
+}
+
 const TIER_META: Record<string, { label: string; accent: string }> = {
   rare_2wp_a: { label: '2WP A', accent: '#FFD700' },
   rare_2wp_b: { label: '2WP B', accent: '#E8C15A' },
@@ -132,7 +139,7 @@ function SoftballSwatch({ colors, seam, selected, ringColor }: {
   )
 }
 
-export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen, thisRoundPoints, lastRoundPoints, thisRoundLabel, lastRoundLabel, cardStyle, doubledIds = [], initialCaptainId = null, initialViceCaptainId = null }: {
+export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen, thisRoundPoints, lastRoundPoints, thisRoundLabel, lastRoundLabel, cardStyle, doubledIds = [], initialCaptainId = null, initialViceCaptainId = null, notices = [] }: {
   teamName: string
   clubName: string
   cards: TeamCard[]
@@ -152,6 +159,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   doubledIds?: string[]
   initialCaptainId?: string | null
   initialViceCaptainId?: string | null
+  notices?: ArmbandNotice[]
 }) {
   const router = useRouter()
   const T = theme(grade, siteTheme)
@@ -164,6 +172,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   const [slots, setSlots] = useState<SlotState[]>(() => normaliseOrders(initialSlots))
   const [captainId, setCaptainId] = useState<string | null>(initialCaptainId)
   const [viceCaptainId, setViceCaptainId] = useState<string | null>(initialViceCaptainId)
+  const [openNotices, setOpenNotices] = useState<ArmbandNotice[]>(notices)
   const [dirty, setDirty] = useState(false)
   const [swapTarget, setSwapTarget] = useState<number | null>(null)
   const [pickerSlot, setPickerSlot] = useState<string | null>(null)
@@ -243,6 +252,16 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  async function dismissNotice(id: string) {
+    setOpenNotices(prev => prev.filter(n => n.id !== id))
+    await fetch('/api/dismiss-notice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+  }
+
   async function setSiteTheme(next: string) {
     if (themeSaving || next === siteTheme) return
     setThemeSaving(true)
@@ -346,8 +365,9 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   function clearSlot(slot: string) {
     setDirty(true)
     // a card leaving the lineup loses its armband
-    if (captainId && slots.find(s => s.slot === slot)?.card_id === captainId) setCaptainId(null)
-    if (viceCaptainId && slots.find(s => s.slot === slot)?.card_id === viceCaptainId) setViceCaptainId(null)
+    const leaving = slots.find(s => s.slot === slot)?.card_id
+    if (leaving && captainId === leaving) setCaptainId(null)
+    if (leaving && viceCaptainId === leaving) setViceCaptainId(null)
     setSlots(prev => normaliseOrders(prev.filter(s => s.slot !== slot)))
     setPickerSlot(null)
   }
@@ -590,6 +610,36 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
 
   return (
     <div style={{ maxWidth: "860px", marginLeft: "auto", marginRight: "auto" }}>
+
+      {/* ── Armband notices — a bonus was awarded, and the armband may have moved ── */}
+      {openNotices.map(n => (
+        <div key={n.id} className="rounded-2xl overflow-hidden"
+          style={{
+            background: `linear-gradient(180deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`,
+            border: `2px solid #FF8C4270`,
+            boxShadow: '0 0 26px #FF8C4222',
+            padding: '20px 22px',
+            marginBottom: '22px',
+          }}>
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: '#FF8C42', marginBottom: '8px' }}>
+                Bonus awarded
+              </p>
+              <p className="text-sm leading-relaxed" style={{ color: T.text }}>
+                <b>{n.bonus_player_name}</b> earned a 2× bonus and scores double in Round {n.round_number}.
+              </p>
+              {n.moved_to_name && (
+                <p className="text-sm leading-relaxed" style={{ color: T.textDim, marginTop: '8px' }}>
+                  A bonus player can&apos;t be your Captain, so the armband has moved to <b style={{ color: T.text }}>{n.moved_to_name}</b>.
+                  Change it any time while the round is open.
+                </p>
+              )}
+            </div>
+            <button onClick={() => dismissNotice(n.id)} className="text-xl font-black shrink-0" style={{ color: T.textDim }}>×</button>
+          </div>
+        </div>
+      ))}
 
       {/* ── Waiting packs — first thing on the page, before anything else ── */}
       {(t2Available || weeklyReady) && (
