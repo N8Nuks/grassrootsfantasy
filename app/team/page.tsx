@@ -28,7 +28,8 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
     supabase.from('cards')
       .select('id, players(id, full_name, tier, positions, stats, photo_url, playing_number, clubs(name))')
       .eq('owner_id', user!.id).eq('grade', grade),
-    supabase.from('lineups').select('id, lineup_slots(slot, card_id, batting_order)')
+    supabase.from('lineups')
+      .select('id, captain_card_id, vice_captain_card_id, lineup_slots(slot, card_id, batting_order)')
       .eq('owner_id', user!.id).eq('grade', grade)
       .order('submitted_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('rounds').select('id, round_number, status')
@@ -113,6 +114,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
   }))
 
   const slots = (lineup?.lineup_slots ?? []) as { slot: string; card_id: string; batting_order: number | null }[]
+  const armbands = lineup as unknown as { captain_card_id: string | null; vice_captain_card_id: string | null } | null
 
   // Players scoring double this round — cycle or perfect game earned last round
   const doubledMap = await doubledInRound(supabase, grade, latestRound?.round_number ?? null)
@@ -140,6 +142,8 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
           cardStyle={cardStyle}
           lastRoundLabel={lastRoundLabel}
           doubledIds={doubledIds}
+          initialCaptainId={armbands?.captain_card_id ?? null}
+          initialViceCaptainId={armbands?.vice_captain_card_id ?? null}
         />
       </section>
       <Footer />
