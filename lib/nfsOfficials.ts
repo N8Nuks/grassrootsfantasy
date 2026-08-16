@@ -1,7 +1,7 @@
 // NFS officials — umpires and scorers. Generated from NFS_AFC_HISTORY.xlsx
 // Career figures cover NFC, AFC and NFS, 2005–2026.
 
-export type Official = { name: string; games: number; role: 'umpire' | 'scorer'; retired: boolean }
+export type Official = { name: string; games: number; role: 'umpire' | 'scorer'; retired: boolean; level?: number }
 export type OfficialMilestone = { name: string; games: number; tier: 100 | 200 | 300 | 400; season: string; role: 'umpire' | 'scorer' }
 
 export const OFFICIALS: Official[] = [
@@ -56,11 +56,11 @@ export const OFFICIALS: Official[] = [
   { name: 'Dion Sneddon', games: 3, role: 'umpire', retired: false },
   { name: 'Hisan Kadal', games: 2, role: 'umpire', retired: false },
   { name: 'John Hall', games: 1, role: 'umpire', retired: false },
-  { name: 'Lynnette Leathart', games: 333, role: 'scorer', retired: false },
-  { name: 'Stuart Gamble', games: 215, role: 'scorer', retired: false },
-  { name: 'Carolyn McQueen', games: 210, role: 'scorer', retired: false },
-  { name: 'Christine Nukunuku', games: 183, role: 'scorer', retired: false },
-  { name: 'Karina Rueb', games: 156, role: 'scorer', retired: false },
+  { name: 'Lynnette Leathart', games: 333, role: 'scorer', retired: false, level: 7 },
+  { name: 'Stuart Gamble', games: 215, role: 'scorer', retired: false, level: 7 },
+  { name: 'Carolyn McQueen', games: 210, role: 'scorer', retired: false, level: 7 },
+  { name: 'Christine Nukunuku', games: 183, role: 'scorer', retired: false, level: 7 },
+  { name: 'Karina Rueb', games: 156, role: 'scorer', retired: false, level: 7 },
   { name: 'Deb Townley', games: 136, role: 'scorer', retired: false },
   { name: 'Tracee Topia', games: 126, role: 'scorer', retired: false },
   { name: 'Annie Martin', games: 106, role: 'scorer', retired: false },
