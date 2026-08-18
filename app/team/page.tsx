@@ -119,7 +119,26 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
     .eq('owner_id', user!.id).eq('grade', grade).eq('seen', false)
     .order('created_at', { ascending: false })
   const notices = (noticeRows ?? []) as { id: string; round_number: number; bonus_player_name: string; moved_to_name: string | null }[]
-  const armbands = lineup as unknown as { captain_card_id: string | null; vice_captain_card_id: string | null } | null
+  // What each card actually earned in the last scored round, and why it differs
+  // from the raw stat line — drives the Earned column on the Lineup Card
+  let earned: Record<string, { earned: number; reason: string | null }> = {}
+  let earnedLabel: string | null = null
+  if (latestRound) {
+    const { data: scoredRound } = await supabase.from('rounds')
+      .select('id, round_number').eq('grade', grade)
+      .lte('round_number', latestRound.round_number)
+      .in('status', ['provisional', 'confirmed'])
+      .order('round_number', { ascending: false }).limit(1).maybeSingle()
+    if (scoredRound) {
+      const { data: earnRows } = await supabase.from('lineup_earnings')
+        .select('player_id, earned, reason')
+        .eq('owner_id', user!.id).eq('round_id', scoredRound.id)
+      for (const r of earnRows ?? []) {
+        earned[r.player_id] = { earned: Number(r.earned), reason: r.reason }
+      }
+      if ((earnRows ?? []).length > 0) earnedLabel = `Rd ${scoredRound.round_number}`
+    }
+  }
 
   // Players scoring double this round — cycle or perfect game earned last round
   const doubledMap = await doubledInRound(supabase, grade, latestRound?.round_number ?? null)
@@ -150,6 +169,8 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
           initialCaptainId={armbands?.captain_card_id ?? null}
           initialViceCaptainId={armbands?.vice_captain_card_id ?? null}
           notices={notices}
+          earned={earned}
+          earnedLabel={earnedLabel}
         />
       </section>
       <Footer />
