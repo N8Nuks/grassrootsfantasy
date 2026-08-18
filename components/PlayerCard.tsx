@@ -1,5 +1,6 @@
 'use client'
 import { theme, type Grade } from '@/lib/clubhouse'
+import { splitName } from '@/lib/names'
 
 export const TIER_META: Record<string, { label: string; accent: string }> = {
   rare_2wp_a: { label: '2WP A', accent: '#FFD700' },
@@ -90,7 +91,7 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
           </div>
           <p className="flex-1 min-w-0 text-xs font-black truncate"
             style={{ fontFamily: 'var(--font-heading)', color: owned ? T.text : T.textDim }}>
-            {player.name}
+            {splitName(player.name).first} <span className="uppercase">{splitName(player.name).last}</span>
           </p>
         </div>
 
