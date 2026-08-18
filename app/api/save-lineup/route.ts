@@ -16,6 +16,13 @@ export async function POST(request: Request) {
     viceCaptainCardId?: string | null
   }
 
+  // A lineup with no slots is never a legitimate save — an empty write would
+  // replace the manager's real lineup with nothing, which is how teams have
+  // appeared to vanish. Registration deals lineups through a different path.
+  if (!Array.isArray(slots) || slots.length === 0) {
+    return NextResponse.json({ error: 'Nothing to save — your lineup is empty' }, { status: 400 })
+  }
+
   const admin = createAdminClient()
 
   // Current open round for grade
