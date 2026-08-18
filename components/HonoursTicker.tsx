@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { HONOURS, AWARD_LABELS } from '@/lib/nfsHonours'
+import { splitName } from '@/lib/names'
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr]
@@ -67,7 +68,7 @@ export default function HonoursTicker({ grade, accent }: {
           style={{ opacity: visible ? 1 : 0, minHeight: '62px', marginTop: '12px' }}>
           <p className="text-lg sm:text-2xl font-black leading-tight"
             style={{ fontFamily: 'var(--font-heading)', color: '#FFFFFF', textShadow: `0 0 20px ${accent}45` }}>
-            {line.name}
+            {splitName(line.name).first} <span className="uppercase">{splitName(line.name).last}</span>
           </p>
           <p className="text-[11px] font-bold uppercase tracking-[0.25em]"
             style={{ color: 'rgba(255,255,255,0.6)', marginTop: '7px' }}>
