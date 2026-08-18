@@ -119,7 +119,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
     .eq('owner_id', user!.id).eq('grade', grade).eq('seen', false)
     .order('created_at', { ascending: false })
   const notices = (noticeRows ?? []) as { id: string; round_number: number; bonus_player_name: string; moved_to_name: string | null }[]
-  // What each card actually earned in the last scored round, and why it differs
+  const armbands = lineup as unknown as { captain_card_id: string | null; vice_captain_card_id: string | null } | null
   // from the raw stat line — drives the Earned column on the Lineup Card
   let earned: Record<string, { earned: number; reason: string | null }> = {}
   let earnedLabel: string | null = null
