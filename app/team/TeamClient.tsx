@@ -496,7 +496,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     return (
       <span className="flex items-center gap-1 shrink-0">
         <button onClick={() => toggleCaptain(cardId)} disabled={blocked || !roundOpen}
-          title={blocked ? 'Already scoring 2× — cannot be Captain' : 'Captain — scores double'}
+          title={blocked ? 'Already scoring 2× — cannot be Captain' : 'Captain — scores 2×'}
           className="w-7 h-7 rounded-full text-[10px] font-black flex items-center justify-center transition-all disabled:opacity-15"
           style={isCap
             ? { background: CAPTAIN_GOLD, color: '#141210', boxShadow: `0 0 12px ${CAPTAIN_GOLD}80` }
@@ -504,7 +504,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           C
         </button>
         <button onClick={() => toggleViceCaptain(cardId)} disabled={blocked || !roundOpen}
-          title={blocked ? 'Already scoring 2× — cannot be Vice Captain' : 'Vice Captain — doubles if the Captain is out'}
+          title={blocked ? 'Already scoring 2× — cannot be Vice Captain' : 'Vice Captain — scores 1.5×'}
           className="w-7 h-7 rounded-full text-[9px] font-black flex items-center justify-center transition-all disabled:opacity-15"
           style={isVice
             ? { background: VICE_SILVER, color: '#141210', boxShadow: `0 0 10px ${VICE_SILVER}70` }
@@ -838,7 +838,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               </span>
               {captainInReserve && (
                 <span className="text-[11px] w-full text-center" style={{ color: '#FF9B9B' }}>
-                  Your Captain is in your reserves and won&apos;t score — the Vice Captain will take the double.
+                  Your Captain is in your reserves and won&apos;t score — you&apos;ll lose the 2× this round.
                 </span>
               )}
             </div>
