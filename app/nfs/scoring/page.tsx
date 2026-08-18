@@ -38,6 +38,14 @@ const slots = [
   { slot: 'Squad', rule: 'Depth in your squad. Don\'t forget to check for your nuggets having great seasons, and factor in byes and double-header rounds. Two new players added every week!' },
 ]
 
+const armbands = [
+  { slot: 'Captain', rule: 'Scores 2×. Everything doubles — including the negatives, so a bad day hurts twice as much.' },
+  { slot: 'Vice Captain', rule: 'Scores 1.5×. Runs alongside the Captain every round, not instead of them, so you have two picks that matter.' },
+  { slot: 'On the bench', rule: 'An armband still works, but the bench multiplier applies on top — a Captain on your bench scores 1.5×, a Vice Captain 1.125×.' },
+  { slot: 'In the reserves', rule: 'No score, so no bonus. An armband on a reserve is a wasted pick.' },
+  { slot: 'Already on a 2× bonus', rule: 'A player on a cycle or perfect-game bonus can\'t wear an armband — the multipliers never stack. Put it on someone else and run two doubles that round.' },
+]
+
 const boards = [
   { t: 'Season Ladder', c: '#E8C15A', d: 'Cumulative points across the whole season. The long game.' },
   { t: 'Head-to-Head', c: '#4DA6FF', d: 'A matchup every round with its own win-percentage standings. Anyone can beat anyone on the weekend.' },
@@ -108,7 +116,23 @@ export default function Scoring() {
           </div>
         </div>
       </section>
-
+      {/* Captain and Vice Captain */}
+      <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "36px", paddingBottom: "36px" }}>
+        <div style={{ maxWidth: "720px", marginLeft: "auto", marginRight: "auto" }}>
+          <h2 className="text-2xl sm:text-3xl font-black text-white text-center" style={{ fontFamily: 'var(--font-heading)', marginBottom: "12px" }}>Captain &amp; Vice Captain.</h2>
+          <p className="text-sm text-white/70 text-center leading-relaxed" style={{ maxWidth: '460px', marginLeft: 'auto', marginRight: 'auto', marginBottom: '32px' }}>
+            Two armbands, every round. Get them right and they win you the weekend.
+          </p>
+          <div className="flex flex-col gap-4">
+            {armbands.map(a => (
+              <div key={a.slot} className="rounded-xl px-6 py-5 text-center" style={{ background: '#121215', border: `2px solid ${GOLD}55` }}>
+                <span className="block text-sm font-black uppercase tracking-[0.2em] mb-2" style={{ color: GOLD }}>{a.slot}</span>
+                <span className="block text-sm text-white/70 leading-relaxed" style={{ maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>{a.rule}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
       {/* Competitions */}
       <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "36px", paddingBottom: "36px" }}>
         <div style={{ maxWidth: "720px", marginLeft: "auto", marginRight: "auto" }}>
