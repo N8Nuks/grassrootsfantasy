@@ -215,7 +215,6 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
       // Why this differs from the raw stat line, most notable reason first
       const reasons: string[] = []
       if (isDoubled) reasons.push('2× Bonus')
-      else if (hasArmband) reasons.push(sc.player_id === captainPlayer ? '2× Captain' : '2× Vice Captain')
       if (sc.slot === 'BENCH') reasons.push('0.75× Bench')
       if (sc.promoted) reasons.push('Promoted')
       if (sc.slot === 'PB') reasons.push('Pitching only')
