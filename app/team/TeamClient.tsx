@@ -571,7 +571,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         <button onClick={() => setDetailCard(c)} className="flex-1 min-w-0 text-left">
           <p className="text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
             <span className="block sm:inline landscape:inline">{c.name.split(' ')[0]}</span>
-            <span className="block sm:inline landscape:inline sm:before:content-['_'] landscape:before:content-['_']">{c.name.split(' ').slice(1).join(' ')}</span>
+            <span className="block sm:inline landscape:inline uppercase sm:before:content-['_'] landscape:before:content-['_']">{c.name.split(' ').slice(1).join(' ')}</span>
             {isOut && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1" style={{ background: '#FF6B6B', color: '#141210' }}>OUT</span>}
             {isDoubled && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1 gf-pulse" style={{ background: '#FF8C42', color: '#141210', boxShadow: '0 0 10px #FF8C42' }}>2×</span>}
           </p>
