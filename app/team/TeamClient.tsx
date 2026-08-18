@@ -930,7 +930,10 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
             <p className="text-[11px]" style={{ color: T.textDim, marginTop: '10px' }}>
               How much of your squad&apos;s output you actually banked — and where the rest went.
             </p>
-          </div> — drag or tap them to reorder · 11–16 mark your other scoring players and stay put · Tap C for Captain and VC for Vice Captain · Tap a name for the player card · Tap a position chip to change who fills it.
+          </div>
+
+          <p className="text-[11px] text-center mt-4" style={{ color: T.textDim }}>
+            Numbers 1–10 are your batting order — drag or tap them to reorder · 11–16 mark your other scoring players and stay put · Tap C for Captain and VC for Vice Captain · Tap a name for the player card · Tap a position chip to change who fills it.
           </p>
 
           <div className="text-center" style={{ marginTop: "28px" }}>
