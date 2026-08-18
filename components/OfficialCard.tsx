@@ -1,4 +1,5 @@
 'use client'
+import { splitName } from '@/lib/names'
 
 const SILVER = '#7FC4FF'
 const GOLD = '#E8C15A'
@@ -64,7 +65,7 @@ export default function OfficialCard({ o, cardStyle = 'standard' }: {
               style={big
                 ? { fontFamily: 'var(--font-heading)' }
                 : { fontFamily: 'var(--font-heading)', color: '#F5F1E8' }}>
-              {o.name}
+              {splitName(o.name).first} <span className="uppercase">{splitName(o.name).last}</span>
             </p>
           </div>
 
