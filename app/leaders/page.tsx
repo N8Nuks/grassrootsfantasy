@@ -6,7 +6,7 @@ import GradeSwitch from '@/components/GradeSwitch'
 import { splitName } from '@/lib/names'
 
 const CATS: { key: string; label: string; format?: 'ba' }[] = [
-  { key: 'season_points', label: 'Points' },
+  { key: 'season_points', label: 'Fantasy Points' },
   { key: 'season_hr', label: 'Home Runs' },
   { key: 'season_rbi', label: 'RBI' },
   { key: 'season_sb', label: 'Stolen Bases' },
