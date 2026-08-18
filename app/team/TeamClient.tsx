@@ -569,8 +569,9 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           {SLOT_LABELS[s.slot] ?? 'B'}
         </button>
         <button onClick={() => setDetailCard(c)} className="flex-1 min-w-0 text-left">
-          <p className="text-sm font-black truncate" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
-            {c.name}
+          <p className="text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
+            <span className="block sm:inline landscape:inline">{c.name.split(' ')[0]}</span>
+            <span className="block sm:inline landscape:inline sm:before:content-['_'] landscape:before:content-['_']">{c.name.split(' ').slice(1).join(' ')}</span>
             {isOut && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1" style={{ background: '#FF6B6B', color: '#141210' }}>OUT</span>}
             {isDoubled && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1 gf-pulse" style={{ background: '#FF8C42', color: '#141210', boxShadow: '0 0 10px #FF8C42' }}>2×</span>}
             {isCap && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1" style={{ background: CAPTAIN_GOLD, color: '#141210' }}>C</span>}
@@ -839,7 +840,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                 }}>
                 <span style={{ fontSize: '14px', color: T.accent, lineHeight: 1 }}>↻</span>
                 <span className="text-[11px] font-black uppercase tracking-[0.12em]" style={{ color: T.accent }}>
-                  Rotate for full stats
+                  Rotate Phone for full stats
                 </span>
               </span>
             </div>
