@@ -142,6 +142,19 @@ export async function dealAndPersistT1(admin: SupabaseClient, userId: string, gr
   const { error: slotError } = await admin.from('lineup_slots').insert(slotRows)
   if (slotError) throw new Error('Slot insert failed: ' + slotError.message)
 
+  // Sensible armband defaults so a manager who never sets them still gets the
+  // multipliers. P and C because at season start there's no form to sort on —
+  // predictable and easy to explain. Changeable from My Team any time.
+  const captainPlayer = lineup.get('P')
+  const vicePlayer = lineup.get('C')
+  const captainCard = captainPlayer ? cardIdByPlayer.get(captainPlayer.id) ?? null : null
+  const viceCard = vicePlayer ? cardIdByPlayer.get(vicePlayer.id) ?? null : null
+  if (captainCard || viceCard) {
+    await admin.from('lineups')
+      .update({ captain_card_id: captainCard, vice_captain_card_id: viceCard })
+      .eq('id', lineupRow.id)
+  }
+
   return {
     dealt: cards.length,
     cards: cards.map(p => ({
