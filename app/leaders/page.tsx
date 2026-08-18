@@ -3,6 +3,7 @@ import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/server'
 import { theme, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
+import { splitName } from '@/lib/names'
 
 const CATS: { key: string; label: string; format?: 'ba' }[] = [
   { key: 'season_points', label: 'Points' },
@@ -75,7 +76,9 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold truncate" style={{ color: T.text }}>{p.full_name}</p>
+                        <p className="text-sm font-bold truncate" style={{ color: T.text }}>
+                          {splitName(p.full_name).first} <span className="uppercase">{splitName(p.full_name).last}</span>
+                        </p>
                         <p className="text-[10px] truncate" style={{ color: T.textDim }}>{p.clubs?.name ?? ''}</p>
                       </div>
                       <span className="text-base font-black shrink-0" style={{ fontFamily: 'var(--font-heading)', color: i === 0 ? '#FFD700' : T.text }}>
