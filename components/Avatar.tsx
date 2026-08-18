@@ -2,33 +2,34 @@
 
 /* Procedural manager avatars — no uploads, no moderation, no cost per user.
    Every avatar is drawn from a short seed string like "b3-c07-d2-m4-f1", so
-   nothing is stored but the seed and nothing is served but SVG.
+   nothing is stored but the seed and nothing is served but layers.
+
+   The silhouettes are fixed black artwork. All colour lives in the backdrop,
+   motif and frame — a black figure against a club-coloured field, which reads
+   like proper sports iconography and keeps the artwork untouched.
 
    Layers: silhouette · colourway · backdrop · motif · frame
-   5 x 10 x 5 x 5 x 4 = 5,000 combinations.
+   5 x 10 x 8 x 5 x 4 = 8,000 combinations. */
 
-   The silhouettes here are placeholders — rough shapes standing in until proper
-   artwork is commissioned. Everything else is final. */
-
-export const SILHOUETTES = ['batter', 'pitcher', 'catcher', 'fielder', 'runner'] as const
+export const SILHOUETTES = ['batter', 'pitcher', 'catcher', 'fielding', 'slide'] as const
 export const COLOURWAYS: { fill: string; accent: string }[] = [
-  { fill: '#C41E3A', accent: '#F5F1E8' },   // ramblers red
-  { fill: '#2456E6', accent: '#E8F0FF' },   // marist blue
-  { fill: '#2D9E4E', accent: '#E9FBEF' },   // pukekohe green
-  { fill: '#5B2D8E', accent: '#EFE6FA' },   // bandits purple
-  { fill: '#8A1E41', accent: '#FBE9EF' },   // howick maroon
-  { fill: '#FFB81C', accent: '#2A2100' },   // waitakere gold
-  { fill: '#E03A3E', accent: '#FFF0F0' },   // united red
-  { fill: '#B49759', accent: '#241E10' },   // patriots sand
-  { fill: '#2B5C9E', accent: '#EAF2FF' },   // otahuhu blue
-  { fill: '#C9D2DE', accent: '#141821' },   // neutral silver
+  { fill: '#C41E3A', accent: '#FF8FA3' },   // ramblers red
+  { fill: '#2456E6', accent: '#8FB4FF' },   // marist blue
+  { fill: '#2D9E4E', accent: '#8FE0A8' },   // pukekohe green
+  { fill: '#5B2D8E', accent: '#B79BE0' },   // bandits purple
+  { fill: '#8A1E41', accent: '#E58FAC' },   // howick maroon
+  { fill: '#FFB81C', accent: '#FFE3A0' },   // waitakere gold
+  { fill: '#E03A3E', accent: '#FF9B9D' },   // united red
+  { fill: '#B49759', accent: '#E8D5A3' },   // patriots sand
+  { fill: '#2B5C9E', accent: '#93BCEE' },   // otahuhu blue
+  { fill: '#4A5568', accent: '#C9D2DE' },   // neutral slate
 ]
-export const BACKDROPS = ['dirt', 'grass', 'lights', 'dugout', 'chalk'] as const
+export const BACKDROPS = ['dirt', 'grass', 'lights', 'dugout', 'chalk', 'sunset', 'halo', 'bands'] as const
 export const MOTIFS = ['seams', 'bats', 'glove', 'plate', 'ball'] as const
 export const FRAMES = ['plain', 'elite', 'gold', 'twotone'] as const
 
 const FRAME_COLOURS: Record<string, [string, string]> = {
-  plain: ['#ffffff28', '#ffffff28'],
+  plain: ['#ffffff30', '#ffffff30'],
   elite: ['#1D3FBE', '#1D3FBE'],
   gold: ['#E8C15A', '#E8C15A'],
   twotone: ['#E8C15A', '#1D3FBE'],
@@ -74,35 +75,37 @@ export function randomSeed(): string {
   })
 }
 
-/* ── Placeholder silhouettes ──
-   Rough single-path shapes on a 100x100 box. These are deliberately crude —
-   they stand in so the system can be judged before artwork is commissioned. */
-function Silhouette({ kind, fill }: { kind: string; fill: string }) {
-  const paths: Record<string, string> = {
-    batter: 'M50 22 a9 9 0 1 1 0.1 0 Z M44 34 h12 l6 22 -4 3 -6 -16 v20 l6 24 h-7 l-6 -20 -5 20 h-7 l6 -24 v-29 Z M60 30 l22 -12 3 5 -22 12 Z',
-    pitcher: 'M52 20 a9 9 0 1 1 0.1 0 Z M46 32 h12 l4 20 -5 2 -4 -12 v18 l7 26 h-7 l-6 -21 -6 21 h-7 l7 -26 v-28 Z M44 34 l-16 -14 4 -4 16 14 Z',
-    catcher: 'M50 26 a10 10 0 1 1 0.1 0 Z M40 40 h20 l6 16 -6 4 -4 -8 v10 h-12 v-10 l-4 8 -6 -4 Z M38 62 h24 l4 22 h-9 l-2 -14 h-10 l-2 14 h-9 Z',
-    fielder: 'M50 20 a9 9 0 1 1 0.1 0 Z M44 32 h12 v24 l8 26 h-7 l-7 -20 -7 20 h-7 l8 -26 Z M44 34 l-20 8 -2 -6 20 -8 Z M56 34 l18 -16 4 5 -18 16 Z',
-    runner: 'M56 20 a9 9 0 1 1 0.1 0 Z M48 32 h12 l2 18 -6 3 v6 l12 18 -6 4 -12 -18 -14 12 -5 -5 14 -14 Z M46 36 l-18 -6 2 -6 18 6 Z',
+/* Backdrops carry all the colour, since the figure itself is fixed black.
+   Each returns a CSS background stack. */
+function backdropStyle(kind: string, fill: string, accent: string): string {
+  switch (kind) {
+    case 'dirt':
+      return `radial-gradient(ellipse 120% 60% at 50% 108%, ${fill} 0%, ${fill}70 40%, transparent 72%), linear-gradient(180deg, ${accent}25 0%, #1A1512 70%)`
+    case 'grass':
+      return `linear-gradient(180deg, ${accent}30 0%, ${accent}18 52%, ${fill} 52%, ${fill}CC 100%)`
+    case 'lights':
+      return `radial-gradient(ellipse 90% 65% at 50% -8%, ${accent} 0%, ${fill}80 34%, #0C0F18 78%)`
+    case 'dugout':
+      return `linear-gradient(180deg, #000000 0%, #000000 32%, ${fill} 32%, ${fill}90 100%)`
+    case 'chalk':
+      return `linear-gradient(135deg, transparent 44%, ${accent}55 44%, ${accent}55 49%, transparent 49%), linear-gradient(225deg, transparent 44%, ${accent}55 44%, ${accent}55 49%, transparent 49%), linear-gradient(180deg, ${fill}CC 0%, ${fill}70 100%)`
+    case 'sunset':
+      return `linear-gradient(180deg, ${accent} 0%, ${fill} 46%, #1A0F14 100%)`
+    case 'halo':
+      return `radial-gradient(circle at 50% 44%, ${accent} 0%, ${fill} 38%, ${fill}50 62%, #0D0D12 88%)`
+    default: // bands
+      return `repeating-linear-gradient(180deg, ${fill} 0px, ${fill} 16px, ${fill}A0 16px, ${fill}A0 32px)`
   }
-  return <path d={paths[kind] ?? paths.batter} fill={fill} />
 }
 
-function Backdrop({ kind, fill, accent }: { kind: string; fill: string; accent: string }) {
-  if (kind === 'dirt') return <><rect width="100" height="100" fill="#1A1512" /><path d="M0 74 Q50 52 100 74 V100 H0 Z" fill={fill} opacity="0.28" /></>
-  if (kind === 'grass') return <><rect width="100" height="100" fill="#0E1A10" /><rect y="58" width="100" height="42" fill={fill} opacity="0.22" /><rect y="58" width="100" height="3" fill={accent} opacity="0.3" /></>
-  if (kind === 'lights') return <><rect width="100" height="100" fill="#0C0F18" /><ellipse cx="50" cy="14" rx="52" ry="34" fill={accent} opacity="0.18" /></>
-  if (kind === 'dugout') return <><rect width="100" height="100" fill="#101014" /><rect y="0" width="100" height="34" fill="#000000" opacity="0.5" /><rect y="33" width="100" height="2" fill={fill} opacity="0.5" /></>
-  return <><rect width="100" height="100" fill="#12140F" /><path d="M-10 88 L60 18" stroke={accent} strokeWidth="4" opacity="0.25" /><path d="M110 88 L40 18" stroke={accent} strokeWidth="4" opacity="0.25" /></>
-}
-
+/* Motifs sit behind the figure, low opacity, in the accent colour */
 function Motif({ kind, accent }: { kind: string; accent: string }) {
-  const o = 0.14
-  if (kind === 'seams') return <g opacity={o} stroke={accent} strokeWidth="2.4" fill="none" strokeLinecap="round" strokeDasharray="4 5"><path d="M18 8 Q34 50 18 92" /><path d="M82 8 Q66 50 82 92" /></g>
-  if (kind === 'bats') return <g opacity={o} stroke={accent} strokeWidth="5" strokeLinecap="round"><path d="M20 84 L76 20" /><path d="M80 84 L24 20" /></g>
-  if (kind === 'glove') return <g opacity={o} fill={accent}><path d="M32 44 q0 -16 18 -16 q18 0 18 16 v18 q0 14 -18 14 q-18 0 -18 -14 Z" /></g>
-  if (kind === 'plate') return <g opacity={o} fill={accent}><path d="M34 40 h32 v20 l-16 14 -16 -14 Z" /></g>
-  return <g opacity={o} fill="none" stroke={accent} strokeWidth="3"><circle cx="50" cy="50" r="26" /><path d="M32 32 Q50 50 32 68" /><path d="M68 32 Q50 50 68 68" /></g>
+  const o = 0.22
+  if (kind === 'seams') return <g opacity={o} stroke={accent} strokeWidth="2.6" fill="none" strokeLinecap="round" strokeDasharray="4 5"><path d="M16 6 Q34 50 16 94" /><path d="M84 6 Q66 50 84 94" /></g>
+  if (kind === 'bats') return <g opacity={o} stroke={accent} strokeWidth="5" strokeLinecap="round"><path d="M18 86 L78 18" /><path d="M82 86 L22 18" /></g>
+  if (kind === 'glove') return <g opacity={o} fill={accent}><path d="M30 42 q0 -18 20 -18 q20 0 20 18 v20 q0 16 -20 16 q-20 0 -20 -16 Z" /></g>
+  if (kind === 'plate') return <g opacity={o} fill={accent}><path d="M32 38 h36 v22 l-18 16 -18 -16 Z" /></g>
+  return <g opacity={o} fill="none" stroke={accent} strokeWidth="3"><circle cx="50" cy="48" r="28" /><path d="M30 30 Q50 48 30 66" /><path d="M70 30 Q50 48 70 66" /></g>
 }
 
 export default function Avatar({ seed, size = 44 }: { seed: string | null | undefined; size?: number }) {
@@ -112,11 +115,16 @@ export default function Avatar({ seed, size = 44 }: { seed: string | null | unde
   return (
     <span className="inline-block rounded-full overflow-hidden shrink-0"
       style={{ width: size, height: size, padding: '2px', background: `linear-gradient(150deg, ${f1} 0%, ${f2} 100%)` }}>
-      <svg viewBox="0 0 100 100" className="w-full h-full rounded-full" style={{ display: 'block' }}>
-        <Backdrop kind={BACKDROPS[a.d]} fill={col.fill} accent={col.accent} />
-        <Motif kind={MOTIFS[a.m]} accent={col.accent} />
-        <Silhouette kind={SILHOUETTES[a.s]} fill={col.fill} />
-      </svg>
+      <span className="relative block w-full h-full rounded-full overflow-hidden"
+        style={{ background: backdropStyle(BACKDROPS[a.d], col.fill, col.accent) }}>
+        <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full">
+          <Motif kind={MOTIFS[a.m]} accent={col.accent} />
+        </svg>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={`/avatars/silhouette-${SILHOUETTES[a.s]}.png`} alt=""
+          className="absolute inset-0 w-full h-full"
+          style={{ objectFit: 'contain', objectPosition: 'center bottom', filter: 'brightness(0) drop-shadow(0 1px 3px #00000060)' }} />
+      </span>
     </span>
   )
 }
