@@ -7,6 +7,7 @@ import GradeSwitch from '@/components/GradeSwitch'
 import PlayerCard from '@/components/PlayerCard'
 import PlayerCardFull from '@/components/PlayerCardFull'
 import PageGuide, { GuideStep } from '@/components/PageGuide'
+import { splitName } from '@/lib/names'
 
 const HALL_GUIDE: GuideStep[] = [
   {
@@ -51,7 +52,8 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
   const sorted = [...roster].sort((a, b) => {
     const t = TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier)
     if (t !== 0) return t
-    return a.name.localeCompare(b.name)
+    const sa = splitName(a.name), sb = splitName(b.name)
+    return sa.last.localeCompare(sb.last) || sa.first.localeCompare(sb.first)
   })
   const ownedCount = roster.filter(p => owned.has(p.id)).length
 
