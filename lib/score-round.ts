@@ -220,8 +220,7 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
       if (sc.promoted) reasons.push('Promoted')
       if (sc.slot === 'PB') reasons.push('Pitching only')
       if (sc.slot === 'DR') reasons.push('Steals only')
-      if (sc.slot === 'DP') reasons.push('Offence only')
-
+  
       // resolveSubs labels unused bench players generically — recover their real
       // slot from the lineup so the card can match rows to positions
       const realSlot = sc.slot === 'BENCH'
