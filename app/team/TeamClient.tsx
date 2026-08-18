@@ -9,6 +9,7 @@ import FieldPicker from '@/components/FieldPicker'
 import PackReveal, { RevealCard } from '@/components/PackReveal'
 import PageGuide, { GuideStep } from '@/components/PageGuide'
 import SandboxBanner from '@/components/SandboxBanner'
+import { splitName } from '@/lib/names'
 
 const TEAM_GUIDE: GuideStep[] = [
   {
@@ -777,26 +778,6 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         </div>
       )}
 
-      {/* Armband status */}
-      {view === 'lineup' && (
-        <div className="rounded-xl mb-6 flex items-center justify-center gap-6 flex-wrap text-sm"
-          style={{ background: T.surface, border: '1px solid #ffffff12', padding: '16px 20px' }}>
-          <span style={{ color: T.textDim }}>
-            <b style={{ color: CAPTAIN_GOLD }}>Captain</b>{' '}
-            {captainCard ? <span style={{ color: T.text }}>{captainCard.name}</span> : <span style={{ opacity: 0.6 }}>not set</span>}
-          </span>
-          <span style={{ color: T.textDim }}>
-            <b style={{ color: VICE_SILVER }}>Vice Captain</b>{' '}
-            {viceCard ? <span style={{ color: T.text }}>{viceCard.name}</span> : <span style={{ opacity: 0.6 }}>not set</span>}
-          </span>
-          {captainInReserve && (
-            <span className="text-[11px] w-full text-center" style={{ color: '#FF9B9B' }}>
-              Your Captain is in your reserves and won&apos;t score — the Vice Captain will take the double.
-            </span>
-          )}
-        </div>
-      )}
-
       {unavailableRostered.length > 0 && view === 'lineup' && (
         <div className="rounded-xl px-5 py-4 mb-6 text-sm" style={{ background: '#FF6B6B15', border: '1px solid #FF6B6B50', color: '#FF9B9B' }}>
           <b>Unavailable this round:</b> {unavailableRostered.map(c => c.name).join(', ')} — swap them out before lock or the auto-sub will fill the gap from your bench.
@@ -823,6 +804,23 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
 
       {view === 'lineup' && (
         <div>
+          {/* Armband status — sits between the view pill and the card */}
+          <div className="rounded-xl mb-6 flex items-center justify-center gap-6 flex-wrap text-sm"
+            style={{ background: T.surface, border: '1px solid #ffffff12', padding: '16px 20px' }}>
+            <span style={{ color: T.textDim }}>
+              <b style={{ color: CAPTAIN_GOLD }}>Captain</b>{' '}
+              {captainCard ? <span style={{ color: T.text }}>{splitName(captainCard.name).first} <span className="uppercase">{splitName(captainCard.name).last}</span></span> : <span style={{ opacity: 0.6 }}>not set</span>}
+            </span>
+            <span style={{ color: T.textDim }}>
+              <b style={{ color: VICE_SILVER }}>Vice Captain</b>{' '}
+              {viceCard ? <span style={{ color: T.text }}>{splitName(viceCard.name).first} <span className="uppercase">{splitName(viceCard.name).last}</span></span> : <span style={{ opacity: 0.6 }}>not set</span>}
+            </span>
+            {captainInReserve && (
+              <span className="text-[11px] w-full text-center" style={{ color: '#FF9B9B' }}>
+                Your Captain is in your reserves and won&apos;t score — the Vice Captain will take the double.
+              </span>
+            )}
+          </div>
           <div className="rounded-2xl overflow-hidden pinstripe" style={{ background: T.surface, border: '1px solid #ffffff12' }}>
             {/* Card masthead */}
             <div className="text-center" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a', padding: '24px 28px 18px' }}>
