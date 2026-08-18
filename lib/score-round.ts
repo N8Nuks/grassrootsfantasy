@@ -214,13 +214,13 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
 
       // Why this differs from the raw stat line, most notable reason first
       const reasons: string[] = []
-      if (isDoubled) reasons.push('2× bonus')
+      if (isDoubled) reasons.push('2× Bonus')
       else if (hasArmband) reasons.push(sc.player_id === captainPlayer ? '2× Captain' : '2× Vice Captain')
-      if (sc.slot === 'BENCH') reasons.push('0.75× bench')
-      if (sc.promoted) reasons.push('promoted')
-      if (sc.slot === 'PB') reasons.push('pitching only')
-      if (sc.slot === 'DR') reasons.push('steals only')
-      if (sc.slot === 'DP') reasons.push('offence only')
+      if (sc.slot === 'BENCH') reasons.push('0.75× Bench')
+      if (sc.promoted) reasons.push('Promoted')
+      if (sc.slot === 'PB') reasons.push('Pitching only')
+      if (sc.slot === 'DR') reasons.push('Steals only')
+      if (sc.slot === 'DP') reasons.push('Offence only')
 
       // resolveSubs labels unused bench players generically — recover their real
       // slot from the lineup so the card can match rows to positions
@@ -238,8 +238,8 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
     for (const r of rows) {
       if (earnedByPlayer.has(r.player_id)) continue
       const reason = r.slot.startsWith('RES')
-        ? 'reserve — no score'
-        : (played.has(r.player_id) ? 'not in a scoring slot' : 'did not play')
+        ? 'No score'
+        : (played.has(r.player_id) ? 'Not in a scoring slot' : 'Did not play')
       earnedByPlayer.set(r.player_id, { slot: r.slot, earned: 0, reason })
     }
 
