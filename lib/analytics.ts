@@ -31,12 +31,37 @@ export async function managerAnalytics(
   const roundIds = [...new Set(earnRows.map(r => r.round_id))]
   const playerIds = [...new Set(earnRows.map(r => r.player_id))]
 
-  const [{ data: scores }, { data: players }, { data: rounds }] = await Promise.all([
+  const [{ data: scores }, { data: players }, { data: rounds }, { data: lineups }] = await Promise.all([
     supabase.from('player_scores').select('player_id, round_id, points')
       .in('round_id', roundIds).in('player_id', playerIds),
     supabase.from('players').select('id, full_name').in('id', playerIds),
     supabase.from('rounds').select('id, round_number').in('id', roundIds),
+    // Armbands are stored on the lineup, not in the earnings reason text
+    supabase.from('lineups')
+      .select('round_id, captain_card_id, vice_captain_card_id, lineup_slots(card_id, cards(player_id))')
+      .eq('owner_id', ownerId).eq('grade', grade),
   ])
+
+  type LineupArm = {
+    round_id: string
+    captain_card_id: string | null
+    vice_captain_card_id: string | null
+    lineup_slots: { card_id: string; cards: { player_id: string } | null }[]
+  }
+  const captainOfRound = new Map<string, string>()
+  const viceOfRound = new Map<string, string>()
+  for (const lu of (lineups ?? []) as unknown as LineupArm[]) {
+    const playerOfCard = new Map(
+      (lu.lineup_slots ?? []).filter(s => s.cards?.player_id).map(s => [s.card_id, s.cards!.player_id]))
+    if (lu.captain_card_id) {
+      const p = playerOfCard.get(lu.captain_card_id)
+      if (p) captainOfRound.set(`${lu.round_id}:${p}`, p)
+    }
+    if (lu.vice_captain_card_id) {
+      const p = playerOfCard.get(lu.vice_captain_card_id)
+      if (p) viceOfRound.set(`${lu.round_id}:${p}`, p)
+    }
+  }
 
   const rawOf = new Map<string, number>()
   for (const s of scores ?? []) rawOf.set(`${s.round_id}:${s.player_id}`, Number(s.points))
@@ -52,6 +77,9 @@ export async function managerAnalytics(
     const earned = Number(r.earned)
     const raw = rawOf.get(`${r.round_id}:${r.player_id}`) ?? 0
     const reason = r.reason ?? ''
+    const key = `${r.round_id}:${r.player_id}`
+    const isCaptain = captainOfRound.has(key)
+    const isVice = viceOfRound.has(key)
     earnedTotal += earned
     squadRawTotal += raw
 
@@ -61,16 +89,16 @@ export async function managerAnalytics(
     } else if (reason.includes('Bench')) {
       // The 0.75x shave, measured against what they'd have scored as a starter.
       // An armband on the bench is multiplied first, so measure off that.
-      const mult = reason.includes('2× Captain') ? 2 : reason.includes('1.5× Vice') ? 1.5 : 1
+      const mult = isCaptain ? 2 : isVice ? 1.5 : 1
       benchLoss += (raw * mult) - earned
-    } else if (raw > 0 && earned < raw && !reason.includes('2×') && !reason.includes('1.5×')) {
+    } else if (raw > 0 && earned < raw && !isCaptain && !isVice && !reason.includes('2×')) {
       // Slot rules ate it: a P(B) who didn't pitch, a DR with no steals
       slotLoss += raw - earned
     }
 
     // What the armbands actually added on top of the base
-    if (reason.includes('2× Captain')) armbandGain += earned / 2
-    else if (reason.includes('1.5× Vice')) armbandGain += earned / 3
+    if (isCaptain) armbandGain += earned / 2
+    else if (isVice) armbandGain += earned / 3
 
     if (earned > 0 && (!bestCall || earned > bestCall.earned)) {
       bestCall = { name: nameOf.get(r.player_id) ?? '', earned, round: roundNoOf.get(r.round_id) ?? 0 }
