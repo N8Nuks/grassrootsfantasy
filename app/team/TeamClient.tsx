@@ -804,23 +804,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
 
       {view === 'lineup' && (
         <div>
-          {/* Armband status — sits between the view pill and the card */}
-          <div className="rounded-xl mb-6 flex items-center justify-center gap-6 flex-wrap text-sm"
-            style={{ background: T.surface, border: '1px solid #ffffff12', padding: '16px 20px' }}>
-            <span style={{ color: T.textDim }}>
-              <b style={{ color: CAPTAIN_GOLD }}>Captain</b>{' '}
-              {captainCard ? <span style={{ color: T.text }}>{splitName(captainCard.name).first} <span className="uppercase">{splitName(captainCard.name).last}</span></span> : <span style={{ opacity: 0.6 }}>not set</span>}
-            </span>
-            <span style={{ color: T.textDim }}>
-              <b style={{ color: VICE_SILVER }}>Vice Captain</b>{' '}
-              {viceCard ? <span style={{ color: T.text }}>{splitName(viceCard.name).first} <span className="uppercase">{splitName(viceCard.name).last}</span></span> : <span style={{ opacity: 0.6 }}>not set</span>}
-            </span>
-            {captainInReserve && (
-              <span className="text-[11px] w-full text-center" style={{ color: '#FF9B9B' }}>
-                Your Captain is in your reserves and won&apos;t score — the Vice Captain will take the double.
-              </span>
-            )}
-          </div>
+
           <div className="rounded-2xl overflow-hidden pinstripe" style={{ background: T.surface, border: '1px solid #ffffff12' }}>
             {/* Card masthead */}
             <div className="text-center" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a', padding: '24px 28px 18px' }}>
@@ -840,6 +824,23 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                   Rotate Phone for full stats
                 </span>
               </span>
+            </div>
+            {/* Armband status — inside the card, under the masthead */}
+            <div className="flex items-center justify-center gap-6 flex-wrap text-sm"
+              style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a', padding: '14px 20px' }}>
+              <span style={{ color: T.textDim }}>
+                <b style={{ color: CAPTAIN_GOLD }}>Captain</b>{' '}
+                {captainCard ? <span style={{ color: T.text }}>{splitName(captainCard.name).first} <span className="uppercase">{splitName(captainCard.name).last}</span></span> : <span style={{ opacity: 0.6 }}>not set</span>}
+              </span>
+              <span style={{ color: T.textDim }}>
+                <b style={{ color: VICE_SILVER }}>Vice Captain</b>{' '}
+                {viceCard ? <span style={{ color: T.text }}>{splitName(viceCard.name).first} <span className="uppercase">{splitName(viceCard.name).last}</span></span> : <span style={{ opacity: 0.6 }}>not set</span>}
+              </span>
+              {captainInReserve && (
+                <span className="text-[11px] w-full text-center" style={{ color: '#FF9B9B' }}>
+                  Your Captain is in your reserves and won&apos;t score — the Vice Captain will take the double.
+                </span>
+              )}
             </div>
             {/* Column titles */}
             <div className="hidden sm:flex landscape:flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff0a', padding: '10px 28px' }}>
