@@ -496,18 +496,18 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
       <span className="flex items-center gap-1 shrink-0">
         <button onClick={() => toggleCaptain(cardId)} disabled={blocked || !roundOpen}
           title={blocked ? 'Already scoring 2× — cannot be Captain' : 'Captain — scores double'}
-          className="w-7 h-7 rounded-full text-[10px] font-black flex items-center justify-center transition-all disabled:opacity-25"
+          className="w-7 h-7 rounded-full text-[10px] font-black flex items-center justify-center transition-all disabled:opacity-15"
           style={isCap
             ? { background: CAPTAIN_GOLD, color: '#141210', boxShadow: `0 0 12px ${CAPTAIN_GOLD}80` }
-            : { background: '#ffffff10', color: T.textDim, border: '1px solid #ffffff20' }}>
+            : { background: 'transparent', color: T.textDim, border: '1px solid #ffffff14', opacity: 0.3 }}>
           C
         </button>
         <button onClick={() => toggleViceCaptain(cardId)} disabled={blocked || !roundOpen}
           title={blocked ? 'Already scoring 2× — cannot be Vice Captain' : 'Vice Captain — doubles if the Captain is out'}
-          className="w-7 h-7 rounded-full text-[9px] font-black flex items-center justify-center transition-all disabled:opacity-25"
+          className="w-7 h-7 rounded-full text-[9px] font-black flex items-center justify-center transition-all disabled:opacity-15"
           style={isVice
             ? { background: VICE_SILVER, color: '#141210', boxShadow: `0 0 10px ${VICE_SILVER}70` }
-            : { background: '#ffffff10', color: T.textDim, border: '1px solid #ffffff20' }}>
+            : { background: 'transparent', color: T.textDim, border: '1px solid #ffffff14', opacity: 0.3 }}>
           VC
         </button>
       </span>
