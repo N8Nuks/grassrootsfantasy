@@ -250,10 +250,13 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
   if (userScores.length) {
     await admin.from('user_scores').upsert(userScores, { onConflict: 'owner_id,round_id' })
   }
-  // Re-scoring a round overwrites cleanly via the unique constraint
+  // Re-scoring a round overwrites cleanly via the unique constraint.
+  // Errors are surfaced rather than swallowed — a silent failure here leaves the
+  // Lineup Card unable to explain its own totals.
   for (let i = 0; i < earnings.length; i += 500) {
-    await admin.from('lineup_earnings')
+    const { error: eErr } = await admin.from('lineup_earnings')
       .upsert(earnings.slice(i, i + 500), { onConflict: 'owner_id,round_id,player_id,slot' })
+    if (eErr) return { ok: false, error: 'Earnings insert failed: ' + eErr.message, status: 500 }
   }
 
   // 4. Resolve H2H matchups
