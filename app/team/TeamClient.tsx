@@ -20,6 +20,10 @@ const TEAM_GUIDE: GuideStep[] = [
     body: "Tap C to name your Captain — they score double. Tap VC for your Vice Captain, who takes over the double if your Captain doesn't play or is sitting in your reserves. The double applies to everything, including negatives, so pick with care. A player already on a 2× bonus can't wear the armband.",
   },
   {
+    title: 'Points and Earned',
+    body: "The round columns show what a player scored from their own stat line. Earned is what they were actually worth to you — after the slot rules, the bench multiplier and any doubles. A P(B) who didn't pitch earns nothing; a DR only counts steals. Where the two differ, the reason is shown under the player's club.",
+  },
+  {
     title: 'Starters, bench, reserve',
     body: 'Starters score full points. Bench players score at 0.75× and step in automatically at full value if a starter misses the round. Reserves are your depth — no score, no number, but ready to promote.',
   },
@@ -47,6 +51,8 @@ export type ArmbandNotice = {
   bonus_player_name: string
   moved_to_name: string | null
 }
+
+export type Earned = Record<string, { earned: number; reason: string | null }>
 
 const TIER_META: Record<string, { label: string; accent: string }> = {
   rare_2wp_a: { label: '2WP A', accent: '#FFD700' },
@@ -119,6 +125,11 @@ function isEligible(card: TeamCard, slot: string): boolean {
   return card.positions.includes(slot)
 }
 
+// Trim trailing zeros: 18 not 18.00, 5.25 stays 5.25
+function fmt(n: number): string {
+  return Number.isInteger(n) ? String(n) : String(Number(n.toFixed(2)))
+}
+
 function SoftballSwatch({ colors, seam, selected, ringColor }: {
   colors: [string, string]
   seam: string
@@ -139,7 +150,7 @@ function SoftballSwatch({ colors, seam, selected, ringColor }: {
   )
 }
 
-export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen, thisRoundPoints, lastRoundPoints, thisRoundLabel, lastRoundLabel, cardStyle, doubledIds = [], initialCaptainId = null, initialViceCaptainId = null, notices = [] }: {
+export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen, thisRoundPoints, lastRoundPoints, thisRoundLabel, lastRoundLabel, cardStyle, doubledIds = [], initialCaptainId = null, initialViceCaptainId = null, notices = [], earned = {}, earnedLabel = null }: {
   teamName: string
   clubName: string
   cards: TeamCard[]
@@ -160,6 +171,8 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   initialCaptainId?: string | null
   initialViceCaptainId?: string | null
   notices?: ArmbandNotice[]
+  earned?: Earned
+  earnedLabel?: string | null
 }) {
   const router = useRouter()
   const T = theme(grade, siteTheme)
@@ -282,6 +295,13 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     .filter(s => !s.slot.startsWith('RES'))
     .map(s => cardById.get(s.card_id))
     .filter(c => c && unavailable.has(c.playerId)) as TeamCard[]
+
+  // Round total from the earned figures — what the lineup was actually worth
+  const earnedTotal = slots.reduce((sum, s) => {
+    const c = cardById.get(s.card_id)
+    return sum + (c ? (earned[c.playerId]?.earned ?? 0) : 0)
+  }, 0)
+  const hasEarned = earnedLabel != null
 
   // ── Armbands ──
   // A player already on an achievement 2× can never hold one.
@@ -506,11 +526,12 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     const isDoubled = doubled.has(c.playerId)
     const isCap = captainId === s.card_id
     const isVice = viceCaptainId === s.card_id
+    const e = earned[c.playerId]
     return (
       <div
         draggable={swappable}
         onDragStart={() => { if (swappable) setDragOrder(s.batting_order) }}
-        onDragOver={e => { if (swappable) e.preventDefault() }}
+        onDragOver={e2 => { if (swappable) e2.preventDefault() }}
         onDrop={() => { if (swappable && dragOrder != null && s.batting_order != null) swapOrders(dragOrder, s.batting_order); setDragOrder(null) }}
         className="flex items-center gap-3"
         style={{
@@ -555,7 +576,10 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
             {isCap && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1" style={{ background: CAPTAIN_GOLD, color: '#141210' }}>C</span>}
             {isVice && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1" style={{ background: VICE_SILVER, color: '#141210' }}>VC</span>}
           </p>
-          <p className="text-[10px]" style={{ color: T.textDim }}>{c.club}</p>
+          <p className="text-[10px]" style={{ color: T.textDim }}>
+            {c.club}
+            {e?.reason && <span style={{ color: accentBright, marginLeft: '6px' }}>· {e.reason}</span>}
+          </p>
         </button>
         <ArmbandButtons cardId={s.card_id} />
         <span className="hidden sm:flex landscape:flex w-20 justify-center shrink-0">
@@ -575,6 +599,12 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         <span className="hidden sm:block landscape:block w-14 text-right text-[11px] shrink-0" style={{ color: T.text }}>
           {thisRoundPoints[c.playerId] ?? '—'}
         </span>
+        {hasEarned && (
+          <span className="hidden sm:block landscape:block w-16 text-right text-[11px] font-black shrink-0"
+            style={{ color: e && e.earned > 0 ? accentBright : T.textDim }}>
+            {e ? fmt(e.earned) : '—'}
+          </span>
+        )}
         <span className="hidden sm:block landscape:block w-14 text-right text-[11px] font-black shrink-0" style={{ color: T.text }}>
           {c.stats.season_points ?? 0}
         </span>
@@ -814,6 +844,11 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               <span className="w-12 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>SB</span>
               <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>{lastRoundLabel ?? 'Prev Rd'}</span>
               <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>{thisRoundLabel ?? 'Last Rd'}</span>
+              {hasEarned && (
+                <span className="w-16 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: accentBright }}>
+                  Earned
+                </span>
+              )}
               <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>Season</span>
             </div>
 
@@ -841,6 +876,17 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                 return s ? <PlayerRow key={r} s={s} /> : <EmptyRow key={r} slot={r} />
               })}
             </div>
+
+            {hasEarned && (
+              <div className="flex items-center justify-between" style={{ background: '#00000055', borderTop: `1px solid ${accentBright}30`, padding: '16px 28px' }}>
+                <span className="text-[11px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim }}>
+                  {earnedLabel} total earned
+                </span>
+                <span className="text-lg font-black" style={{ color: accentBright, fontFamily: 'var(--font-heading)' }}>
+                  {fmt(earnedTotal)}
+                </span>
+              </div>
+            )}
 
             <div style={{ background: T.headerBg, borderTop: '1px solid #ffffff0a', padding: '20px 28px' }}>
               <div className="grid grid-cols-2 gap-4">
