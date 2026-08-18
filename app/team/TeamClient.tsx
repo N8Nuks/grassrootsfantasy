@@ -577,7 +577,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           </p>
           <p className="text-[10px]" style={{ color: T.textDim }}>
             {c.club}
-            {e?.reason && <span style={{ color: accentBright, marginLeft: '6px' }}>· {e.reason}</span>}
+            {e?.reason && <span style={{ color: accentBright, marginLeft: '6px' }}>· {earnedLabel ? `${earnedLabel} ` : ''}{e.reason}</span>}
           </p>
         </button>
         <ArmbandButtons cardId={s.card_id} />
