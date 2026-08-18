@@ -222,8 +222,13 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
       if (sc.slot === 'DR') reasons.push('steals only')
       if (sc.slot === 'DP') reasons.push('offence only')
 
+      // resolveSubs labels unused bench players generically — recover their real
+      // slot from the lineup so the card can match rows to positions
+      const realSlot = sc.slot === 'BENCH'
+        ? (rows.find(r => r.player_id === sc.player_id)?.slot ?? sc.slot)
+        : sc.slot
       earnedByPlayer.set(sc.player_id, {
-        slot: sc.slot,
+        slot: realSlot,
         earned: final,
         reason: reasons.length ? reasons.join(' · ') : null,
       })
