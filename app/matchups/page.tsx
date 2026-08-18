@@ -6,6 +6,7 @@ import GradeSwitch from '@/components/GradeSwitch'
 import PageGuide from '@/components/PageGuide'
 import FactsTicker from '@/components/FactsTicker'
 import { doubledInRound } from '@/lib/achievements'
+import { splitName } from '@/lib/names'
 
 const SLOT_ORDER = ['P', 'C', 'B1', 'B2', 'B3', 'SS', 'LF', 'CF', 'RF', 'DP', 'PB', 'DR',
   'BENCH1', 'BENCH2', 'BENCH3', 'BENCH4']
@@ -15,6 +16,7 @@ const slotRank = (s: string) => {
   return i === -1 ? 999 : i
 }
 const slotLabel = (s: string) => SLOT_LABELS[s] ?? s
+const fmt = (n: number) => (Number.isInteger(n) ? String(n) : String(Number(n.toFixed(2))))
 
 type SlotRow = {
   slot: string
@@ -29,17 +31,19 @@ type LineupRec = {
 }
 type Palette = ReturnType<typeof theme>
 
-function TeamCard({ title, slots, T, winner, pointsByPlayer, pointsRoundLabel, doubled }: {
+function TeamCard({ title, slots, T, winner, pointsByPlayer, earnedByPlayer, pointsRoundLabel, doubled }: {
   title: string
   slots: SlotRow[]
   T: Palette
   winner: boolean
   pointsByPlayer: Map<string, number> | null
+  earnedByPlayer: Map<string, number> | null
   pointsRoundLabel: string | null
   doubled: Set<string>
 }) {
   const sorted = slots.filter(s => !s.slot.startsWith('RES'))
     .sort((a, b) => slotRank(a.slot) - slotRank(b.slot))
+  const showEarned = !!earnedByPlayer
   return (
     <div className="flex-1 rounded-2xl overflow-hidden pinstripe"
       style={{ background: T.surface, border: winner ? `1px solid ${T.accent}70` : '1px solid #ffffff12' }}>
@@ -51,16 +55,25 @@ function TeamCard({ title, slots, T, winner, pointsByPlayer, pointsRoundLabel, d
           <p className="text-xs font-black uppercase tracking-[0.2em] truncate" style={{ color: T.accent }}>{title}</p>
         </div>
         {pointsByPlayer && (
-          <span className="w-14 text-center text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: T.textDim }}>
-            {pointsRoundLabel ?? 'Points'}
+          <span className="flex shrink-0">
+            <span className="w-14 text-center text-[10px] font-black uppercase tracking-widest" style={{ color: T.textDim }}>
+              {pointsRoundLabel ?? 'Points'}
+            </span>
+            {showEarned && (
+              <span className="w-14 text-center text-[10px] font-black uppercase tracking-widest" style={{ color: T.accent }}>
+                Earned
+              </span>
+            )}
           </span>
         )}
       </div>
       {sorted.map((s, i) => {
         const pid = s.cards?.player_id
         const pts = pointsByPlayer && pid ? pointsByPlayer.get(pid) : undefined
+        const earn = earnedByPlayer && pid ? earnedByPlayer.get(pid) : undefined
         // The double belongs to the player, so it lights on whichever team holds them
         const isDoubled = !!pid && doubled.has(pid)
+        const full = s.cards?.players?.full_name
         return (
           <div key={i} className="flex items-center gap-3"
             style={{
@@ -70,14 +83,19 @@ function TeamCard({ title, slots, T, winner, pointsByPlayer, pointsRoundLabel, d
             }}>
             <span className="w-12 text-[10px] font-black uppercase shrink-0" style={{ color: T.textDim }}>{slotLabel(s.slot)}</span>
             <span className="flex-1 min-w-0 text-sm font-bold truncate" style={{ color: T.text }}>
-              {s.cards?.players?.full_name ?? '—'}
+              {full ? <>{splitName(full).first} <span className="uppercase">{splitName(full).last}</span></> : '—'}
               {isDoubled && (
                 <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1.5 gf-pulse"
                   style={{ background: '#FF8C42', color: '#141210', boxShadow: '0 0 10px #FF8C42' }}>2×</span>
               )}
             </span>
             {pointsByPlayer && (
-              <span className="w-14 text-center text-sm font-black shrink-0" style={{ color: pts != null ? T.accent : T.textDim }}>{pts ?? '—'}</span>
+              <span className="w-14 text-center text-sm font-bold shrink-0" style={{ color: T.textDim }}>{pts ?? '—'}</span>
+            )}
+            {showEarned && (
+              <span className="w-14 text-center text-sm font-black shrink-0" style={{ color: earn != null && earn > 0 ? T.accent : T.textDim }}>
+                {earn != null ? fmt(earn) : '—'}
+              </span>
             )}
           </div>
         )
@@ -120,6 +138,8 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
   let lineupA: LineupRec | null = null
   let lineupB: LineupRec | null = null
   let pointsByPlayer: Map<string, number> | null = null
+  let earnedA: Map<string, number> | null = null
+  let earnedB: Map<string, number> | null = null
   let pointsRoundNumber: number | null = null
   const seasonTotals = new Map<string, number>()
 
@@ -157,9 +177,11 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
         const { data: pscores } = await supabase
           .from('player_scores').select('player_id, points')
           .eq('round_id', round.id).in('player_id', ids)
+        let scoredRoundId: string | null = null
         if (pscores?.length) {
           pointsByPlayer = new Map(pscores.map(p => [p.player_id, Number(p.points)]))
           pointsRoundNumber = round.round_number
+          scoredRoundId = round.id
         } else {
           // Current round not scored/visible yet — fall back to the previous round
           const { data: prevRound } = await supabase
@@ -173,8 +195,20 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
             if (prevScores?.length) {
               pointsByPlayer = new Map(prevScores.map(p => [p.player_id, Number(p.points)]))
               pointsRoundNumber = prevRound.round_number
+              scoredRoundId = prevRound.id
             }
           }
+        }
+        // Earned is per-manager — the same player is worth different amounts to each side
+        if (scoredRoundId) {
+          const [{ data: eA }, { data: eB }] = await Promise.all([
+            supabase.from('lineup_earnings').select('player_id, earned')
+              .eq('owner_id', myMatchup.user_a).eq('round_id', scoredRoundId),
+            supabase.from('lineup_earnings').select('player_id, earned')
+              .eq('owner_id', myMatchup.user_b).eq('round_id', scoredRoundId),
+          ])
+          if (eA?.length) earnedA = new Map(eA.map(r => [r.player_id, Number(r.earned)]))
+          if (eB?.length) earnedB = new Map(eB.map(r => [r.player_id, Number(r.earned)]))
         }
       }
     }
@@ -251,10 +285,15 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row gap-6 mb-12">
-                <TeamCard title={nameOf(myMatchup.user_a)} slots={lineupA?.lineup_slots ?? []} T={T} winner={!!aWins} pointsByPlayer={pointsByPlayer} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber} Pts` : null} doubled={doubled} />
-                <TeamCard title={nameOf(myMatchup.user_b)} slots={lineupB?.lineup_slots ?? []} T={T} winner={!!bWins} pointsByPlayer={pointsByPlayer} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber} Pts` : null} doubled={doubled} />
+              <div className="flex flex-col sm:flex-row gap-6 mb-4">
+                <TeamCard title={nameOf(myMatchup.user_a)} slots={lineupA?.lineup_slots ?? []} T={T} winner={!!aWins} pointsByPlayer={pointsByPlayer} earnedByPlayer={earnedA} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber}` : null} doubled={doubled} />
+                <TeamCard title={nameOf(myMatchup.user_b)} slots={lineupB?.lineup_slots ?? []} T={T} winner={!!bWins} pointsByPlayer={pointsByPlayer} earnedByPlayer={earnedB} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber}` : null} doubled={doubled} />
               </div>
+              {(earnedA || earnedB) && (
+                <p className="text-[11px] text-center mb-12" style={{ color: T.textDim }}>
+                  The round column is what each player scored from their own stat line. Earned is what they were worth to that team after slot rules, the bench multiplier and any doubles — the matchup is decided on Earned.
+                </p>
+              )}
             </>
           )}
           {round && user && !myMatchup && (
@@ -295,8 +334,8 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
           body: "The draw happens when lineups lock, not when the round opens. While a round is open you'll see how the last one finished — that's your window to set your lineup.",
         },
         {
-          title: 'The two lineups',
-          body: "Your card against theirs, player by player, with each player's round points once games are scored. Scroll down for every other matchup around the grounds.",
+          title: 'Round points and Earned',
+          body: "The round column is each player's own score. Earned is what they were actually worth to that team — after the slot rules, the bench multiplier and any Captain or bonus doubles. The matchup is decided on Earned, which is why the same player can be worth more to one side than the other.",
         },
       ]} />
       <Footer />
