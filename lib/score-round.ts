@@ -236,7 +236,7 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
     for (const r of rows) {
       if (earnedByPlayer.has(r.player_id)) continue
       const reason = r.slot.startsWith('RES')
-        ? 'No score'
+        ? 'Reserve — no score'
         : (played.has(r.player_id) ? 'Not in a scoring slot' : 'Did not play')
       earnedByPlayer.set(r.player_id, { slot: r.slot, earned: 0, reason })
     }
