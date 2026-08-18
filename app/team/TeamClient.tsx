@@ -759,8 +759,9 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
             value={t4Code}
             onChange={e => setT4Code(e.target.value)}
             placeholder="Bonus pack code"
-            className="text-xs font-bold uppercase tracking-widest outline-none w-44"
-            style={{ background: 'transparent', caretColor: T.text, color: T.text, padding: '14px 24px', fontFamily: 'var(--font-label)' }}
+            className="font-bold uppercase tracking-widest outline-none w-44"
+            autoFocus={false}
+            style={{ background: 'transparent', caretColor: T.text, color: T.text, padding: '14px 24px', fontFamily: 'var(--font-label)', fontSize: '16px' }}
           />
           <button onClick={redeemT4} disabled={!t4Code.trim()}
             className={"text-xs font-black uppercase tracking-widest transition-all disabled:opacity-40" + shimmer}
