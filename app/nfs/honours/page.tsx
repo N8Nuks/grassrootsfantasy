@@ -4,6 +4,7 @@ import FactsTicker from '@/components/FactsTicker'
 import GradeSwitch from '@/components/GradeSwitch'
 import HonoursTicker from '@/components/HonoursTicker'
 import { HONOURS, AWARD_LABELS, MEN_AWARDS, WOMEN_AWARDS } from '@/lib/nfsHonours'
+import { splitName } from '@/lib/names'
 
 const COBALT = '#2456E6'
 const GOLD = '#E8C15A'
@@ -36,9 +37,13 @@ function AwardRoll({ grade, awardKey, accent }: {
   const topWins = leaders[0][1]
   // Awards nobody has won twice still deserve a line — show the latest winner
   // rather than leaving the row looking empty.
+  const caps = (n: string) => {
+    const s = splitName(n)
+    return s.last ? `${s.first} ${s.last}` : s.first
+  }
   const strap = topWins >= 2
-    ? `Most: ${leaders.filter(l => l[1] === topWins).map(l => l[0]).join(' & ')} (${topWins})`
-    : winners[0] ? `Latest: ${winners[0].name}` : null
+    ? `Most: ${leaders.filter(l => l[1] === topWins).map(l => caps(l[0])).join(' & ')} (${topWins})`
+    : winners[0] ? `Latest: ${caps(winners[0].name!)}` : null
 
   return (
     <details className="group rounded-xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${accent}30` }}>
@@ -62,7 +67,9 @@ function AwardRoll({ grade, awardKey, accent }: {
           <div key={w.season} className="flex items-baseline justify-between gap-4"
             style={{ borderBottom: '1px solid #ffffff06', padding: '9px 18px' }}>
             <span className="text-xs font-bold shrink-0" style={{ color: '#ffffff55' }}>{w.season}</span>
-            <span className="text-sm font-bold text-white/85 text-right min-w-0">{w.name}</span>
+            <span className="text-sm font-bold text-white/85 text-right min-w-0">
+              {splitName(w.name!).first} <span className="uppercase">{splitName(w.name!).last}</span>
+            </span>
           </div>
         ))}
       </div>
