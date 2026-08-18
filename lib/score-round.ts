@@ -154,6 +154,12 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
   }
 
   const userScores: { owner_id: string; round_id: string; grade: string; points: number }[] = []
+  // Per-manager record of what each card actually earned, and why it differs
+  // from the raw stat line. Drives the Earned column on the Lineup Card.
+  const earnings: {
+    owner_id: string; round_id: string; player_id: string
+    grade: string; slot: string; earned: number; reason: string | null
+  }[] = []
 
   for (const lu of latestByOwner.values()) {
     const rows = ((lu.lineup_slots ?? []) as SlotRow[])
@@ -190,6 +196,8 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
     const armband = armbandHolder(scoredIds, captainPlayer, vicePlayer)
 
     let total = 0
+    const earnedByPlayer = new Map<string, { slot: string; earned: number; reason: string | null }>()
+
     for (const sc of scored) {
       const line = statByPlayer.get(sc.player_id)
       if (!line) continue
@@ -198,13 +206,54 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
       // — a doubled player can't wear an armband), then the bench multiplier.
       // So a Captain on the bench scores points x2 x0.75 = 1.5x.
       const isDoubled = doubledPlayers.has(sc.player_id)
-      const raw = applyDouble(slotPoints(effectiveSlot, line, v), isDoubled || sc.player_id === armband)
-      total += sc.slot === 'BENCH' ? applyBench(raw, 'BENCH1', v, false) : raw
+      const hasArmband = sc.player_id === armband
+      const base = slotPoints(effectiveSlot, line, v)
+      const raw = applyDouble(base, isDoubled || hasArmband)
+      const final = sc.slot === 'BENCH' ? applyBench(raw, 'BENCH1', v, false) : raw
+      total += final
+
+      // Why this differs from the raw stat line, most notable reason first
+      const reasons: string[] = []
+      if (isDoubled) reasons.push('2× bonus')
+      else if (hasArmband) reasons.push(sc.player_id === captainPlayer ? '2× Captain' : '2× Vice Captain')
+      if (sc.slot === 'BENCH') reasons.push('0.75× bench')
+      if (sc.promoted) reasons.push('promoted')
+      if (sc.slot === 'PB') reasons.push('pitching only')
+      if (sc.slot === 'DR') reasons.push('steals only')
+      if (sc.slot === 'DP') reasons.push('offence only')
+
+      earnedByPlayer.set(sc.player_id, {
+        slot: sc.slot,
+        earned: final,
+        reason: reasons.length ? reasons.join(' · ') : null,
+      })
     }
+
+    // Everyone on the card who earned nothing — reserves, absentees, unused bench
+    for (const r of rows) {
+      if (earnedByPlayer.has(r.player_id)) continue
+      const reason = r.slot.startsWith('RES')
+        ? 'reserve — no score'
+        : (played.has(r.player_id) ? 'not in a scoring slot' : 'did not play')
+      earnedByPlayer.set(r.player_id, { slot: r.slot, earned: 0, reason })
+    }
+
+    for (const [playerId, e] of earnedByPlayer) {
+      earnings.push({
+        owner_id: lu.owner_id, round_id, player_id: playerId,
+        grade: round.grade, slot: e.slot, earned: e.earned, reason: e.reason,
+      })
+    }
+
     userScores.push({ owner_id: lu.owner_id, round_id, grade: round.grade, points: total })
   }
   if (userScores.length) {
     await admin.from('user_scores').upsert(userScores, { onConflict: 'owner_id,round_id' })
+  }
+  // Re-scoring a round overwrites cleanly via the unique constraint
+  for (let i = 0; i < earnings.length; i += 500) {
+    await admin.from('lineup_earnings')
+      .upsert(earnings.slice(i, i + 500), { onConflict: 'owner_id,round_id,player_id,slot' })
   }
 
   // 4. Resolve H2H matchups
