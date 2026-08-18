@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { theme, type Grade } from '@/lib/clubhouse'
+import { splitName } from '@/lib/names'
 
 const TIER_META: Record<string, { label: string; accent: string }> = {
   rare_2wp_a: { label: '2WP A', accent: '#FFD700' },
@@ -218,7 +219,9 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[9px] font-black uppercase tracking-[0.25em] truncate" style={{ color: T.textDim }}>{player.club}</p>
-            <p className="text-lg sm:text-xl font-black leading-tight" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{player.name}</p>
+            <p className="text-lg sm:text-xl font-black leading-tight" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
+              {splitName(player.name).first} <span className="uppercase">{splitName(player.name).last}</span>
+            </p>
           </div>
           {/* Gem corner — outlined diamond, uniform number in tier colour */}
           <div className="shrink-0 flex items-center justify-center"
@@ -363,7 +366,9 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
       <div className="flex-1 rounded-xl overflow-hidden flex flex-col min-h-0"
         style={{ background: T.surface, border: '1px solid #F5F1E825' }}>
         <div className="text-center pinstripe-fine" style={{ background: T.headerBg, borderBottom: `1px solid ${meta.accent}40`, padding: '14px 16px 12px' }}>
-          <p className="text-base font-black leading-tight" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{player.name}</p>
+          <p className="text-base font-black leading-tight" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
+            {splitName(player.name).first} <span className="uppercase">{splitName(player.name).last}</span>
+          </p>
           <p className="text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: meta.accent, marginTop: '3px' }}>Career &amp; Honours</p>
         </div>
 
@@ -432,7 +437,9 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
       <div className="flex-1 rounded-xl overflow-hidden flex flex-col min-h-0"
         style={{ background: T.surface, border: '1px solid #F5F1E825' }}>
         <div className="text-center pinstripe-fine" style={{ background: T.headerBg, borderBottom: `1px solid ${meta.accent}40`, padding: '14px 16px 12px' }}>
-          <p className="text-base font-black leading-tight" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{player.name}</p>
+          <p className="text-base font-black leading-tight" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
+            {splitName(player.name).first} <span className="uppercase">{splitName(player.name).last}</span>
+          </p>
           <p className="text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: meta.accent, marginTop: '3px' }}>Round by Round</p>
         </div>
         <div className="flex-1 overflow-y-auto gf-noscroll" style={{ padding: '6px 0' }}>
