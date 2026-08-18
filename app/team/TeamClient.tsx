@@ -574,8 +574,6 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
             <span className="block sm:inline landscape:inline sm:before:content-['_'] landscape:before:content-['_']">{c.name.split(' ').slice(1).join(' ')}</span>
             {isOut && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1" style={{ background: '#FF6B6B', color: '#141210' }}>OUT</span>}
             {isDoubled && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1 gf-pulse" style={{ background: '#FF8C42', color: '#141210', boxShadow: '0 0 10px #FF8C42' }}>2×</span>}
-            {isCap && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1" style={{ background: CAPTAIN_GOLD, color: '#141210' }}>C</span>}
-            {isVice && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1" style={{ background: VICE_SILVER, color: '#141210' }}>VC</span>}
           </p>
           <p className="text-[10px]" style={{ color: T.textDim }}>
             {c.club}
