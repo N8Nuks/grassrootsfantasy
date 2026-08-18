@@ -123,7 +123,7 @@ export default function Avatar({ seed, size = 44 }: { seed: string | null | unde
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={`/avatars/silhouette-${SILHOUETTES[a.s]}.png`} alt=""
           className="absolute inset-0 w-full h-full"
-          style={{ objectFit: 'contain', objectPosition: 'center bottom', filter: 'brightness(0) drop-shadow(0 1px 3px #00000060)' }} />
+          style={{ objectFit: 'contain', objectPosition: 'center bottom' }} />
       </span>
     </span>
   )
