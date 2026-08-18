@@ -283,6 +283,10 @@ export default function NFS() {
                 q: 'When do lineups lock?',
                 a: 'Lineups open each Tuesday once the previous round\u2019s stats are confirmed, and lock Friday night ahead of the weekend\u2019s games. Your head-to-head matchup is drawn at lock \u2014 that\u2019s when you find out who you\u2019re playing. Provisional scores land over the weekend; confirmed scores follow official stats on Tuesday.',
               },
+                            {
+                q: 'How do Captain and Vice Captain work?',
+                a: 'Name a Captain and a Vice Captain each round. Your Captain scores 2\u00d7 and your Vice Captain 1.5\u00d7 \u2014 both apply every round, so you get two picks that matter. The multiplier hits everything, including the negatives, and anyone sitting in your reserves earns nothing regardless of the armband. Your picks carry over until you change them.',
+              },
               {
                 q: 'What are the card tiers?',
                 a: 'Rare two-way players, Elite, and Common \u2014 rarity reflects on-field production and honours across recent seasons. Every tier scores from the same point table; a Common having a big Saturday outscores a quiet Elite.',
