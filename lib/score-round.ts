@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { slotPoints, applyBench, applyDouble, armbandHolder, isCycle, updateSeasonTotals, battingPoints, pitchingPoints, resolveSubs, StatLine, PointValues, SlotAssignment } from '@/lib/scoring'
+import { slotPoints, applyBench, applyDouble, armbandMultiplier, isCycle, updateSeasonTotals, battingPoints, pitchingPoints, resolveSubs, StatLine, PointValues, SlotAssignment } from '@/lib/scoring'
 import { moveArmbandsOffDoubled } from '@/lib/armbands'
 
 export type ScoreRoundResult =
@@ -184,16 +184,14 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
     const { scored } = resolveSubs(starters, bench, reserves, played)
 
     // Armbands are stored as card ids — map to the player who holds them.
-    // A Captain who didn't score (absent, or sitting in reserve and never
-    // promoted) hands the double to the Vice Captain.
+    // Captain 2x and Vice Captain 1.5x both apply every round, independently.
+    // A player in reserves never reaches the scoring set, so earns no bonus.
     const playerOfCard = new Map(
       ((lu.lineup_slots ?? []) as SlotRow[])
         .filter(r => r.cards?.player_id)
         .map(r => [r.card_id, r.cards!.player_id]))
     const captainPlayer = lu.captain_card_id ? playerOfCard.get(lu.captain_card_id) ?? null : null
     const vicePlayer = lu.vice_captain_card_id ? playerOfCard.get(lu.vice_captain_card_id) ?? null : null
-    const scoredIds = new Set(scored.map(sc => sc.player_id))
-    const armband = armbandHolder(scoredIds, captainPlayer, vicePlayer)
 
     let total = 0
     const earnedByPlayer = new Map<string, { slot: string; earned: number; reason: string | null }>()
@@ -202,13 +200,13 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
       const line = statByPlayer.get(sc.player_id)
       if (!line) continue
       const effectiveSlot = sc.slot === 'BENCH' ? 'DP' : sc.slot
-      // Floor first, then the achievement double OR the armband double (never both
-      // — a doubled player can't wear an armband), then the bench multiplier.
-      // So a Captain on the bench scores points x2 x0.75 = 1.5x.
+      // Floor first, then the achievement double OR the armband multiplier
+      // (never both — a doubled player can't wear an armband), then the bench
+      // multiplier. So a Captain on the bench scores points x2 x0.75 = 1.5x.
       const isDoubled = doubledPlayers.has(sc.player_id)
-      const hasArmband = sc.player_id === armband
+      const armband = armbandMultiplier(sc.player_id, captainPlayer, vicePlayer)
       const base = slotPoints(effectiveSlot, line, v)
-      const raw = applyDouble(base, isDoubled || hasArmband)
+      const raw = isDoubled ? applyDouble(base, true) : base * armband
       const final = sc.slot === 'BENCH' ? applyBench(raw, 'BENCH1', v, false) : raw
       total += final
 
@@ -219,7 +217,7 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
       if (sc.promoted) reasons.push('Promoted')
       if (sc.slot === 'PB') reasons.push('Pitching only')
       if (sc.slot === 'DR') reasons.push('Steals only')
-  
+
       // resolveSubs labels unused bench players generically — recover their real
       // slot from the lineup so the card can match rows to positions
       const realSlot = sc.slot === 'BENCH'
