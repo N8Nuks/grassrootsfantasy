@@ -54,7 +54,7 @@ export default function SnakeClient({ clubs, initialClub }: {
   const randomTreat = useCallback((body: Pt[]): Treat => {
     const total = TREATS.reduce((s, t) => s + t.weight, 0)
     let roll = Math.random() * total
-    let kind = TREATS[0]
+    let kind: typeof TREATS[number] = TREATS[0]
     for (const t of TREATS) { roll -= t.weight; if (roll <= 0) { kind = t; break } }
     let pos: Pt
     do {
