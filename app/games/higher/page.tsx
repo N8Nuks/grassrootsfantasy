@@ -1,7 +1,8 @@
-import Nav from '@/components/Nav'
-import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/server'
+import ArcadeShell from '@/components/ArcadeShell'
 import HigherClient, { GamePlayer } from './HigherClient'
+
+const NEON = '#00F0FF'
 
 /* The whole pool is handed to the client at once — the run is endless, so
    round-tripping for every pair would feel sluggish. Every figure here is
@@ -40,21 +41,12 @@ export default async function Higher() {
   }))
 
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: '#0D0D0F' }}>
-      <Nav />
-      <section className="relative flex-1 px-5 sm:px-12 overflow-hidden" style={{ paddingTop: '76px', paddingBottom: '80px' }}>
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 75% 45% at 50% 0%, #10214D 0%, #0D0D0F 70%)' }} />
-        <div className="relative z-10" style={{ maxWidth: '640px', marginLeft: 'auto', marginRight: 'auto' }}>
-          <a href="/games" className="inline-block text-[11px] font-bold uppercase tracking-widest"
-            style={{ color: '#ffffff60', marginBottom: '18px' }}>← Games</a>
-          {pool.length < 2
-            ? <p className="text-sm text-center text-white/60" style={{ paddingTop: '40px' }}>
-                No scored players yet — this one opens once a round has been played.
-              </p>
-            : <HigherClient pool={pool} />}
-        </div>
-      </section>
-      <Footer />
-    </main>
+    <ArcadeShell neon={NEON} eyebrow="Endless · Keep it alive" title="Higher or Lower">
+      {pool.length < 2
+        ? <p style={{ color: '#8FA0B4', fontSize: '13px' }}>
+            No scored players yet — this one opens once a round has been played.
+          </p>
+        : <HigherClient pool={pool} />}
+    </ArcadeShell>
   )
 }
