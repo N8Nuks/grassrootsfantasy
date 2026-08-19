@@ -17,7 +17,12 @@ export default async function Snake() {
       : Promise.resolve({ data: null }),
   ])
 
-  const options: ClubOption[] = (clubs ?? []).map(c => ({
+  // Generic is the no-club fallback and Papatoetoe isn't in the competition —
+  // neither has a crest, so neither belongs in the picker
+  const EXCLUDE = ['Generic', 'Papatoetoe']
+  const options: ClubOption[] = (clubs ?? [])
+    .filter(c => !EXCLUDE.includes(c.name as string))
+    .map(c => ({
     id: c.id as string,
     name: c.name as string,
     crest: `/clubs/${clubSlug(c.name as string)}.jpg`,
