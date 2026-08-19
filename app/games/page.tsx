@@ -4,7 +4,8 @@ const GAMES = [
   { href: '/games/daily', n: '01', title: 'Player of the Day', blurb: 'One player. Six guesses. A clue for every miss.', tag: 'Daily', neon: '#FF2D95' },
   { href: '/games/higher', n: '02', title: 'Higher or Lower', blurb: 'Two cards, one stat. Keep the run alive.', tag: 'Endless', neon: '#00F0FF' },
   { href: '/games/lineup', n: '03', title: 'The Perfect Card', blurb: 'Sixteen cards, twelve slots, one best answer.', tag: 'Puzzle', neon: '#C6FF00' },
-  { href: '/games/batting', n: '04', title: 'Batting Practice', blurb: 'Time the swing. Send it.', tag: 'Arcade', neon: '#FFB800' },
+  { href: '/games/snake', n: '04', title: 'Diamond Snake', blurb: 'Your club crest, loose on the field. Eat everything.', tag: 'Arcade', neon: '#FFB800' },
+  { href: '/games/batting', n: '05', title: 'Batting Practice', blurb: 'Time the swing. Send it.', tag: 'Arcade', neon: '#B47CFF' },
 ]
 
 export default function Games() {
