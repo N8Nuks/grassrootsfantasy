@@ -71,7 +71,9 @@ function solve(cards: PuzzleCard[]): Record<string, string> {
   return assign
 }
 
-export default function LineupClient({ cards, roundNumber, grade }: {
+export default function LineupClient({ cards, roundNumber, grade, nextDealHref }: {
+  cards: PuzzleCard[]; roundNumber: number; grade: string; nextDealHref: string
+}) {
   cards: PuzzleCard[]; roundNumber: number; grade: string
 }) {
   const [assign, setAssign] = useState<Record<string, string>>({})
