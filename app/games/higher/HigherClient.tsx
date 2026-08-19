@@ -25,7 +25,7 @@ const TIER_ACCENT: Record<string, string> = {
 const STATS: { key: string; label: string; question: string; decimals: number }[] = [
   { key: 'season_points', label: 'Fantasy Points', question: 'more points', decimals: 0 },
   { key: 'season_hr', label: 'Home Runs', question: 'more home runs', decimals: 0 },
-  { key: 'season_rbi', label: 'RBI', question: 'more RBI', decimals: 0 },
+  { key: 'season_rbi', label: 'RBI', question: 'more RBIs', decimals: 0 },
   { key: 'season_sb', label: 'Stolen Bases', question: 'more stolen bases', decimals: 0 },
   { key: 'season_ba', label: 'Batting Average', question: 'the higher batting average', decimals: 3 },
 ]
