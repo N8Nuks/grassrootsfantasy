@@ -20,12 +20,7 @@ const SLOT_LABELS: Record<string, string> = {
 const SLOT_NOTES: Record<string, string> = {
   P: 'Batting and pitching', PB: 'Pitching only', DP: 'Offence only', DR: 'Steals only',
 }
-const TIER_ACCENT: Record<string, string> = {
-  rare_2wp_a: '#FFD700', rare_2wp_b: '#E8C15A', elite: '#1D3FBE', common: '#2D9E4E',
-}
-
-const GOLD = '#E8C15A'
-const GREEN = '#3FBF63'
+const BEST = '#00F0FF'
 
 /* A strong solve rather than a proven optimum — every arrangement of sixteen
    cards across twelve slots is far too many to check in a browser. This fills
@@ -108,7 +103,7 @@ export default function LineupClient({ cards, roundNumber, grade, nextDealHref }
 
   const caps = (n: string) => {
     const s = splitName(n)
-    return <>{s.first} <span className="uppercase">{s.last}</span></>
+    return <>{s.first} <span style={{ textTransform: 'uppercase' }}>{s.last}</span></>
   }
   const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1))
 
@@ -116,82 +111,107 @@ export default function LineupClient({ cards, roundNumber, grade, nextDealHref }
 
   return (
     <>
-      <div className="text-center" style={{ marginBottom: '26px' }}>
-        <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: '#3FBF63' }}>The Perfect Card</p>
-        <h1 className="text-2xl sm:text-3xl font-black text-white mb-3" style={{ fontFamily: 'var(--font-heading)' }}>
-          Sixteen cards. Twelve slots.
-        </h1>
-        <p className="text-sm text-white/65 leading-relaxed" style={{ maxWidth: '420px', margin: '0 auto' }}>
-          These players really played in {grade} Round {roundNumber}. Fill every slot for the highest
-          score you can — then see how close you got.
-        </p>
-      </div>
+      <style>{`
+        .lp-lede { font-size: 13px; line-height: 1.7; color: #8FA0B4; max-width: 42ch; margin-bottom: 24px; }
+        .lp-row { border-bottom: 1px solid #ffffff0a; }
+        .lp-row:last-child { border-bottom: none; }
+        .lp-slot {
+          width: 100%; display: flex; align-items: center; gap: 14px; text-align: left;
+          background: transparent; border: none; cursor: pointer; padding: 13px 18px;
+          transition: background 140ms ease;
+        }
+        .lp-slot:hover:not(:disabled) { background: #ffffff06; }
+        .lp-slot:disabled { cursor: default; }
+        .lp-tag {
+          width: 46px; flex-shrink: 0; font-family: var(--font-heading); font-weight: 900;
+          font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; text-align: center;
+          color: #05060A; background: var(--neon); padding: 5px 0; transform: skewX(-9deg);
+        }
+        .lp-nm { font-family: var(--font-heading); font-weight: 900; font-size: 14px; color: #F5F1E8; display: block; line-height: 1.2; }
+        .lp-meta { font-size: 10px; color: #5C6878; display: block; margin-top: 3px; }
+        .lp-empty { font-size: 12px; color: #4E5A6A; }
+        .lp-pts { font-family: var(--font-heading); font-weight: 900; font-size: 16px; color: #F5F1E8; flex-shrink: 0; }
 
-      {/* The card */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: '#121215', border: '1px solid #ffffff12', marginBottom: '20px' }}>
+        .lp-best { display: flex; align-items: center; gap: 12px; padding: 9px 18px 11px 78px; background: ${BEST}0F; }
+        .lp-best-k { font-size: 9px; font-weight: 900; letter-spacing: 0.24em; text-transform: uppercase; color: ${BEST}; flex-shrink: 0; }
+        .lp-best-n { flex: 1; font-size: 12px; font-weight: 700; color: #B8C4D2; }
+        .lp-best-p { font-family: var(--font-heading); font-weight: 900; font-size: 13px; color: ${BEST}; }
+
+        .lp-pick { background: #04050A; border-top: 1px solid #ffffff0a; }
+        .lp-opt {
+          width: 100%; display: flex; align-items: center; gap: 10px; text-align: left;
+          background: transparent; border: none; cursor: pointer; padding: 11px 18px 11px 78px;
+          font-size: 12px; font-weight: 700; color: #F5F1E8;
+        }
+        .lp-opt:hover { background: #ffffff07; }
+        .lp-dot { width: 6px; height: 6px; flex-shrink: 0; background: var(--neon); }
+        .lp-inuse { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #4E5A6A; }
+
+        .lp-benchlbl { font-size: 9px; font-weight: 900; letter-spacing: 0.3em; text-transform: uppercase; color: #4E5A6A; margin: 22px 0 10px; }
+        .lp-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 24px; }
+        .lp-chip {
+          font-size: 11px; font-weight: 700; color: #B8C4D2; padding: 7px 12px;
+          border: 1px solid #ffffff14; background: #ffffff05;
+        }
+        .lp-result { text-align: center; padding: 34px 24px; }
+        .lp-big { font-family: var(--font-heading); font-weight: 900; font-size: 62px; line-height: 1; color: #F5F1E8; }
+        .lp-pct { font-family: var(--font-heading); font-weight: 900; font-size: 40px; line-height: 1; margin-top: 12px; }
+      `}</style>
+
+      <p className="lp-lede">
+        These players really played in {grade} Round {roundNumber}. Fill every slot for the highest score
+        you can — then see how close you got.
+      </p>
+
+      <div className="ar-panel" style={{ marginBottom: '20px' }}>
         {SLOTS.map(s => {
           const c = assign[s] ? cardById.get(assign[s])! : null
           const bestC = done && best?.[s] ? cardById.get(best[s])! : null
           const same = done && bestC && c && bestC.id === c.id
           return (
-            <div key={s} style={{ borderBottom: '1px solid #ffffff08' }}>
-              <button onClick={() => !done && setPicking(picking === s ? null : s)} disabled={done}
-                className="w-full flex items-center gap-3 text-left transition-colors hover:bg-white/5 disabled:hover:bg-transparent"
-                style={{ padding: '13px 18px' }}>
-                <span className="w-12 shrink-0">
-                  <span className="text-[10px] font-black uppercase px-2 py-1 rounded" style={{ color: '#0D0D0F', background: GOLD }}>
-                    {SLOT_LABELS[s]}
-                  </span>
-                </span>
-                <span className="flex-1 min-w-0">
+            <div key={s} className="lp-row">
+              <button className="lp-slot" onClick={() => !done && setPicking(picking === s ? null : s)} disabled={done}>
+                <span className="lp-tag">{SLOT_LABELS[s]}</span>
+                <span style={{ flex: 1, minWidth: 0 }}>
                   {c ? (
                     <>
-                      <span className="block text-sm font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>{caps(c.name)}</span>
-                      <span className="block text-[10px]" style={{ color: '#ffffff50' }}>
-                        {c.club}{SLOT_NOTES[s] ? ` · ${SLOT_NOTES[s]}` : ''}
-                      </span>
+                      <span className="lp-nm">{caps(c.name)}</span>
+                      <span className="lp-meta">{c.club}{SLOT_NOTES[s] ? ` · ${SLOT_NOTES[s]}` : ''}</span>
                     </>
                   ) : (
-                    <span className="text-sm" style={{ color: '#ffffff40' }}>
-                      Empty — tap to fill{SLOT_NOTES[s] ? ` · ${SLOT_NOTES[s]}` : ''}
-                    </span>
+                    <span className="lp-empty">Tap to fill{SLOT_NOTES[s] ? ` · ${SLOT_NOTES[s]}` : ''}</span>
                   )}
                 </span>
                 {done && c && (
-                  <span className="text-sm font-black shrink-0" style={{ fontFamily: 'var(--font-heading)', color: same ? GREEN : 'white' }}>
-                    {fmt(c.worth[s] ?? 0)}
-                  </span>
+                  <span className="lp-pts" style={same ? { color: BEST } : undefined}>{fmt(c.worth[s] ?? 0)}</span>
                 )}
               </button>
 
-              {/* Reveal what the solve put here, when it differs */}
               {done && bestC && !same && (
-                <div className="flex items-center gap-3" style={{ background: `${GREEN}10`, padding: '9px 18px 11px 78px' }}>
-                  <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: GREEN }}>Best</span>
-                  <span className="flex-1 text-xs font-bold text-white/80">{caps(bestC.name)}</span>
-                  <span className="text-xs font-black" style={{ color: GREEN }}>{fmt(bestC.worth[s] ?? 0)}</span>
+                <div className="lp-best">
+                  <span className="lp-best-k">Best</span>
+                  <span className="lp-best-n">{caps(bestC.name)}</span>
+                  <span className="lp-best-p">{fmt(bestC.worth[s] ?? 0)}</span>
                 </div>
               )}
 
-              {/* Picker */}
               {picking === s && !done && (
-                <div style={{ background: '#0D0D10', borderTop: '1px solid #ffffff08' }}>
+                <div className="lp-pick">
                   {cards.filter(c2 => c2.worth[s] != null).map(c2 => {
                     const inUse = usedIds.has(c2.id) && assign[s] !== c2.id
-                    const accent = TIER_ACCENT[c2.tier] ?? TIER_ACCENT.common
                     return (
-                      <button key={c2.id} onClick={() => place(s, c2.id)}
-                        className="w-full flex items-center gap-3 text-left transition-colors hover:bg-white/5"
-                        style={{ padding: '11px 18px 11px 78px', opacity: inUse ? 0.4 : 1 }}>
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: accent }} />
-                        <span className="flex-1 text-xs font-bold text-white">{caps(c2.name)}</span>
-                        {inUse && <span className="text-[9px] uppercase tracking-widest" style={{ color: '#ffffff45' }}>in use</span>}
+                      <button key={c2.id} className="lp-opt" onClick={() => place(s, c2.id)}
+                        style={{ opacity: inUse ? 0.42 : 1 }}>
+                        <span className="lp-dot" />
+                        <span style={{ flex: 1 }}>{caps(c2.name)}</span>
+                        {inUse && <span className="lp-inuse">in use</span>}
                       </button>
                     )
                   })}
                   {assign[s] && (
-                    <button onClick={() => clear(s)} className="w-full text-left text-xs"
-                      style={{ color: '#FF6B6B', padding: '11px 18px 13px 78px' }}>Clear this slot</button>
+                    <button className="lp-opt" onClick={() => clear(s)} style={{ color: '#FF4D4D' }}>
+                      <span style={{ flex: 1 }}>Clear this slot</span>
+                    </button>
                   )}
                 </div>
               )}
@@ -200,54 +220,36 @@ export default function LineupClient({ cards, roundNumber, grade, nextDealHref }
         })}
       </div>
 
-      {/* Cards not yet used */}
       {!done && bench.length > 0 && (
         <>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: '#ffffff45', marginBottom: '10px' }}>
-            Not placed · {bench.length}
-          </p>
-          <div className="flex flex-wrap gap-2" style={{ marginBottom: '24px' }}>
-            {bench.map(c => (
-              <span key={c.id} className="text-[11px] font-bold rounded-full"
-                style={{ color: 'white', background: '#ffffff08', border: `1px solid ${TIER_ACCENT[c.tier] ?? TIER_ACCENT.common}40`, padding: '7px 13px' }}>
-                {caps(c.name)}
-              </span>
-            ))}
+          <p className="lp-benchlbl">Not placed · {bench.length}</p>
+          <div className="lp-chips">
+            {bench.map(c => <span key={c.id} className="lp-chip">{caps(c.name)}</span>)}
           </div>
         </>
       )}
 
-      {/* Submit / result */}
       {!done ? (
-        <div className="text-center">
-          <button onClick={() => setDone(true)} disabled={filled < SLOTS.length}
-            className="text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.02] disabled:opacity-35"
-            style={{ color: '#0D0D0F', background: GOLD, padding: '17px 42px' }}>
-            {filled < SLOTS.length ? `${SLOTS.length - filled} slot${SLOTS.length - filled === 1 ? '' : 's'} to fill` : 'Lock it in'}
+        <div style={{ textAlign: 'center' }}>
+          <button className="ar-btn" onClick={() => setDone(true)} disabled={filled < SLOTS.length}>
+            <span>{filled < SLOTS.length ? `${SLOTS.length - filled} to fill` : 'Lock it in'}</span>
           </button>
         </div>
       ) : (
-        <div className="rounded-2xl text-center"
-          style={{ background: `linear-gradient(180deg, ${GOLD}18 0%, #121215 100%)`, border: `2px solid ${GOLD}60`, padding: '34px 24px' }}>
-          <p className="text-[10px] font-black uppercase tracking-[0.35em]" style={{ color: GOLD, marginBottom: '14px' }}>Your card</p>
-          <p className="text-5xl font-black text-white leading-none" style={{ fontFamily: 'var(--font-heading)' }}>{fmt(yourScore)}</p>
-          <p className="text-sm" style={{ color: '#ffffff70', marginTop: '14px' }}>
-            The best we found was <b style={{ color: GREEN }}>{fmt(bestScore)}</b>
+        <div className="ar-panel lp-result">
+          <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.34em', textTransform: 'uppercase', color: 'var(--neon)' }}>Your card</p>
+          <p className="lp-big" style={{ marginTop: '14px' }}>{fmt(yourScore)}</p>
+          <p style={{ fontSize: '12px', color: '#7D8B9C', marginTop: '14px' }}>
+            The best we found was <b style={{ color: BEST }}>{fmt(bestScore)}</b>
           </p>
-          <p className="text-3xl font-black" style={{ fontFamily: 'var(--font-heading)', color: pct >= 95 ? GREEN : GOLD, marginTop: '10px' }}>
-            {pct}%
-          </p>
-          <p className="text-xs leading-relaxed" style={{ color: '#ffffff55', maxWidth: '340px', margin: '16px auto 0' }}>
+          <p className="lp-pct" style={{ color: pct >= 95 ? BEST : 'var(--neon)' }}>{pct}%</p>
+          <p style={{ fontSize: '12px', lineHeight: 1.6, color: '#5C6878', maxWidth: '34ch', margin: '16px auto 0' }}>
             {pct >= 98 ? 'Just about perfect. You would not have left much out there.'
               : pct >= 90 ? 'Strong card. A slot or two away from the best of it.'
               : pct >= 75 ? 'Solid, but there were points sitting in your hand.'
-              : 'Plenty left on the table — check the green rows for where.'}
+              : 'Plenty left on the table — check the cyan rows for where.'}
           </p>
-          <a href={nextDealHref}
-            className="inline-block text-xs font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03]"
-            style={{ color: '#0D0D0F', background: GREEN, padding: '15px 34px', marginTop: '22px' }}>
-            Deal a new hand
-          </a>
+          <a href={nextDealHref} className="ar-btn" style={{ marginTop: '26px' }}><span>Deal a new hand</span></a>
         </div>
       )}
     </>

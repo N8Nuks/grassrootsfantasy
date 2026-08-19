@@ -1,11 +1,9 @@
-import Nav from '@/components/Nav'
-import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/server'
-import GradeSwitch from '@/components/GradeSwitch'
+import ArcadeShell from '@/components/ArcadeShell'
 import { slotPoints, StatLine, PointValues } from '@/lib/scoring'
 import LineupClient, { PuzzleCard } from './LineupClient'
-import type { Grade } from '@/lib/clubhouse'
 
+const NEON = '#C6FF00'
 const SCORING_SLOTS = ['P','C','B1','B2','B3','SS','LF','CF','RF','DP','PB','DR']
 
 /* The hand is drawn from the round id plus a deal number, so everyone opening
@@ -21,7 +19,7 @@ export default async function LineupPuzzle({ searchParams }: {
   searchParams: Promise<{ grade?: string; deal?: string }>
 }) {
   const params = await searchParams
-  const grade: Grade = params.grade === 'womens' ? 'womens' : 'mens'
+  const grade = params.grade === 'womens' ? 'womens' : 'mens'
   const deal = Math.max(0, Math.min(999, Number(params.deal ?? 0) || 0))
   const gradeLabel = grade === 'womens' ? "Women's" : "Men's"
 
@@ -33,21 +31,26 @@ export default async function LineupPuzzle({ searchParams }: {
     .in('status', ['provisional', 'confirmed'])
     .order('round_number', { ascending: false }).limit(1).maybeSingle()
 
-  if (!round) {
-    return <Shell grade={grade}>
-      <p className="text-sm text-center text-white/60" style={{ paddingTop: '20px' }}>
-        No {gradeLabel} round has been scored yet — try the other grade.
-      </p>
-    </Shell>
-  }
+  const shell = (children: React.ReactNode) => (
+    <ArcadeShell neon={NEON} eyebrow="Puzzle · Sixteen into twelve" title="The Perfect Card">
+      <GradeToggle grade={grade} />
+      {children}
+    </ArcadeShell>
+  )
+
+  if (!round) return shell(
+    <p style={{ color: '#8FA0B4', fontSize: '13px' }}>
+      No {gradeLabel} round has been scored yet — try the other grade.
+    </p>
+  )
 
   const [{ data: stats }, { data: config }] = await Promise.all([
     supabase.from('player_stats').select('player_id, raw').eq('round_id', round.id),
     supabase.from('scoring_config').select('values').eq('grade', grade).single(),
   ])
-  if (!stats?.length || !config) {
-    return <Shell grade={grade}><p className="text-sm text-center text-white/60" style={{ paddingTop: '20px' }}>Round data is still being prepared.</p></Shell>
-  }
+  if (!stats?.length || !config) return shell(
+    <p style={{ color: '#8FA0B4', fontSize: '13px' }}>Round data is still being prepared.</p>
+  )
   const v = config.values as PointValues
 
   const ids = stats.map(s => s.player_id)
@@ -63,9 +66,9 @@ export default async function LineupPuzzle({ searchParams }: {
   const lineFor = new Map(stats.map(s => [s.player_id, s.raw as StatLine]))
 
   const candidates = ids.filter(id => byId.has(id))
-  if (candidates.length < 20) {
-    return <Shell grade={grade}><p className="text-sm text-center text-white/60" style={{ paddingTop: '20px' }}>Not enough players in this round to build a puzzle.</p></Shell>
-  }
+  if (candidates.length < 20) return shell(
+    <p style={{ color: '#8FA0B4', fontSize: '13px' }}>Not enough players in this round to build a puzzle.</p>
+  )
 
   // Draw sixteen, then check the set can legally fill all twelve slots —
   // an unsolvable hand is a broken puzzle, not a hard one.
@@ -102,37 +105,43 @@ export default async function LineupPuzzle({ searchParams }: {
     }
   })
 
-  return (
-    <Shell grade={grade}>
-      <LineupClient
-        key={`${grade}-${deal}`}
-        cards={cards}
-        roundNumber={round.round_number}
-        grade={gradeLabel}
-        nextDealHref={`/games/lineup?grade=${grade}&deal=${deal + 1}`}
-      />
-    </Shell>
+  return shell(
+    <LineupClient
+      key={`${grade}-${deal}`}
+      cards={cards}
+      roundNumber={round.round_number}
+      grade={gradeLabel}
+      nextDealHref={`/games/lineup?grade=${grade}&deal=${deal + 1}`}
+    />
   )
 }
 
-function Shell({ grade, children }: { grade: Grade; children: React.ReactNode }) {
+function GradeToggle({ grade }: { grade: string }) {
+  const item = (g: string, label: string) => {
+    const on = grade === g
+    return (
+      <a href={`/games/lineup?grade=${g}`}
+        style={{
+          flex: 1, textAlign: 'center', textDecoration: 'none',
+          fontFamily: 'var(--font-heading)', fontWeight: 900, fontSize: '12px',
+          letterSpacing: '0.2em', textTransform: 'uppercase',
+          padding: '13px 0',
+          color: on ? '#05060A' : '#64748B',
+          background: on ? NEON : 'transparent',
+        }}>
+        {label}
+      </a>
+    )
+  }
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: '#0D0D0F' }}>
-      <Nav />
-      <section className="relative flex-1 px-5 sm:px-12 overflow-hidden" style={{ paddingTop: '76px', paddingBottom: '80px' }}>
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 75% 45% at 50% 0%, #10214D 0%, #0D0D0F 70%)' }} />
-        <div className="relative z-10" style={{ maxWidth: '620px', marginLeft: 'auto', marginRight: 'auto' }}>
-          <a href="/games" className="inline-block text-[11px] font-bold uppercase tracking-widest"
-            style={{ color: '#ffffff60', marginBottom: '18px' }}>← Games</a>
-          <div className="flex justify-center" style={{ marginBottom: '26px' }}>
-            <GradeSwitch grade={grade}
-              mensHref="/games/lineup?grade=mens"
-              womensHref="/games/lineup?grade=womens" />
-          </div>
-          {children}
-        </div>
-      </section>
-      <Footer />
-    </main>
+    <div style={{
+      display: 'flex', border: `1px solid ${NEON}45`, marginBottom: '26px',
+      transform: 'skewX(-8deg)', overflow: 'hidden',
+    }}>
+      <div style={{ display: 'flex', width: '100%', transform: 'skewX(8deg)' }}>
+        {item('mens', "Men's")}
+        {item('womens', "Women's")}
+      </div>
+    </div>
   )
 }
