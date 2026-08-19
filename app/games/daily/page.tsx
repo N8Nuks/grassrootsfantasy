@@ -16,14 +16,15 @@ function daySeed(): number {
 export default async function Daily() {
   const supabase = await createClient()
 
-  // Only players with real career weight — obscure one-gamers make a poor puzzle
+  // Whole active pool for now — career games are placeholders until the real
+  // season data lands, at which point add .gte('career_games', 40) back so
+  // obscure one-gamers don't make the puzzle unfair.
   const { data: players } = await supabase
     .from('players')
     .select('id, full_name, grade, positions, career_games, stats, clubs(name)')
     .eq('active', true)
     .or('is_under18.eq.false,has_consent.eq.true')
-    .gte('career_games', 40)
-
+   
   type Row = {
     id: string; full_name: string; grade: string; positions: string[]
     career_games: number | null; stats: Record<string, number> | null
