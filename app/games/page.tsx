@@ -7,6 +7,7 @@ const GAMES = [
   { href: '/games/snake', n: '04', title: 'Diamond Snake', blurb: 'Your club crest, loose on the field. Eat everything.', tag: 'Arcade', neon: '#FFB800' },
   { href: '/games/batting', n: '05', title: 'Batting Practice', blurb: 'Time the swing. Send it.', tag: 'Arcade', neon: '#B47CFF' },
   { href: '/games/memory', n: '06', title: 'Card Sharp', blurb: 'Two of every card, face down. Remember what you saw.', tag: 'Memory', neon: '#FF6B9D' },
+  { href: '/games/merge', n: '07', title: 'Tier Up', blurb: 'Two Commons make an Elite. Climb to Immortal.', tag: 'Puzzle', neon: '#39FF9E' },
 ]
 
 export default function Games() {
