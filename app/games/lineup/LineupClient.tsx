@@ -74,8 +74,6 @@ function solve(cards: PuzzleCard[]): Record<string, string> {
 export default function LineupClient({ cards, roundNumber, grade, nextDealHref }: {
   cards: PuzzleCard[]; roundNumber: number; grade: string; nextDealHref: string
 }) {
-  cards: PuzzleCard[]; roundNumber: number; grade: string
-}) {
   const [assign, setAssign] = useState<Record<string, string>>({})
   const [picking, setPicking] = useState<string | null>(null)
   const [done, setDone] = useState(false)
