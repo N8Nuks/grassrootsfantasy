@@ -1,42 +1,179 @@
-import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 
 const GAMES = [
-  { href: '/games/daily', title: 'Player of the Day', blurb: 'One NFS player, six guesses. A new clue every time you miss.', tag: 'Daily', accent: '#E8C15A' },
-  { href: '/games/higher', title: 'Higher or Lower', blurb: 'Two players, one stat. Pick the bigger number and keep the run going.', tag: 'Endless', accent: '#2456E6' },
-  { href: '/games/lineup', title: 'The Perfect Card', blurb: 'A fixed set of cards and a scored round. Find the highest legal lineup.', tag: 'Puzzle', accent: '#2D9E4E' },
-  { href: '/games/batting', title: 'Batting Practice', blurb: 'Time your swing. See how far it goes.', tag: 'Arcade', accent: '#FF8C42' },
+  { href: '/games/daily', n: '01', title: 'Player of the Day', blurb: 'One player. Six guesses. A clue for every miss.', tag: 'Daily', neon: '#FF2D95' },
+  { href: '/games/higher', n: '02', title: 'Higher or Lower', blurb: 'Two cards, one stat. Keep the run alive.', tag: 'Endless', neon: '#00F0FF' },
+  { href: '/games/lineup', n: '03', title: 'The Perfect Card', blurb: 'Sixteen cards, twelve slots, one best answer.', tag: 'Puzzle', neon: '#C6FF00' },
+  { href: '/games/batting', n: '04', title: 'Batting Practice', blurb: 'Time the swing. Send it.', tag: 'Arcade', neon: '#FFB800' },
 ]
 
 export default function Games() {
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: '#0D0D0F' }}>
-      <Nav />
-      <section className="relative flex-1 px-5 sm:px-12 overflow-hidden" style={{ paddingTop: '76px', paddingBottom: '80px' }}>
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 75% 45% at 50% 0%, #10214D 0%, #0D0D0F 70%)' }} />
-        <div className="relative z-10" style={{ maxWidth: '760px', marginLeft: 'auto', marginRight: 'auto' }}>
-          <div className="text-center" style={{ marginBottom: '44px' }}>
-            <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: '#E8C15A' }}>The Clubhouse</p>
-            <h1 className="text-4xl sm:text-5xl font-black text-white mb-4" style={{ fontFamily: 'var(--font-heading)' }}>Games</h1>
-            <p className="text-sm text-white/70 leading-relaxed" style={{ maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>
-              Something to do between rounds. Nothing here counts toward your season — it&apos;s just for the love of it.
-            </p>
-          </div>
+    <main className="gm-root">
+      <style>{`
+        .gm-root {
+          --ink: #05060A;
+          min-height: 100vh; background: var(--ink);
+          position: relative; overflow-x: hidden;
+          display: flex; flex-direction: column;
+        }
+        /* floodlight haze, drifting */
+        .gm-flood {
+          position: absolute; inset: -20% -10% auto -10%; height: 90vh; pointer-events: none;
+          background:
+            radial-gradient(ellipse 40% 60% at 18% 0%, #00F0FF22 0%, transparent 62%),
+            radial-gradient(ellipse 42% 62% at 82% 4%, #FF2D9522 0%, transparent 62%),
+            radial-gradient(ellipse 60% 40% at 50% 0%, #C6FF0014 0%, transparent 70%);
+          animation: gm-drift 14s ease-in-out infinite alternate;
+        }
+        @keyframes gm-drift { to { transform: translate3d(0, 24px, 0) scale(1.06); } }
+        /* chain-link */
+        .gm-fence {
+          position: absolute; inset: 0; pointer-events: none; opacity: 0.11;
+          background-image:
+            linear-gradient(45deg, transparent 46%, #9FB0C0 46%, #9FB0C0 54%, transparent 54%),
+            linear-gradient(-45deg, transparent 46%, #9FB0C0 46%, #9FB0C0 54%, transparent 54%);
+          background-size: 34px 34px;
+          mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, transparent 30%, black 92%);
+          -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, transparent 30%, black 92%);
+        }
+        /* CRT scanlines */
+        .gm-scan {
+          position: absolute; inset: 0; pointer-events: none; opacity: 0.5; mix-blend-mode: overlay;
+          background: repeating-linear-gradient(180deg, #ffffff0d 0px, #ffffff0d 1px, transparent 1px, transparent 4px);
+        }
+        .gm-wrap { position: relative; z-index: 2; flex: 1; padding: 84px 20px 96px; }
+        .gm-inner { max-width: 940px; margin: 0 auto; }
 
-          <div className="grid gap-4 sm:grid-cols-2">
+        .gm-eyebrow {
+          font-size: 11px; font-weight: 900; letter-spacing: 0.55em; text-transform: uppercase;
+          color: #C6FF00; text-shadow: 0 0 14px #C6FF0090;
+        }
+        /* spray-stencil headline */
+        .gm-title {
+          font-family: var(--font-heading); font-weight: 900; line-height: 0.82;
+          font-size: clamp(66px, 17vw, 168px); letter-spacing: -0.035em; text-transform: uppercase;
+          color: transparent; -webkit-text-stroke: 2px #F5F1E8;
+          transform: skewX(-7deg); margin: 16px 0 0; position: relative; width: fit-content;
+        }
+        .gm-title::before, .gm-title::after {
+          content: 'PLAY'; position: absolute; inset: 0; -webkit-text-stroke: 2px transparent;
+        }
+        .gm-title::before { color: #FF2D95; transform: translate(-5px, 4px); mix-blend-mode: screen; filter: blur(0.5px); animation: gm-jit 5s steps(1) infinite; }
+        .gm-title::after  { color: #00F0FF; transform: translate(5px, -4px); mix-blend-mode: screen; filter: blur(0.5px); animation: gm-jit 5s steps(1) infinite reverse; }
+        @keyframes gm-jit {
+          0%, 92%, 100% { opacity: 0.85; }
+          93% { transform: translate(-11px, 4px); opacity: 1; }
+          95% { transform: translate(3px, -7px); }
+          97% { transform: translate(-7px, 2px); }
+        }
+        .gm-sub {
+          font-size: 14px; line-height: 1.7; color: #8FA0B4; max-width: 400px;
+          margin-top: 26px; border-left: 3px solid #FFB800; padding-left: 16px;
+        }
+
+        .gm-grid { display: grid; gap: 18px; margin-top: 56px; }
+        @media (min-width: 720px) { .gm-grid { grid-template-columns: 1fr 1fr; gap: 22px; } }
+
+        /* stencil panel bolted to the fence */
+        .gm-tile {
+          --neon: #fff;
+          position: relative; display: block; padding: 30px 26px 28px; text-decoration: none;
+          background: linear-gradient(155deg, #0C0F16 0%, #07080D 100%);
+          border: 1px solid color-mix(in srgb, var(--neon) 40%, transparent);
+          box-shadow: 0 0 0 1px #ffffff08 inset, 0 18px 40px #00000090;
+          transition: transform 220ms cubic-bezier(.2,.8,.3,1), box-shadow 220ms ease, border-color 220ms ease;
+          overflow: hidden;
+        }
+        .gm-tile:nth-child(odd)  { transform: rotate(-0.7deg); }
+        .gm-tile:nth-child(even) { transform: rotate(0.55deg); }
+        .gm-tile::after {
+          content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0;
+          background: radial-gradient(ellipse 70% 90% at 12% 0%, color-mix(in srgb, var(--neon) 22%, transparent) 0%, transparent 66%);
+          transition: opacity 260ms ease;
+        }
+        .gm-tile:hover, .gm-tile:focus-visible {
+          transform: rotate(0deg) translateY(-6px) scale(1.014);
+          border-color: var(--neon);
+          box-shadow: 0 0 26px color-mix(in srgb, var(--neon) 45%, transparent),
+                      0 0 70px color-mix(in srgb, var(--neon) 18%, transparent),
+                      0 24px 48px #000000a0;
+        }
+        .gm-tile:hover::after, .gm-tile:focus-visible::after { opacity: 1; }
+        .gm-tile:focus-visible { outline: 2px solid var(--neon); outline-offset: 4px; }
+
+        .gm-n {
+          position: absolute; right: 16px; top: 8px; font-family: var(--font-heading);
+          font-size: 68px; font-weight: 900; line-height: 1; color: transparent;
+          -webkit-text-stroke: 1.5px color-mix(in srgb, var(--neon) 26%, transparent);
+        }
+        .gm-tag {
+          display: inline-block; font-size: 9px; font-weight: 900; letter-spacing: 0.3em;
+          text-transform: uppercase; color: var(--ink); background: var(--neon);
+          padding: 5px 11px; transform: skewX(-9deg);
+        }
+        .gm-name {
+          font-family: var(--font-heading); font-size: 27px; font-weight: 900; line-height: 1.02;
+          text-transform: uppercase; color: #F5F1E8; margin: 16px 0 10px; letter-spacing: -0.02em;
+          transition: color 200ms ease, text-shadow 200ms ease;
+        }
+        .gm-tile:hover .gm-name { color: var(--neon); text-shadow: 0 0 20px color-mix(in srgb, var(--neon) 60%, transparent); }
+        .gm-blurb { font-size: 13px; line-height: 1.65; color: #7D8B9C; max-width: 30ch; }
+        .gm-go {
+          display: flex; align-items: center; gap: 8px; margin-top: 22px;
+          font-size: 10px; font-weight: 900; letter-spacing: 0.28em; text-transform: uppercase;
+          color: var(--neon);
+        }
+        .gm-go span { display: inline-block; transition: transform 220ms cubic-bezier(.2,.8,.3,1); }
+        .gm-tile:hover .gm-go span { transform: translateX(7px); }
+
+        .gm-foot {
+          margin-top: 60px; padding-top: 22px; border-top: 1px dashed #ffffff18;
+          font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #5C6878;
+        }
+        .gm-back {
+          display: inline-block; font-size: 11px; font-weight: 900; letter-spacing: 0.28em;
+          text-transform: uppercase; color: #64748B; text-decoration: none;
+        }
+        .gm-back:hover { color: #C6FF00; }
+
+        @media (prefers-reduced-motion: reduce) {
+          .gm-flood, .gm-title::before, .gm-title::after { animation: none; }
+          .gm-tile { transition: none; }
+        }
+      `}</style>
+
+      <div className="gm-flood" />
+      <div className="gm-fence" />
+      <div className="gm-scan" />
+
+      <div className="gm-wrap">
+        <div className="gm-inner">
+          <a href="/" className="gm-back">← Back to the league</a>
+
+          <p className="gm-eyebrow" style={{ marginTop: '30px' }}>Grassroots Fantasy Arcade</p>
+          <h1 className="gm-title">PLAY</h1>
+          <p className="gm-sub">
+            Four games built on real NFS numbers. Nothing here touches your season — no points, no packs,
+            no ladder. Just something to do until Friday.
+          </p>
+
+          <div className="gm-grid">
             {GAMES.map(g => (
-              <a key={g.href} href={g.href}
-                className="rounded-2xl transition-all hover:scale-[1.02] flex flex-col gap-3"
-                style={{ background: '#121215', border: `1px solid ${g.accent}40`, boxShadow: `0 0 22px ${g.accent}12`, padding: '24px 22px' }}>
-                <span className="text-[9px] font-black uppercase tracking-[0.3em] self-start rounded-full"
-                  style={{ color: g.accent, background: `${g.accent}18`, padding: '5px 12px' }}>{g.tag}</span>
-                <h2 className="text-xl font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>{g.title}</h2>
-                <p className="text-xs text-white/65 leading-relaxed">{g.blurb}</p>
+              <a key={g.href} href={g.href} className="gm-tile" style={{ ['--neon' as string]: g.neon }}>
+                <span className="gm-n">{g.n}</span>
+                <span className="gm-tag">{g.tag}</span>
+                <h2 className="gm-name">{g.title}</h2>
+                <p className="gm-blurb">{g.blurb}</p>
+                <p className="gm-go">Play <span>→</span></p>
               </a>
             ))}
           </div>
+
+          <p className="gm-foot">Black Diamond Labs · Built on real game records</p>
         </div>
-      </section>
+      </div>
+
       <Footer />
     </main>
   )
