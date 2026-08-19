@@ -15,10 +15,8 @@ export type DailyPlayer = {
 const SLOT_LABELS: Record<string, string> = { B1: '1B', B2: '2B', B3: '3B', PB: 'P(B)' }
 const posLabel = (p: string) => SLOT_LABELS[p] ?? p
 
-const GOLD = '#E8C15A'
-const GREEN = '#3FBF63'
-const RED = '#FF6B6B'
-
+const WIN = '#C6FF00'
+const LOSE = '#FF4D4D'
 const MAX_GUESSES = 6
 
 export default function DailyClient({ answer, names }: { answer: DailyPlayer; names: string[] }) {
@@ -34,7 +32,7 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
     { label: 'Grade', value: answer.grade },
     { label: 'Position', value: answer.positions.map(posLabel).join(' · ') || '—' },
     { label: 'Club', value: answer.club },
-    { label: 'Career games', value: answer.gamesBand },
+    { label: 'Season points', value: String(answer.seasonPoints) },
     { label: 'Career bat ave.', value: answer.careerBa ?? 'Not recorded' },
     { label: 'Surname starts with', value: splitName(answer.name).last.charAt(0) || '?' },
   ]
@@ -54,105 +52,115 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
 
   const caps = (n: string) => {
     const s = splitName(n)
-    return <>{s.first} <span className="uppercase">{s.last}</span></>
+    return <>{s.first} <span style={{ textTransform: 'uppercase' }}>{s.last}</span></>
   }
 
   return (
     <>
-      <div className="text-center" style={{ marginBottom: '32px' }}>
-        <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>Player of the Day</p>
-        <h1 className="text-3xl sm:text-4xl font-black text-white mb-3" style={{ fontFamily: 'var(--font-heading)' }}>
-          Who is it?
-        </h1>
-        <p className="text-sm text-white/65 leading-relaxed" style={{ maxWidth: '400px', margin: '0 auto' }}>
-          One NFS player, six guesses. Every miss unlocks another clue. Same player for everyone, all day.
-        </p>
-      </div>
+      <style>{`
+        .dl-lede { font-size: 13px; line-height: 1.7; color: #8FA0B4; max-width: 40ch; margin-bottom: 28px; }
+        .dl-clue {
+          display: flex; align-items: center; justify-content: space-between; gap: 16px;
+          padding: 15px 20px; border-bottom: 1px solid #ffffff0a;
+        }
+        .dl-clue:last-child { border-bottom: none; }
+        .dl-clue-k { font-size: 9px; font-weight: 900; letter-spacing: 0.28em; text-transform: uppercase; color: #5C6878; }
+        .dl-clue-v { font-family: var(--font-heading); font-weight: 900; font-size: 15px; color: #F5F1E8; text-align: right; }
+        .dl-locked { letter-spacing: 0.3em; color: #ffffff20; font-weight: 900; }
+        .dl-open { animation: dl-flick 320ms steps(2); }
+        @keyframes dl-flick { 0%,60% { opacity: 0.25; } 61%,100% { opacity: 1; } }
 
-      {/* Clues */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: '#121215', border: '1px solid #ffffff12', marginBottom: '22px' }}>
+        .dl-bar { display: flex; border: 1px solid color-mix(in srgb, var(--neon) 45%, transparent); background: #07080D; }
+        .dl-bar:focus-within { border-color: var(--neon); box-shadow: 0 0 22px color-mix(in srgb, var(--neon) 30%, transparent); }
+        .dl-input {
+          flex: 1; background: transparent; border: none; outline: none; color: #F5F1E8;
+          font-size: 16px; font-weight: 700; padding: 16px 20px; caret-color: var(--neon);
+        }
+        .dl-input::placeholder { color: #4E5A6A; }
+        .dl-guess {
+          display: flex; align-items: center; gap: 12px; padding: 13px 18px;
+          border: 1px solid #ffffff12; background: #ffffff05; margin-bottom: 8px;
+        }
+        .dl-mark { font-family: var(--font-heading); font-weight: 900; font-size: 15px; }
+        .dl-name { font-family: var(--font-heading); font-weight: 900; font-size: 14px; color: #F5F1E8; }
+        .dl-left { font-size: 10px; font-weight: 900; letter-spacing: 0.26em; text-transform: uppercase; color: #5C6878; text-align: center; margin-top: 14px; }
+        .dl-err { font-size: 11px; color: ${LOSE}; text-align: center; margin-top: 12px; }
+        .dl-result { text-align: center; padding: 36px 24px; }
+        .dl-verdict { font-size: 10px; font-weight: 900; letter-spacing: 0.34em; text-transform: uppercase; }
+        .dl-answer {
+          font-family: var(--font-heading); font-weight: 900; text-transform: uppercase;
+          font-size: clamp(26px, 7vw, 38px); line-height: 1; color: #F5F1E8; margin: 14px 0 10px;
+          transform: skewX(-5deg);
+        }
+      `}</style>
+
+      <p className="dl-lede">
+        One NFS player, six guesses. Every miss unlocks another clue. Same player for everyone, all day.
+      </p>
+
+      <div className="ar-panel" style={{ marginBottom: '22px' }}>
         {clues.map((c, i) => {
           const open = i < unlocked
           return (
-            <div key={c.label} className="flex items-center justify-between gap-4"
-              style={{ borderBottom: i < clues.length - 1 ? '1px solid #ffffff08' : 'none', padding: '15px 20px' }}>
-              <span className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: '#ffffff55' }}>{c.label}</span>
-              {open ? (
-                <span className="text-sm font-black text-white text-right" style={{ fontFamily: 'var(--font-heading)' }}>{c.value}</span>
-              ) : (
-                <span className="text-sm font-black text-right" style={{ color: '#ffffff25', letterSpacing: '0.2em' }}>·····</span>
-              )}
+            <div key={c.label} className="dl-clue">
+              <span className="dl-clue-k">{c.label}</span>
+              {open
+                ? <span className="dl-clue-v dl-open">{c.value}</span>
+                : <span className="dl-clue-v dl-locked">·····</span>}
             </div>
           )
         })}
       </div>
 
-      {/* Guess box */}
       {!done && (
         <div style={{ marginBottom: '22px' }}>
-          <div className="flex rounded-full overflow-hidden" style={{ border: `1px solid ${GOLD}50` }}>
+          <div className="dl-bar">
             <input
+              className="dl-input"
               value={input}
               onChange={e => { setInput(e.target.value); setError('') }}
               onKeyDown={e => { if (e.key === 'Enter') submit() }}
               list="nfs-players"
               placeholder="Name a player"
-              className="flex-1 outline-none font-bold"
-              style={{ background: 'transparent', color: 'white', caretColor: 'white', padding: '15px 22px', fontSize: '16px' }}
             />
-            <button onClick={submit}
-              className="text-xs font-black uppercase tracking-widest transition-all"
-              style={{ color: '#0D0D0F', background: GOLD, padding: '15px 26px' }}>
-              Guess
+            <button className="ar-btn" onClick={submit} style={{ transform: 'none', boxShadow: 'none' }}>
+              <span style={{ transform: 'none' }}>Guess</span>
             </button>
           </div>
           <datalist id="nfs-players">
             {names.map(n => <option key={n} value={n} />)}
           </datalist>
-          {error && <p className="text-xs mt-3 text-center" style={{ color: RED }}>{error}</p>}
-          <p className="text-[11px] text-center mt-3" style={{ color: '#ffffff45' }}>
-            {MAX_GUESSES - guesses.length} guess{MAX_GUESSES - guesses.length === 1 ? '' : 'es'} left
-          </p>
+          {error && <p className="dl-err">{error}</p>}
+          <p className="dl-left">{MAX_GUESSES - guesses.length} guess{MAX_GUESSES - guesses.length === 1 ? '' : 'es'} left</p>
         </div>
       )}
 
-      {/* Guesses so far */}
       {guesses.length > 0 && (
-        <div className="flex flex-col gap-2" style={{ marginBottom: '22px' }}>
+        <div style={{ marginBottom: '22px' }}>
           {guesses.map((g, i) => {
             const right = g.toLowerCase() === answer.name.toLowerCase()
             return (
-              <div key={i} className="flex items-center gap-3 rounded-xl"
-                style={{
-                  background: right ? `${GREEN}18` : '#ffffff06',
-                  border: `1px solid ${right ? GREEN + '60' : '#ffffff12'}`,
-                  padding: '13px 18px',
-                }}>
-                <span className="text-sm font-black" style={{ color: right ? GREEN : '#ffffff40' }}>{right ? '✓' : '✕'}</span>
-                <span className="text-sm font-bold text-white" style={{ fontFamily: 'var(--font-heading)' }}>{caps(g)}</span>
+              <div key={i} className="dl-guess"
+                style={right ? { borderColor: WIN, background: `${WIN}12` } : undefined}>
+                <span className="dl-mark" style={{ color: right ? WIN : '#3E4A58' }}>{right ? '✓' : '✕'}</span>
+                <span className="dl-name">{caps(g)}</span>
               </div>
             )
           })}
         </div>
       )}
 
-      {/* Result */}
       {done && (
-        <div className="rounded-2xl text-center"
-          style={{
-            background: `linear-gradient(180deg, ${won ? GREEN : RED}18 0%, #121215 100%)`,
-            border: `2px solid ${won ? GREEN : RED}60`,
-            padding: '32px 24px',
-          }}>
-          <p className="text-[10px] font-black uppercase tracking-[0.35em]" style={{ color: won ? GREEN : RED, marginBottom: '12px' }}>
+        <div className="ar-panel dl-result" style={{ borderColor: won ? WIN : LOSE }}>
+          <p className="dl-verdict" style={{ color: won ? WIN : LOSE }}>
             {won ? `Got it in ${guesses.length}` : 'Out of guesses'}
           </p>
-          <p className="text-2xl font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>{caps(answer.name)}</p>
-          <p className="text-xs text-white/60" style={{ marginTop: '8px' }}>
-            {answer.club} · {answer.grade} · {answer.gamesBand} career games
+          <p className="dl-answer">{caps(answer.name)}</p>
+          <p style={{ fontSize: '11px', color: '#7D8B9C', letterSpacing: '0.1em' }}>
+            {answer.club} · {answer.grade} · {answer.seasonPoints} season points
           </p>
-          <p className="text-sm text-white/65 leading-relaxed" style={{ maxWidth: '340px', margin: '20px auto 0' }}>
-            A new player at midnight. Come back tomorrow.
+          <p style={{ fontSize: '12px', color: '#5C6878', marginTop: '22px' }}>
+            A new player at midnight.
           </p>
         </div>
       )}

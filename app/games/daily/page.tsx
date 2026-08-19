@@ -1,7 +1,8 @@
-import Nav from '@/components/Nav'
-import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/server'
+import ArcadeShell from '@/components/ArcadeShell'
 import DailyClient, { DailyPlayer } from './DailyClient'
+
+const NEON = '#FF2D95'
 
 /* One player a day, the same for everyone, derived from the date in Auckland.
    Nothing is stored — the date is the seed, so tomorrow's player is already
@@ -24,7 +25,7 @@ export default async function Daily() {
     .select('id, full_name, grade, positions, career_games, stats, clubs(name)')
     .eq('active', true)
     .or('is_under18.eq.false,has_consent.eq.true')
-   
+
   type Row = {
     id: string; full_name: string; grade: string; positions: string[]
     career_games: number | null; stats: Record<string, number> | null
@@ -35,19 +36,15 @@ export default async function Daily() {
 
   if (pool.length === 0) {
     return (
-      <main className="min-h-screen flex flex-col" style={{ background: '#0D0D0F' }}>
-        <Nav />
-        <section className="flex-1 px-6 text-center" style={{ paddingTop: '120px' }}>
-          <p className="text-white/60 text-sm">No players available yet.</p>
-        </section>
-        <Footer />
-      </main>
+      <ArcadeShell neon={NEON} eyebrow="Daily" title="Player of the Day">
+        <p style={{ color: '#8FA0B4', fontSize: '13px' }}>No players available yet.</p>
+      </ArcadeShell>
     )
   }
 
   const p = pool[daySeed() % pool.length]
   const games = p.career_games ?? 0
-  const gamesBand = games >= 300 ? '300+' : games >= 200 ? '200–299' : games >= 100 ? '100–199' : '40–99'
+  const gamesBand = games >= 300 ? '300+' : games >= 200 ? '200–299' : games >= 100 ? '100–199' : 'Under 100'
 
   const answer: DailyPlayer = {
     name: p.full_name,
@@ -63,17 +60,8 @@ export default async function Daily() {
   const names = pool.map(r => r.full_name).sort((a, b) => a.localeCompare(b))
 
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: '#0D0D0F' }}>
-      <Nav />
-      <section className="relative flex-1 px-5 sm:px-12 overflow-hidden" style={{ paddingTop: '76px', paddingBottom: '80px' }}>
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 75% 45% at 50% 0%, #10214D 0%, #0D0D0F 70%)' }} />
-        <div className="relative z-10" style={{ maxWidth: '560px', marginLeft: 'auto', marginRight: 'auto' }}>
-          <a href="/games" className="inline-block text-[11px] font-bold uppercase tracking-widest"
-            style={{ color: '#ffffff60', marginBottom: '18px' }}>← Games</a>
-          <DailyClient answer={answer} names={names} />
-        </div>
-      </section>
-      <Footer />
-    </main>
+    <ArcadeShell neon={NEON} eyebrow="Daily · One shot" title="Who is it?">
+      <DailyClient answer={answer} names={names} />
+    </ArcadeShell>
   )
 }
