@@ -243,9 +243,11 @@ export default function LineupClient({ cards, roundNumber, grade, nextDealHref }
               : pct >= 75 ? 'Solid, but there were points sitting in your hand.'
               : 'Plenty left on the table — check the green rows for where.'}
           </p>
-          <p className="text-[11px]" style={{ color: '#ffffff35', marginTop: '18px' }}>
-            A new hand when the next round is scored.
-          </p>
+          <a href={nextDealHref}
+            className="inline-block text-xs font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03]"
+            style={{ color: '#0D0D0F', background: GREEN, padding: '15px 34px', marginTop: '22px' }}>
+            Deal a new hand
+          </a>
         </div>
       )}
     </>
