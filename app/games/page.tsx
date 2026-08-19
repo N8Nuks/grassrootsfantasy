@@ -154,10 +154,10 @@ export default function Games() {
 
           <p className="gm-eyebrow" style={{ marginTop: '30px' }}>Grassroots Fantasy Arcade</p>
           <h1 className="gm-title">PLAY</h1>
-          <p className="gm-sub">
-            Four games built on real NFS numbers. Nothing here touches your season — no points, no packs,
-            no ladder. Just something to do until Friday.
-          </p>
+        <button className="sn-club" data-on={club === null} onClick={() => setClub(null)} aria-label="Black Diamond Labs">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/bdl-diamond.webp" alt="" />
+        </button>
 
           <div className="gm-grid">
             {GAMES.map(g => (
