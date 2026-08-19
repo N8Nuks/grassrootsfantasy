@@ -22,12 +22,12 @@ const TIER_ACCENT: Record<string, string> = {
 
 /* Hitting stats only. Each carries its own wording so the question reads
    naturally rather than "higher season_sb". */
-const STATS: { key: string; label: string; noun: string; decimals: number }[] = [
-  { key: 'season_points', label: 'Fantasy Points', noun: 'points', decimals: 0 },
-  { key: 'season_hr', label: 'Home Runs', noun: 'home runs', decimals: 0 },
-  { key: 'season_rbi', label: 'RBI', noun: 'RBI', decimals: 0 },
-  { key: 'season_sb', label: 'Stolen Bases', noun: 'stolen bases', decimals: 0 },
-  { key: 'season_ba', label: 'Batting Average', noun: 'batting average', decimals: 3 },
+const STATS: { key: string; label: string; question: string; decimals: number }[] = [
+  { key: 'season_points', label: 'Fantasy Points', question: 'more points', decimals: 0 },
+  { key: 'season_hr', label: 'Home Runs', question: 'more home runs', decimals: 0 },
+  { key: 'season_rbi', label: 'RBI', question: 'more RBI', decimals: 0 },
+  { key: 'season_sb', label: 'Stolen Bases', question: 'more stolen bases', decimals: 0 },
+  { key: 'season_ba', label: 'Batting Average', question: 'the higher batting average', decimals: 3 },
 ]
 
 type Round = { stat: typeof STATS[number]; left: GamePlayer; right: GamePlayer }
@@ -139,7 +139,7 @@ export default function HigherClient({ pool }: { pool: GamePlayer[] }) {
       <div className="text-center" style={{ marginBottom: '26px' }}>
         <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: '#4D9BFF' }}>Higher or Lower</p>
         <h1 className="text-2xl sm:text-3xl font-black text-white mb-2" style={{ fontFamily: 'var(--font-heading)' }}>
-          Who has more <span style={{ color: GOLD }}>{round.stat.noun}</span>?
+          Who has <span style={{ color: GOLD }}>{round.stat.question}</span>?
         </h1>
         <div className="flex items-center justify-center gap-6" style={{ marginTop: '14px' }}>
           <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#ffffff55' }}>
