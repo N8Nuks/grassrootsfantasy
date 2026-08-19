@@ -159,11 +159,6 @@ export default function Games() {
             no ladder. Pick a machine, have a go, come back for the ones we add next.
           </p>
 
-        <button className="sn-club" data-on={club === null} onClick={() => setClub(null)} aria-label="Black Diamond Labs">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/bdl-diamond.webp" alt="" />
-        </button>
-
           <div className="gm-grid">
             {GAMES.map(g => (
               <a key={g.href} href={g.href} className="gm-tile" style={{ ['--neon' as string]: g.neon }}>
