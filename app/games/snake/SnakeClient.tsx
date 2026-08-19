@@ -42,13 +42,13 @@ export default function SnakeClient({ clubs, initialClub }: {
   const raf = useRef<number>(0)
   const last = useRef(0)
 
-  // Load the crest so it can be drawn as the head
+  // Load the head artwork — a club crest, or the BDL diamond by default
   useEffect(() => {
-    if (!club) { crestRef.current = null; return }
     const img = new Image()
-    img.src = club.crest
-    img.onload = () => { crestRef.current = img }
-    img.onerror = () => { crestRef.current = null }
+    img.src = club ? club.crest : '/bdl-diamond.webp'
+    img.onload = () => { crestRef.current = img; draw() }
+    img.onerror = () => { crestRef.current = null; draw() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [club])
 
   const randomTreat = useCallback((body: Pt[]): Treat => {
@@ -323,7 +323,10 @@ export default function SnakeClient({ clubs, initialClub }: {
 
       <p className="sn-clublbl">Pick your head</p>
       <div className="sn-clubs">
-        <button className="sn-ball" data-on={club === null} onClick={() => setClub(null)} aria-label="Softball" />
+        <button className="sn-club" data-on={club === null} onClick={() => setClub(null)} aria-label="Black Diamond Labs">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/bdl-diamond.webp" alt="" />
+        </button>
         {clubs.map(c => (
           <button key={c.id} className="sn-club" data-on={club?.id === c.id}
             onClick={() => setClub(c)} aria-label={c.name}>
