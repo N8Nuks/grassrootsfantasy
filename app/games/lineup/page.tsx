@@ -1,35 +1,53 @@
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/server'
+import GradeSwitch from '@/components/GradeSwitch'
 import { slotPoints, StatLine, PointValues } from '@/lib/scoring'
 import LineupClient, { PuzzleCard } from './LineupClient'
+import type { Grade } from '@/lib/clubhouse'
 
 const SCORING_SLOTS = ['P','C','B1','B2','B3','SS','LF','CF','RF','DP','PB','DR']
 
-/* Everyone gets the same sixteen cards, drawn from the last scored round using
-   the round id as the seed — so the puzzle changes when the round does, and two
-   people playing on the same day are solving the same problem. */
+/* The hand is drawn from the round id plus a deal number, so everyone opening
+   the same grade sees the same sixteen — and "new hand" simply advances the
+   deal, giving a fresh set that is still reproducible. */
 function seeded(seed: string) {
   let h = 0
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
   return () => { h = (h * 1103515245 + 12345) >>> 0; return h / 4294967296 }
 }
 
-export default async function LineupPuzzle() {
+export default async function LineupPuzzle({ searchParams }: {
+  searchParams: Promise<{ grade?: string; deal?: string }>
+}) {
+  const params = await searchParams
+  const grade: Grade = params.grade === 'womens' ? 'womens' : 'mens'
+  const deal = Math.max(0, Math.min(999, Number(params.deal ?? 0) || 0))
+  const gradeLabel = grade === 'womens' ? "Women's" : "Men's"
+
   const supabase = await createClient()
 
   const { data: round } = await supabase.from('rounds')
-    .select('id, round_number, grade')
+    .select('id, round_number')
+    .eq('grade', grade)
     .in('status', ['provisional', 'confirmed'])
     .order('round_number', { ascending: false }).limit(1).maybeSingle()
 
-  if (!round) return <Shell><p className="text-sm text-center text-white/60">This one opens once a round has been scored.</p></Shell>
+  if (!round) {
+    return <Shell grade={grade}>
+      <p className="text-sm text-center text-white/60" style={{ paddingTop: '20px' }}>
+        No {gradeLabel} round has been scored yet — try the other grade.
+      </p>
+    </Shell>
+  }
 
   const [{ data: stats }, { data: config }] = await Promise.all([
     supabase.from('player_stats').select('player_id, raw').eq('round_id', round.id),
-    supabase.from('scoring_config').select('values').eq('grade', round.grade).single(),
+    supabase.from('scoring_config').select('values').eq('grade', grade).single(),
   ])
-  if (!stats?.length || !config) return <Shell><p className="text-sm text-center text-white/60">Round data is still being prepared.</p></Shell>
+  if (!stats?.length || !config) {
+    return <Shell grade={grade}><p className="text-sm text-center text-white/60" style={{ paddingTop: '20px' }}>Round data is still being prepared.</p></Shell>
+  }
   const v = config.values as PointValues
 
   const ids = stats.map(s => s.player_id)
@@ -44,13 +62,14 @@ export default async function LineupPuzzle() {
   const byId = new Map(((players ?? []) as unknown as Row[]).map(p => [p.id, p]))
   const lineFor = new Map(stats.map(s => [s.player_id, s.raw as StatLine]))
 
-  // Candidates: anyone who played and is still active
   const candidates = ids.filter(id => byId.has(id))
-  if (candidates.length < 20) return <Shell><p className="text-sm text-center text-white/60">Not enough players in this round to build a puzzle.</p></Shell>
+  if (candidates.length < 20) {
+    return <Shell grade={grade}><p className="text-sm text-center text-white/60" style={{ paddingTop: '20px' }}>Not enough players in this round to build a puzzle.</p></Shell>
+  }
 
-  // Draw sixteen, then make sure the set can legally fill all twelve slots —
+  // Draw sixteen, then check the set can legally fill all twelve slots —
   // an unsolvable hand is a broken puzzle, not a hard one.
-  const rand = seeded(round.id)
+  const rand = seeded(`${round.id}-${deal}`)
   let hand: string[] = []
   for (let attempt = 0; attempt < 60; attempt++) {
     const shuffled = [...candidates].sort(() => rand() - 0.5)
@@ -84,13 +103,19 @@ export default async function LineupPuzzle() {
   })
 
   return (
-    <Shell>
-      <LineupClient cards={cards} roundNumber={round.round_number} grade={round.grade === 'womens' ? "Women's" : "Men's"} />
+    <Shell grade={grade}>
+      <LineupClient
+        key={`${grade}-${deal}`}
+        cards={cards}
+        roundNumber={round.round_number}
+        grade={gradeLabel}
+        nextDealHref={`/games/lineup?grade=${grade}&deal=${deal + 1}`}
+      />
     </Shell>
   )
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ grade, children }: { grade: Grade; children: React.ReactNode }) {
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#0D0D0F' }}>
       <Nav />
@@ -99,6 +124,11 @@ function Shell({ children }: { children: React.ReactNode }) {
         <div className="relative z-10" style={{ maxWidth: '620px', marginLeft: 'auto', marginRight: 'auto' }}>
           <a href="/games" className="inline-block text-[11px] font-bold uppercase tracking-widest"
             style={{ color: '#ffffff60', marginBottom: '18px' }}>← Games</a>
+          <div className="flex justify-center" style={{ marginBottom: '26px' }}>
+            <GradeSwitch grade={grade}
+              mensHref="/games/lineup?grade=mens"
+              womensHref="/games/lineup?grade=womens" />
+          </div>
           {children}
         </div>
       </section>
