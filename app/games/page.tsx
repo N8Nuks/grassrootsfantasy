@@ -6,6 +6,7 @@ const GAMES = [
   { href: '/games/lineup', n: '03', title: 'The Perfect Card', blurb: 'Sixteen cards, twelve slots, one best answer.', tag: 'Puzzle', neon: '#C6FF00' },
   { href: '/games/snake', n: '04', title: 'Diamond Snake', blurb: 'Your club crest, loose on the field. Eat everything.', tag: 'Arcade', neon: '#FFB800' },
   { href: '/games/batting', n: '05', title: 'Batting Practice', blurb: 'Time the swing. Send it.', tag: 'Arcade', neon: '#B47CFF' },
+  { href: '/games/memory', n: '06', title: 'Card Sharp', blurb: 'Two of every card, face down. Remember what you saw.', tag: 'Memory', neon: '#FF6B9D' },
 ]
 
 export default function Games() {
