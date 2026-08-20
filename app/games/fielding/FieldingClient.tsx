@@ -20,9 +20,9 @@ let nextId = 1
 
 const BALL: Record<string, { label: string; points: number; colour: string; rate: number }> = {
   grounder: { label: 'Grounder', points: 10, colour: '#F5F1E8', rate: 0.85 },
-  liner:    { label: 'Line drive', points: 20, colour: '#7DF9FF', rate: 1.55 },
+  liner:    { label: 'Screamer', points: 60, colour: '#FFD700', rate: 1.55 },
   fly:      { label: 'Pop fly',  points: 15, colour: '#C6FF00', rate: 0.62 },
-  screamer: { label: 'Screamer', points: 60, colour: '#FFD700', rate: 1.75 },
+  screamer: { label: 'Two hopper', points: 20, colour: '#7DF9FF', rate: 1.75 },
 }
 
 export default function FieldingClient() {
@@ -43,6 +43,8 @@ export default function FieldingClient() {
   const spawnAt = useRef(600)
   const glove = useRef(0)
   const streakRef = useRef(0)
+  // Points floating up off the glove — one per catch
+  const pops = useRef<{ id: number; text: string; colour: string; life: number }[]>([])
 
   const speed = () => BASE_SPEED + Math.max(0, elapsed.current - RAMP_DELAY) * SPEED_RAMP
 
@@ -109,8 +111,14 @@ export default function FieldingClient() {
       setStreak(streakRef.current)
       setScore(v => v + meta.points + bonus)
       setCaught(c => c + 1)
-      if (t.kind === 'screamer' || streakRef.current % 10 === 0) {
-        setFlash({ text: t.kind === 'screamer' ? 'SCREAMER' : `${streakRef.current} CLEAN`, colour: meta.colour })
+      pops.current.push({
+        id: nextId++,
+        text: bonus > 0 ? `+${meta.points} +${bonus}` : `+${meta.points}`,
+        colour: meta.colour,
+        life: 900,
+      })
+      if (t.kind === 'liner' || streakRef.current % 10 === 0) {
+        setFlash({ text: t.kind === 'liner' ? 'SCREAMER' : `${streakRef.current} CLEAN`, colour: meta.colour })
         setTimeout(() => setFlash(null), 900)
       }
     }
@@ -125,6 +133,8 @@ export default function FieldingClient() {
 
     things.current = things.current.filter(t => t.z < 1.3)
     if (glove.current > 0) glove.current -= dt
+    for (const p of pops.current) p.life -= dt
+    pops.current = pops.current.filter(p => p.life > 0)
 
     draw()
     raf.current = requestAnimationFrame(tick)
@@ -252,7 +262,23 @@ export default function FieldingClient() {
     }
 
     // ── The fielder ──
-    drawFielder(ctx, W, H, xAt(facing.current, 1), yAt(1) - H * 0.02, facing.current)
+    const fx = xAt(facing.current, 1)
+    const fy = yAt(1) - H * 0.02
+    drawFielder(ctx, W, H, fx, fy, facing.current)
+
+    // Points floating up off the glove
+    for (const p of pops.current) {
+      const t = 1 - p.life / 900
+      ctx.save()
+      ctx.globalAlpha = Math.max(0, 1 - t * t)
+      ctx.font = `900 ${Math.round(H * 0.055)}px var(--font-heading), sans-serif`
+      ctx.textAlign = 'center'
+      ctx.fillStyle = p.colour
+      ctx.shadowColor = p.colour
+      ctx.shadowBlur = 20
+      ctx.fillText(p.text, fx, fy - H * 0.14 - t * H * 0.16)
+      ctx.restore()
+    }
   }, [])
 
   /* Three stances. Middle lane is square on, glove in front. Left lane reaches
