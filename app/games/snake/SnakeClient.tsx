@@ -14,8 +14,22 @@ const TREATS = [
 
 const COLS = 20
 const ROWS = 20
-const START_MS = 190
-const MIN_MS = 80
+
+/* Levels rather than a creeping speed-up — you can feel the step change, and
+   the target for the next one is always on screen. */
+const LEVELS = [
+  { at: 0,   ms: 260, name: 'Warm-up' },
+  { at: 100, ms: 215, name: 'Reserve' },
+  { at: 250, ms: 180, name: 'Bench' },
+  { at: 450, ms: 150, name: 'Starter' },
+  { at: 700, ms: 125, name: 'Premier' },
+  { at: 1000, ms: 105, name: 'Icon' },
+]
+const levelFor = (score: number) => {
+  let i = 0
+  for (let n = 0; n < LEVELS.length; n++) if (score >= LEVELS[n].at) i = n
+  return i
+}
 
 type Pt = { x: number; y: number }
 type Treat = { pos: Pt; kind: typeof TREATS[number] }
@@ -28,6 +42,8 @@ export default function SnakeClient({ clubs, initialClub }: {
   const [score, setScore] = useState(0)
   const [best, setBest] = useState(0)
   const [lastEaten, setLastEaten] = useState<string | null>(null)
+  const [level, setLevel] = useState(0)
+  const [levelUp, setLevelUp] = useState<string | null>(null)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const crestRef = useRef<HTMLImageElement | null>(null)
@@ -163,9 +179,20 @@ export default function SnakeClient({ clubs, initialClub }: {
     const t = treat.current
     if (t && head.x === t.pos.x && head.y === t.pos.y) {
       grow.current += t.kind.grow
-      setScore(s => s + t.kind.points)
       setLastEaten(t.kind.label)
-      speed.current = Math.max(MIN_MS, speed.current - 3)
+      setScore(s => {
+        const next = s + t.kind.points
+        const lv = levelFor(next)
+        speed.current = LEVELS[lv].ms
+        setLevel(prev => {
+          if (lv > prev) {
+            setLevelUp(LEVELS[lv].name)
+            setTimeout(() => setLevelUp(null), 1400)
+          }
+          return lv
+        })
+        return next
+      })
       treat.current = randomTreat(body)
     }
     if (grow.current > 0) grow.current -= 1
@@ -227,7 +254,8 @@ export default function SnakeClient({ clubs, initialClub }: {
     dir.current = { x: 1, y: 0 }
     queued.current = []
     grow.current = 0
-    speed.current = START_MS
+    speed.current = LEVELS[0].ms
+    setLevel(0); setLevelUp(null)
     last.current = 0
     treat.current = randomTreat(snake.current)
     setScore(0); setLastEaten(null); setState('playing')
@@ -289,9 +317,16 @@ export default function SnakeClient({ clubs, initialClub }: {
 
       <div className="sn-score">
         <span>Score <b>{score}</b></span>
-        <span>Best <b style={{ color: 'var(--neon)' }}>{best}</b></span>
+        <span>Level <b style={{ color: 'var(--neon)' }}>{LEVELS[level].name}</b></span>
+        <span>Best <b>{best}</b></span>
       </div>
-      <p className="sn-eaten">{lastEaten ?? ''}</p>
+      <p className="sn-eaten">
+        {levelUp
+          ? <span style={{ color: 'var(--neon)' }}>Level up · {levelUp}</span>
+          : LEVELS[level + 1]
+            ? <span style={{ color: '#4E5A6A' }}>{LEVELS[level + 1].at - score} to {LEVELS[level + 1].name}</span>
+            : (lastEaten ?? '')}
+      </p>
 
       <div className="sn-stage">
         <canvas ref={canvasRef} className="sn-canvas" width={600} height={600} />
