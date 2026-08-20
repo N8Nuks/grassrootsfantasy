@@ -54,7 +54,7 @@ export default function SnakeClient({ clubs, initialClub }: {
   const queued = useRef<Pt[]>([])
   const treat = useRef<Treat | null>(null)
   const grow = useRef(0)
-  const speed = useRef(START_MS)
+  const speed = useRef(LEVELS[0].ms)
   const raf = useRef<number>(0)
   const last = useRef(0)
 
