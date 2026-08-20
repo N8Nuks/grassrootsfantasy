@@ -19,9 +19,12 @@ const CLOSE = 260       // ms after release and still under the tag
 /* Canvas angles: 0 is 3 o'clock and angles increase clockwise.
    An hour on the clock face is 30 degrees, so hour h sits at (h * 30 - 90). */
 const clock = (h: number) => ((h * 30 - 90) * Math.PI) / 180
-const REST = clock(7)                  // hand down in front
-const ROCK = clock(5)                  // rocked back
-const RELEASE = ROCK - (300 * Math.PI) / 180   // 300 degrees round, back to 7 o'clock
+const REST = clock(7)                  // hand down in front, home side
+const ROCK = clock(5)                  // rocked back behind
+/* From the rock the hand comes forward through the bottom, up the FRONT (the
+   home side), over the top, down the back, and releases at 7 o'clock — one
+   full circle plus the little extra from 5 round to 7. */
+const RELEASE = ROCK + (420 * Math.PI) / 180
 const ROCK_MS = 420                    // the rock back before the arm goes
 
 const BALL_YELLOW = '#E8FF3D'
@@ -256,8 +259,8 @@ export default function ReleaseClient() {
     ctx.beginPath(); ctx.arc(0, -54, 8.5, 0, Math.PI * 2); ctx.fill()
     ctx.fillStyle = '#FFB800'
     ctx.beginPath(); ctx.arc(0, -55, 9.5, Math.PI, 0); ctx.fill()
-    ctx.beginPath(); ctx.ellipse(4, -52, 4.5, 5.5, 0, 0, Math.PI * 2); ctx.fill()
-    ctx.fillRect(-16, -58, 8, 3.5)
+    ctx.beginPath(); ctx.ellipse(-4, -52, 4.5, 5.5, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.fillRect(8, -58, 8, 3.5)
     // arms pumping
     ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 5
     ctx.beginPath(); ctx.moveTo(0, -42); ctx.lineTo(12 - stride * 12, -50); ctx.stroke()
