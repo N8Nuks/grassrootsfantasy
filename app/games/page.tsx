@@ -161,8 +161,8 @@ export default function Games() {
           <p className="gm-eyebrow" style={{ marginTop: '30px' }}>Grassroots Fantasy Arcade</p>
           <h1 className="gm-title">PLAY</h1>
           <p className="gm-sub">
-            Built on real NFS numbers, and nothing here touches your season — no points, no packs,
-            no ladder. Pick a machine, have a go, come back for the ones we add next.
+            It's Game-Time! Play Games built using real NFS numbers and other popular games styled for the NFS Premier League. Nothing here touches your season — no points, no packs,
+            no ladder - just fun. Pick a game, have a crack, try another. Check for what game we add next...
           </p>
 
           <div className="gm-grid">
