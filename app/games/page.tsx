@@ -11,6 +11,7 @@ const GAMES = [
   { href: '/games/season', n: '08', title: 'Guess the Season', blurb: 'Four award winners. Name the year they won.', tag: 'Archive', neon: '#FF8A3D' },
   { href: '/games/connections', n: '09', title: 'Connections', blurb: 'Sixteen players, four hidden fours. Find them.', tag: 'Daily', neon: '#7DF9FF' },
   { href: '/games/release', n: '10', title: 'Release Point', blurb: 'The windmill comes round. Tap the instant it leaves.', tag: 'Reaction', neon: '#FF4FD8' },
+  { href: '/games/fielding', n: '11', title: 'Take the Field', blurb: 'Three lanes. Catch everything, dodge the runners.', tag: 'Endless', neon: '#5CFF6B' },
 ]
 
 export default function Games() {
