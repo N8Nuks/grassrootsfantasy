@@ -1,31 +1,37 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 
-/* You are the runner at first. The pitcher winds — one revolution, as the rules
-   require — and the ball leaves the hand at the bottom of the circle, level
-   with the hip. Go on the release and second is yours.
+/* You are the runner at first, watching the pitcher side on. Home plate is off
+   to the left, which is the way the cap is pointing.
 
-   Ten pitches. The hand quickens as the levels climb, and the ball lights in
-   the hand just before the arm goes, the way a real delivery telegraphs itself
-   through the body. */
+   The delivery, as it really goes: the hand rests at 7 o'clock in front of the
+   body, rocks back to 5, then comes round once — up the front, over the top,
+   down the back — and the ball leaves at 7 o'clock, level with the hip,
+   travelling flat toward the plate. One revolution only; two is illegal.
+
+   You can't leave first until the ball is out of the hand. Early is a pick-off,
+   late and the throw beats you to second. */
 
 const ROUNDS = 10
 const SAFE = 120        // ms after release for a clean steal
 const CLOSE = 260       // ms after release and still under the tag
 
-// Release at 7 o'clock — hand at the hip, ball away
-const REST_ANGLE = -Math.PI / 2                 // 12 o'clock, arm up at the start
-const RELEASE_ANGLE = Math.PI * (7 / 6)         // 7 o'clock
+/* Canvas angles: 0 is 3 o'clock and angles increase clockwise.
+   An hour on the clock face is 30 degrees, so hour h sits at (h * 30 - 90). */
+const clock = (h: number) => ((h * 30 - 90) * Math.PI) / 180
+const REST = clock(7)                  // hand down in front
+const ROCK = clock(5)                  // rocked back
+const RELEASE = ROCK - (300 * Math.PI) / 180   // 300 degrees round, back to 7 o'clock
+const ROCK_MS = 420                    // the rock back before the arm goes
 
-/* One revolution from rest to release, so the arm travels from 12 round to 7. */
-const TRAVEL = (RELEASE_ANGLE + Math.PI * 2) - REST_ANGLE
+const BALL_YELLOW = '#E8FF3D'
 
 const LEVELS = [
-  { at: 0,  ms: 1450, name: 'Social' },
-  { at: 2,  ms: 1250, name: 'Reserve' },
-  { at: 4,  ms: 1080, name: 'Premier' },
-  { at: 6,  ms: 930,  name: 'Rep' },
-  { at: 8,  ms: 800,  name: 'Black Sox' },
+  { at: 0, ms: 1450, name: 'Social' },
+  { at: 2, ms: 1250, name: 'Reserve' },
+  { at: 4, ms: 1080, name: 'Premier' },
+  { at: 6, ms: 930,  name: 'Rep' },
+  { at: 8, ms: 800,  name: 'Black Sox' },
 ]
 const levelFor = (pitch: number) => {
   let i = 0
@@ -51,9 +57,10 @@ export default function ReleaseClient() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const raf = useRef(0)
-  const startAt = useRef(0)          // arm begins to move
-  const releaseAt = useRef(0)        // ball leaves the hand
-  const spin = useRef(1400)          // ms for the one revolution
+  const rockAt = useRef(0)         // the rock back begins
+  const startAt = useRef(0)        // the arm begins its revolution
+  const releaseAt = useRef(0)      // ball leaves the hand
+  const spin = useRef(1450)
   const judged = useRef(false)
   const goneAt = useRef(0)
 
@@ -64,9 +71,10 @@ export default function ReleaseClient() {
     goneAt.current = 0
     setLast(null)
     spin.current = LEVELS[levelFor(forRound)].ms
-    const pause = 900 + Math.random() * 1500      // can't be counted
+    const pause = 900 + Math.random() * 1500        // can't be counted
     setPhase('wind')
-    startAt.current = performance.now() + pause
+    rockAt.current = performance.now() + pause
+    startAt.current = rockAt.current + ROCK_MS
     releaseAt.current = startAt.current + spin.current
   }, [])
 
@@ -101,17 +109,17 @@ export default function ReleaseClient() {
     if (!ctx) return
     const W = cv.width, H = cv.height
 
-    // Infield
+    // ── The park ──
     const sky = ctx.createLinearGradient(0, 0, 0, H)
     sky.addColorStop(0, '#080A14'); sky.addColorStop(0.42, '#12301C'); sky.addColorStop(1, '#0A1A10')
     ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H)
-    const pool = ctx.createRadialGradient(W / 2, H * 0.12, 8, W / 2, H * 0.12, W * 0.8)
+    const pool = ctx.createRadialGradient(W / 2, H * 0.1, 8, W / 2, H * 0.1, W * 0.8)
     pool.addColorStop(0, '#FF4FD818'); pool.addColorStop(1, 'transparent')
     ctx.fillStyle = pool; ctx.fillRect(0, 0, W, H)
 
-    // The base path you're running
-    const firstX = W * 0.12, secondX = W * 0.88, baseY = H * 0.86
-    ctx.strokeStyle = '#C9A87830'; ctx.lineWidth = H * 0.05
+    // The base path, first on the left, second on the right
+    const firstX = W * 0.13, secondX = W * 0.87, baseY = H * 0.86
+    ctx.strokeStyle = '#C9A87828'; ctx.lineWidth = H * 0.05
     ctx.beginPath(); ctx.moveTo(firstX, baseY); ctx.lineTo(secondX, baseY); ctx.stroke()
     for (const [bx, label] of [[firstX, '1st'], [secondX, '2nd']] as [number, string][]) {
       ctx.fillStyle = '#F5F1E8'
@@ -122,97 +130,143 @@ export default function ReleaseClient() {
       ctx.textAlign = 'center'
       ctx.fillText(label, bx, baseY + H * 0.07)
     }
+    // Home is off to the left — say so, so the direction reads
+    ctx.fillStyle = '#ffffff22'
+    ctx.font = `900 ${Math.round(H * 0.024)}px var(--font-heading), sans-serif`
+    ctx.textAlign = 'left'
+    ctx.fillText('← HOME', W * 0.03, H * 0.52)
 
     // Mound
     ctx.fillStyle = '#3A2A1E'
-    ctx.beginPath(); ctx.ellipse(W / 2, H * 0.58, W * 0.15, H * 0.04, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.ellipse(W / 2, H * 0.6, W * 0.15, H * 0.04, 0, 0, Math.PI * 2); ctx.fill()
 
-    // ── The pitcher ──
-    const hipX = W / 2, hipY = H * 0.46, armR = H * 0.17
-    const cx = hipX, cy = hipY - armR * 0.3
+    // ── Arm position ──
+    const hipX = W / 2, hipY = H * 0.47, armR = H * 0.17
+    const cx = hipX, cy = hipY - armR * 0.34        // shoulder, centre of the circle
 
-    let angle = REST_ANGLE
+    let angle = REST
     let released = false
-    let loading = false          // the ball lights just before the arm goes
-    const t = now - startAt.current
+    let loading = false
     if (phase === 'wind' || phase === 'judged') {
-      loading = t > -320 && t < 0
-      if (t > 0) {
-        const p = Math.min(t / spin.current, 1)
-        angle = REST_ANGLE + TRAVEL * p
-        released = t >= spin.current
+      const tRock = now - rockAt.current
+      const tSpin = now - startAt.current
+      if (tSpin > 0) {
+        const p = Math.min(tSpin / spin.current, 1)
+        angle = ROCK + (RELEASE - ROCK) * p
+        released = tSpin >= spin.current
+      } else if (tRock > 0) {
+        const p = Math.min(tRock / ROCK_MS, 1)
+        angle = REST + (ROCK - REST) * p
+        loading = true
+      } else if (tRock > -340) {
+        loading = true                              // ball lights just before the rock
       }
     }
 
-    // Body — legs, torso, head
+    // ── The pitcher, facing home (left) ──
     ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 8; ctx.lineCap = 'round'
-    ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(hipX - 14, H * 0.58); ctx.stroke()
-    ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(hipX + 18, H * 0.58); ctx.stroke()
-    ctx.strokeStyle = '#FF4FD8'; ctx.lineWidth = 13
-    ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(hipX, H * 0.34); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(hipX - 20, H * 0.6); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(hipX + 14, H * 0.6); ctx.stroke()
+    ctx.strokeStyle = '#FF4FD8'; ctx.lineWidth = 14
+    ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(hipX - 3, H * 0.35); ctx.stroke()
+
+    // Head with a cap, brim pointing left toward home
+    const headX = hipX - 4, headY = H * 0.32
     ctx.fillStyle = '#0A0C10'
-    ctx.beginPath(); ctx.arc(hipX, H * 0.31, 10, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.arc(headX, headY, 11, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = '#FF4FD8'
+    ctx.beginPath(); ctx.arc(headX, headY - 2, 11, Math.PI, 0); ctx.fill()
+    ctx.beginPath()
+    ctx.moveTo(headX, headY - 5); ctx.lineTo(headX - 22, headY - 2)
+    ctx.lineTo(headX - 22, headY + 2); ctx.lineTo(headX, headY - 1)
+    ctx.closePath(); ctx.fill()
 
-    // The circle the arm travels, and the release point marked at 7 o'clock
-    ctx.strokeStyle = '#ffffff0C'; ctx.lineWidth = 1
+    // The circle the hand travels, and the release point marked at 7 o'clock
+    ctx.strokeStyle = '#ffffff0B'; ctx.lineWidth = 1
     ctx.beginPath(); ctx.arc(cx, cy, armR, 0, Math.PI * 2); ctx.stroke()
-    const mx = cx + Math.cos(RELEASE_ANGLE) * armR
-    const my = cy + Math.sin(RELEASE_ANGLE) * armR
-    ctx.strokeStyle = released ? '#39FF9E50' : '#FF4FD860'
+    const mx = cx + Math.cos(REST) * armR
+    const my = cy + Math.sin(REST) * armR
+    ctx.strokeStyle = released ? '#39FF9E55' : '#FF4FD855'
     ctx.lineWidth = 2
-    ctx.beginPath(); ctx.arc(mx, my, 14, 0, Math.PI * 2); ctx.stroke()
+    ctx.beginPath(); ctx.arc(mx, my, 15, 0, Math.PI * 2); ctx.stroke()
+    ctx.fillStyle = released ? '#39FF9E70' : '#FF4FD850'
+    ctx.font = `900 ${Math.round(H * 0.02)}px var(--font-heading), sans-serif`
+    ctx.textAlign = 'center'
+    ctx.fillText('RELEASE', mx, my + armR * 0.34)
 
-    // Arm
-    const hx = cx + Math.cos(angle) * armR, hy = cy + Math.sin(angle) * armR
+    // Glove arm tucks across the chest
+    ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 8
+    ctx.beginPath(); ctx.moveTo(hipX - 2, H * 0.38); ctx.lineTo(hipX - 26, H * 0.44); ctx.stroke()
+
+    // Throwing arm
+    const hx = cx + Math.cos(angle) * armR
+    const hy = cy + Math.sin(angle) * armR
     ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 7
-    ctx.beginPath(); ctx.moveTo(cx, cy - armR * 0.45); ctx.lineTo(hx, hy); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(hx, hy); ctx.stroke()
 
-    // Ball — lights in the hand as the body loads, then away at release
+    // ── The ball ──
     if (!released) {
-      const pulse = loading ? 0.6 + Math.sin(now / 55) * 0.4 : 0
+      const pulse = loading ? 0.55 + Math.sin(now / 50) * 0.45 : 0
       ctx.save()
-      ctx.shadowColor = loading ? '#FFD700' : '#FFFFFF'
-      ctx.shadowBlur = loading ? 18 + pulse * 22 : 12
-      ctx.fillStyle = loading ? '#FFE96B' : '#F5F1E8'
-      ctx.beginPath(); ctx.arc(hx, hy, loading ? 8 + pulse * 2.5 : 8, 0, Math.PI * 2); ctx.fill()
+      ctx.shadowColor = BALL_YELLOW
+      ctx.shadowBlur = loading ? 16 + pulse * 26 : 10
+      ctx.fillStyle = BALL_YELLOW
+      ctx.beginPath(); ctx.arc(hx, hy, loading ? 8.5 + pulse * 2.5 : 8.5, 0, Math.PI * 2); ctx.fill()
       ctx.restore()
+      ctx.strokeStyle = '#C41E3A'; ctx.lineWidth = 1.8
+      ctx.beginPath(); ctx.arc(hx - 9, hy, 8, -0.9, 0.9); ctx.stroke()
     } else {
-      const g = Math.min(1, (now - releaseAt.current) / 460)
-      ctx.save(); ctx.globalAlpha = 1 - g * 0.75
-      ctx.shadowColor = '#FFFFFF'; ctx.shadowBlur = 16
-      ctx.fillStyle = '#F5F1E8'
-      ctx.beginPath(); ctx.arc(hx - g * W * 0.06, hy + g * H * 0.36, 8, 0, Math.PI * 2); ctx.fill()
+      // Away flat toward home, parallel to the base path
+      const g = (now - releaseAt.current) / 620
+      const bx = mx - g * W * 0.72
+      ctx.save()
+      ctx.globalAlpha = Math.max(0, 1 - g * 0.85)
+      ctx.shadowColor = BALL_YELLOW; ctx.shadowBlur = 18
+      ctx.fillStyle = BALL_YELLOW
+      ctx.beginPath(); ctx.arc(bx, my, 8.5, 0, Math.PI * 2); ctx.fill()
+      // trail
+      const trail = ctx.createLinearGradient(bx, my, bx + W * 0.14, my)
+      trail.addColorStop(0, `${BALL_YELLOW}70`); trail.addColorStop(1, 'transparent')
+      ctx.strokeStyle = trail; ctx.lineWidth = 7
+      ctx.beginPath(); ctx.moveTo(bx, my); ctx.lineTo(bx + W * 0.14, my); ctx.stroke()
       ctx.restore()
-      ctx.strokeStyle = `rgba(57, 255, 158, ${Math.max(0, 0.7 - g)})`
+      // the moment marked
+      ctx.strokeStyle = `rgba(57, 255, 158, ${Math.max(0, 0.7 - g * 1.4)})`
       ctx.lineWidth = 3
-      ctx.beginPath(); ctx.arc(hx, hy, 16 + g * 34, 0, Math.PI * 2); ctx.stroke()
+      ctx.beginPath(); ctx.arc(mx, my, 16 + g * 46, 0, Math.PI * 2); ctx.stroke()
     }
 
-    // ── The runner ──
+    // ── The runner, helmet on ──
     let runP = 0
     if (goneAt.current) runP = Math.min(1, (now - goneAt.current) / 1150)
     const rx = firstX + (secondX - firstX) * runP
-    const stride = goneAt.current ? Math.sin(now / 55) : 0
-    const lean = goneAt.current ? 0.34 : 0.08
+    const stride = goneAt.current ? Math.sin(now / 52) : 0
+    const lean = goneAt.current ? 0.36 : 0.1
 
     ctx.save()
     ctx.translate(rx, baseY)
     ctx.rotate(lean)
-    ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 7
-    ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(-9 + stride * 9, 0); ctx.stroke()
-    ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(9 - stride * 9, 0); ctx.stroke()
+    ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 7; ctx.lineCap = 'round'
+    ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(-10 + stride * 10, 0); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(10 - stride * 10, 0); ctx.stroke()
     ctx.strokeStyle = '#FFB800'; ctx.lineWidth = 11
     ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(0, -46); ctx.stroke()
+    // helmet — shell with an ear flap on the near side
     ctx.fillStyle = '#0A0C10'
-    ctx.beginPath(); ctx.arc(0, -54, 8, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.arc(0, -54, 8.5, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = '#FFB800'
+    ctx.beginPath(); ctx.arc(0, -55, 9.5, Math.PI, 0); ctx.fill()
+    ctx.beginPath(); ctx.ellipse(4, -52, 4.5, 5.5, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.fillRect(-16, -58, 8, 3.5)
+    // arms pumping
     ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 5
-    ctx.beginPath(); ctx.moveTo(0, -42); ctx.lineTo(11 - stride * 11, -50); ctx.stroke()
-    ctx.beginPath(); ctx.moveTo(0, -42); ctx.lineTo(-11 + stride * 11, -34); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(0, -42); ctx.lineTo(12 - stride * 12, -50); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(0, -42); ctx.lineTo(-12 + stride * 12, -34); ctx.stroke()
     ctx.restore()
 
-    if (goneAt.current && runP < 0.9) {
-      ctx.fillStyle = '#C9A87830'
-      ctx.beginPath(); ctx.ellipse(rx - 22, baseY + 4, 20, 6, 0, 0, Math.PI * 2); ctx.fill()
+    if (goneAt.current && runP < 0.92) {
+      ctx.fillStyle = '#C9A87828'
+      ctx.beginPath(); ctx.ellipse(rx - 24, baseY + 4, 22, 6, 0, 0, Math.PI * 2); ctx.fill()
     }
 
     raf.current = requestAnimationFrame(draw)
@@ -280,20 +334,20 @@ export default function ReleaseClient() {
       `}</style>
 
       <p className="rl-lede">
-        You are on first. The runner can&apos;t leave until the ball is out of the hand — it goes at the
-        bottom of the circle, level with the hip. Watch for the ball to light up: that&apos;s the body
-        loading, and the arm is about to come round.
+        You&apos;re on first, home plate off to your left. The hand rocks back, comes round once, and the
+        ball goes at 7 o&apos;clock — level with the hip. Watch it light up: that&apos;s the body loading.
+        Leave before it&apos;s gone and you&apos;re picked off.
       </p>
 
       <div className="rl-hud">
         <span className="rl-stat"><span>Pitch</span><b>{Math.min(round + (phase === 'wind' || phase === 'judged' ? 1 : 0), ROUNDS)}/{ROUNDS}</b></span>
-        <span className="rl-stat"><span>Level</span><b style={{ color: 'var(--neon)', fontSize: '14px' }}>{LEVELS[level].name}</b></span>
+        <span className="rl-stat"><span>Level</span><b style={{ color: 'var(--neon)', fontSize: '13px' }}>{LEVELS[level].name}</b></span>
         <span className="rl-stat"><span>Stolen</span><b>{stolen}</b></span>
         <span className="rl-stat"><span>Score</span><b style={{ color: 'var(--neon)' }}>{score}</b></span>
       </div>
 
       <div className="rl-stage">
-        <canvas ref={canvasRef} className="rl-canvas" width={640} height={420} onClick={go} />
+        <canvas ref={canvasRef} className="rl-canvas" width={640} height={430} onClick={go} />
 
         {last && phase === 'judged' && (
           <div className="rl-flash">
@@ -321,7 +375,7 @@ export default function ReleaseClient() {
             ) : (
               <>
                 <p style={{ fontSize: '12px', color: '#8FA0B4', maxWidth: '30ch', lineHeight: 1.6 }}>
-                  Ten pitches. The arm gets quicker as you go.
+                  Ten pitches. The arm quickens as you go.
                 </p>
                 <button className="ar-btn" onClick={start} style={{ marginTop: '14px' }}><span>Take your lead</span></button>
               </>
