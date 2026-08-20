@@ -231,7 +231,7 @@ export default function SnakeClient({ clubs, initialClub }: {
 
   // Swipe
   useEffect(() => {
-    const cv = canvasRef.current
+    const cv = canvasRef.current?.parentElement
     if (!cv) return
     let sx = 0, sy = 0
     const start = (e: TouchEvent) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY }
@@ -248,7 +248,19 @@ export default function SnakeClient({ clubs, initialClub }: {
     cv.addEventListener('touchend', end, { passive: true })
     return () => { cv.removeEventListener('touchstart', start); cv.removeEventListener('touchend', end) }
   }, [])
-
+  /* While a game is live the page mustn't scroll under the swipes — on a phone
+     a swipe that drifts off the canvas otherwise drags the whole screen. */
+  useEffect(() => {
+    if (state !== 'playing') return
+    const prev = document.body.style.overscrollBehavior
+    const prevTouch = document.body.style.touchAction
+    document.body.style.overscrollBehavior = 'none'
+    document.body.style.touchAction = 'none'
+    return () => {
+      document.body.style.overscrollBehavior = prev
+      document.body.style.touchAction = prevTouch
+    }
+  }, [state])
   function begin() {
     snake.current = [{ x: 9, y: 10 }, { x: 8, y: 10 }, { x: 7, y: 10 }]
     dir.current = { x: 1, y: 0 }
@@ -271,9 +283,18 @@ export default function SnakeClient({ clubs, initialClub }: {
         .sn-score { display: flex; gap: 26px; align-items: baseline; margin-bottom: 16px; }
         .sn-score span { font-size: 10px; font-weight: 900; letter-spacing: 0.26em; text-transform: uppercase; color: #5C6878; }
         .sn-score b { font-family: var(--font-heading); font-size: 19px; color: #F5F1E8; margin-left: 8px; }
-        .sn-stage { position: relative; }
+        /* The board is square, so cap it by viewport height too — otherwise on
+           a phone it's as tall as the screen is wide and the far edge sits off
+           the bottom of the view. */
+        .sn-stage {
+          position: relative;
+          width: min(100%, 62vh);
+          margin: 0 auto;
+          overscroll-behavior: contain;
+        }
         .sn-canvas {
-          width: 100%; height: auto; display: block; touch-action: none;
+          width: 100%; height: auto; display: block;
+          touch-action: none; -webkit-user-select: none; user-select: none;
           border: 1px solid color-mix(in srgb, var(--neon) 34%, transparent);
           box-shadow: 0 0 0 1px #ffffff08 inset, 0 18px 40px #00000090;
         }
