@@ -8,6 +8,7 @@ const GAMES = [
   { href: '/games/batting', n: '05', title: 'Batting Practice', blurb: 'Time the swing. Send it.', tag: 'Arcade', neon: '#B47CFF' },
   { href: '/games/memory', n: '06', title: 'Card Sharp', blurb: 'Two of every card, face down. Remember what you saw.', tag: 'Memory', neon: '#FF6B9D' },
   { href: '/games/merge', n: '07', title: 'Tier Up', blurb: 'Two Commons make an Elite. Climb to Immortal.', tag: 'Puzzle', neon: '#39FF9E' },
+  { href: '/games/season', n: '08', title: 'Guess the Season', blurb: 'Four award winners. Name the year they won.', tag: 'Archive', neon: '#FF8A3D' },
 ]
 
 export default function Games() {
