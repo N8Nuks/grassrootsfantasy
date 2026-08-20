@@ -188,4 +188,76 @@ export default function ReleaseClient() {
           font-size: clamp(28px, 8vw, 50px); line-height: 1; transform: skewX(-7deg);
           animation: rl-slam 360ms cubic-bezier(.2,1.7,.4,1);
         }
-        @keyframes rl-slam { from { transform: skewX(-7deg)
+        @keyframes rl-slam { from { transform: skewX(-7deg) scale(2); opacity: 0; } }
+        .rl-ms { font-size: 11px; font-weight: 900; letter-spacing: 0.24em; text-transform: uppercase; color: #F5F1E8; margin-top: 9px; }
+        .rl-overlay {
+          position: absolute; inset: 0; display: flex; flex-direction: column;
+          align-items: center; justify-content: center; gap: 8px; text-align: center;
+          background: #05060AE6; padding: 24px;
+        }
+        .rl-key { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #3E4A58; text-align: center; margin-top: 14px; }
+        .rl-tape { display: flex; gap: 5px; margin-top: 18px; flex-wrap: wrap; }
+        .rl-dot { width: 30px; height: 5px; background: #ffffff10; }
+      `}</style>
+
+      <p className="rl-lede">
+        The arm comes over and round. Tap the instant the ball leaves the hand — at the bottom of the
+        circle, level with the hip. Five pitches, and the arm speed changes every time.
+      </p>
+
+      <div className="rl-hud">
+        <span>Pitch <b>{Math.min(round + (phase !== 'ready' && phase !== 'done' ? 1 : 0), ROUNDS)}/{ROUNDS}</b></span>
+        {best != null && <span>Sharpest <b style={{ color: 'var(--neon)' }}>{Math.round(best)}ms</b></span>}
+      </div>
+
+      <div className="rl-stage">
+        <canvas ref={canvasRef} className="rl-canvas" width={600} height={420} onClick={judge} />
+
+        {last && phase === 'judged' && (() => {
+          const g = gradeFor(last.ms)
+          return (
+            <div className="rl-flash">
+              <p className="rl-verdict" style={{ color: g.colour, textShadow: `0 0 28px ${g.colour}80` }}>{g.label}</p>
+              <p className="rl-ms">
+                {last.ms >= 999 ? 'Flinched' : `${Math.round(last.ms)}ms ${last.early ? 'early' : 'late'}`}
+              </p>
+            </div>
+          )
+        })()}
+
+        {(phase === 'ready' || phase === 'done') && (
+          <div className="rl-overlay">
+            {phase === 'done' && overall ? (
+              <>
+                <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.34em', textTransform: 'uppercase', color: overall.colour }}>
+                  {overall.label}
+                </p>
+                <p className="ar-num" style={{ fontSize: '52px', color: '#F5F1E8', textShadow: 'none', margin: '10px 0 2px' }}>{avg}ms</p>
+                <p style={{ fontSize: '11px', color: '#7D8B9C' }}>average off the release</p>
+                <button className="ar-btn" onClick={start} style={{ marginTop: '20px' }}><span>Go again</span></button>
+              </>
+            ) : (
+              <>
+                <p style={{ fontSize: '12px', color: '#8FA0B4', maxWidth: '28ch', lineHeight: 1.6 }}>
+                  Watch the hand, not the clock.
+                </p>
+                <button className="ar-btn" onClick={start} style={{ marginTop: '14px' }}><span>Step in</span></button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      <p className="rl-key">Tap the circle or hit space</p>
+
+      {errors.length > 0 && (
+        <div className="rl-tape">
+          {Array.from({ length: ROUNDS }).map((_, i) => (
+            <span key={i} className="rl-dot"
+              style={errors[i] != null ? { background: gradeFor(errors[i]).colour } : undefined} />
+          ))}
+        </div>
+      )}
+    </>
+  )
+}
