@@ -49,14 +49,54 @@ function build() {
       }
     })
 
+  // Everyone below the card threshold still worked the games — they get a roll
+  // rather than a card, so nobody who has done the job goes unlisted.
+  const below = OFFICIALS
+    .filter(o => o.games < (o.role === 'umpire' ? UMP_BAR : SCORER_BAR))
+    .sort((a, b) => b.games - a.games)
+
   const by = (a: Card, b: Card) => b.games - a.games
   return {
     featured: cards.filter(c => c.featured).sort(by),
     umpires: cards.filter(c => !c.featured && c.role === 'umpire').sort(by),
     scorers: cards.filter(c => !c.featured && c.role === 'scorer').sort(by),
+    moreUmpires: below.filter(o => o.role === 'umpire'),
+    moreScorers: below.filter(o => o.role === 'scorer'),
     total: cards.reduce((a, c) => a + c.games, 0),
     count: cards.length,
   }
+}
+
+/* A plain roll of names and games, folded away behind a summary. Kept simple
+   on purpose — the cards carry the ceremony, this carries the completeness. */
+function MoreRoll({ label, accent, rows }: {
+  label: string
+  accent: string
+  rows: { name: string; games: number; retired: boolean }[]
+}) {
+  if (rows.length === 0) return null
+  return (
+    <details className="group rounded-xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${accent}30`, marginTop: '24px' }}>
+      <summary className="cursor-pointer list-none flex items-center justify-between gap-4" style={{ padding: '16px 20px' }}>
+        <span className="text-sm font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+          {label} <span className="text-white/45">· {rows.length}</span>
+        </span>
+        <span className="text-lg font-black shrink-0 leading-none transition-transform group-open:rotate-45" style={{ color: accent }}>+</span>
+      </summary>
+      <div style={{ borderTop: '1px solid #ffffff0a' }}>
+        {rows.map(o => (
+          <div key={o.name} className="flex items-baseline justify-between gap-4"
+            style={{ borderBottom: '1px solid #ffffff06', padding: '10px 20px' }}>
+            <span className="text-sm font-bold text-white/85">
+              {o.name}
+              {o.retired && <span className="text-[9px] uppercase tracking-widest ml-2" style={{ color: '#ffffff40' }}>Retired</span>}
+            </span>
+            <span className="text-sm font-black shrink-0" style={{ fontFamily: 'var(--font-heading)', color: accent }}>{o.games}</span>
+          </div>
+        ))}
+      </div>
+    </details>
+  )
 }
 
 /* Featured — the same card as the wing, turned up: crackling rim, shimmering
@@ -77,7 +117,7 @@ function WingCard({ c, cardStyle }: { c: Card; cardStyle: 'standard' | 'premium'
 }
 
 export default async function Officials() {
-  const { featured, umpires, scorers, total, count } = build()
+  const { featured, umpires, scorers, moreUmpires, moreScorers, total, count } = build()
 
   // Officials cards follow the same Command setting as the player cards
   const supabase = await createClient()
@@ -130,6 +170,7 @@ export default async function Officials() {
           <div className="grid gap-3 grid-cols-2 sm:gap-5 lg:grid-cols-3">
             {umpires.map(c => <WingCard key={c.name} c={c} cardStyle={cardStyle} />)}
           </div>
+          <MoreRoll label="Every other umpire on record" accent={SILVER} rows={moreUmpires} />
         </div>
       </section>
 
@@ -143,6 +184,7 @@ export default async function Officials() {
           <div className="grid gap-3 grid-cols-2 sm:gap-5 lg:grid-cols-3">
             {scorers.map(c => <WingCard key={c.name} c={c} cardStyle={cardStyle} />)}
           </div>
+          <MoreRoll label="Every other scorer on record" accent={GOLD} rows={moreScorers} />
         </div>
       </section>
 
