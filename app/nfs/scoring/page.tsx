@@ -43,8 +43,7 @@ const armbands = [
   { slot: 'Vice Captain', rule: 'Scores 1.5×. Runs alongside the Captain every round, not instead of them, so you have two picks that matter.' },
   { slot: 'On the bench', rule: 'An armband still works, but the bench multiplier applies on top — a Captain on your bench scores 1.5×, a Vice Captain 1.125×.' },
   { slot: 'In the reserves', rule: 'No score, so no bonus. An armband on a reserve is a wasted pick.' },
-  { slot: 'Already on a 2× bonus', rule: 'A player on a cycle or perfect-game bonus can\'t wear an armband — the multipliers never stack. Put it on someone else and run two doubles that round.' },
-]
+  ]
 
 const boards = [
   { t: 'Season Ladder', c: '#E8C15A', d: 'Cumulative points across the whole season. The long game.' },

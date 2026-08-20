@@ -36,7 +36,6 @@ const ANNOUNCEMENTS = [
   'Bench players score at 0.75× and step in at full value when a starter misses.',
   'Captain and Vice Captain are live — your Captain scores 2×, your Vice Captain 1.5×, both every round.',
   "We've set your pitcher as Captain and your catcher as Vice Captain to start. Change them on My Team any time.",
-  "A player already on a 2× bonus can't wear an armband — put it on someone else and run two doubles in the same round.",
   'The armband multiplier hits everything, including the negatives. Pick with care.',
   'A Captain sitting in your reserves earns nothing. Make sure your armbands are in the scoring sixteen.',
   'The DR slot scores steals and caught stealing only. Pick your speed.',

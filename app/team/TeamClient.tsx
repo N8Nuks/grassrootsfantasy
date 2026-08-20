@@ -18,7 +18,7 @@ const TEAM_GUIDE: GuideStep[] = [
   },
   {
     title: 'Captain and Vice Captain',
-    body: "Tap C to name your Captain — they score 2×. Tap VC for your Vice Captain, who scores 1.5×. Both apply every round, so you have two picks that matter. The multiplier applies to everything, including negatives, so pick with care. Anyone sitting in your reserves earns nothing, armband or not, and a player already on a 2× bonus can't wear one.",
+    body: "Tap C to name your Captain — they score 2×. Tap VC for your Vice Captain, who scores 1.5×. Both apply every round, so you have two picks that matter. The multiplier applies to everything, including negatives, so pick with care. Anyone sitting in your reserves earns nothing, armband or not.",
   },
   {
     title: 'Points and Earned',
