@@ -6,35 +6,45 @@ const NEON = '#B47CFF'
 
 /* The cage is stocked from the Honours Board, so players who finished years ago
    still get to stand in it. Titles won stand in for the stats we don't have —
-   more batting titles is a better eye, more pitching titles a better arm. */
-const BAT_KEYS = ['batting', 'bat_ave', 'batting_champion', 'top_bat']
-const PIT_KEYS = ['pitching', 'era', 'pitching_champion', 'top_pitcher', 'mvp_pitcher']
+   more Top Batter awards is a better eye, more Top Pitcher awards a better arm. */
 
-function tally(grade: 'men' | 'women', keys: string[]) {
+/* Hand-picked replacements. Some names belong in the cage on reputation rather
+   than title count, and a couple of the tail-enders don't. */
+const BATTER_SWAPS: Record<string, string> = { 'Sina Hunkin': 'Katrina Nukunuku' }
+const PITCHER_ADDS: { name: string; grade: 'M' | 'W'; titles: number }[] = [
+  { name: 'Daniel Chapman', grade: 'M', titles: 1 },
+  { name: 'Blaire Luna', grade: 'W', titles: 1 },
+]
+
+function tally(grade: 'men' | 'women', key: string): [string, number][] {
   const counts = new Map<string, number>()
   for (const s of HONOURS) {
-    for (const [key, winner] of Object.entries(s[grade])) {
-      if (!winner) continue
-      if (!keys.some(k => key.toLowerCase().includes(k))) continue
-      counts.set(winner as string, (counts.get(winner as string) ?? 0) + 1)
+    const w = s[grade][key]
+    if (!w) continue
+    // A shared award is recorded as one string — split so each winner counts
+    for (const name of w.split('&').map(n => n.trim()).filter(Boolean)) {
+      counts.set(name, (counts.get(name) ?? 0) + 1)
     }
   }
   return [...counts.entries()].sort((a, b) => b[1] - a[1])
 }
 
-function build(keys: string[]): Legend[] {
+function build(key: string, swaps: Record<string, string> = {}): Legend[] {
   const out: Legend[] = []
   for (const grade of ['men', 'women'] as const) {
-    for (const [name, titles] of tally(grade, keys).slice(0, 5)) {
-      out.push({ name, titles, grade: grade === 'men' ? 'M' : 'W' })
+    for (const [name, titles] of tally(grade, key).slice(0, 5)) {
+      out.push({ name: swaps[name] ?? name, titles, grade: grade === 'men' ? 'M' : 'W' })
     }
   }
-  return out.sort((a, b) => b.titles - a.titles)
+  return out
 }
 
 export default function LegendsCage() {
-  const batters = build(BAT_KEYS)
-  const pitchers = build(PIT_KEYS)
+  const batters = build('top_batter', BATTER_SWAPS).sort((a, b) => b.titles - a.titles)
+
+  // The two named arms come in at the expense of the lowest title-holders
+  const pitchers = [...build('top_pitcher').sort((a, b) => b.titles - a.titles).slice(0, 8), ...PITCHER_ADDS]
+    .sort((a, b) => b.titles - a.titles)
 
   if (batters.length < 2 || pitchers.length < 2) {
     return (
