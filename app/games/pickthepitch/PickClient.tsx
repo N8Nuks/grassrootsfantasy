@@ -473,8 +473,8 @@ export default function PickClient() {
         <img className="pk-batter" alt=""
           src={lefty ? '/batter-lh-pick.png' : '/batter-rh-pick.png'}
           style={lefty
-            ? { left: '1%', transform: 'scaleX(-1)' }
-            : { right: '1%', transform: 'scaleX(-1)' }} />
+            ? { left: '1%' }
+            : { right: '1%' }} />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="pk-catcher" src="/catcher-pick.png" alt="" />
         <span className="pk-hand"><Hand shape={shownIdx >= 0 ? seq[shownIdx] ?? null : null} /></span>
@@ -553,15 +553,6 @@ export default function PickClient() {
         )}
       </div>
 
-      {/* The key rides beside the field — a rough drawing should never be the puzzle */}
-      <div className="pk-key">
-        {SHAPES.map(s => (
-          <span key={s} className="pk-keyitem">
-            <Hand shape={s} />
-            <span>{SHAPE_LABEL[s]}</span>
-          </span>
-        ))}
-      </div>
       </div>
 
       {committed ? (
@@ -627,8 +618,17 @@ export default function PickClient() {
         </span>
       </div>
 
-      <div className="pk-ladder">
-        {LEVELS.map((lv, i) => (
+      {/* Reference only — needed for the first couple of pitches, then never
+          again, so it sits out of the way of the calling buttons. */}
+      <p className="pk-lbl">The hand</p>
+      <div className="pk-key">
+        {SHAPES.map(s => (
+          <span key={s} className="pk-keyitem">
+            <Hand shape={s} />
+            <span>{SHAPE_LABEL[s]}</span>
+          </span>
+        ))}
+      </div>
           <span key={i} className="pk-rung" data-on={i === level} data-done={i < level}>
             <span className="pk-n">{i + 1}</span>
             {lv.n} signals
