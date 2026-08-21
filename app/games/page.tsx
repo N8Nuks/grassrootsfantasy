@@ -147,17 +147,17 @@ export default function Games() {
 
         /* One machine in the corner is worth more than the rest. It breathes,
            its border runs, and it sits a touch prouder than the others. */
+        /* The frame is drawn in SVG for the same reason as the number — a
+           gradient border box renders flat on iOS Safari. */
         .gm-tile[data-featured="true"] {
           border-color: transparent;
-          background:
-            linear-gradient(155deg, #14120A 0%, #0A0906 100%) padding-box,
-            conic-gradient(from var(--spin), var(--neon), #FF2D95, var(--neon), #00F0FF, var(--neon)) border-box;
-          border: 2px solid transparent;
-          animation: gm-spin 5s linear infinite, gm-breathe 3.4s ease-in-out infinite;
+          background: linear-gradient(155deg, #14120A 0%, #0A0906 100%);
+          animation: gm-breathe 3.4s ease-in-out infinite;
         }
-        .gm-tile[data-featured="true"]:hover { animation-play-state: paused, paused; }
-        @property --spin { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
-        @keyframes gm-spin { to { --spin: 360deg; } }
+        .gm-frame {
+          position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;
+        }
+        .gm-frame rect { fill: none; stroke: url(#gm-wave-grad); stroke-width: 4; }
         @keyframes gm-breathe {
           0%, 100% { box-shadow: 0 0 22px #FFD40028, 0 18px 40px #00000090; }
           50%      { box-shadow: 0 0 44px #FFD40055, 0 0 90px #FFD4001F, 0 18px 40px #00000090; }
@@ -209,6 +209,11 @@ export default function Games() {
                 data-featured={'featured' in g ? 'true' : undefined}
                 style={{ ['--neon' as string]: g.neon }}>
                 <span className="gm-n" data-n={g.n}>{g.n}</span>
+                {'featured' in g && (
+                  <svg className="gm-frame" preserveAspectRatio="none" aria-hidden="true">
+                    <rect x="2" y="2" width="calc(100% - 4px)" height="calc(100% - 4px)" />
+                  </svg>
+                )}
                 {'featured' in g && (
                   <svg className="gm-nsvg" viewBox="0 0 96 76" aria-hidden="true">
                     <defs>
