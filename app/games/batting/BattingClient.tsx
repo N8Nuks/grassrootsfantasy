@@ -25,6 +25,15 @@ const ZONE = { x: 0.5, y: 0.755, w: 0.105, h: 0.125 }
 const FENCE_Y = 0.335          // top of the wall
 const CROWD_TOP = 0.06
 const SWING_MS = 340
+
+/* Speed is a multiplier on the flight time — under 1 is quicker than standard. */
+const PITCH_TYPES = [
+  { name: 'Rise',     speed: 0.82, move: 1.0 },
+  { name: 'Drop',     speed: 0.86, move: 1.1 },
+  { name: 'Fastball', speed: 0.78, move: 0.5 },
+  { name: 'Curve',    speed: 1.18, move: 1.5 },
+  { name: 'Changeup', speed: 1.32, move: 0.7 },
+]
 const CONTACT_AT = 0.458       // where in the swing the barrel meets the ball
 
 type Flight = { kind: string; colour: string; t: number; dur: number
@@ -56,6 +65,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
   const breakX = useRef(0)
   const started = useRef(0)
   const windUp = useRef(0)
+  const pitchKind = useRef(PITCH_TYPES[0])
   const swung = useRef(false)
   const settled = useRef(false)
   const swingAt = useRef(0)
@@ -91,8 +101,11 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
   const windowSize = 0.058 + eye * 0.055
 
   const beginPitch = useCallback(() => {
-    dur.current = 1520 - heat * 600 + (Math.random() * 240 - 120)
-    breakX.current = (Math.random() * 2 - 1) * (0.14 + heat * 0.3)
+    // Risers and drops come hard, changeups and curves float in
+    const kind = PITCH_TYPES[Math.floor(Math.random() * PITCH_TYPES.length)]
+    pitchKind.current = kind
+    dur.current = (1520 - heat * 600) * kind.speed + (Math.random() * 200 - 100)
+    breakX.current = (Math.random() * 2 - 1) * (0.14 + heat * 0.3) * kind.move
     t.current = -0.55
     swung.current = false
     settled.current = false
@@ -135,11 +148,13 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       ball.current = { ...base, x1: 0.5 + spread * 1.5, y1: FENCE_Y - 0.02, apex: 0.16, dur: 1250,
         hop: { x: 0.5 + spread * 0.9, y: 0.545 } }
     } else if (kind === 'through') {
-      ball.current = { ...base, x1: 0.5 + spread * 2.1, y1: 0.50, apex: 0.035, dur: 780 }
+      // Flat through the infield, dying just short of the wall
+      ball.current = { ...base, x1: 0.5 + spread * 0.9, y1: FENCE_Y + 0.115, apex: 0.05, dur: 900 }
     } else if (kind === 'back') {
       ball.current = { ...base, x1: 0.5 + (pull > 0 ? 0.7 : -0.7), y1: 1.15, apex: 0.42, dur: 1000 }
     } else {
-      ball.current = { ...base, x1: 0.5 + spread * 2.4, y1: 0.80, apex: 0.02, dur: 900 }
+      // Grounder — stays in the infield
+      ball.current = { ...base, x1: 0.5 + spread * 1.1, y1: 0.62, apex: 0.015, dur: 850 }
     }
   }
 
@@ -187,9 +202,10 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     // the plate. Runs 200 down to -40 — behind, through, and round.
     const phi = ((200 - 240 * p) * Math.PI) / 180
     // The bat is up at the load, level at contact, up again on the follow
+    // High at the load, level through contact, high again on the follow-through
     const lift = p < 0.5
-      ? H * 0.085 * Math.cos(p * Math.PI)
-      : H * 0.068 * -Math.cos(p * Math.PI)
+      ? H * 0.20 * Math.cos(p * Math.PI)
+      : H * 0.075 * -Math.cos(p * Math.PI)
 
     const tipX = px + Math.sin(phi) * R * side
     const tipY = py - Math.cos(phi) * R * SQUASH - lift
@@ -460,7 +476,8 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       if (!contact.current && t.current > 0 && t.current < 1.16) {
         const p = t.current
         const x = W * ZONE.x + breakX.current * W * 0.12 * p * p
-        const y = H * 0.5 + (H * ZONE.y - H * 0.5) * (p * p * 0.7 + p * 0.3)
+        // Keeps travelling past the zone to the catcher — it never hangs
+        const y = H * 0.5 + (H * 0.9 - H * 0.5) * ((p / 1.16) * (p / 1.16) * 0.55 + (p / 1.16) * 0.45)
         const r = 3.5 + p * p * 9
         ctx.save()
         ctx.shadowColor = '#E8FF3D'; ctx.shadowBlur = 12 + p * 18
@@ -581,6 +598,8 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
           font-size: clamp(28px, 8vw, 48px); color: var(--neon); transform: skewX(-7deg);
           text-shadow: 0 0 30px color-mix(in srgb, var(--neon) 60%, transparent);
         }
+        .bt-swing { font-size: 18px !important; padding: 19px 52px !important; }
+        .bt-swing:active { transform: skewX(-8deg) translate(3px, 3px) scale(0.97) !important; }
         .bt-key { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #3E4A58; text-align: center; margin-top: 14px; }
         .bt-tape { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 16px; }
         .bt-dot { width: 26px; height: 5px; background: #ffffff10; }
@@ -678,7 +697,10 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       </div>
 
       {phase === 'live' && !paused && (
-        <div style={{ textAlign: 'center', marginTop: '14px' }}>
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', alignItems: 'center', marginTop: '14px', flexWrap: 'wrap' }}>
+          <button className="ar-btn bt-swing" onClick={swing}>
+            <span>Swing</span>
+          </button>
           <button className="ar-btn" onClick={togglePause}
             style={{ background: 'transparent', color: 'var(--neon)', border: '1px solid var(--neon)', boxShadow: 'none' }}>
             <span>Pause</span>
