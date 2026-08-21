@@ -471,7 +471,7 @@ export default function PickClient() {
       `}</style>
 
       <p className="pk-lede">
-        Bottom of the seventh, tied, and you&apos;re the winning run on second. The catcher&apos;s hand is in
+        Bottom of the seventh, tied, and you&apos;re the winning run standing on second. The catcher&apos;s hand is in
         plain sight — nobody is going to tell you what it means. The same shape can be the pitch or the
         location; only where it sits in the sequence says which.
       </p>
@@ -554,7 +554,7 @@ export default function PickClient() {
             <p style={{ fontSize: '12px', color: '#8FA0B4', maxWidth: '32ch', lineHeight: 1.6, marginTop: '6px' }}>
               {L.brief}
             </p>
-            <button className="ar-btn" onClick={begin} style={{ marginTop: '16px' }}><span>Take your lead</span></button>
+            <button className="ar-btn" onClick={begin} style={{ marginTop: '16px' }}><span>Runner on 2 — ready?</span></button>
           </div>
         )}
 
