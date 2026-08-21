@@ -199,7 +199,7 @@ export default function PickClient() {
       after(400 + i * L.ms + L.ms * 0.7, () => setShownIdx(-1))
     })
     after(400 + built.seq.length * L.ms, () => {
-      if (isCommitted) setPhase('pick')
+      if (isCommitted) setPhase('pick')       // no clock — take the time, it costs a life
       else after(650, () => setPhase('pitching'))
     })
   }, [level, code, L.ms])
@@ -259,7 +259,18 @@ export default function PickClient() {
     runPitch(0, false)
   }
 
-  function commit() { setCommitted(true); setStreak(0); setPaused(false) }
+  /* Committing stops whatever is mid-flight and re-runs that same pitch from
+     the first signal, now for real. Calling a sequence you only half saw would
+     be a rough way to lose a life. */
+  function commit() {
+    clearAll()
+    setCommitted(true)
+    setStreak(0)
+    setPaused(false)
+    setShownIdx(-1)
+    setResult(null)
+    runPitch(outs, true)
+  }
 
   function lockIn() {
     if (!pickPitch || (needsLoc && !pickLoc)) return
@@ -309,9 +320,9 @@ export default function PickClient() {
   }
 
   function togglePause() {
-    if (!L.pause) return
-    if (paused) { setPaused(false); runPitch(outs, committed) }
-    else { clearAll(); setShownIdx(-1); setPaused(true) }
+    if (!L.pause || committed) return
+    if (paused) { setPaused(false); runPitch(outs, false) }
+    else { clearAll(); setShownIdx(-1); setResult(null); setPaused(true) }
   }
 
   const bulb = (on: boolean) => ({
