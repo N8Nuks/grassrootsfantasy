@@ -165,12 +165,29 @@ export default function Games() {
         .gm-tile[data-featured="true"] .gm-tag { animation: gm-flick 2.6s steps(1) infinite; }
         @keyframes gm-flick { 0%, 88%, 100% { opacity: 1; } 90% { opacity: 0.45; } 94% { opacity: 1; } 96% { opacity: 0.6; } }
         .gm-tile[data-featured="true"] .gm-name { color: var(--neon); text-shadow: 0 0 18px #FFD40060; }
-        /* The 12 runs the same colours as the border it sits inside */
+        /* Outline only, like every other tile — but the stroke carries a colour
+           wave. A copy of the glyph sits behind, painted with the gradient and
+           clipped to text, so only the stroke shows. */
         .gm-tile[data-featured="true"] .gm-n {
-          -webkit-text-stroke: 0;
-          background: conic-gradient(from var(--spin), var(--neon), #FF2D95, var(--neon), #00F0FF, var(--neon));
+          -webkit-text-stroke: 1.5px transparent;
+          position: absolute;
+        }
+        .gm-tile[data-featured="true"] .gm-n::before {
+          content: attr(data-n);
+          position: absolute; inset: 0;
+          background: linear-gradient(100deg,
+            var(--neon) 0%, #FF2D95 18%, var(--neon) 36%,
+            #00F0FF 54%, var(--neon) 72%, #FF2D95 88%, var(--neon) 100%);
+          background-size: 320% 100%;
           -webkit-background-clip: text; background-clip: text;
-          color: transparent; opacity: 0.55;
+          color: transparent;
+          -webkit-text-stroke: 1.5px transparent;
+          animation: gm-wave 3.2s linear infinite;
+          opacity: 0.85;
+        }
+        @keyframes gm-wave {
+          from { background-position: 0% 50%; }
+          to   { background-position: 320% 50%; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -201,7 +218,7 @@ export default function Games() {
               <a key={g.href} href={g.href} className="gm-tile"
                 data-featured={'featured' in g ? 'true' : undefined}
                 style={{ ['--neon' as string]: g.neon }}>
-                <span className="gm-n">{g.n}</span>
+                <span className="gm-n" data-n={g.n}>{g.n}</span>
                 <span className="gm-tag">{g.tag}</span>
                 <h2 className="gm-name">{g.title}</h2>
                 <p className="gm-blurb">{g.blurb}</p>
