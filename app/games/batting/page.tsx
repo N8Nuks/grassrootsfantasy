@@ -12,12 +12,11 @@ const NEON = '#B47CFF'
    than title count, and a couple of the tail-enders don't. */
 const BATTER_SWAPS: Record<string, string> = {
   'Sina Hunkin': 'Katrina Nukunuku',
-  'Katie Hetherington': 'Nathan Nukunuku',
 }
 
 /* Which side they stood on. Right unless named here — every arm in the cage is
    right-handed bar one. */
-const LEFTIES = new Set(['Kaleo Eldredge', 'Nathan Nukunuku', 'Heinie Shannon'])
+const LEFTIES = new Set(['Kaleo Eldredge', 'Heinie Shannon'])
 const PITCHER_ADDS: Legend[] = [
   { name: 'Daniel Chapman', grade: 'M', titles: 1, lefty: false },
   { name: 'Blaire Luna', grade: 'W', titles: 1, lefty: false },
