@@ -40,7 +40,7 @@ const OUT: Record<Outcome, { label: string; sub: string; colour: string }> = {
   clean:  { label: 'STOLEN',     sub: 'Safe by a distance', colour: '#39FF9E' },
   close:  { label: 'SAFE',       sub: 'Under the tag',      colour: '#7DF9FF' },
   thrown: { label: 'THROWN OUT', sub: 'Late off the base',  colour: '#FF4D4D' },
-  picked: { label: 'PICKED OFF', sub: 'You left too early', colour: '#FF4D4D' },
+  picked: { label: 'DEAD BALL!', sub: 'Out for leaving early', colour: '#FF4D4D' },
 }
 const isSteal = (o: Outcome) => o === 'clean' || o === 'close'
 
@@ -256,7 +256,7 @@ export default function ReleaseClient() {
       const b = mX + mW * ((to + 300) / span)
       ctx.fillStyle = colour; ctx.fillRect(a, mY, b - a, mH)
     }
-    seg(-300, 0, '#FF4D4D')          // early — picked off
+    seg(-300, 0, '#FF4D4D')          // too early — you're out
     seg(0, SAFE, '#39FF9E')          // gone on the release
     seg(SAFE, CLOSE, '#FFB800')      // late but safe
     seg(CLOSE, 400, '#FF4D4D')       // thrown out
