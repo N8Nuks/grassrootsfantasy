@@ -6,7 +6,7 @@ export type ClubOption = { id: string; name: string; crest: string; colours: [st
 /* Collectibles — a softball is the staple, the rest turn up less often and
    pay more. Every one grows the tail by its own amount. */
 const TREATS = [
-  { kind: 'ball',  label: 'Softball',   points: 10,  grow: 1, weight: 62, colour: '#F5F1E8' },
+  { kind: 'ball',  label: 'Softball',   points: 10,  grow: 1, weight: 62, colour: '#E8FF3D' },
   { kind: 'glove', label: 'Glove',      points: 25,  grow: 2, weight: 20, colour: '#C08040' },
   { kind: 'bat',   label: 'Bat',        points: 40,  grow: 3, weight: 13, colour: '#D9B36A' },
   { kind: 'gold',  label: 'Golden Ball', points: 100, grow: 4, weight: 5,  colour: '#FFD700' },
@@ -46,6 +46,7 @@ export default function SnakeClient({ clubs, initialClub }: {
   const [lastEaten, setLastEaten] = useState<string | null>(null)
   const [level, setLevel] = useState(0)
   const [levelUp, setLevelUp] = useState<string | null>(null)
+  const [paused, setPaused] = useState(false)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const crestRef = useRef<HTMLImageElement | null>(null)
@@ -209,14 +210,16 @@ export default function SnakeClient({ clubs, initialClub }: {
 
   // Game loop
   useEffect(() => {
-    if (state !== 'playing') return
+    if (state !== 'playing' || paused) return
+    last.current = 0                 // don't bank time spent paused
     const tick = (now: number) => {
+      if (!last.current) last.current = now
       if (now - last.current >= speed.current) { last.current = now; step() }
       raf.current = requestAnimationFrame(tick)
     }
     raf.current = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf.current)
-  }, [state, step])
+  }, [state, paused, step])
 
   // Keys
   useEffect(() => {
@@ -226,6 +229,7 @@ export default function SnakeClient({ clubs, initialClub }: {
         ArrowLeft: { x: -1, y: 0 }, ArrowRight: { x: 1, y: 0 },
         w: { x: 0, y: -1 }, s: { x: 0, y: 1 }, a: { x: -1, y: 0 }, d: { x: 1, y: 0 },
       }
+      if (e.code === 'Space') { e.preventDefault(); setPaused(p => !p); return }
       const d = map[e.key]
       if (!d) return
       e.preventDefault()
@@ -278,7 +282,7 @@ export default function SnakeClient({ clubs, initialClub }: {
     setLevel(0); setLevelUp(null)
     last.current = 0
     treat.current = randomTreat(snake.current)
-    setScore(0); setLastEaten(null); setState('playing')
+    setScore(0); setLastEaten(null); setPaused(false); setState('playing')
     draw()
   }
 
@@ -358,6 +362,16 @@ export default function SnakeClient({ clubs, initialClub }: {
 
       <div className="sn-stage">
         <canvas ref={canvasRef} className="sn-canvas" width={600} height={600} />
+        {state === 'playing' && paused && (
+          <div className="sn-over">
+            <p style={{ fontFamily: 'var(--font-heading)', fontWeight: 900, fontSize: 'clamp(30px, 9vw, 52px)',
+                        textTransform: 'uppercase', color: 'var(--neon)', transform: 'skewX(-7deg)',
+                        textShadow: '0 0 30px #FFB80090' }}>PAUSED</p>
+            <button className="ar-btn" onClick={() => setPaused(false)} style={{ marginTop: '18px' }}>
+              <span>Resume</span>
+            </button>
+          </div>
+        )}
         {state !== 'playing' && (
           <div className="sn-over">
             {state === 'over' && (
@@ -373,7 +387,16 @@ export default function SnakeClient({ clubs, initialClub }: {
         )}
       </div>
 
-      <p className="sn-key">Arrow keys or WASD · swipe on a phone</p>
+      {state === 'playing' && (
+        <div style={{ textAlign: 'center', marginTop: '14px' }}>
+          <button className="ar-btn" onClick={() => setPaused(p => !p)}
+            style={{ background: 'transparent', color: 'var(--neon)', border: '1px solid var(--neon)', boxShadow: 'none' }}>
+            <span>{paused ? 'Resume' : 'Pause'}</span>
+          </button>
+        </div>
+      )}
+
+      <p className="sn-key">Arrow keys or WASD · space to pause · swipe on a phone</p>
 
       <div className="sn-treats">
         {TREATS.map(t => (
