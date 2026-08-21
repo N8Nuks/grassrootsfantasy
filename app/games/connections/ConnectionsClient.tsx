@@ -101,6 +101,22 @@ export default function ConnectionsClient({ groups }: { groups: Group[] }) {
           100% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
         }
         .cn-end { text-align: center; padding: 28px 22px; margin-top: 20px; }
+        .cn-how { margin-top: 22px; background: #0A0D14; border: 1px solid #ffffff12; }
+        .cn-how summary {
+          cursor: pointer; list-style: none; display: flex; align-items: center;
+          justify-content: space-between; gap: 12px; padding: 14px 16px;
+          font-family: var(--font-heading); font-weight: 900; font-size: 13px; color: #F5F1E8;
+        }
+        .cn-how summary::-webkit-details-marker { display: none; }
+        .cn-how summary i {
+          font-style: normal; font-size: 18px; line-height: 1; color: var(--neon);
+          transition: transform 200ms ease;
+        }
+        .cn-how[open] summary i { transform: rotate(45deg); }
+        .cn-how ol { margin: 0; padding: 14px 18px 16px 34px; border-top: 1px solid #ffffff0a; }
+        .cn-how li { font-size: 12px; line-height: 1.75; color: #8FA0B4; margin-bottom: 9px; }
+        .cn-how li b { color: #F5F1E8; }
+        .cn-how p { font-size: 12px; line-height: 1.7; color: #5C6878; padding: 0 18px 16px; margin: 0; }
       `}</style>
 
       <p className="cn-lede">
@@ -142,8 +158,20 @@ export default function ConnectionsClient({ groups }: { groups: Group[] }) {
         </div>
       )}
 
-      {done && (
-        <div className="ar-panel cn-end">
+      <details className="cn-how">
+        <summary>How it works <i>+</i></summary>
+        <ol>
+          <li><b>Sixteen NFS players, four hidden groups of four.</b> Every player belongs to exactly one group.</li>
+          <li><b>The link could be anything</b> — same club and grade, all pitchers, all one card tier, all did something this season.</li>
+          <li><b>Tap four and lock them in.</b> Get it right and the group lifts off the board in its own colour.</li>
+          <li><b>Four wrong guesses and the board opens up</b> and shows you the answers.</li>
+          <li><b>&quot;One away&quot;</b> means three of your four belong together and one doesn&apos;t. It won&apos;t tell you which — and the miss still costs you.</li>
+        </ol>
+        <p>
+          Start with the group you&apos;re surest of. A name that only fits one thing is worth
+          anchoring on — the players who could sit in two groups are the trap.
+        </p>
+      </details>
           <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.34em', textTransform: 'uppercase',
                       color: wrong < MISTAKES ? '#39FF9E' : '#FF4D4D' }}>
             {wrong < MISTAKES ? `Solved with ${MISTAKES - wrong} to spare` : 'Board opened'}
