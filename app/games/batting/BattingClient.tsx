@@ -71,7 +71,8 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
   const swingAt = useRef(0)
   const contact = useRef(false)
   const ball = useRef<Flight | null>(null)
-  const pop = useRef<{ x: number; y: number; life: number } | null>(null)
+  const pop = useRef<{ x: number; y: number; life: number; size: number } | null>(null)
+  const wallHit = useRef<{ x: number; y: number; life: number } | null>(null)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const after = (ms: number, fn: () => void) => { timers.current.push(setTimeout(fn, ms)) }
   const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = [] }
@@ -122,14 +123,15 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     setFlash({ key, dist, off })
     setScore(s => s + RESULTS[key].points)
     setLog(l => [...l, { key, dist, off }])
+    // Outs are counted for the record but never cut the cage short — you get
+    // all ten swings whatever happens
     const isOut = key === 'strike' || key === 'out'
-    const nextOuts = outs + (isOut ? 1 : 0)
     const nextPitch = pitchNo + 1
-    if (isOut) setOuts(nextOuts)
+    if (isOut) setOuts(o => o + 1)
     setPitchNo(nextPitch)
     after(2100, () => {
       setFlash(null)
-      if (nextOuts >= OUTS || nextPitch >= PITCHES) setPhase('done')
+      if (nextPitch >= PITCHES) setPhase('done')
       else beginPitch()
     })
   }, [outs, pitchNo, beginPitch])
@@ -164,7 +166,11 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     swingAt.current = clock(performance.now())
     const off = t.current - 1
     const abs = Math.abs(off)
-    if (t.current < 0.5) { after(340, () => finish('strike', 0, off)); return }
+    // A swing is always a swing — miss it early or miss it late, the bat still goes
+    if (t.current < 0.5 || t.current > 1.14) {
+      after(SWING_MS * 0.7, () => finish('strike', 0, off))
+      return
+    }
     const pull = Math.max(-1, Math.min(1, -off * 5))
 
     let key: ResultKey
@@ -446,8 +452,30 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
 
         if (k >= 1 && !b.landed) {
           b.landed = true
-          if (b.kind === 'over') pop.current = { x, y, life: 700 }
+          if (b.kind === 'over') pop.current = { x, y, life: 700, size: 1 }
+          else if (b.kind === 'bounce') pop.current = { x, y, life: 520, size: 0.55 }
+          else if (b.kind === 'wall') wallHit.current = { x, y, life: 600 }
         }
+      }
+
+      // A triple thumping into the boards
+      if (wallHit.current) {
+        if (!paused) wallHit.current.life -= 16
+        const k = 1 - wallHit.current.life / 600
+        const cx = wallHit.current.x * W, cy = wallHit.current.y * H
+        ctx.save()
+        ctx.globalAlpha = Math.max(0, 1 - k)
+        ctx.strokeStyle = '#C6FF00'; ctx.lineWidth = 3
+        ctx.beginPath(); ctx.arc(cx, cy, 6 + k * 26, 0, Math.PI * 2); ctx.stroke()
+        for (let i = 0; i < 6; i++) {
+          const a = -Math.PI / 2 + (i - 2.5) * 0.35
+          ctx.beginPath()
+          ctx.moveTo(cx, cy)
+          ctx.lineTo(cx + Math.cos(a) * (14 + k * 34), cy + Math.sin(a) * (14 + k * 34) * 0.5)
+          ctx.stroke()
+        }
+        ctx.restore()
+        if (wallHit.current.life <= 0) wallHit.current = null
       }
 
       // Crowd erupting where the ball landed
@@ -458,16 +486,17 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
         ctx.save()
         ctx.globalAlpha = Math.max(0, 1 - k)
         ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 2.5
+        const sz = pop.current.size
         for (let i = 0; i < 12; i++) {
           const a = (i / 12) * Math.PI * 2
-          const r0 = 8 + k * 30, r1 = 16 + k * 62
+          const r0 = (8 + k * 30) * sz, r1 = (16 + k * 62) * sz
           ctx.beginPath()
           ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0)
           ctx.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1)
           ctx.stroke()
         }
         ctx.fillStyle = `rgba(255,215,0,${0.25 * (1 - k)})`
-        ctx.beginPath(); ctx.arc(cx, cy, 30 + k * 70, 0, Math.PI * 2); ctx.fill()
+        ctx.beginPath(); ctx.arc(cx, cy, (30 + k * 70) * sz, 0, Math.PI * 2); ctx.fill()
         ctx.restore()
         if (pop.current.life <= 0) pop.current = null
       }
@@ -598,6 +627,18 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
           font-size: clamp(28px, 8vw, 48px); color: var(--neon); transform: skewX(-7deg);
           text-shadow: 0 0 30px color-mix(in srgb, var(--neon) 60%, transparent);
         }
+        .bt-hit {
+          position: absolute; top: 0; bottom: 0; width: 42%; border: none; cursor: pointer;
+          background: linear-gradient(to var(--dir, left), color-mix(in srgb, var(--neon) 12%, transparent), transparent);
+          display: flex; align-items: flex-end; justify-content: center; padding-bottom: 22px;
+          transition: background 120ms ease;
+        }
+        .bt-hit span {
+          font-family: var(--font-heading); font-weight: 900; font-size: 13px;
+          letter-spacing: .3em; color: color-mix(in srgb, var(--neon) 55%, transparent);
+        }
+        .bt-hit:active { background: color-mix(in srgb, var(--neon) 22%, transparent); }
+        .bt-hit:active span { color: var(--neon); }
         .bt-swing { font-size: 18px !important; padding: 19px 52px !important; }
         .bt-swing:active { transform: skewX(-8deg) translate(3px, 3px) scale(0.97) !important; }
         .bt-key { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #3E4A58; text-align: center; margin-top: 14px; }
@@ -632,13 +673,21 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
 
       <div className="bt-hud">
         <span className="bt-stat"><span>Pitch</span><b>{Math.min(pitchNo + (phase === 'live' ? 1 : 0), PITCHES)}/{PITCHES}</b></span>
-        <span className="bt-stat"><span>Outs</span><b style={{ color: outs > 0 ? '#FF4D4D' : undefined }}>{outs}/{OUTS}</b></span>
+        <span className="bt-stat"><span>Outs</span><b style={{ color: outs > 0 ? '#FF4D4D' : undefined }}>{outs}</b></span>
         <span className="bt-stat"><span>Contact</span><b>{contactRate}%</b></span>
         <span className="bt-stat"><span>Score</span><b style={{ color: 'var(--neon)' }}>{score}</b></span>
       </div>
 
       <div className="bt-stage">
         <canvas ref={canvasRef} className="bt-canvas" width={620} height={520} onClick={swing} />
+
+        {/* A wide target over the empty side of the field, away from the hitter */}
+        {phase === 'live' && !paused && (
+          <button className="bt-hit" onClick={swing}
+            style={batter.lefty ? { left: 0 } : { right: 0 }}>
+            <span>SWING</span>
+          </button>
+        )}
 
         {flash && (
           <div className="bt-flash">
@@ -670,7 +719,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
             {phase === 'done' ? (
               <>
                 <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.34em', textTransform: 'uppercase', color: 'var(--neon)' }}>
-                  {outs >= OUTS ? 'Three up, three down' : 'Innings over'}
+                  Ten swings
                 </p>
                 <p className="ar-num" style={{ fontSize: '58px', color: '#F5F1E8', textShadow: 'none', margin: '10px 0 2px' }}>{score}</p>
                 <p style={{ fontSize: '11px', color: '#7D8B9C', letterSpacing: '0.08em' }}>
