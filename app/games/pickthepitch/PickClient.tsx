@@ -225,11 +225,15 @@ export default function PickClient() {
     return true
   }, [balls, strikes, threeTwo])
 
-  /* A correct call never ends the at-bat — the hitter has the pitch, so he
-     fouls it off and the count holds. Only a watched pitch strikes him out. */
+  /* The count keeps ticking while you're calling — but a hitter who knows what's
+     coming never strikes out, so the count stalls at 3-2 rather than ending him. */
   const nextPitch = useCallback((isCommitted: boolean) => {
-    if (isCommitted) { runPitch(outs, true); return }
     const struckOut = advanceCount()
+    if (isCommitted) {
+      if (struckOut) { setBalls(3); setStrikes(2); setThreeTwo(true) }
+      runPitch(outs, true)
+      return
+    }
     if (!struckOut) { runPitch(outs, isCommitted); return }
 
     // Strikeout — hold on it, because otherwise it flies past
