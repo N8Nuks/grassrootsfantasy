@@ -20,7 +20,6 @@ export default function ConnectionsClient({ groups }: { groups: Group[] }) {
 
   function tap(name: string) {
     if (done) return
-    setNote('')
     setSelected(s => s.includes(name) ? s.filter(x => x !== name)
       : s.length < 4 ? [...s, name] : s)
   }
@@ -34,9 +33,13 @@ export default function ConnectionsClient({ groups }: { groups: Group[] }) {
       setSelected([])
       return
     }
-    // One away is the tell that keeps people playing
+    /* One away is the tell that keeps people playing — three of the four belong
+       together. It never says which one is wrong, and the miss still costs a life. */
     const near = groups.some(g => selected.filter(n => g.names.includes(n)).length === 3)
-    setNote(near ? 'One away' : '')
+    if (near) {
+      setNote('One away…')
+      setTimeout(() => setNote(''), 2600)
+    }
     setShake(true)
     setTimeout(() => setShake(false), 420)
     setWrong(w => w + 1)
@@ -84,7 +87,19 @@ export default function ConnectionsClient({ groups }: { groups: Group[] }) {
         .cn-lives span { font-size: 9px; font-weight: 900; letter-spacing: 0.24em; text-transform: uppercase; color: #5C6878; }
         .cn-pip { width: 11px; height: 11px; border-radius: 50%; background: var(--neon); }
         .cn-pip[data-gone="true"] { background: #ffffff14; }
-        .cn-note { font-size: 11px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; color: #FFB800; text-align: center; margin-top: 14px; min-height: 14px; }
+        .cn-toast {
+          position: fixed; left: 50%; bottom: 42px; transform: translateX(-50%);
+          background: #F5F1E8; color: #05060A; z-index: 50;
+          font-family: var(--font-heading); font-weight: 900; font-size: 14px;
+          letter-spacing: .06em; padding: 13px 26px; white-space: nowrap;
+          box-shadow: 0 10px 30px #00000090;
+          animation: cn-toast 2.6s ease forwards;
+        }
+        @keyframes cn-toast {
+          0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+          8%, 88% { opacity: 1; transform: translateX(-50%) translateY(0); }
+          100% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+        }
         .cn-end { text-align: center; padding: 28px 22px; margin-top: 20px; }
       `}</style>
 
@@ -111,7 +126,7 @@ export default function ConnectionsClient({ groups }: { groups: Group[] }) {
         </div>
       )}
 
-      <p className="cn-note">{note}</p>
+      {note && <div className="cn-toast">{note}</div>}
 
       {!done && (
         <div className="cn-bar">
