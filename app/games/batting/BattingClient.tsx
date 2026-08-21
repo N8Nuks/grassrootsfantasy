@@ -7,35 +7,50 @@ export type Legend = { name: string; titles: number; grade: string; lefty: boole
 const PITCHES = 10
 const OUTS = 3
 
+/* Each result flies its own way: over the fence into the crowd, flat to the
+   wall, one bounce and over, or through the infield. */
 const RESULTS = {
   homer:  { label: 'HOME RUN',     points: 15, colour: '#FFD700', flight: 'over' },
-  triple: { label: 'TRIPLE',       points: 10, colour: '#C6FF00', flight: 'deep' },
-  double: { label: 'DOUBLE',       points: 8,  colour: '#00F0FF', flight: 'deep' },
-  single: { label: 'SINGLE',       points: 5,  colour: '#7FE0A0', flight: 'liner' },
+  triple: { label: 'TRIPLE',       points: 10, colour: '#C6FF00', flight: 'wall' },
+  double: { label: 'DOUBLE',       points: 8,  colour: '#00F0FF', flight: 'bounce' },
+  single: { label: 'SINGLE',       points: 5,  colour: '#7FE0A0', flight: 'through' },
   foul:   { label: 'FOUL BALL',    points: 0,  colour: '#8FA0B4', flight: 'back' },
   out:    { label: 'GROUNDED OUT', points: 0,  colour: '#FF7A5C', flight: 'ground' },
   strike: { label: 'STRIKE',       points: 0,  colour: '#FF4D4D', flight: 'none' },
 } as const
 type ResultKey = keyof typeof RESULTS
 
-// The zone is the width of the plate and no wider, quartered into nine cells
-// Knees to the letters on a standing hitter — the plate sits just below it
+// Knees to the letters, no wider than the plate beneath it
 const ZONE = { x: 0.5, y: 0.755, w: 0.105, h: 0.125 }
-const SWING_MS = 300
+const FENCE_Y = 0.335          // top of the wall
+const CROWD_TOP = 0.06
+const SWING_MS = 340
+const CONTACT_AT = 0.458       // where in the swing the barrel meets the ball
+
+type Flight = { kind: string; colour: string; t: number; dur: number
+  x0: number; y0: number; x1: number; y1: number; apex: number
+  hop?: { x: number; y: number }; landed: boolean }
 
 export default function LegendsClient({ batters, pitchers }: { batters: Legend[]; pitchers: Legend[] }) {
   const [batter, setBatter] = useState<Legend>(batters[0])
   const [pitcher, setPitcher] = useState<Legend>(pitchers[0])
   const [phase, setPhase] = useState<'setup' | 'live' | 'done'>('setup')
+  const [paused, setPaused] = useState(false)
 
   const [pitchNo, setPitchNo] = useState(0)
   const [outs, setOuts] = useState(0)
   const [score, setScore] = useState(0)
-  const [log, setLog] = useState<{ key: ResultKey; dist: number; off: number; angle: number }[]>([])
+  const [log, setLog] = useState<{ key: ResultKey; dist: number; off: number }[]>([])
   const [flash, setFlash] = useState<{ key: ResultKey; dist: number; off: number } | null>(null)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const raf = useRef(0)
+
+  // Clock that stops when paused, so nothing advances behind the overlay
+  const pauseOffset = useRef(0)
+  const pausedAt = useRef(0)
+  const clock = (now: number) => now - pauseOffset.current
+
   const t = useRef(0)
   const dur = useRef(1400)
   const breakX = useRef(0)
@@ -45,16 +60,38 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
   const settled = useRef(false)
   const swingAt = useRef(0)
   const contact = useRef(false)
-  const ball = useRef<{ x: number; y: number; vx: number; vy: number; g: number } | null>(null)
+  const ball = useRef<Flight | null>(null)
+  const pop = useRef<{ x: number; y: number; life: number } | null>(null)
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+  const after = (ms: number, fn: () => void) => { timers.current.push(setTimeout(fn, ms)) }
+  const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = [] }
+  useEffect(() => clearTimers, [])
 
-  const maxBatTitles = Math.max(...batters.map(b => b.titles), 1)
-  const maxPitTitles = Math.max(...pitchers.map(p => p.titles), 1)
-  const heat = pitcher.titles / maxPitTitles
-  const eye = batter.titles / maxBatTitles
+  // Crowd, generated once so it doesn't shimmer between frames
+  const crowd = useRef<{ x: number; y: number; r: number; c: string }[]>([])
+  if (crowd.current.length === 0) {
+    const shirts = ['#2B3A55', '#4A2F3D', '#2F4A38', '#463A22', '#3A2F4A', '#514238', '#28303F']
+    for (let row = 0; row < 7; row++) {
+      const y = CROWD_TOP + row * 0.0345
+      for (let i = 0; i < 46; i++) {
+        crowd.current.push({
+          x: (i / 46) + (row % 2 ? 0.011 : 0) + (Math.random() - 0.5) * 0.008,
+          y: y + (Math.random() - 0.5) * 0.006,
+          r: 0.0088 + Math.random() * 0.0035,
+          c: shirts[Math.floor(Math.random() * shirts.length)],
+        })
+      }
+    }
+  }
+
+  const maxBat = Math.max(...batters.map(b => b.titles), 1)
+  const maxPit = Math.max(...pitchers.map(p => p.titles), 1)
+  const heat = pitcher.titles / maxPit
+  const eye = batter.titles / maxBat
   const windowSize = 0.058 + eye * 0.055
 
   const beginPitch = useCallback(() => {
-    dur.current = 1520 - heat * 620 + (Math.random() * 240 - 120)
+    dur.current = 1520 - heat * 600 + (Math.random() * 240 - 120)
     breakX.current = (Math.random() * 2 - 1) * (0.14 + heat * 0.3)
     t.current = -0.55
     swung.current = false
@@ -62,45 +99,58 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     contact.current = false
     swingAt.current = 0
     ball.current = null
-    started.current = performance.now()
+    pop.current = null
+    started.current = clock(performance.now())
   }, [heat])
 
-  const finish = useCallback((key: ResultKey, dist: number, off: number, angle: number) => {
+  const finish = useCallback((key: ResultKey, dist: number, off: number) => {
     if (settled.current) return
     settled.current = true
     setFlash({ key, dist, off })
     setScore(s => s + RESULTS[key].points)
-    setLog(l => [...l, { key, dist, off, angle }])
+    setLog(l => [...l, { key, dist, off }])
     const isOut = key === 'strike' || key === 'out'
     const nextOuts = outs + (isOut ? 1 : 0)
     const nextPitch = pitchNo + 1
     if (isOut) setOuts(nextOuts)
     setPitchNo(nextPitch)
-    setTimeout(() => {
+    after(2100, () => {
       setFlash(null)
       if (nextOuts >= OUTS || nextPitch >= PITCHES) setPhase('done')
       else beginPitch()
-    }, 1700)
+    })
   }, [outs, pitchNo, beginPitch])
 
-  function launch(kind: string, angle: number) {
+  /* Flight paths, aimed rather than simulated — a home run has to clear the
+     wall and land in the crowd, a triple has to die against it. */
+  function launch(kind: string, pull: number, colour: string) {
     contact.current = true
-    const base = { x: ZONE.x, y: ZONE.y }
-    if (kind === 'over')        ball.current = { ...base, vx: angle * 0.8, vy: -1.4, g: 0.0118 }
-    else if (kind === 'deep')   ball.current = { ...base, vx: angle * 1.1, vy: -1.02, g: 0.0185 }
-    else if (kind === 'liner')  ball.current = { ...base, vx: angle * 1.4, vy: -0.6, g: 0.021 }
-    else if (kind === 'ground') ball.current = { ...base, vx: angle * 1.7, vy: -0.14, g: 0.028 }
-    else if (kind === 'back')   ball.current = { ...base, vx: (angle > 0 ? 1 : -1) * 0.55, vy: -1.55, g: 0.031 }
+    const spread = pull * 0.34
+    const base = { kind, colour, t: 0, landed: false, x0: ZONE.x, y0: ZONE.y }
+    if (kind === 'over') {
+      ball.current = { ...base, x1: 0.5 + spread * 1.5, y1: CROWD_TOP + 0.09, apex: 0.30, dur: 1500 }
+    } else if (kind === 'wall') {
+      ball.current = { ...base, x1: 0.5 + spread * 1.7, y1: FENCE_Y + 0.045, apex: 0.10, dur: 950 }
+    } else if (kind === 'bounce') {
+      ball.current = { ...base, x1: 0.5 + spread * 1.5, y1: FENCE_Y - 0.02, apex: 0.16, dur: 1250,
+        hop: { x: 0.5 + spread * 0.9, y: 0.545 } }
+    } else if (kind === 'through') {
+      ball.current = { ...base, x1: 0.5 + spread * 2.1, y1: 0.50, apex: 0.035, dur: 780 }
+    } else if (kind === 'back') {
+      ball.current = { ...base, x1: 0.5 + (pull > 0 ? 0.7 : -0.7), y1: 1.15, apex: 0.42, dur: 1000 }
+    } else {
+      ball.current = { ...base, x1: 0.5 + spread * 2.4, y1: 0.80, apex: 0.02, dur: 900 }
+    }
   }
 
   const swing = useCallback(() => {
-    if (phase !== 'live' || swung.current || settled.current) return
+    if (phase !== 'live' || paused || swung.current || settled.current) return
     swung.current = true
-    swingAt.current = performance.now()
+    swingAt.current = clock(performance.now())
     const off = t.current - 1
     const abs = Math.abs(off)
-    if (t.current < 0.5) { setTimeout(() => finish('strike', 0, off, 0), 320); return }
-    const angle = Math.max(-1, Math.min(1, -off * 5))
+    if (t.current < 0.5) { after(340, () => finish('strike', 0, off)); return }
+    const pull = Math.max(-1, Math.min(1, -off * 5))
 
     let key: ResultKey
     let dist = 0
@@ -111,85 +161,121 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     else if (abs <= windowSize * 3)   { key = 'foul'; dist = 0 }
     else { key = 'out'; dist = 12 + Math.round(Math.random() * 10) }
 
-    setTimeout(() => { launch(RESULTS[key].flight, angle); finish(key, dist, off, angle) }, SWING_MS * 0.38)
-  }, [phase, windowSize, batter.titles, finish])
+    after(SWING_MS * CONTACT_AT, () => {
+      launch(RESULTS[key].flight, pull, RESULTS[key].colour)
+      finish(key, dist, off)
+    })
+  }, [phase, paused, windowSize, batter.titles, finish])
 
-  /* ── The batter ──
-     The whole swing turns about the waist, not the shoulders. Hands stay in
-     front of the chest and the barrel whips round behind them, so from behind
-     the pitcher the bat sweeps level across the frame rather than chopping. */
+  /* ── The swing ──
+     The bat rotates about the spine through 240 degrees: loaded behind the
+     head, round through the zone, and wrapped across the front shoulder. Seen
+     from behind the plate that circle is foreshortened, so the barrel traces a
+     flat ellipse — level through contact, never chopping down. */
   function drawBatter(ctx: CanvasRenderingContext2D, W: number, H: number, now: number) {
-    // A lefty stands the other side of the plate and swings the other way
     const side = batter.lefty ? -1 : 1
-    const bx = W * (ZONE.x - 0.155 * side)
-    const waistY = H * 0.845             // the fulcrum, at the waist
+    const px = W * (ZONE.x - 0.155 * side)     // spine
+    const py = H * 0.845                        // waist, the fulcrum
+    const R = W * 0.125                         // barrel radius
+    const SQUASH = 0.38                         // how flat the circle looks
+
     let s = 0
     if (swung.current && swingAt.current) s = Math.min(1, (now - swingAt.current) / SWING_MS)
-    const e = s < 0.5 ? 2 * s * s : 1 - Math.pow(-2 * s + 2, 2) / 2
+    const p = s < 0.5 ? 2 * s * s : 1 - Math.pow(-2 * s + 2, 2) / 2
+
+    // Compass angle in the horizontal plane: 0 points at the pitcher, 90 at
+    // the plate. Runs 200 down to -40 — behind, through, and round.
+    const phi = ((200 - 240 * p) * Math.PI) / 180
+    // The bat is up at the load, level at contact, up again on the follow
+    const lift = p < 0.5
+      ? H * 0.085 * Math.cos(p * Math.PI)
+      : H * 0.068 * -Math.cos(p * Math.PI)
+
+    const tipX = px + Math.sin(phi) * R * side
+    const tipY = py - Math.cos(phi) * R * SQUASH - lift
+    const handR = R * 0.34
+    const handX = px + Math.sin(phi) * handR * side
+    const handY = py - Math.cos(phi) * handR * SQUASH - lift * 0.55
 
     const ink = '#0A0C10'
     const kit = '#B47CFF'
-    const turn = -1.05 + e * 2.4         // radians the trunk rotates about the waist
+    const turn = -0.95 + p * 2.1
 
+    // Shadow on the dirt
     ctx.save()
-    ctx.translate(bx, waistY)
+    ctx.fillStyle = '#00000050'
+    ctx.beginPath(); ctx.ellipse(px, H * 0.955, W * 0.055, H * 0.014, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.restore()
+
+    // Legs — back foot pivots up onto the toe, front leg braces
+    ctx.save()
+    ctx.translate(px, py)
     ctx.scale(side, 1)
+    ctx.strokeStyle = ink; ctx.lineWidth = 11; ctx.lineCap = 'round'
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-19 - p * 4, H * 0.108); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(20 + p * 9, H * 0.108); ctx.stroke()
+    // Hips open through the turn
+    ctx.strokeStyle = kit; ctx.lineWidth = 11
+    ctx.beginPath(); ctx.moveTo(-9, 0); ctx.lineTo(9, 0); ctx.stroke()
 
-    // Legs below the fulcrum — back foot pivots, front leg braces
-    ctx.strokeStyle = ink; ctx.lineWidth = 10; ctx.lineCap = 'round'
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-17 - e * 4, H * 0.115); ctx.stroke()
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(19 + e * 10, H * 0.115); ctx.stroke()
-
-    // Everything above the waist rotates as one
+    // Trunk turns about the waist; the head counter-rotates and stays level
     ctx.save()
-    ctx.rotate(turn * 0.36)
-    ctx.strokeStyle = kit; ctx.lineWidth = 17
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -H * 0.085); ctx.stroke()
-    // Head stays back and level — a hitter watches the ball in
+    ctx.rotate(turn * 0.34)
+    ctx.strokeStyle = kit; ctx.lineWidth = 18
+    ctx.beginPath(); ctx.moveTo(0, -2); ctx.lineTo(0, -H * 0.085); ctx.stroke()
     ctx.save()
-    ctx.rotate(-turn * 0.32)
+    ctx.rotate(-turn * 0.34)
     ctx.fillStyle = ink
-    ctx.beginPath(); ctx.arc(0, -H * 0.115, 11, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.arc(0, -H * 0.115, 12, 0, Math.PI * 2); ctx.fill()
     ctx.fillStyle = kit
-    ctx.beginPath(); ctx.arc(0, -H * 0.12, 11, Math.PI, 0); ctx.fill()
-    ctx.fillRect(0, -H * 0.128, 15, 4)
+    ctx.beginPath(); ctx.arc(0, -H * 0.12, 12, Math.PI, 0); ctx.fill()
+    ctx.fillRect(0, -H * 0.129, 17, 4)
     ctx.restore()
     ctx.restore()
-
-    // The bat pivots about the waist, hands riding just ahead of the barrel
-    ctx.save()
-    ctx.rotate(turn)
-    const handX = 26, barrelX = 88
-    ctx.strokeStyle = ink; ctx.lineWidth = 7
-    ctx.beginPath(); ctx.moveTo(0, -H * 0.07); ctx.lineTo(handX, -6); ctx.stroke()
-    const grain = ctx.createLinearGradient(handX, 0, barrelX, 0)
-    grain.addColorStop(0, '#6E4F2C'); grain.addColorStop(1, '#D9B36A')
-    ctx.strokeStyle = grain; ctx.lineCap = 'round'
-    ctx.lineWidth = 6
-    ctx.beginPath(); ctx.moveTo(handX, -6); ctx.lineTo(barrelX - 18, -6); ctx.stroke()
-    ctx.lineWidth = 11
-    ctx.beginPath(); ctx.moveTo(barrelX - 20, -6); ctx.lineTo(barrelX, -6); ctx.stroke()
     ctx.restore()
 
-    // Barrel blur, level through the zone
-    if (s > 0.12 && s < 0.88) {
+    // Barrel trail through the zone
+    if (s > 0.08 && s < 0.94) {
       ctx.save()
-      ctx.strokeStyle = `rgba(217,179,106,${0.34 * (1 - Math.abs(s - 0.5) * 2)})`
-      ctx.lineWidth = 20
-      ctx.beginPath(); ctx.arc(0, -6, 84, turn - 1.0, turn, false); ctx.stroke()
+      for (let g = 1; g <= 6; g++) {
+        const gp = Math.max(0, p - g * 0.045)
+        const gphi = ((200 - 240 * gp) * Math.PI) / 180
+        const glift = gp < 0.5 ? H * 0.085 * Math.cos(gp * Math.PI) : H * 0.068 * -Math.cos(gp * Math.PI)
+        ctx.fillStyle = `rgba(217,179,106,${0.16 - g * 0.022})`
+        ctx.beginPath()
+        ctx.arc(px + Math.sin(gphi) * R * side, py - Math.cos(gphi) * R * SQUASH - glift, 9, 0, Math.PI * 2)
+        ctx.fill()
+      }
       ctx.restore()
     }
-    ctx.restore()
 
-    if (contact.current && s > 0.3 && s < 0.72) {
-      const px = W * ZONE.x, py = H * ZONE.y
-      ctx.save(); ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 3
-      const r = 12 + (s - 0.3) * 70
-      for (let i = 0; i < 7; i++) {
-        const a = (i / 7) * Math.PI * 2 + s * 3
+    // Arms out to the hands
+    ctx.strokeStyle = ink; ctx.lineWidth = 8; ctx.lineCap = 'round'
+    ctx.beginPath(); ctx.moveTo(px, py - H * 0.075); ctx.lineTo(handX, handY); ctx.stroke()
+
+    // The bat itself — handle to barrel along the same line
+    const grain = ctx.createLinearGradient(handX, handY, tipX, tipY)
+    grain.addColorStop(0, '#6E4F2C'); grain.addColorStop(0.7, '#B58A4F'); grain.addColorStop(1, '#E4C480')
+    ctx.strokeStyle = grain; ctx.lineWidth = 6
+    ctx.beginPath(); ctx.moveTo(handX, handY); ctx.lineTo(tipX, tipY); ctx.stroke()
+    ctx.lineWidth = 11
+    ctx.beginPath()
+    ctx.moveTo(handX + (tipX - handX) * 0.74, handY + (tipY - handY) * 0.74)
+    ctx.lineTo(tipX, tipY)
+    ctx.stroke()
+
+    // Contact spark
+    if (contact.current && s > CONTACT_AT - 0.12 && s < CONTACT_AT + 0.2) {
+      const cx = W * ZONE.x, cy = H * ZONE.y
+      const k = (s - (CONTACT_AT - 0.12)) / 0.32
+      ctx.save()
+      ctx.strokeStyle = `rgba(255,215,0,${1 - k})`; ctx.lineWidth = 3
+      const r = 14 + k * 64
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + k * 2
         ctx.beginPath()
-        ctx.moveTo(px + Math.cos(a) * r * 0.4, py + Math.sin(a) * r * 0.4)
-        ctx.lineTo(px + Math.cos(a) * r, py + Math.sin(a) * r)
+        ctx.moveTo(cx + Math.cos(a) * r * 0.35, cy + Math.sin(a) * r * 0.35)
+        ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r)
         ctx.stroke()
       }
       ctx.restore()
@@ -197,53 +283,92 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
   }
 
   function drawPitcher(ctx: CanvasRenderingContext2D, W: number, H: number) {
-    const px = W * 0.5, py = H * 0.42, armR = H * 0.075
+    const px = W * 0.5, py = H * 0.47, armR = H * 0.06
     const w = Math.max(0, Math.min(1, windUp.current))
     const angle = -Math.PI / 2 + w * Math.PI * 2
+    const s = pitcher.lefty ? -1 : 1
     ctx.save()
+    ctx.fillStyle = '#00000045'
+    ctx.beginPath(); ctx.ellipse(px, py + H * 0.055, W * 0.035, H * 0.01, 0, 0, Math.PI * 2); ctx.fill()
     ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 6; ctx.lineCap = 'round'
-    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px - 10, py + H * 0.06); ctx.stroke()
-    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + 11 + w * 14, py + H * 0.06); ctx.stroke()
-    ctx.strokeStyle = '#5C3E8E'; ctx.lineWidth = 11
-    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py - H * 0.05); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px - 9 * s, py + H * 0.05); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + (10 + w * 13) * s, py + H * 0.05); ctx.stroke()
+    ctx.strokeStyle = '#5C3E8E'; ctx.lineWidth = 10
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py - H * 0.042); ctx.stroke()
     ctx.fillStyle = '#0A0C10'
-    ctx.beginPath(); ctx.arc(px, py - H * 0.065, 8, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.arc(px, py - H * 0.055, 7, 0, Math.PI * 2); ctx.fill()
     ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 5
     ctx.beginPath()
-    ctx.moveTo(px, py - H * 0.045)
-    ctx.lineTo(px + Math.cos(angle) * armR, py - H * 0.045 + Math.sin(angle) * armR)
+    ctx.moveTo(px, py - H * 0.038)
+    ctx.lineTo(px + Math.cos(angle) * armR * s, py - H * 0.038 + Math.sin(angle) * armR)
     ctx.stroke()
     ctx.restore()
   }
 
-  const draw = useCallback((now: number) => {
+  const draw = useCallback((raw: number) => {
     const cv = canvasRef.current
     if (!cv) return
     const ctx = cv.getContext('2d')
     if (!ctx) return
     const W = cv.width, H = cv.height
+    const now = clock(raw)
 
+    // ── Night sky and floodlight haze ──
     const sky = ctx.createLinearGradient(0, 0, 0, H)
-    sky.addColorStop(0, '#0B0D18'); sky.addColorStop(0.32, '#101A2E')
-    sky.addColorStop(0.33, '#12301C'); sky.addColorStop(1, '#0A1A10')
+    sky.addColorStop(0, '#080A14'); sky.addColorStop(0.28, '#0E1626')
+    sky.addColorStop(0.44, '#12301C'); sky.addColorStop(1, '#0A1A10')
     ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H)
-    const pool = ctx.createRadialGradient(W * 0.5, H * 0.12, 10, W * 0.5, H * 0.12, W * 0.75)
-    pool.addColorStop(0, '#B47CFF1C'); pool.addColorStop(1, 'transparent')
+    const pool = ctx.createRadialGradient(W * 0.5, 0, 10, W * 0.5, 0, W * 0.8)
+    pool.addColorStop(0, '#B47CFF22'); pool.addColorStop(1, 'transparent')
     ctx.fillStyle = pool; ctx.fillRect(0, 0, W, H)
 
-    ctx.fillStyle = '#0E1626'; ctx.fillRect(0, H * 0.30, W, H * 0.035)
-    ctx.fillStyle = '#B47CFF45'; ctx.fillRect(0, H * 0.30, W, 2)
-    ctx.strokeStyle = '#ffffff14'; ctx.lineWidth = 2
+    // ── The crowd, banked above the wall ──
+    ctx.save()
+    ctx.fillStyle = '#0A0E18'
+    ctx.fillRect(0, 0, W, H * (FENCE_Y - 0.005))
+    for (const c of crowd.current) {
+      ctx.fillStyle = c.c
+      ctx.beginPath(); ctx.arc(c.x * W, c.y * H, c.r * W, 0, Math.PI * 2); ctx.fill()
+      ctx.fillStyle = '#00000055'
+      ctx.beginPath(); ctx.arc(c.x * W, (c.y - 0.011) * H, c.r * W * 0.58, 0, Math.PI * 2); ctx.fill()
+    }
+    // Haze over the stand so it sits back
+    const dim = ctx.createLinearGradient(0, 0, 0, H * FENCE_Y)
+    dim.addColorStop(0, '#050810CC'); dim.addColorStop(1, '#0508101A')
+    ctx.fillStyle = dim; ctx.fillRect(0, 0, W, H * FENCE_Y)
+    ctx.restore()
+
+    // ── The wall, with the name running along it ──
+    const fh = H * 0.085
+    const fy = H * FENCE_Y
+    ctx.fillStyle = '#0C1420'; ctx.fillRect(0, fy, W, fh)
+    ctx.fillStyle = '#B47CFF50'; ctx.fillRect(0, fy, W, 2)
+    ctx.fillStyle = '#ffffff10'; ctx.fillRect(0, fy + fh - 2, W, 2)
+    ctx.save()
+    ctx.beginPath(); ctx.rect(0, fy, W, fh); ctx.clip()
+    ctx.font = `900 ${Math.round(fh * 0.42)}px var(--font-heading), sans-serif`
+    ctx.textBaseline = 'middle'
+    const word = 'GRASSROOTS FANTASY   ·   '
+    const wordW = ctx.measureText(word).width
+    const scroll = (now / 26) % wordW
+    ctx.fillStyle = '#B47CFF30'
+    for (let x = -wordW - scroll; x < W + wordW; x += wordW) {
+      ctx.fillText(word, x, fy + fh * 0.5)
+    }
+    ctx.restore()
+
+    // ── Outfield, foul lines, infield dirt ──
+    ctx.strokeStyle = '#ffffff12'; ctx.lineWidth = 2
     ctx.beginPath()
-    ctx.moveTo(W * ZONE.x, H * 0.92); ctx.lineTo(W * 0.02, H * 0.33)
-    ctx.moveTo(W * ZONE.x, H * 0.92); ctx.lineTo(W * 0.98, H * 0.33)
+    ctx.moveTo(W * ZONE.x, H * 0.93); ctx.lineTo(W * 0.01, fy + fh)
+    ctx.moveTo(W * ZONE.x, H * 0.93); ctx.lineTo(W * 0.99, fy + fh)
     ctx.stroke()
     ctx.fillStyle = '#2A1D14'
-    ctx.beginPath(); ctx.ellipse(W / 2, H * 1.08, W * 0.55, H * 0.36, 0, Math.PI, 0); ctx.fill()
+    ctx.beginPath(); ctx.ellipse(W / 2, H * 1.1, W * 0.56, H * 0.34, 0, Math.PI, 0); ctx.fill()
     ctx.fillStyle = '#3A2A1E'
-    ctx.beginPath(); ctx.ellipse(W / 2, H * 0.455, W * 0.07, H * 0.022, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.ellipse(W / 2, H * 0.5, W * 0.07, H * 0.021, 0, 0, Math.PI * 2); ctx.fill()
 
-    // Home plate, drawn to the same width as the zone above it
+    // Plate, drawn to the same width as the zone above it
     const pw = W * ZONE.w
     ctx.fillStyle = '#F5F1E8'
     ctx.beginPath()
@@ -251,13 +376,13 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.lineTo(W / 2 + pw / 2, H * 0.925); ctx.lineTo(W / 2, H * 0.944)
     ctx.lineTo(W / 2 - pw / 2, H * 0.925); ctx.closePath(); ctx.fill()
 
-    // Nine-cell zone
+    // ── The nine-cell zone ──
     const zx = W * (ZONE.x - ZONE.w / 2), zy = H * (ZONE.y - ZONE.h / 2)
     const zw = W * ZONE.w, zh = H * ZONE.h
     const near = phase === 'live' && !settled.current ? Math.min(Math.max(t.current, 0), 1) : 0
-    ctx.strokeStyle = `rgba(180,124,255,${0.28 + near * 0.55})`; ctx.lineWidth = 2
+    ctx.strokeStyle = `rgba(180,124,255,${0.26 + near * 0.55})`; ctx.lineWidth = 2
     ctx.strokeRect(zx, zy, zw, zh)
-    ctx.strokeStyle = `rgba(180,124,255,${0.12 + near * 0.24})`; ctx.lineWidth = 1
+    ctx.strokeStyle = `rgba(180,124,255,${0.1 + near * 0.22})`; ctx.lineWidth = 1
     ctx.beginPath()
     for (let i = 1; i < 3; i++) {
       ctx.moveTo(zx + (zw * i) / 3, zy); ctx.lineTo(zx + (zw * i) / 3, zy + zh)
@@ -266,32 +391,79 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.stroke()
 
     if (phase === 'live') {
-      if (!swung.current && !settled.current && started.current) {
+      if (!paused && !swung.current && !settled.current && started.current) {
         t.current = -0.55 + ((now - started.current) / dur.current) * 1.55
         windUp.current = Math.min(1, Math.max(0, (t.current + 0.55) / 0.55))
-        if (t.current >= 1.14) finish('strike', 0, t.current - 1, 0)
+        if (t.current >= 1.14) finish('strike', 0, t.current - 1)
       }
       drawPitcher(ctx, W, H)
 
+      // ── The struck ball ──
       const b = ball.current
       if (b) {
-        b.x += b.vx * 0.011
-        b.y += b.vy * 0.013
-        b.vy += b.g
-        if (b.y > 0.915 && b.vy > 0) { b.y = 0.915; b.vy *= -0.4; b.vx *= 0.7 }
+        if (!paused) b.t = Math.min(1, b.t + 16 / b.dur)
+        const k = b.t
+        let x: number, y: number
+        if (b.hop) {
+          // One bounce in the outfield, then up and over the wall
+          if (k < 0.55) {
+            const k1 = k / 0.55
+            x = b.x0 + (b.hop.x - b.x0) * k1
+            y = b.y0 + (b.hop.y - b.y0) * k1 - Math.sin(k1 * Math.PI) * b.apex
+          } else {
+            const k2 = (k - 0.55) / 0.45
+            x = b.hop.x + (b.x1 - b.hop.x) * k2
+            y = b.hop.y + (b.y1 - b.hop.y) * k2 - Math.sin(k2 * Math.PI) * b.apex * 0.7
+          }
+        } else {
+          x = b.x0 + (b.x1 - b.x0) * k
+          y = b.y0 + (b.y1 - b.y0) * k - Math.sin(k * Math.PI) * b.apex
+        }
+
+        // Shrinks as it goes out, and a home run pops the crowd on landing
+        const r = Math.max(2.5, 9 - (0.9 - y) * 7)
         ctx.save()
-        ctx.shadowColor = '#E8FF3D'; ctx.shadowBlur = 18
+        ctx.shadowColor = '#E8FF3D'; ctx.shadowBlur = 16
         ctx.fillStyle = '#E8FF3D'
-        const r = Math.max(3, 8 - (0.9 - b.y) * 6)
-        ctx.beginPath(); ctx.arc(b.x * W, b.y * H, r, 0, Math.PI * 2); ctx.fill()
+        ctx.beginPath(); ctx.arc(x * W, y * H, r, 0, Math.PI * 2); ctx.fill()
         ctx.restore()
-      } else if (!contact.current && t.current > 0 && t.current < 1.16) {
+
+        if (k >= 1 && !b.landed) {
+          b.landed = true
+          if (b.kind === 'over') pop.current = { x, y, life: 700 }
+        }
+      }
+
+      // Crowd erupting where the ball landed
+      if (pop.current) {
+        if (!paused) pop.current.life -= 16
+        const k = 1 - pop.current.life / 700
+        const cx = pop.current.x * W, cy = pop.current.y * H
+        ctx.save()
+        ctx.globalAlpha = Math.max(0, 1 - k)
+        ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 2.5
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * Math.PI * 2
+          const r0 = 8 + k * 30, r1 = 16 + k * 62
+          ctx.beginPath()
+          ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0)
+          ctx.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1)
+          ctx.stroke()
+        }
+        ctx.fillStyle = `rgba(255,215,0,${0.25 * (1 - k)})`
+        ctx.beginPath(); ctx.arc(cx, cy, 30 + k * 70, 0, Math.PI * 2); ctx.fill()
+        ctx.restore()
+        if (pop.current.life <= 0) pop.current = null
+      }
+
+      // ── The pitch on its way in ──
+      if (!contact.current && t.current > 0 && t.current < 1.16) {
         const p = t.current
         const x = W * ZONE.x + breakX.current * W * 0.12 * p * p
-        const y = H * 0.455 + (H * ZONE.y - H * 0.455) * (p * p * 0.7 + p * 0.3)
+        const y = H * 0.5 + (H * ZONE.y - H * 0.5) * (p * p * 0.7 + p * 0.3)
         const r = 3.5 + p * p * 9
         ctx.save()
-        ctx.shadowColor = '#E8FF3D'; ctx.shadowBlur = 12 + p * 16
+        ctx.shadowColor = '#E8FF3D'; ctx.shadowBlur = 12 + p * 18
         ctx.fillStyle = '#E8FF3D'
         ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill()
         ctx.restore()
@@ -302,7 +474,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
 
     drawBatter(ctx, W, H, now)
     raf.current = requestAnimationFrame(draw)
-  }, [phase, finish])
+  }, [phase, paused, finish])
 
   useEffect(() => {
     raf.current = requestAnimationFrame(draw)
@@ -311,15 +483,26 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.code === 'KeyP') { e.preventDefault(); togglePause(); return }
       if (e.code !== 'Space') return
       e.preventDefault(); swing()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [swing])
+  })
+
+  function togglePause() {
+    if (phase !== 'live') return
+    setPaused(p => {
+      if (p) { pauseOffset.current += performance.now() - pausedAt.current; return false }
+      pausedAt.current = performance.now(); return true
+    })
+  }
 
   function start() {
-    setPitchNo(0); setOuts(0); setScore(0); setLog([]); setFlash(null)
+    clearTimers()
+    setPitchNo(0); setOuts(0); setScore(0); setLog([]); setFlash(null); setPaused(false)
+    pauseOffset.current = 0
     setPhase('live'); beginPitch()
   }
 
@@ -335,11 +518,9 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
   function Card({ p, on, onPick, max }: { p: Legend; on: boolean; onPick: () => void; max: number }) {
     return (
       <button className="bt-pick" data-on={on} onClick={onPick}>
-        <span className="bt-face">
-          <span className="bt-crest">{p.titles}</span>
-        </span>
+        <span className="bt-face"><span className="bt-crest">{p.titles}</span></span>
         <span className="bt-pn">{caps(p.name)}</span>
-        <span className="bt-pm">{p.titles} title{p.titles === 1 ? '' : 's'} · {p.grade}</span>
+        <span className="bt-pm">{p.grade} · {p.lefty ? 'LHB' : 'RHB'}</span>
         <span className="bt-bar"><i style={{ width: `${Math.round((p.titles / max) * 100)}%` }} /></span>
       </button>
     )
@@ -353,17 +534,17 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
         .bt-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
         .bt-strip::-webkit-scrollbar { display: none; }
         .bt-pick {
-          flex: 0 0 auto; width: 104px; cursor: pointer; padding: 0 0 10px; text-align: center;
-          background: linear-gradient(160deg, #0C0F16 0%, #07080D 100%);
+          flex: 0 0 auto; width: 106px; cursor: pointer; padding: 0 0 10px; text-align: center;
+          background: linear-gradient(160deg, #0F1018 0%, #07080D 100%);
           border: 1px solid #ffffff14; transition: border-color 150ms ease, transform 150ms ease;
         }
         .bt-pick:hover { transform: translateY(-3px); border-color: #ffffff35; }
-        .bt-pick[data-on="true"] { border-color: var(--neon); box-shadow: 0 0 20px color-mix(in srgb, var(--neon) 40%, transparent); }
-        .bt-face { height: 58px; display: flex; align-items: center; justify-content: center;
-          background: linear-gradient(180deg, color-mix(in srgb, var(--neon) 18%, transparent), transparent); }
-        .bt-crest { font-family: var(--font-heading); font-weight: 900; font-size: 30px; color: var(--neon); text-shadow: 0 0 18px color-mix(in srgb, var(--neon) 60%, transparent); }
+        .bt-pick[data-on="true"] { border-color: var(--neon); box-shadow: 0 0 22px color-mix(in srgb, var(--neon) 42%, transparent); }
+        .bt-face { height: 60px; display: flex; align-items: center; justify-content: center;
+          background: linear-gradient(180deg, color-mix(in srgb, var(--neon) 20%, transparent), transparent); }
+        .bt-crest { font-family: var(--font-heading); font-weight: 900; font-size: 32px; color: var(--neon); text-shadow: 0 0 20px color-mix(in srgb, var(--neon) 65%, transparent); }
         .bt-pn { font-family: var(--font-heading); font-weight: 900; font-size: 11px; color: #F5F1E8; margin-top: 8px; padding: 0 5px; line-height: 1.15; display: block; }
-        .bt-pm { font-size: 9px; color: #5C6878; margin-top: 3px; display: block; }
+        .bt-pm { font-size: 9px; color: #5C6878; margin-top: 3px; display: block; letter-spacing: .1em; }
         .bt-bar { height: 3px; background: #ffffff12; margin: 6px 8px 0; display: block; }
         .bt-bar i { display: block; height: 100%; background: var(--neon); }
 
@@ -395,6 +576,11 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
           align-items: center; justify-content: center; gap: 8px; text-align: center;
           background: #05060Aee; padding: 24px;
         }
+        .bt-paused {
+          font-family: var(--font-heading); font-weight: 900; text-transform: uppercase;
+          font-size: clamp(28px, 8vw, 48px); color: var(--neon); transform: skewX(-7deg);
+          text-shadow: 0 0 30px color-mix(in srgb, var(--neon) 60%, transparent);
+        }
         .bt-key { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #3E4A58; text-align: center; margin-top: 14px; }
         .bt-tape { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 16px; }
         .bt-dot { width: 26px; height: 5px; background: #ffffff10; }
@@ -411,14 +597,14 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
           <p className="bt-lbl">In the box · most batting titles</p>
           <div className="bt-strip">
             {batters.map(b => (
-              <Card key={b.name + b.grade} p={b} max={maxBatTitles}
+              <Card key={b.name + b.grade} p={b} max={maxBat}
                 on={batter.name === b.name} onPick={() => setBatter(b)} />
             ))}
           </div>
           <p className="bt-lbl">On the mound · most pitching titles</p>
           <div className="bt-strip">
             {pitchers.map(p => (
-              <Card key={p.name + p.grade} p={p} max={maxPitTitles}
+              <Card key={p.name + p.grade} p={p} max={maxPit}
                 on={pitcher.name === p.name} onPick={() => setPitcher(p)} />
             ))}
           </div>
@@ -433,7 +619,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       </div>
 
       <div className="bt-stage">
-        <canvas ref={canvasRef} className="bt-canvas" width={600} height={460} onClick={swing} />
+        <canvas ref={canvasRef} className="bt-canvas" width={620} height={520} onClick={swing} />
 
         {flash && (
           <div className="bt-flash">
@@ -450,6 +636,13 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
                 <span className="bt-tlbl"><span>Early</span><span>On it</span><span>Late</span></span>
               </>
             )}
+          </div>
+        )}
+
+        {phase === 'live' && paused && (
+          <div className="bt-overlay">
+            <p className="bt-paused">Paused</p>
+            <button className="ar-btn" onClick={togglePause} style={{ marginTop: '14px' }}><span>Resume</span></button>
           </div>
         )}
 
@@ -484,7 +677,16 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
         )}
       </div>
 
-      <p className="bt-key">Tap the field or hit space to swing</p>
+      {phase === 'live' && !paused && (
+        <div style={{ textAlign: 'center', marginTop: '14px' }}>
+          <button className="ar-btn" onClick={togglePause}
+            style={{ background: 'transparent', color: 'var(--neon)', border: '1px solid var(--neon)', boxShadow: 'none' }}>
+            <span>Pause</span>
+          </button>
+        </div>
+      )}
+
+      <p className="bt-key">Tap the field or hit space to swing · P to pause</p>
 
       {log.length > 0 && (
         <div className="bt-tape">
