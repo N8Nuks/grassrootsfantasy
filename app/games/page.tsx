@@ -165,6 +165,13 @@ export default function Games() {
         .gm-tile[data-featured="true"] .gm-tag { animation: gm-flick 2.6s steps(1) infinite; }
         @keyframes gm-flick { 0%, 88%, 100% { opacity: 1; } 90% { opacity: 0.45; } 94% { opacity: 1; } 96% { opacity: 0.6; } }
         .gm-tile[data-featured="true"] .gm-name { color: var(--neon); text-shadow: 0 0 18px #FFD40060; }
+        /* The 12 runs the same colours as the border it sits inside */
+        .gm-tile[data-featured="true"] .gm-n {
+          -webkit-text-stroke: 0;
+          background: conic-gradient(from var(--spin), var(--neon), #FF2D95, var(--neon), #00F0FF, var(--neon));
+          -webkit-background-clip: text; background-clip: text;
+          color: transparent; opacity: 0.55;
+        }
 
         @media (prefers-reduced-motion: reduce) {
           .gm-flood, .gm-title::before, .gm-title::after { animation: none; }
