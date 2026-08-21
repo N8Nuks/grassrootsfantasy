@@ -177,6 +177,7 @@ export default function PickClient() {
   const [phase, setPhase] = useState<Phase>('idle')
   const [committed, setCommitted] = useState(false)
   const [paused, setPaused] = useState(false)
+  const [replays, setReplays] = useState(0)      // used on the current pitch
   const [streak, setStreak] = useState(0)
   const [balls, setBalls] = useState(0)
   const [strikes, setStrikes] = useState(0)
@@ -205,6 +206,7 @@ export default function PickClient() {
     setSeq(built.seq)
     setTruth({ pitch: built.pitch, location: built.location })
     setPickPitch(null); setPickLoc(null)
+    setReplays(0)
     setShownIdx(-1)
     setPhase('signals')
 
@@ -340,7 +342,25 @@ export default function PickClient() {
     setPhase('idle')
   }
 
-  function togglePause() {
+  /* Show the same sequence again. Free on the first two levels, once a pitch
+     after that — at five signals the holding of them is the game. */
+  const replayCap = L.pause ? Infinity : 1
+  function replay() {
+    if (replays >= replayCap) return
+    if (phase !== 'signals' && phase !== 'pick') return
+    clearAll()
+    setReplays(r => r + 1)
+    setShownIdx(-1)
+    setPhase('signals')
+    seq.forEach((_, i) => {
+      after(300 + i * L.ms, () => setShownIdx(i))
+      after(300 + i * L.ms + L.ms * 0.7, () => setShownIdx(-1))
+    })
+    after(300 + seq.length * L.ms, () => {
+      if (committed) setPhase('pick')
+      else after(650, () => setPhase('pitching'))
+    })
+  }
     if (!L.pause || committed) return
     if (paused) { setPaused(false); runPitch(outs, false) }
     else { clearAll(); setShownIdx(-1); setResult(null); setPaused(true) }
@@ -592,10 +612,15 @@ export default function PickClient() {
               </div>
             </>
           )}
-          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+          <div style={{ textAlign: 'center', marginTop: '16px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button className="ar-btn" onClick={lockIn}
               disabled={phase !== 'pick' || !pickPitch || (needsLoc && !pickLoc)}>
               <span>Lock it in</span>
+            </button>
+            <button className="ar-btn" onClick={replay}
+              disabled={replays >= replayCap || (phase !== 'signals' && phase !== 'pick')}
+              style={{ background: 'transparent', color: 'var(--neon)', border: '1px solid var(--neon)', boxShadow: 'none' }}>
+              <span>{replayCap === Infinity ? 'Show again' : `Show again (${replayCap - replays})`}</span>
             </button>
             <p style={{ fontSize: '10px', color: '#FF6B6B', fontWeight: 700, marginTop: '9px' }}>
               One wrong and the hitter stops looking
@@ -611,6 +636,12 @@ export default function PickClient() {
             <button className="ar-btn" onClick={togglePause}
               style={{ background: 'transparent', color: 'var(--neon)', border: '1px solid var(--neon)', boxShadow: 'none' }}>
               <span>{paused ? 'Resume' : 'Pause'}</span>
+            </button>
+          )}
+          {(phase === 'signals' || phase === 'pick') && (
+            <button className="ar-btn" onClick={replay} disabled={replays >= replayCap}
+              style={{ background: 'transparent', color: 'var(--neon)', border: '1px solid var(--neon)', boxShadow: 'none' }}>
+              <span>{replayCap === Infinity ? 'Show again' : `Show again (${replayCap - replays})`}</span>
             </button>
           )}
         </div>
