@@ -18,7 +18,7 @@ type Shape = typeof SHAPES[number]
 
 const SHAPE_LABEL: Record<Shape, string> = {
   one: 'One', two: 'Two', three: 'Three', four: 'Four',
-  five: 'Open hand', thumb: 'Thumb', pinky: 'Pinky',
+  five: 'Open', thumb: 'Thumb', pinky: 'Pinky',
 }
 
 /* Two vocabularies, as they're really used. In the first, one and two are the
@@ -405,18 +405,12 @@ export default function PickClient() {
 
         /* The key rides beside the field so the shapes are next to the hand
            you're reading, not a scroll away from it. */
-        .pk-stage { display: flex; gap: 10px; align-items: stretch; }
-        .pk-stage .pk-field { flex: 1; min-width: 0; }
-        .pk-key {
-          display: flex; flex-direction: column; gap: 4px; width: 62px; flex-shrink: 0;
-        }
-        .pk-keyitem { flex: 1; background: #0C0F16; border: 1px solid #ffffff12; padding: 3px 2px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
-        .pk-keyitem svg { height: 30px; width: 100%; }
-        @media (max-width: 560px) {
-          .pk-key { width: 50px; }
-          .pk-keyitem svg { height: 24px; }
-        }
-        .pk-keyitem span { display: block; font-size: 8px; font-weight: 900; letter-spacing: .06em; color: #7D8B9C; margin-top: 3px; }
+        .pk-stage { display: block; }
+        .pk-key { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 4px; }
+        .pk-keyitem { background: #0C0F16; border: 1px solid #ffffff12; padding: 5px 1px 4px; text-align: center; }
+        .pk-keyitem svg { height: 34px; width: 100%; }
+        .pk-keyitem span { display: block; font-size: 7px; font-weight: 900; color: #7D8B9C; margin-top: 2px; line-height: 1.1; }
+        @media (max-width: 560px) { .pk-keyitem svg { height: 26px; } }
 
         .pk-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
         .pk-lives { display: flex; align-items: center; gap: 7px; font-size: 9px; font-weight: 900; letter-spacing: .24em; text-transform: uppercase; color: #5C6878; }
@@ -629,6 +623,9 @@ export default function PickClient() {
           </span>
         ))}
       </div>
+
+      <div className="pk-ladder">
+        {LEVELS.map((lv, i) => (
           <span key={i} className="pk-rung" data-on={i === level} data-done={i < level}>
             <span className="pk-n">{i + 1}</span>
             {lv.n} signals
