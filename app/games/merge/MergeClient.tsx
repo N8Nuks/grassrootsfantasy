@@ -207,6 +207,22 @@ export default function MergeClient() {
           background: #05060AE8; padding: 22px; z-index: 5;
         }
         .mg-key { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #3E4A58; text-align: center; margin-top: 14px; }
+        .mg-how { margin-top: 20px; background: #0A0D14; border: 1px solid #ffffff12; }
+        .mg-how summary {
+          cursor: pointer; list-style: none; display: flex; align-items: center;
+          justify-content: space-between; gap: 12px; padding: 14px 16px;
+          font-family: var(--font-heading); font-weight: 900; font-size: 13px; color: #F5F1E8;
+        }
+        .mg-how summary::-webkit-details-marker { display: none; }
+        .mg-how summary i {
+          font-style: normal; font-size: 18px; line-height: 1; color: var(--neon);
+          transition: transform 200ms ease;
+        }
+        .mg-how[open] summary i { transform: rotate(45deg); }
+        .mg-how ol { margin: 0; padding: 0 18px 16px 34px; border-top: 1px solid #ffffff0a; padding-top: 14px; }
+        .mg-how li { font-size: 12px; line-height: 1.75; color: #8FA0B4; margin-bottom: 9px; }
+        .mg-how li b { color: #F5F1E8; }
+        .mg-how p { font-size: 12px; line-height: 1.7; color: #5C6878; padding: 0 18px 16px; margin: 0; }
       `}</style>
 
       <p className="mg-lede">
@@ -267,6 +283,21 @@ export default function MergeClient() {
       </div>
 
       <p className="mg-key">Arrow keys or WASD · swipe on a phone</p>
+
+      <details className="mg-how">
+        <summary>How it works <i>+</i></summary>
+        <ol>
+          <li><b>Swipe or press a direction</b> and every card on the board slides that way until it hits a wall or another card.</li>
+          <li><b>Two of the same tier merge</b> when they meet — two Commons become an Elite, two Elites a 2WP B, and so on up the ladder.</li>
+          <li><b>A new Common appears</b> in a free square after every move that shifts something. A move that changes nothing doesn&apos;t deal one.</li>
+          <li><b>Your score is what you merge</b>, not what&apos;s on the board — the bigger the card you make, the more it pays.</li>
+          <li><b>The board jams</b> when it&apos;s full and no two neighbours match. That&apos;s the run over.</li>
+        </ol>
+        <p>
+          Keep your biggest card wedged in a corner and work along one edge. Merging toward the
+          middle is how boards fill up and jam.
+        </p>
+      </details>
 
       <div className="mg-ladder">
         {TIERS.map(t => (
