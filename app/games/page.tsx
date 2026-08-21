@@ -12,6 +12,7 @@ const GAMES = [
   { href: '/games/connections', n: '09', title: 'Connections', blurb: 'Sixteen players, four hidden fours. Find them.', tag: 'Daily', neon: '#7DF9FF' },
   { href: '/games/release', n: '10', title: 'Release Point', blurb: 'The windmill comes round. Tap the instant it leaves.', tag: 'Reaction', neon: '#FF4FD8' },
   { href: '/games/fielding', n: '11', title: 'Take the Field', blurb: 'Three lanes. Catch everything, dodge the runners.', tag: 'Endless', neon: '#5CFF6B' },
+  { href: '/games/pickthepitch', n: '12', title: 'Pick the Pitch', blurb: "Steal the catcher's signs from second. Nobody tells you the code.", tag: 'Expert', neon: '#FFD400' },
 ]
 
 export default function Games() {
