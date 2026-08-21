@@ -26,7 +26,7 @@ const SHAPE_LABEL: Record<Shape, string> = {
    In the second, location moves onto the thumb and pinky. */
 const SETS = [
   {
-    pitches: { one: 'Drop', two: 'Rise', three: 'Curve', four: 'Changeup', thumb: 'Pickoff', pinky: 'Low rise / Screwball' } as Partial<Record<Shape, string>>,
+    pitches: { one: 'Drop', two: 'Rise', three: 'Curve', four: 'Changeup', pinky: 'Low rise / Screwball' } as Partial<Record<Shape, string>>,
     locShapes: ['one', 'two'] as Shape[],
   },
   {
@@ -343,10 +343,19 @@ export default function PickClient() {
           box-shadow: 0 0 0 1px #ffffff08 inset, 0 18px 40px #00000090;
         }
         .pk-dirt { position: absolute; left: 50%; bottom: -40px; transform: translateX(-50%); width: 122%; height: 116px; border-radius: 50%; background: #2A1D14; opacity: .8; }
-        .pk-catcher { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); height: 84%; width: auto; filter: brightness(0) drop-shadow(0 0 22px #00000090); }
+        .pk-catcher {
+          position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%);
+          height: 84%; max-width: 62%; width: auto; object-fit: contain;
+          filter: brightness(0.3) contrast(1.4) drop-shadow(0 0 22px #00000090);
+        }
         /* The batter stands upright next to a crouching catcher, so he reads
            taller — scaled to match a real standing figure beside a crouch. */
-        .pk-batter { position: absolute; bottom: 6px; height: 96%; width: auto; filter: brightness(0) drop-shadow(0 0 18px #00000090); }
+        /* Both figures lift off the dark field, and the batter is held back
+           from the middle so he can't crowd the catcher on a narrow screen. */
+        .pk-batter {
+          position: absolute; bottom: 6px; height: 88%; max-width: 30%; width: auto; object-fit: contain;
+          filter: brightness(0.22) contrast(1.5) drop-shadow(0 0 16px #00000090);
+        }
         .pk-hand { position: absolute; left: 50%; bottom: 13%; transform: translateX(-50%); width: 86px; height: 116px; filter: drop-shadow(0 0 18px #00000090); }
         .pk-status { position: absolute; left: 0; right: 0; bottom: 0; padding: 8px; text-align: center; background: #05060Ad9; }
         .pk-status span { font-size: 9px; font-weight: 900; letter-spacing: .28em; text-transform: uppercase; color: var(--neon); }
@@ -383,9 +392,19 @@ export default function PickClient() {
         .pk-opt[data-on="true"] { background: var(--neon); border-color: var(--neon); color: #05060A; }
         .pk-opt:disabled { opacity: .35; cursor: default; }
 
-        .pk-key { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 5px; margin-top: 16px; }
-        .pk-keyitem { background: #0C0F16; border: 1px solid #ffffff12; padding: 8px 2px 6px; text-align: center; }
-        .pk-keyitem svg { height: 44px; width: 100%; }
+        /* The key rides beside the field so the shapes are next to the hand
+           you're reading, not a scroll away from it. */
+        .pk-stage { display: flex; gap: 10px; align-items: stretch; }
+        .pk-stage .pk-field { flex: 1; min-width: 0; }
+        .pk-key {
+          display: flex; flex-direction: column; gap: 4px; width: 62px; flex-shrink: 0;
+        }
+        .pk-keyitem { flex: 1; background: #0C0F16; border: 1px solid #ffffff12; padding: 3px 2px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+        .pk-keyitem svg { height: 30px; width: 100%; }
+        @media (max-width: 560px) {
+          .pk-key { width: 50px; }
+          .pk-keyitem svg { height: 24px; }
+        }
         .pk-keyitem span { display: block; font-size: 8px; font-weight: 900; letter-spacing: .06em; color: #7D8B9C; margin-top: 3px; }
 
         .pk-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
@@ -435,6 +454,7 @@ export default function PickClient() {
         </div>
       </div>
 
+      <div className="pk-stage">
       <div className="pk-field">
         <span className="pk-dirt" />
         {/* Batter stands on the side he bats from, facing the plate in the middle */}
@@ -522,8 +542,7 @@ export default function PickClient() {
         )}
       </div>
 
-      {/* ── The hand shapes, so a rough drawing is never the puzzle ── */}
-      <p className="pk-lbl">The hand</p>
+      {/* The key rides beside the field — a rough drawing should never be the puzzle */}
       <div className="pk-key">
         {SHAPES.map(s => (
           <span key={s} className="pk-keyitem">
@@ -532,6 +551,7 @@ export default function PickClient() {
           </span>
         ))}
       </div>
+      </div>
 
       {committed ? (
         <>
@@ -539,7 +559,8 @@ export default function PickClient() {
           <div className="pk-opts">
             {code.pitchList.map(p => (
               <button key={p} className="pk-opt" data-on={pickPitch === p}
-                disabled={phase !== 'pick'} onClick={() => setPickPitch(p)}>{p}</button>
+                disabled={phase !== 'signals' && phase !== 'pick'}
+                onClick={() => setPickPitch(p)}>{p}</button>
             ))}
           </div>
           {needsLoc && (
@@ -548,7 +569,8 @@ export default function PickClient() {
               <div className="pk-loc">
                 {LOCATIONS.map(l => (
                   <button key={l} className="pk-opt" data-on={pickLoc === l}
-                    disabled={phase !== 'pick'} onClick={() => setPickLoc(l)}>{l}</button>
+                    disabled={phase !== 'signals' && phase !== 'pick'}
+                    onClick={() => setPickLoc(l)}>{l}</button>
                 ))}
               </div>
             </>
