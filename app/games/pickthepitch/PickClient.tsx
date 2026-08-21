@@ -361,6 +361,8 @@ export default function PickClient() {
       else after(650, () => setPhase('pitching'))
     })
   }
+
+  function togglePause() {
     if (!L.pause || committed) return
     if (paused) { setPaused(false); runPitch(outs, false) }
     else { clearAll(); setShownIdx(-1); setResult(null); setPaused(true) }
