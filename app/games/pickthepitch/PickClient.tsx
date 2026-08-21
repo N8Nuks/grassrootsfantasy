@@ -227,15 +227,16 @@ export default function PickClient() {
     return true
   }, [balls, strikes, threeTwo])
 
-  /* The count keeps ticking while you're calling — but a hitter who knows what's
-     coming never strikes out, so the count stalls at 3-2 rather than ending him. */
+  /* Once you're calling them, the hitter lays off — every pitch he knows is
+     coming goes for a ball. The count runs up and holds at 3-2. */
   const nextPitch = useCallback((isCommitted: boolean) => {
-    const struckOut = advanceCount()
     if (isCommitted) {
-      if (struckOut) { setBalls(3); setStrikes(2); setThreeTwo(true) }
+      setBalls(b => Math.min(3, b + 1))
+      if (balls >= 2) setThreeTwo(true)
       runPitch(outs, true)
       return
     }
+    const struckOut = advanceCount()
     if (!struckOut) { runPitch(outs, isCommitted); return }
 
     // Strikeout — hold on it, because otherwise it flies past
@@ -249,7 +250,7 @@ export default function PickClient() {
       runPitch(nextOuts, isCommitted)
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [advanceCount, outs, runPitch])
+  }, [advanceCount, outs, balls, runPitch])
 
   function loseLife() {
     clearAll()
@@ -319,10 +320,10 @@ export default function PickClient() {
       const run = streak + 1
       setStreak(run)
       if (run >= NEED) {
-        const hit = pick(['HOME RUN', 'SINGLE', 'WALK'])
-        setResult({ text: `${truth.pitch}, ${truth.location}`, sub: hit, colour: '#39FF9E' })
+        // The hitter knew what was coming, and the winning run was on second
+        setResult({ text: `${truth.pitch}, ${truth.location}`, sub: 'HOME RUN', colour: '#FFD700' })
         setPhase('result')
-        after(2200, () => { setResult(null); setReveal(describe(level, code)); setPhase('passed') })
+        after(2400, () => { setResult(null); setReveal(describe(level, code)); setPhase('passed') })
         return
       }
       setResult({ text: `${truth.pitch}, ${truth.location}`, sub: `Called it — ${run} of ${NEED}`, colour: '#39FF9E' })
@@ -580,7 +581,12 @@ export default function PickClient() {
 
         {phase === 'passed' && reveal && (
           <div className="pk-overlay" style={{ justifyContent: 'flex-start', paddingTop: '24px', overflowY: 'auto' }}>
-            <p className="pk-verdict" style={{ color: '#39FF9E' }}>{finished ? 'All four cracked' : 'Signs cracked'}</p>
+            <p className="pk-verdict" style={{ color: '#FFD700', textShadow: '0 0 34px #FFD70080' }}>
+              Home team win!
+            </p>
+            <p style={{ fontSize: '11px', fontWeight: 900, letterSpacing: '.28em', textTransform: 'uppercase', color: '#39FF9E', marginTop: '4px' }}>
+              {finished ? 'All four cracked' : 'Signs cracked'}
+            </p>
             <p style={{ fontSize: '9px', fontWeight: 900, letterSpacing: '.28em', textTransform: 'uppercase', color: 'var(--neon)', marginTop: '10px' }}>The code was</p>
             <p className="pk-code">{reveal}</p>
             {finished
