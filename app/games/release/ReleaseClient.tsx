@@ -1,81 +1,75 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 
-/* You are the runner at first, watching the pitcher side on. Home plate is off
-   to the left, which is the way the cap is pointing.
+/* You are the runner at first, watching side on. Home is off to the left.
 
-   The delivery, as it really goes: the hand rests at 7 o'clock in front of the
-   body, rocks back to 5, then comes round once — up the front, over the top,
-   down the back — and the ball leaves at 7 o'clock, level with the hip,
-   travelling flat toward the plate. One revolution only; two is illegal.
+   The delivery: the hand rests at 210 degrees (7 o'clock), rocks back
+   anti-clockwise to 170, then swings one full clockwise revolution — 400
+   degrees of travel — and releases back at 210, level with the hip. One
+   revolution only; two is illegal.
 
-   You can't leave first until the ball is out of the hand. Early is a pick-off,
-   late and the throw beats you to second. */
+   Five pitches to a set. Take four or more and you move up a level. Reach
+   Black Sox and five clean steals in a row promotes you to Black Diamond. */
 
-const ROUNDS = 10
-const SAFE = 120        // ms after release for a clean steal
-const CLOSE = 260       // ms after release and still under the tag
+const SET_SIZE = 5
+const PROMOTE_AT = 4          // steals needed in a set to move up
+const SAFE = 120              // ms after release for a clean steal
+const CLOSE = 260             // ms after release and still under the tag
 
-/* Canvas angles: 0 is 3 o'clock and angles increase clockwise.
-   An hour on the clock face is 30 degrees, so hour h sits at (h * 30 - 90). */
-/* Angles in clock degrees: 0 at 12 o'clock, increasing clockwise.
-   Rest and release at 210 (7 o'clock). The rock goes anti-clockwise back to
-   170, then the delivery is one full clockwise revolution from 170 round to
-   the release at 210 — 400 degrees of travel. */
+/* Angles: 0 at 12 o'clock, increasing clockwise. */
 const deg = (d: number) => ((d - 90) * Math.PI) / 180
 const REST = deg(210)
 const ROCK = deg(170)
 const RELEASE = ROCK + (400 * Math.PI) / 180
-const ROCK_MS = 420                    // the rock back before the arm goes
+const ROCK_MS = 420
 
 const BALL_YELLOW = '#E8FF3D'
 
 const LEVELS = [
-  { at: 0, ms: 1450, name: 'Social' },
-  { at: 2, ms: 1250, name: 'Reserve' },
-  { at: 4, ms: 1080, name: 'Premier' },
-  { at: 6, ms: 930,  name: 'Rep' },
-  { at: 8, ms: 800,  name: 'Black Sox' },
+  { name: 'Reserve',       ms: 1450 },
+  { name: 'Premier',       ms: 1230 },
+  { name: 'Rep',           ms: 1040 },
+  { name: 'Black Sox',     ms: 880  },
+  { name: 'Black Diamond', ms: 720  },
 ]
-const levelFor = (pitch: number) => {
-  let i = 0
-  for (let n = 0; n < LEVELS.length; n++) if (pitch >= LEVELS[n].at) i = n
-  return i
-}
+const BLACK_SOX = 3
+const BLACK_DIAMOND = 4
 
 type Outcome = 'clean' | 'close' | 'thrown' | 'picked'
-const OUT: Record<Outcome, { label: string; sub: string; colour: string; points: number }> = {
-  clean:  { label: 'STOLEN',     sub: 'Safe by a distance', colour: '#39FF9E', points: 30 },
-  close:  { label: 'SAFE',       sub: 'Under the tag',      colour: '#7DF9FF', points: 15 },
-  thrown: { label: 'THROWN OUT', sub: 'Late off the base',  colour: '#FF4D4D', points: 0 },
-  picked: { label: 'PICKED OFF', sub: 'You left too early', colour: '#FF4D4D', points: 0 },
+const OUT: Record<Outcome, { label: string; sub: string; colour: string }> = {
+  clean:  { label: 'STOLEN',     sub: 'Safe by a distance', colour: '#39FF9E' },
+  close:  { label: 'SAFE',       sub: 'Under the tag',      colour: '#7DF9FF' },
+  thrown: { label: 'THROWN OUT', sub: 'Late off the base',  colour: '#FF4D4D' },
+  picked: { label: 'PICKED OFF', sub: 'You left too early', colour: '#FF4D4D' },
 }
+const isSteal = (o: Outcome) => o === 'clean' || o === 'close'
 
 export default function ReleaseClient() {
-  const [phase, setPhase] = useState<'ready' | 'wind' | 'judged' | 'done'>('ready')
-  const [round, setRound] = useState(0)
-  const [score, setScore] = useState(0)
-  const [best, setBest] = useState(0)
-  const [results, setResults] = useState<Outcome[]>([])
+  const [phase, setPhase] = useState<'ready' | 'wind' | 'judged' | 'setEnd' | 'done'>('ready')
+  const [level, setLevel] = useState(0)
+  const [pitch, setPitch] = useState(0)              // within the set
+  const [setResults, setSetResults] = useState<Outcome[]>([])
+  const [cleanRun, setCleanRun] = useState(0)        // consecutive steals at Black Sox
   const [last, setLast] = useState<{ outcome: Outcome; ms: number } | null>(null)
+  const [outcome, setOutcome] = useState<'up' | 'stay' | 'crowned' | null>(null)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const raf = useRef(0)
-  const rockAt = useRef(0)         // the rock back begins
-  const startAt = useRef(0)        // the arm begins its revolution
-  const releaseAt = useRef(0)      // ball leaves the hand
+  const rockAt = useRef(0)
+  const startAt = useRef(0)
+  const releaseAt = useRef(0)
   const spin = useRef(1450)
   const judged = useRef(false)
   const goneAt = useRef(0)
+  const meterAt = useRef(0)          // where the needle stopped, in ms off release
 
-  const level = levelFor(round)
-
-  const beginPitch = useCallback((forRound: number) => {
+  const beginPitch = useCallback((lv: number) => {
     judged.current = false
     goneAt.current = 0
+    meterAt.current = 0
     setLast(null)
-    spin.current = LEVELS[levelFor(forRound)].ms
-    const pause = 900 + Math.random() * 1500        // can't be counted
+    spin.current = LEVELS[lv].ms
+    const pause = 900 + Math.random() * 1500
     setPhase('wind')
     rockAt.current = performance.now() + pause
     startAt.current = rockAt.current + ROCK_MS
@@ -88,23 +82,45 @@ export default function ReleaseClient() {
     const now = performance.now()
     goneAt.current = now
     const ms = now - releaseAt.current
+    meterAt.current = ms
 
-    const outcome: Outcome = ms < 0 ? 'picked' : ms <= SAFE ? 'clean' : ms <= CLOSE ? 'close' : 'thrown'
-    setLast({ outcome, ms })
-    setResults(r => [...r, outcome])
-    setScore(s => {
-      const n = s + OUT[outcome].points
-      setBest(b => Math.max(b, n))
-      return n
-    })
+    const result: Outcome = ms < 0 ? 'picked' : ms <= SAFE ? 'clean' : ms <= CLOSE ? 'close' : 'thrown'
+    setLast({ outcome: result, ms })
+    const nextResults = [...setResults, result]
+    setSetResults(nextResults)
+
+    // A run of clean steals at Black Sox is the only way to Black Diamond
+    const nextRun = level === BLACK_SOX && isSteal(result) ? cleanRun + 1 : 0
+    setCleanRun(nextRun)
     setPhase('judged')
+
     setTimeout(() => {
-      const next = round + 1
-      setRound(next)
-      if (next >= ROUNDS) setPhase('done')
-      else beginPitch(next)
+      if (nextRun >= 5) { setOutcome('crowned'); setPhase('setEnd'); return }
+      const nextPitch = pitch + 1
+      if (nextPitch >= SET_SIZE) {
+        const stolen = nextResults.filter(isSteal).length
+        const canRise = stolen >= PROMOTE_AT && level < BLACK_SOX
+        setOutcome(canRise ? 'up' : 'stay')
+        setPhase('setEnd')
+        return
+      }
+      setPitch(nextPitch)
+      beginPitch(level)
     }, 1800)
-  }, [phase, round, beginPitch])
+  }, [phase, setResults, pitch, level, cleanRun, beginPitch])
+
+  function nextSet() {
+    const rise = outcome === 'up'
+    const lv = rise ? level + 1 : level
+    setLevel(lv); setPitch(0); setSetResults([]); setOutcome(null); setLast(null)
+    if (!rise) setCleanRun(0)
+    beginPitch(lv)
+  }
+
+  function startOver() {
+    setLevel(0); setPitch(0); setSetResults([]); setCleanRun(0); setOutcome(null); setLast(null)
+    beginPitch(0)
+  }
 
   const draw = useCallback((now: number) => {
     const cv = canvasRef.current
@@ -121,32 +137,28 @@ export default function ReleaseClient() {
     pool.addColorStop(0, '#FF4FD818'); pool.addColorStop(1, 'transparent')
     ctx.fillStyle = pool; ctx.fillRect(0, 0, W, H)
 
-    // The base path, first on the left, second on the right
-    const firstX = W * 0.13, secondX = W * 0.87, baseY = H * 0.86
-    ctx.strokeStyle = '#C9A87828'; ctx.lineWidth = H * 0.05
+    const firstX = W * 0.13, secondX = W * 0.87, baseY = H * 0.855
+    ctx.strokeStyle = '#C9A87828'; ctx.lineWidth = H * 0.048
     ctx.beginPath(); ctx.moveTo(firstX, baseY); ctx.lineTo(secondX, baseY); ctx.stroke()
     for (const [bx, label] of [[firstX, '1st'], [secondX, '2nd']] as [number, string][]) {
       ctx.fillStyle = '#F5F1E8'
       ctx.save(); ctx.translate(bx, baseY); ctx.rotate(Math.PI / 4)
-      ctx.fillRect(-11, -11, 22, 22); ctx.restore()
-      ctx.fillStyle = '#ffffff35'
-      ctx.font = `900 ${Math.round(H * 0.026)}px var(--font-heading), sans-serif`
+      ctx.fillRect(-10, -10, 20, 20); ctx.restore()
+      ctx.fillStyle = '#ffffff30'
+      ctx.font = `900 ${Math.round(H * 0.024)}px var(--font-heading), sans-serif`
       ctx.textAlign = 'center'
-      ctx.fillText(label, bx, baseY + H * 0.07)
+      ctx.fillText(label, bx, baseY + H * 0.065)
     }
-    // Home is off to the left — say so, so the direction reads
-    ctx.fillStyle = '#ffffff22'
-    ctx.font = `900 ${Math.round(H * 0.024)}px var(--font-heading), sans-serif`
+    ctx.fillStyle = '#ffffff20'
     ctx.textAlign = 'left'
-    ctx.fillText('← HOME', W * 0.03, H * 0.52)
+    ctx.fillText('← HOME', W * 0.03, H * 0.5)
 
-    // Mound
     ctx.fillStyle = '#3A2A1E'
-    ctx.beginPath(); ctx.ellipse(W / 2, H * 0.6, W * 0.15, H * 0.04, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.ellipse(W / 2, H * 0.585, W * 0.145, H * 0.038, 0, 0, Math.PI * 2); ctx.fill()
 
     // ── Arm position ──
-    const hipX = W / 2, hipY = H * 0.47, armR = H * 0.17
-    const cx = hipX, cy = hipY - armR * 0.34        // shoulder, centre of the circle
+    const hipX = W / 2, hipY = H * 0.46, armR = H * 0.165
+    const cx = hipX, cy = hipY - armR * 0.34
 
     let angle = REST
     let released = false
@@ -159,23 +171,27 @@ export default function ReleaseClient() {
         angle = ROCK + (RELEASE - ROCK) * p
         released = tSpin >= spin.current
       } else if (tRock > 0) {
-        const p = Math.min(tRock / ROCK_MS, 1)
-        angle = REST + (ROCK - REST) * p
+        angle = REST + (ROCK - REST) * Math.min(tRock / ROCK_MS, 1)
         loading = true
       } else if (tRock > -340) {
-        loading = true                              // ball lights just before the rock
+        loading = true
       }
     }
 
     // ── The pitcher, facing home (left) ──
-    ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 8; ctx.lineCap = 'round'
-    ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(hipX - 20, H * 0.6); ctx.stroke()
-    ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(hipX + 14, H * 0.6); ctx.stroke()
-    ctx.strokeStyle = '#FF4FD8'; ctx.lineWidth = 14
-    ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(hipX - 3, H * 0.35); ctx.stroke()
+    // Back arm first so it sits behind the torso
+    ctx.strokeStyle = '#141821'; ctx.lineWidth = 7; ctx.lineCap = 'round'
+    ctx.beginPath(); ctx.moveTo(hipX + 4, H * 0.375); ctx.lineTo(hipX + 24, H * 0.425); ctx.stroke()
+    ctx.fillStyle = '#141821'
+    ctx.beginPath(); ctx.ellipse(hipX + 27, H * 0.432, 6.5, 7.5, -0.4, 0, Math.PI * 2); ctx.fill()
 
-    // Head with a cap, brim pointing left toward home
-    const headX = hipX - 4, headY = H * 0.32
+    ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 8
+    ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(hipX - 20, H * 0.585); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(hipX + 14, H * 0.585); ctx.stroke()
+    ctx.strokeStyle = '#FF4FD8'; ctx.lineWidth = 14
+    ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(hipX - 3, H * 0.345); ctx.stroke()
+
+    const headX = hipX - 4, headY = H * 0.315
     ctx.fillStyle = '#0A0C10'
     ctx.beginPath(); ctx.arc(headX, headY, 11, 0, Math.PI * 2); ctx.fill()
     ctx.fillStyle = '#FF4FD8'
@@ -185,28 +201,20 @@ export default function ReleaseClient() {
     ctx.lineTo(headX - 22, headY + 2); ctx.lineTo(headX, headY - 1)
     ctx.closePath(); ctx.fill()
 
-    // The circle the hand travels, and the release point marked at 7 o'clock
+    // The circle and the release mark
     ctx.strokeStyle = '#ffffff0B'; ctx.lineWidth = 1
     ctx.beginPath(); ctx.arc(cx, cy, armR, 0, Math.PI * 2); ctx.stroke()
     const mx = cx + Math.cos(REST) * armR
     const my = cy + Math.sin(REST) * armR
-    ctx.strokeStyle = released ? '#39FF9E55' : '#FF4FD855'
+    ctx.strokeStyle = released ? '#39FF9E60' : '#FF4FD850'
     ctx.lineWidth = 2
     ctx.beginPath(); ctx.arc(mx, my, 15, 0, Math.PI * 2); ctx.stroke()
-    ctx.fillStyle = released ? '#39FF9E70' : '#FF4FD850'
-    ctx.font = `900 ${Math.round(H * 0.02)}px var(--font-heading), sans-serif`
-    ctx.textAlign = 'center'
-    ctx.fillText('RELEASE', mx, my + armR * 0.34)
 
-    // Glove arm tucks across the chest
-    ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 8
-    ctx.beginPath(); ctx.moveTo(hipX - 2, H * 0.38); ctx.lineTo(hipX - 26, H * 0.44); ctx.stroke()
-
-    // Throwing arm
+    // Throwing arm, shoulder offset right so it reads as the far arm
     const hx = cx + Math.cos(angle) * armR
     const hy = cy + Math.sin(angle) * armR
     ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 7
-    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(hx, hy); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(cx + 5, cy); ctx.lineTo(hx, hy); ctx.stroke()
 
     // ── The ball ──
     if (!released) {
@@ -220,7 +228,6 @@ export default function ReleaseClient() {
       ctx.strokeStyle = '#C41E3A'; ctx.lineWidth = 1.8
       ctx.beginPath(); ctx.arc(hx - 9, hy, 8, -0.9, 0.9); ctx.stroke()
     } else {
-      // Away flat toward home, parallel to the base path
       const g = (now - releaseAt.current) / 620
       const bx = mx - g * W * 0.72
       ctx.save()
@@ -228,19 +235,56 @@ export default function ReleaseClient() {
       ctx.shadowColor = BALL_YELLOW; ctx.shadowBlur = 18
       ctx.fillStyle = BALL_YELLOW
       ctx.beginPath(); ctx.arc(bx, my, 8.5, 0, Math.PI * 2); ctx.fill()
-      // trail
       const trail = ctx.createLinearGradient(bx, my, bx + W * 0.14, my)
       trail.addColorStop(0, `${BALL_YELLOW}70`); trail.addColorStop(1, 'transparent')
       ctx.strokeStyle = trail; ctx.lineWidth = 7
       ctx.beginPath(); ctx.moveTo(bx, my); ctx.lineTo(bx + W * 0.14, my); ctx.stroke()
       ctx.restore()
-      // the moment marked
-      ctx.strokeStyle = `rgba(57, 255, 158, ${Math.max(0, 0.7 - g * 1.4)})`
-      ctx.lineWidth = 3
-      ctx.beginPath(); ctx.arc(mx, my, 16 + g * 46, 0, Math.PI * 2); ctx.stroke()
     }
 
-    // ── The runner, helmet on ──
+    // ── The timing meter ──
+    // Red before the release, green in the steal window, yellow while the throw
+    // is still beatable, red again once it isn't. The needle rides it live.
+    const mW = W * 0.62, mH = H * 0.036
+    const mX = (W - mW) / 2, mY = H * 0.075
+    const span = 700                                  // ms shown across the bar
+    const zeroX = mX + mW * (300 / span)              // where the release sits
+
+    ctx.fillStyle = '#00000060'; ctx.fillRect(mX - 2, mY - 2, mW + 4, mH + 4)
+    const seg = (from: number, to: number, colour: string) => {
+      const a = mX + mW * ((from + 300) / span)
+      const b = mX + mW * ((to + 300) / span)
+      ctx.fillStyle = colour; ctx.fillRect(a, mY, b - a, mH)
+    }
+    seg(-300, 0, '#FF4D4D')          // early — picked off
+    seg(0, SAFE, '#39FF9E')          // gone on the release
+    seg(SAFE, CLOSE, '#FFB800')      // late but safe
+    seg(CLOSE, 400, '#FF4D4D')       // thrown out
+
+    ctx.strokeStyle = '#F5F1E8'; ctx.lineWidth = 2
+    ctx.beginPath(); ctx.moveTo(zeroX, mY - 5); ctx.lineTo(zeroX, mY + mH + 5); ctx.stroke()
+    ctx.fillStyle = '#F5F1E8'
+    ctx.font = `900 ${Math.round(H * 0.019)}px var(--font-heading), sans-serif`
+    ctx.textAlign = 'center'
+    ctx.fillText('RELEASE', zeroX, mY - 9)
+
+    // Needle: live while the arm turns, frozen where you went
+    let needleMs: number | null = null
+    if (phase === 'judged' && goneAt.current) needleMs = meterAt.current
+    else if (phase === 'wind' && now > rockAt.current) needleMs = now - releaseAt.current
+    if (needleMs != null && needleMs > -320 && needleMs < 420) {
+      const nx = mX + mW * ((needleMs + 300) / span)
+      ctx.save()
+      ctx.shadowColor = '#FFFFFF'; ctx.shadowBlur = 12
+      ctx.fillStyle = '#FFFFFF'
+      ctx.beginPath()
+      ctx.moveTo(nx, mY - 7); ctx.lineTo(nx - 5, mY - 15); ctx.lineTo(nx + 5, mY - 15)
+      ctx.closePath(); ctx.fill()
+      ctx.fillRect(nx - 1.5, mY - 6, 3, mH + 12)
+      ctx.restore()
+    }
+
+    // ── The runner ──
     let runP = 0
     if (goneAt.current) runP = Math.min(1, (now - goneAt.current) / 1150)
     const rx = firstX + (secondX - firstX) * runP
@@ -250,19 +294,18 @@ export default function ReleaseClient() {
     ctx.save()
     ctx.translate(rx, baseY)
     ctx.rotate(lean)
-    ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 7; ctx.lineCap = 'round'
+    ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 7
     ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(-10 + stride * 10, 0); ctx.stroke()
     ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(10 - stride * 10, 0); ctx.stroke()
     ctx.strokeStyle = '#FFB800'; ctx.lineWidth = 11
     ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(0, -46); ctx.stroke()
-    // helmet — shell with an ear flap on the near side
+    // Helmet, facing second
     ctx.fillStyle = '#0A0C10'
     ctx.beginPath(); ctx.arc(0, -54, 8.5, 0, Math.PI * 2); ctx.fill()
     ctx.fillStyle = '#FFB800'
     ctx.beginPath(); ctx.arc(0, -55, 9.5, Math.PI, 0); ctx.fill()
     ctx.beginPath(); ctx.ellipse(-4, -52, 4.5, 5.5, 0, 0, Math.PI * 2); ctx.fill()
     ctx.fillRect(8, -58, 8, 3.5)
-    // arms pumping
     ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 5
     ctx.beginPath(); ctx.moveTo(0, -42); ctx.lineTo(12 - stride * 12, -50); ctx.stroke()
     ctx.beginPath(); ctx.moveTo(0, -42); ctx.lineTo(-12 + stride * 12, -34); ctx.stroke()
@@ -290,12 +333,7 @@ export default function ReleaseClient() {
     return () => window.removeEventListener('keydown', onKey)
   }, [go])
 
-  function start() {
-    setRound(0); setScore(0); setResults([]); setLast(null)
-    beginPitch(0)
-  }
-
-  const stolen = results.filter(r => r === 'clean' || r === 'close').length
+  const stolen = setResults.filter(isSteal).length
 
   return (
     <>
@@ -304,7 +342,7 @@ export default function ReleaseClient() {
         .rl-hud { display: flex; align-items: stretch; gap: 1px; margin-bottom: 12px; background: #ffffff10; border: 1px solid #ffffff12; }
         .rl-stat { flex: 1; background: #07080D; padding: 11px 6px; text-align: center; }
         .rl-stat span { display: block; font-size: 8px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; color: #4E5A6A; }
-        .rl-stat b { display: block; font-family: var(--font-heading); font-size: 18px; color: #F5F1E8; margin-top: 3px; }
+        .rl-stat b { display: block; font-family: var(--font-heading); font-size: 17px; color: #F5F1E8; margin-top: 3px; }
         .rl-stage { position: relative; }
         .rl-canvas {
           width: 100%; height: auto; display: block; cursor: pointer; touch-action: manipulation;
@@ -326,32 +364,33 @@ export default function ReleaseClient() {
           background: #05060AE8; padding: 24px;
         }
         .rl-key { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #3E4A58; text-align: center; margin-top: 14px; }
-        .rl-tape { display: flex; gap: 4px; margin-top: 18px; flex-wrap: wrap; }
-        .rl-dot { width: 26px; height: 5px; background: #ffffff10; }
-        .rl-rules { display: flex; flex-direction: column; gap: 7px; margin-top: 22px; }
-        .rl-rule {
-          display: flex; align-items: center; gap: 10px; padding: 10px 13px;
-          border: 1px solid #ffffff12; background: #ffffff05; font-size: 11px; color: #B8C4D2;
+        .rl-tape { display: flex; gap: 6px; margin-top: 18px; justify-content: center; }
+        .rl-dot { width: 40px; height: 6px; background: #ffffff10; }
+        .rl-ladder { display: flex; flex-direction: column; gap: 6px; margin-top: 22px; }
+        .rl-rung {
+          display: flex; align-items: center; gap: 11px; padding: 10px 13px;
+          border: 1px solid #ffffff12; background: #ffffff05; font-size: 11px; color: #7D8B9C;
         }
-        .rl-pip { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-        .rl-val { margin-left: auto; font-family: var(--font-heading); font-weight: 900; color: var(--neon); }
+        .rl-rung[data-on="true"] { border-color: var(--neon); color: #F5F1E8; background: color-mix(in srgb, var(--neon) 10%, transparent); }
+        .rl-rung[data-done="true"] { color: #39FF9E; }
+        .rl-n { font-family: var(--font-heading); font-weight: 900; color: #3E4A58; width: 16px; }
       `}</style>
 
       <p className="rl-lede">
-        You&apos;re on first, home plate off to your left. The hand rocks back, comes round once, and the
-        ball goes at 7 o&apos;clock — level with the hip. Watch it light up: that&apos;s the body loading.
-        Leave before it&apos;s gone and you&apos;re picked off.
+        You&apos;re on first, home off to your left. The hand rocks back, comes round once, and the ball
+        goes at 7 o&apos;clock. Watch the meter: leave in the green and second is yours. Five pitches to a
+        set — take four and you move up.
       </p>
 
       <div className="rl-hud">
-        <span className="rl-stat"><span>Pitch</span><b>{Math.min(round + (phase === 'wind' || phase === 'judged' ? 1 : 0), ROUNDS)}/{ROUNDS}</b></span>
         <span className="rl-stat"><span>Level</span><b style={{ color: 'var(--neon)', fontSize: '13px' }}>{LEVELS[level].name}</b></span>
+        <span className="rl-stat"><span>Pitch</span><b>{Math.min(pitch + (phase === 'wind' || phase === 'judged' ? 1 : 0), SET_SIZE)}/{SET_SIZE}</b></span>
         <span className="rl-stat"><span>Stolen</span><b>{stolen}</b></span>
-        <span className="rl-stat"><span>Score</span><b style={{ color: 'var(--neon)' }}>{score}</b></span>
+        {level === BLACK_SOX && <span className="rl-stat"><span>In a row</span><b style={{ color: cleanRun >= 3 ? '#FFD700' : undefined }}>{cleanRun}/5</b></span>}
       </div>
 
       <div className="rl-stage">
-        <canvas ref={canvasRef} className="rl-canvas" width={640} height={430} onClick={go} />
+        <canvas ref={canvasRef} className="rl-canvas" width={640} height={440} onClick={go} />
 
         {last && phase === 'judged' && (
           <div className="rl-flash">
@@ -360,28 +399,45 @@ export default function ReleaseClient() {
             </p>
             <p className="rl-sub">{OUT[last.outcome].sub}</p>
             <p className="rl-ms">
-              {last.ms < 0 ? `${Math.round(-last.ms)}ms before the release` : `${Math.round(last.ms)}ms after the release`}
+              {last.ms < 0 ? `${Math.round(-last.ms)}ms early` : `${Math.round(last.ms)}ms after the release`}
             </p>
           </div>
         )}
 
-        {(phase === 'ready' || phase === 'done') && (
+        {(phase === 'ready' || phase === 'setEnd') && (
           <div className="rl-overlay">
-            {phase === 'done' ? (
+            {phase === 'setEnd' ? (
               <>
-                <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.34em', textTransform: 'uppercase', color: 'var(--neon)' }}>
-                  {stolen === ROUNDS ? 'Ten from ten' : `${stolen} of ${ROUNDS} stolen`}
+                <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.34em', textTransform: 'uppercase',
+                            color: outcome === 'stay' ? '#FF4D4D' : outcome === 'crowned' ? '#FFD700' : '#39FF9E' }}>
+                  {outcome === 'crowned' ? 'Black Diamond' : outcome === 'up' ? 'Moving up' : 'Set over'}
                 </p>
-                <p className="ar-num" style={{ fontSize: '54px', color: '#F5F1E8', textShadow: 'none', margin: '10px 0 2px' }}>{score}</p>
-                <p style={{ fontSize: '11px', color: '#7D8B9C' }}>Best {best}</p>
-                <button className="ar-btn" onClick={start} style={{ marginTop: '20px' }}><span>Back on first</span></button>
+                <p className="ar-num" style={{ fontSize: '46px', color: '#F5F1E8', textShadow: 'none', margin: '10px 0 2px' }}>
+                  {outcome === 'crowned' ? '5 in a row' : `${stolen}/${SET_SIZE}`}
+                </p>
+                <p style={{ fontSize: '12px', color: '#7D8B9C', maxWidth: '30ch', lineHeight: 1.6 }}>
+                  {outcome === 'crowned'
+                    ? 'Five clean off Black Sox. Nothing left to prove.'
+                    : outcome === 'up'
+                      ? `Four or better — you're up to ${LEVELS[level + 1].name}.`
+                      : level === BLACK_SOX
+                        ? 'Five clean in a row is the only way past Black Sox.'
+                        : `Four steals moves you up. Run the ${LEVELS[level].name} set again.`}
+                </p>
+                {outcome === 'crowned' ? (
+                  <button className="ar-btn" onClick={startOver} style={{ marginTop: '18px' }}><span>Start again</span></button>
+                ) : (
+                  <button className="ar-btn" onClick={nextSet} style={{ marginTop: '18px' }}>
+                    <span>{outcome === 'up' ? `Face ${LEVELS[level + 1].name}` : 'Run it again'}</span>
+                  </button>
+                )}
               </>
             ) : (
               <>
                 <p style={{ fontSize: '12px', color: '#8FA0B4', maxWidth: '30ch', lineHeight: 1.6 }}>
-                  Ten pitches. The arm quickens as you go.
+                  Five pitches at Reserve. Take four and you move up.
                 </p>
-                <button className="ar-btn" onClick={start} style={{ marginTop: '14px' }}><span>Take your lead</span></button>
+                <button className="ar-btn" onClick={() => beginPitch(0)} style={{ marginTop: '14px' }}><span>Take your lead</span></button>
               </>
             )}
           </div>
@@ -390,19 +446,23 @@ export default function ReleaseClient() {
 
       <p className="rl-key">Press space, or tap the field</p>
 
-      {results.length > 0 && (
-        <div className="rl-tape">
-          {Array.from({ length: ROUNDS }).map((_, i) => (
-            <span key={i} className="rl-dot"
-              style={results[i] ? { background: OUT[results[i]].colour } : undefined} />
-          ))}
-        </div>
-      )}
+      <div className="rl-tape">
+        {Array.from({ length: SET_SIZE }).map((_, i) => (
+          <span key={i} className="rl-dot"
+            style={setResults[i] ? { background: OUT[setResults[i]].colour } : undefined} />
+        ))}
+      </div>
 
-      <div className="rl-rules">
-        <span className="rl-rule"><span className="rl-pip" style={{ background: OUT.clean.colour, boxShadow: `0 0 8px ${OUT.clean.colour}` }} />Gone on the release<span className="rl-val">30</span></span>
-        <span className="rl-rule"><span className="rl-pip" style={{ background: OUT.close.colour, boxShadow: `0 0 8px ${OUT.close.colour}` }} />A shade late, still safe<span className="rl-val">15</span></span>
-        <span className="rl-rule"><span className="rl-pip" style={{ background: OUT.thrown.colour, boxShadow: `0 0 8px ${OUT.thrown.colour}` }} />Too slow, or off before the ball<span className="rl-val">0</span></span>
+      <div className="rl-ladder">
+        {LEVELS.map((lv, i) => (
+          <span key={lv.name} className="rl-rung" data-on={i === level} data-done={i < level}>
+            <span className="rl-n">{i + 1}</span>
+            {lv.name}
+            <span style={{ marginLeft: 'auto', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+              {i === BLACK_DIAMOND ? '5 clean in a row' : i < level ? 'Passed' : i === level ? '4 of 5 to pass' : ''}
+            </span>
+          </span>
+        ))}
       </div>
     </>
   )
