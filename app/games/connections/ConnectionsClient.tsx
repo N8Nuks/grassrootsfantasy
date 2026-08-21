@@ -172,6 +172,9 @@ export default function ConnectionsClient({ groups }: { groups: Group[] }) {
           anchoring on — the players who could sit in two groups are the trap.
         </p>
       </details>
+
+      {done && (
+        <div className="ar-panel cn-end">
           <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.34em', textTransform: 'uppercase',
                       color: wrong < MISTAKES ? '#39FF9E' : '#FF4D4D' }}>
             {wrong < MISTAKES ? `Solved with ${MISTAKES - wrong} to spare` : 'Board opened'}
