@@ -24,6 +24,11 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
   const [input, setInput] = useState('')
   const [error, setError] = useState('')
 
+  // Suggestions narrow as you type — a native datalist shows no marker on mobile
+  const q = input.trim().toLowerCase()
+  const matches = q.length < 2 ? []
+    : names.filter(n => n.toLowerCase().includes(q) && n.toLowerCase() !== q).slice(0, 6)
+
   const won = guesses.some(g => g.toLowerCase() === answer.name.toLowerCase())
   const done = won || guesses.length >= MAX_GUESSES
 
@@ -77,6 +82,18 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
           font-size: 16px; font-weight: 700; padding: 16px 20px; caret-color: var(--neon);
         }
         .dl-input::placeholder { color: #4E5A6A; }
+        .dl-drop {
+          position: absolute; left: 0; right: 0; top: 100%; z-index: 20;
+          background: #07080D; border: 1px solid color-mix(in srgb, var(--neon) 45%, transparent);
+          border-top: none; max-height: 244px; overflow-y: auto;
+        }
+        .dl-opt {
+          display: block; width: 100%; text-align: left; cursor: pointer;
+          background: transparent; border: none; border-bottom: 1px solid #ffffff0a;
+          color: #F5F1E8; font-size: 15px; font-weight: 700; padding: 14px 20px;
+        }
+        .dl-opt:last-child { border-bottom: none; }
+        .dl-opt:hover, .dl-opt:active { background: color-mix(in srgb, var(--neon) 18%, transparent); }
         .dl-guess {
           display: flex; align-items: center; gap: 12px; padding: 13px 18px;
           border: 1px solid #ffffff12; background: #ffffff05; margin-bottom: 8px;
@@ -114,22 +131,28 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
 
       {!done && (
         <div style={{ marginBottom: '22px' }}>
-          <div className="dl-bar">
-            <input
-              className="dl-input"
-              value={input}
-              onChange={e => { setInput(e.target.value); setError('') }}
-              onKeyDown={e => { if (e.key === 'Enter') submit() }}
-              list="nfs-players"
-              placeholder="Name a player"
-            />
-            <button className="ar-btn" onClick={submit} style={{ transform: 'none', boxShadow: 'none' }}>
-              <span style={{ transform: 'none' }}>Guess</span>
-            </button>
+          <div style={{ position: 'relative' }}>
+            <div className="dl-bar">
+              <input
+                className="dl-input"
+                value={input}
+                onChange={e => { setInput(e.target.value); setError('') }}
+                onKeyDown={e => { if (e.key === 'Enter') submit() }}
+                placeholder="Start typing a name"
+                autoComplete="off"
+              />
+              <button className="ar-btn" onClick={submit} style={{ transform: 'none', boxShadow: 'none' }}>
+                <span style={{ transform: 'none' }}>Guess</span>
+              </button>
+            </div>
+            {matches.length > 0 && (
+              <div className="dl-drop">
+                {matches.map(n => (
+                  <button key={n} className="dl-opt" onClick={() => setInput(n)}>{n}</button>
+                ))}
+              </div>
+            )}
           </div>
-          <datalist id="nfs-players">
-            {names.map(n => <option key={n} value={n} />)}
-          </datalist>
           {error && <p className="dl-err">{error}</p>}
           <p className="dl-left">{MAX_GUESSES - guesses.length} guess{MAX_GUESSES - guesses.length === 1 ? '' : 'es'} left</p>
         </div>

@@ -56,8 +56,12 @@ export default async function Daily() {
     careerBa: p.stats?.career_ba != null ? Number(p.stats.career_ba).toFixed(3) : null,
   }
 
-  // Every name in the pool, for the guess box — the answer hides among them
-  const names = pool.map(r => r.full_name).sort((a, b) => a.localeCompare(b))
+  /* Only the answer's grade goes in the guess box. Grade is the free first
+     clue, so this gives nothing away — it just halves what you scroll. */
+  const names = pool
+    .filter(r => r.grade === p.grade)
+    .map(r => r.full_name)
+    .sort((a, b) => a.localeCompare(b))
 
   return (
     <ArcadeShell neon={NEON} eyebrow="Daily · One shot" title="Who is it?">
