@@ -12,7 +12,7 @@ const GAMES = [
   { href: '/games/connections', n: '09', title: 'Connections', blurb: 'Sixteen players, four hidden fours. Find them.', tag: 'Daily', neon: '#7DF9FF' },
   { href: '/games/release', n: '10', title: 'Release Point', blurb: 'The windmill comes round. Tap the instant it leaves.', tag: 'Reaction', neon: '#FF4FD8' },
   { href: '/games/fielding', n: '11', title: 'Take the Field', blurb: 'Three lanes. Catch everything, dodge the runners.', tag: 'Endless', neon: '#5CFF6B' },
-  { href: '/games/pickthepitch', n: '12', title: 'Pick the Pitch', blurb: "Steal the catcher's signs from second. Nobody tells you the code.", tag: 'Expert', neon: '#FFD400' },
+  { href: '/games/pickthepitch', n: '12', title: 'Pick the Pitch', blurb: "Steal the catcher's signs from second. Nobody tells you the code.", tag: 'Expert', neon: '#FFD400', featured: true },
 ]
 
 export default function Games() {
@@ -145,9 +145,32 @@ export default function Games() {
         }
         .gm-back:hover { color: #C6FF00; }
 
+        /* One machine in the corner is worth more than the rest. It breathes,
+           its border runs, and it sits a touch prouder than the others. */
+        .gm-tile[data-featured="true"] {
+          border-color: transparent;
+          background:
+            linear-gradient(155deg, #14120A 0%, #0A0906 100%) padding-box,
+            conic-gradient(from var(--spin), var(--neon), #FF2D95, var(--neon), #00F0FF, var(--neon)) border-box;
+          border: 2px solid transparent;
+          animation: gm-spin 5s linear infinite, gm-breathe 3.4s ease-in-out infinite;
+        }
+        .gm-tile[data-featured="true"]:hover { animation-play-state: paused, paused; }
+        @property --spin { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+        @keyframes gm-spin { to { --spin: 360deg; } }
+        @keyframes gm-breathe {
+          0%, 100% { box-shadow: 0 0 22px #FFD40028, 0 18px 40px #00000090; }
+          50%      { box-shadow: 0 0 44px #FFD40055, 0 0 90px #FFD4001F, 0 18px 40px #00000090; }
+        }
+        .gm-tile[data-featured="true"] .gm-tag { animation: gm-flick 2.6s steps(1) infinite; }
+        @keyframes gm-flick { 0%, 88%, 100% { opacity: 1; } 90% { opacity: 0.45; } 94% { opacity: 1; } 96% { opacity: 0.6; } }
+        .gm-tile[data-featured="true"] .gm-name { color: var(--neon); text-shadow: 0 0 18px #FFD40060; }
+
         @media (prefers-reduced-motion: reduce) {
           .gm-flood, .gm-title::before, .gm-title::after { animation: none; }
           .gm-tile { transition: none; }
+          .gm-tile[data-featured="true"] { animation: none; border-color: var(--neon); }
+          .gm-tile[data-featured="true"] .gm-tag { animation: none; }
         }
       `}</style>
 
@@ -168,7 +191,9 @@ export default function Games() {
 
           <div className="gm-grid">
             {GAMES.map(g => (
-              <a key={g.href} href={g.href} className="gm-tile" style={{ ['--neon' as string]: g.neon }}>
+              <a key={g.href} href={g.href} className="gm-tile"
+                data-featured={'featured' in g ? 'true' : undefined}
+                style={{ ['--neon' as string]: g.neon }}>
                 <span className="gm-n">{g.n}</span>
                 <span className="gm-tag">{g.tag}</span>
                 <h2 className="gm-name">{g.title}</h2>
