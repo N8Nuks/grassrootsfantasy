@@ -10,10 +10,17 @@ const NEON = '#B47CFF'
 
 /* Hand-picked replacements. Some names belong in the cage on reputation rather
    than title count, and a couple of the tail-enders don't. */
-const BATTER_SWAPS: Record<string, string> = { 'Sina Hunkin': 'Katrina Nukunuku' }
-const PITCHER_ADDS: { name: string; grade: 'M' | 'W'; titles: number }[] = [
-  { name: 'Daniel Chapman', grade: 'M', titles: 1 },
-  { name: 'Blaire Luna', grade: 'W', titles: 1 },
+const BATTER_SWAPS: Record<string, string> = {
+  'Sina Hunkin': 'Katrina Nukunuku',
+  'Katie Hetherington': 'Nathan Nukunuku',
+}
+
+/* Which side they stood on. Right unless named here — every arm in the cage is
+   right-handed bar one. */
+const LEFTIES = new Set(['Kaleo Eldredge', 'Nathan Nukunuku', 'Heinie Shannon'])
+const PITCHER_ADDS: Legend[] = [
+  { name: 'Daniel Chapman', grade: 'M', titles: 1, lefty: false },
+  { name: 'Blaire Luna', grade: 'W', titles: 1, lefty: false },
 ]
 
 function tally(grade: 'men' | 'women', key: string): [string, number][] {
@@ -33,7 +40,12 @@ function build(key: string, swaps: Record<string, string> = {}): Legend[] {
   const out: Legend[] = []
   for (const grade of ['men', 'women'] as const) {
     for (const [name, titles] of tally(grade, key).slice(0, 5)) {
-      out.push({ name: swaps[name] ?? name, titles, grade: grade === 'men' ? 'M' : 'W' })
+      const final = swaps[name] ?? name
+      out.push({
+        name: final, titles,
+        grade: grade === 'men' ? 'M' : 'W',
+        lefty: LEFTIES.has(final),
+      })
     }
   }
   return out

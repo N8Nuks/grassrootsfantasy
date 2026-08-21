@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { splitName } from '@/lib/names'
 
-export type Legend = { name: string; titles: number; grade: string }
+export type Legend = { name: string; titles: number; grade: string; lefty: boolean }
 
 const PITCHES = 10
 const OUTS = 3
@@ -19,7 +19,8 @@ const RESULTS = {
 type ResultKey = keyof typeof RESULTS
 
 // The zone is the width of the plate and no wider, quartered into nine cells
-const ZONE = { x: 0.5, y: 0.66, w: 0.105, h: 0.125 }
+// Knees to the letters on a standing hitter — the plate sits just below it
+const ZONE = { x: 0.5, y: 0.755, w: 0.105, h: 0.125 }
 const SWING_MS = 300
 
 export default function LegendsClient({ batters, pitchers }: { batters: Legend[]; pitchers: Legend[] }) {
@@ -118,8 +119,10 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
      front of the chest and the barrel whips round behind them, so from behind
      the pitcher the bat sweeps level across the frame rather than chopping. */
   function drawBatter(ctx: CanvasRenderingContext2D, W: number, H: number, now: number) {
-    const bx = W * (ZONE.x - 0.155)
-    const waistY = H * 0.80              // the fulcrum
+    // A lefty stands the other side of the plate and swings the other way
+    const side = batter.lefty ? -1 : 1
+    const bx = W * (ZONE.x - 0.155 * side)
+    const waistY = H * 0.845             // the fulcrum, at the waist
     let s = 0
     if (swung.current && swingAt.current) s = Math.min(1, (now - swingAt.current) / SWING_MS)
     const e = s < 0.5 ? 2 * s * s : 1 - Math.pow(-2 * s + 2, 2) / 2
@@ -130,6 +133,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
 
     ctx.save()
     ctx.translate(bx, waistY)
+    ctx.scale(side, 1)
 
     // Legs below the fulcrum — back foot pivots, front leg braces
     ctx.strokeStyle = ink; ctx.lineWidth = 10; ctx.lineCap = 'round'
