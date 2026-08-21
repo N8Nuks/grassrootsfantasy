@@ -2,14 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { splitName } from '@/lib/names'
 
-export type Batter = {
-  id: string; name: string; club: string; grade: string; tier: string
-  photoUrl: string | null; ba: number; hr: number; points: number
-}
-export type Pitcher = {
-  id: string; name: string; club: string; grade: string
-  photoUrl: string | null; k: number; wins: number
-}
+export type Legend = { name: string; titles: number; grade: string }
 
 const PITCHES = 10
 const OUTS = 3
@@ -25,12 +18,13 @@ const RESULTS = {
 } as const
 type ResultKey = keyof typeof RESULTS
 
-const ZONE = { x: 0.5, y: 0.685, w: 0.15, h: 0.14 }
-const SWING_MS = 300          // loaded to follow-through
+// The zone is the width of the plate and no wider, quartered into nine cells
+const ZONE = { x: 0.5, y: 0.66, w: 0.105, h: 0.125 }
+const SWING_MS = 300
 
-export default function BattingClient({ batters, pitchers }: { batters: Batter[]; pitchers: Pitcher[] }) {
-  const [batter, setBatter] = useState<Batter>(batters[0])
-  const [pitcher, setPitcher] = useState<Pitcher>(pitchers[0])
+export default function LegendsClient({ batters, pitchers }: { batters: Legend[]; pitchers: Legend[] }) {
+  const [batter, setBatter] = useState<Legend>(batters[0])
+  const [pitcher, setPitcher] = useState<Legend>(pitchers[0])
   const [phase, setPhase] = useState<'setup' | 'live' | 'done'>('setup')
 
   const [pitchNo, setPitchNo] = useState(0)
@@ -41,26 +35,27 @@ export default function BattingClient({ batters, pitchers }: { batters: Batter[]
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const raf = useRef(0)
-
   const t = useRef(0)
   const dur = useRef(1400)
   const breakX = useRef(0)
   const started = useRef(0)
-  const windUp = useRef(0)          // pitcher's arm, 0 to 1
+  const windUp = useRef(0)
   const swung = useRef(false)
   const settled = useRef(false)
   const swingAt = useRef(0)
   const contact = useRef(false)
   const ball = useRef<{ x: number; y: number; vx: number; vy: number; g: number } | null>(null)
 
-  const maxK = Math.max(...pitchers.map(p => p.k), 1)
-  const heat = pitcher.k / maxK
-  const windowSize = 0.055 + batter.ba * 0.11
+  const maxBatTitles = Math.max(...batters.map(b => b.titles), 1)
+  const maxPitTitles = Math.max(...pitchers.map(p => p.titles), 1)
+  const heat = pitcher.titles / maxPitTitles
+  const eye = batter.titles / maxBatTitles
+  const windowSize = 0.058 + eye * 0.055
 
   const beginPitch = useCallback(() => {
-    dur.current = 1500 - heat * 600 + (Math.random() * 240 - 120)
-    breakX.current = (Math.random() * 2 - 1) * (0.15 + heat * 0.28)
-    t.current = -0.55                     // the wind-up runs before the ball is loose
+    dur.current = 1520 - heat * 620 + (Math.random() * 240 - 120)
+    breakX.current = (Math.random() * 2 - 1) * (0.14 + heat * 0.3)
+    t.current = -0.55
     swung.current = false
     settled.current = false
     contact.current = false
@@ -77,11 +72,9 @@ export default function BattingClient({ batters, pitchers }: { batters: Batter[]
     setLog(l => [...l, { key, dist, off, angle }])
     const isOut = key === 'strike' || key === 'out'
     const nextOuts = outs + (isOut ? 1 : 0)
-    // A foul with two strikes keeps you alive, as it should
     const nextPitch = pitchNo + 1
     if (isOut) setOuts(nextOuts)
     setPitchNo(nextPitch)
-
     setTimeout(() => {
       setFlash(null)
       if (nextOuts >= OUTS || nextPitch >= PITCHES) setPhase('done')
@@ -91,117 +84,102 @@ export default function BattingClient({ batters, pitchers }: { batters: Batter[]
 
   function launch(kind: string, angle: number) {
     contact.current = true
-    if (kind === 'over')   ball.current = { x: ZONE.x, y: ZONE.y, vx: angle * 0.8, vy: -1.4, g: 0.0118, alive: true } as never
-    else if (kind === 'deep')   ball.current = { x: ZONE.x, y: ZONE.y, vx: angle * 1.1, vy: -1.02, g: 0.0185 } as never
-    else if (kind === 'liner')  ball.current = { x: ZONE.x, y: ZONE.y, vx: angle * 1.4, vy: -0.6, g: 0.021 } as never
-    else if (kind === 'ground') ball.current = { x: ZONE.x, y: ZONE.y, vx: angle * 1.7, vy: -0.14, g: 0.028 } as never
-    else if (kind === 'back')   ball.current = { x: ZONE.x, y: ZONE.y, vx: (angle > 0 ? 1 : -1) * 0.55, vy: -1.55, g: 0.031 } as never
+    const base = { x: ZONE.x, y: ZONE.y }
+    if (kind === 'over')        ball.current = { ...base, vx: angle * 0.8, vy: -1.4, g: 0.0118 }
+    else if (kind === 'deep')   ball.current = { ...base, vx: angle * 1.1, vy: -1.02, g: 0.0185 }
+    else if (kind === 'liner')  ball.current = { ...base, vx: angle * 1.4, vy: -0.6, g: 0.021 }
+    else if (kind === 'ground') ball.current = { ...base, vx: angle * 1.7, vy: -0.14, g: 0.028 }
+    else if (kind === 'back')   ball.current = { ...base, vx: (angle > 0 ? 1 : -1) * 0.55, vy: -1.55, g: 0.031 }
   }
 
   const swing = useCallback(() => {
     if (phase !== 'live' || swung.current || settled.current) return
     swung.current = true
     swingAt.current = performance.now()
-    const off = t.current - 1                  // negative early, positive late
+    const off = t.current - 1
     const abs = Math.abs(off)
-
-    if (t.current < 0.5) {
-      setTimeout(() => finish('strike', 0, off, 0), 320)
-      return
-    }
-    // Pulled when early, pushed when late — the spray tells the story
+    if (t.current < 0.5) { setTimeout(() => finish('strike', 0, off, 0), 320); return }
     const angle = Math.max(-1, Math.min(1, -off * 5))
 
     let key: ResultKey
     let dist = 0
-    if (abs <= windowSize * 0.4) { key = 'homer'; dist = 95 + Math.round(Math.random() * 45) + Math.round(batter.hr * 1.5) }
+    if (abs <= windowSize * 0.4) { key = 'homer'; dist = 92 + Math.round(Math.random() * 42) + batter.titles * 4 }
     else if (abs <= windowSize * 0.8) { key = 'triple'; dist = 62 + Math.round(Math.random() * 20) }
     else if (abs <= windowSize * 1.3) { key = 'double'; dist = 44 + Math.round(Math.random() * 16) }
     else if (abs <= windowSize * 2)   { key = 'single'; dist = 26 + Math.round(Math.random() * 14) }
     else if (abs <= windowSize * 3)   { key = 'foul'; dist = 0 }
     else { key = 'out'; dist = 12 + Math.round(Math.random() * 10) }
 
-    setTimeout(() => {
-      launch(RESULTS[key].flight, angle)
-      finish(key, dist, off, angle)
-    }, SWING_MS * 0.38)                        // contact lands mid-swing
-  }, [phase, windowSize, batter.hr, finish])
+    setTimeout(() => { launch(RESULTS[key].flight, angle); finish(key, dist, off, angle) }, SWING_MS * 0.38)
+  }, [phase, windowSize, batter.titles, finish])
 
-  /* ── The batter: hips, shoulders and bat rotate together around the spine ── */
+  /* ── The batter ──
+     The whole swing turns about the waist, not the shoulders. Hands stay in
+     front of the chest and the barrel whips round behind them, so from behind
+     the pitcher the bat sweeps level across the frame rather than chopping. */
   function drawBatter(ctx: CanvasRenderingContext2D, W: number, H: number, now: number) {
-    const bx = W * (ZONE.x - 0.15)
-    const by = H * 0.9
+    const bx = W * (ZONE.x - 0.155)
+    const waistY = H * 0.80              // the fulcrum
     let s = 0
     if (swung.current && swingAt.current) s = Math.min(1, (now - swingAt.current) / SWING_MS)
-    // Ease so the bat accelerates through the zone and decelerates after
     const e = s < 0.5 ? 2 * s * s : 1 - Math.pow(-2 * s + 2, 2) / 2
 
     const ink = '#0A0C10'
     const kit = '#B47CFF'
-    const rot = -1.15 + e * 2.5        // the whole upper body turns through the ball
+    const turn = -1.05 + e * 2.4         // radians the trunk rotates about the waist
 
     ctx.save()
-    ctx.translate(bx, by)
+    ctx.translate(bx, waistY)
 
-    // Legs — back foot pivots, front leg braces
+    // Legs below the fulcrum — back foot pivots, front leg braces
     ctx.strokeStyle = ink; ctx.lineWidth = 10; ctx.lineCap = 'round'
-    ctx.beginPath(); ctx.moveTo(0, -46); ctx.lineTo(-18 - e * 5, 0); ctx.stroke()
-    ctx.beginPath(); ctx.moveTo(0, -46); ctx.lineTo(20 + e * 12, 0); ctx.stroke()
-    // hips open with the swing
-    ctx.strokeStyle = kit; ctx.lineWidth = 13
-    ctx.beginPath(); ctx.moveTo(-7 + e * 5, -46); ctx.lineTo(7 + e * 5, -46); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-17 - e * 4, H * 0.115); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(19 + e * 10, H * 0.115); ctx.stroke()
 
-    // Everything above the waist turns as one unit
+    // Everything above the waist rotates as one
     ctx.save()
-    ctx.translate(0, -46)
-    ctx.rotate(rot * 0.42)
-    ctx.strokeStyle = kit; ctx.lineWidth = 16
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -32); ctx.stroke()
-    // head stays back and level — a hitter watches the ball in
+    ctx.rotate(turn * 0.36)
+    ctx.strokeStyle = kit; ctx.lineWidth = 17
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -H * 0.085); ctx.stroke()
+    // Head stays back and level — a hitter watches the ball in
     ctx.save()
-    ctx.rotate(-rot * 0.3)
+    ctx.rotate(-turn * 0.32)
     ctx.fillStyle = ink
-    ctx.beginPath(); ctx.arc(0, -44, 11, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.arc(0, -H * 0.115, 11, 0, Math.PI * 2); ctx.fill()
     ctx.fillStyle = kit
-    ctx.beginPath(); ctx.arc(0, -46, 11, Math.PI, 0); ctx.fill()
-    ctx.fillRect(0, -49, 15, 4)
+    ctx.beginPath(); ctx.arc(0, -H * 0.12, 11, Math.PI, 0); ctx.fill()
+    ctx.fillRect(0, -H * 0.128, 15, 4)
+    ctx.restore()
     ctx.restore()
 
-    // Arms and bat, swinging in the horizontal plane around the shoulders
+    // The bat pivots about the waist, hands riding just ahead of the barrel
     ctx.save()
-    ctx.translate(0, -30)
-    ctx.rotate(rot)
+    ctx.rotate(turn)
+    const handX = 26, barrelX = 88
     ctx.strokeStyle = ink; ctx.lineWidth = 7
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(20, 4); ctx.stroke()
-    const grad = ctx.createLinearGradient(20, 0, 78, 0)
-    grad.addColorStop(0, '#6E4F2C'); grad.addColorStop(1, '#D9B36A')
-    ctx.strokeStyle = grad; ctx.lineCap = 'round'
+    ctx.beginPath(); ctx.moveTo(0, -H * 0.07); ctx.lineTo(handX, -6); ctx.stroke()
+    const grain = ctx.createLinearGradient(handX, 0, barrelX, 0)
+    grain.addColorStop(0, '#6E4F2C'); grain.addColorStop(1, '#D9B36A')
+    ctx.strokeStyle = grain; ctx.lineCap = 'round'
     ctx.lineWidth = 6
-    ctx.beginPath(); ctx.moveTo(20, 4); ctx.lineTo(66, 4); ctx.stroke()
-    ctx.lineWidth = 10
-    ctx.beginPath(); ctx.moveTo(58, 4); ctx.lineTo(78, 4); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(handX, -6); ctx.lineTo(barrelX - 18, -6); ctx.stroke()
+    ctx.lineWidth = 11
+    ctx.beginPath(); ctx.moveTo(barrelX - 20, -6); ctx.lineTo(barrelX, -6); ctx.stroke()
     ctx.restore()
 
-    // Bat blur through the zone
-    if (s > 0.15 && s < 0.85) {
+    // Barrel blur, level through the zone
+    if (s > 0.12 && s < 0.88) {
       ctx.save()
-      ctx.translate(0, -30)
-      ctx.strokeStyle = `rgba(217, 179, 106, ${0.3 * (1 - Math.abs(s - 0.5) * 2)})`
-      ctx.lineWidth = 22
-      ctx.beginPath()
-      ctx.arc(0, 0, 74, rot - 0.9, rot, false)
-      ctx.stroke()
+      ctx.strokeStyle = `rgba(217,179,106,${0.34 * (1 - Math.abs(s - 0.5) * 2)})`
+      ctx.lineWidth = 20
+      ctx.beginPath(); ctx.arc(0, -6, 84, turn - 1.0, turn, false); ctx.stroke()
       ctx.restore()
     }
+    ctx.restore()
 
-    ctx.restore()   // upper body
-    ctx.restore()   // batter
-
-    // Contact spark at the plate
     if (contact.current && s > 0.3 && s < 0.72) {
       const px = W * ZONE.x, py = H * ZONE.y
-      ctx.save()
-      ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 3
+      ctx.save(); ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 3
       const r = 12 + (s - 0.3) * 70
       for (let i = 0; i < 7; i++) {
         const a = (i / 7) * Math.PI * 2 + s * 3
@@ -214,13 +192,10 @@ export default function BattingClient({ batters, pitchers }: { batters: Batter[]
     }
   }
 
-  /* ── The pitcher on the mound, winding and releasing ── */
   function drawPitcher(ctx: CanvasRenderingContext2D, W: number, H: number) {
     const px = W * 0.5, py = H * 0.42, armR = H * 0.075
-    // Arm sweeps through the wind-up, releases as the ball goes
     const w = Math.max(0, Math.min(1, windUp.current))
     const angle = -Math.PI / 2 + w * Math.PI * 2
-
     ctx.save()
     ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 6; ctx.lineCap = 'round'
     ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px - 10, py + H * 0.06); ctx.stroke()
@@ -244,7 +219,6 @@ export default function BattingClient({ batters, pitchers }: { batters: Batter[]
     if (!ctx) return
     const W = cv.width, H = cv.height
 
-    // Park
     const sky = ctx.createLinearGradient(0, 0, 0, H)
     sky.addColorStop(0, '#0B0D18'); sky.addColorStop(0.32, '#101A2E')
     sky.addColorStop(0.33, '#12301C'); sky.addColorStop(1, '#0A1A10')
@@ -253,57 +227,57 @@ export default function BattingClient({ batters, pitchers }: { batters: Batter[]
     pool.addColorStop(0, '#B47CFF1C'); pool.addColorStop(1, 'transparent')
     ctx.fillStyle = pool; ctx.fillRect(0, 0, W, H)
 
-    // Wall, foul lines, dirt
     ctx.fillStyle = '#0E1626'; ctx.fillRect(0, H * 0.30, W, H * 0.035)
     ctx.fillStyle = '#B47CFF45'; ctx.fillRect(0, H * 0.30, W, 2)
     ctx.strokeStyle = '#ffffff14'; ctx.lineWidth = 2
     ctx.beginPath()
-    ctx.moveTo(W * ZONE.x, H * 0.9); ctx.lineTo(W * 0.02, H * 0.33)
-    ctx.moveTo(W * ZONE.x, H * 0.9); ctx.lineTo(W * 0.98, H * 0.33)
+    ctx.moveTo(W * ZONE.x, H * 0.92); ctx.lineTo(W * 0.02, H * 0.33)
+    ctx.moveTo(W * ZONE.x, H * 0.92); ctx.lineTo(W * 0.98, H * 0.33)
     ctx.stroke()
     ctx.fillStyle = '#2A1D14'
     ctx.beginPath(); ctx.ellipse(W / 2, H * 1.08, W * 0.55, H * 0.36, 0, Math.PI, 0); ctx.fill()
     ctx.fillStyle = '#3A2A1E'
     ctx.beginPath(); ctx.ellipse(W / 2, H * 0.455, W * 0.07, H * 0.022, 0, 0, Math.PI * 2); ctx.fill()
+
+    // Home plate, drawn to the same width as the zone above it
+    const pw = W * ZONE.w
     ctx.fillStyle = '#F5F1E8'
     ctx.beginPath()
-    ctx.moveTo(W / 2 - 18, H * 0.895); ctx.lineTo(W / 2 + 18, H * 0.895)
-    ctx.lineTo(W / 2 + 18, H * 0.915); ctx.lineTo(W / 2, H * 0.934)
-    ctx.lineTo(W / 2 - 18, H * 0.915); ctx.closePath(); ctx.fill()
+    ctx.moveTo(W / 2 - pw / 2, H * 0.905); ctx.lineTo(W / 2 + pw / 2, H * 0.905)
+    ctx.lineTo(W / 2 + pw / 2, H * 0.925); ctx.lineTo(W / 2, H * 0.944)
+    ctx.lineTo(W / 2 - pw / 2, H * 0.925); ctx.closePath(); ctx.fill()
 
-    // Strike zone
+    // Nine-cell zone
     const zx = W * (ZONE.x - ZONE.w / 2), zy = H * (ZONE.y - ZONE.h / 2)
     const zw = W * ZONE.w, zh = H * ZONE.h
-    const live = phase === 'live' && !settled.current
-    const near = live ? Math.min(Math.max(t.current, 0), 1) : 0
-    ctx.strokeStyle = `rgba(180,124,255,${0.26 + near * 0.55})`; ctx.lineWidth = 2
+    const near = phase === 'live' && !settled.current ? Math.min(Math.max(t.current, 0), 1) : 0
+    ctx.strokeStyle = `rgba(180,124,255,${0.28 + near * 0.55})`; ctx.lineWidth = 2
     ctx.strokeRect(zx, zy, zw, zh)
-    ctx.strokeStyle = `rgba(180,124,255,${0.09 + near * 0.2})`; ctx.lineWidth = 1
+    ctx.strokeStyle = `rgba(180,124,255,${0.12 + near * 0.24})`; ctx.lineWidth = 1
     ctx.beginPath()
-    ctx.moveTo(zx + zw / 3, zy); ctx.lineTo(zx + zw / 3, zy + zh)
-    ctx.moveTo(zx + zw * 2 / 3, zy); ctx.lineTo(zx + zw * 2 / 3, zy + zh)
-    ctx.moveTo(zx, zy + zh / 3); ctx.lineTo(zx + zw, zy + zh / 3)
-    ctx.moveTo(zx, zy + zh * 2 / 3); ctx.lineTo(zx + zw, zy + zh * 2 / 3)
+    for (let i = 1; i < 3; i++) {
+      ctx.moveTo(zx + (zw * i) / 3, zy); ctx.lineTo(zx + (zw * i) / 3, zy + zh)
+      ctx.moveTo(zx, zy + (zh * i) / 3); ctx.lineTo(zx + zw, zy + (zh * i) / 3)
+    }
     ctx.stroke()
 
     if (phase === 'live') {
       if (!swung.current && !settled.current && started.current) {
-        t.current = -0.55 + (now - started.current) / dur.current * 1.55
+        t.current = -0.55 + ((now - started.current) / dur.current) * 1.55
         windUp.current = Math.min(1, Math.max(0, (t.current + 0.55) / 0.55))
         if (t.current >= 1.14) finish('strike', 0, t.current - 1, 0)
       }
-
       drawPitcher(ctx, W, H)
 
-      const b = ball.current as { x: number; y: number; vx: number; vy: number; g: number } | null
+      const b = ball.current
       if (b) {
         b.x += b.vx * 0.011
         b.y += b.vy * 0.013
         b.vy += b.g
-        if (b.y > 0.905 && b.vy > 0) { b.y = 0.905; b.vy *= -0.4; b.vx *= 0.7 }
+        if (b.y > 0.915 && b.vy > 0) { b.y = 0.915; b.vy *= -0.4; b.vx *= 0.7 }
         ctx.save()
-        ctx.shadowColor = '#F5F1E8'; ctx.shadowBlur = 18
-        ctx.fillStyle = '#F5F1E8'
+        ctx.shadowColor = '#E8FF3D'; ctx.shadowBlur = 18
+        ctx.fillStyle = '#E8FF3D'
         const r = Math.max(3, 8 - (0.9 - b.y) * 6)
         ctx.beginPath(); ctx.arc(b.x * W, b.y * H, r, 0, Math.PI * 2); ctx.fill()
         ctx.restore()
@@ -313,8 +287,8 @@ export default function BattingClient({ batters, pitchers }: { batters: Batter[]
         const y = H * 0.455 + (H * ZONE.y - H * 0.455) * (p * p * 0.7 + p * 0.3)
         const r = 3.5 + p * p * 9
         ctx.save()
-        ctx.shadowColor = '#FFFFFF'; ctx.shadowBlur = 12 + p * 16
-        ctx.fillStyle = '#FFFFFF'
+        ctx.shadowColor = '#E8FF3D'; ctx.shadowBlur = 12 + p * 16
+        ctx.fillStyle = '#E8FF3D'
         ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill()
         ctx.restore()
         ctx.strokeStyle = '#C41E3A'; ctx.lineWidth = Math.max(1, r * 0.24)
@@ -354,6 +328,19 @@ export default function BattingClient({ batters, pitchers }: { batters: Batter[]
   const furthest = log.reduce((m, l) => Math.max(m, l.dist), 0)
   const contactRate = log.length ? Math.round((log.filter(l => l.key !== 'strike').length / log.length) * 100) : 0
 
+  function Card({ p, on, onPick, max }: { p: Legend; on: boolean; onPick: () => void; max: number }) {
+    return (
+      <button className="bt-pick" data-on={on} onClick={onPick}>
+        <span className="bt-face">
+          <span className="bt-crest">{p.titles}</span>
+        </span>
+        <span className="bt-pn">{caps(p.name)}</span>
+        <span className="bt-pm">{p.titles} title{p.titles === 1 ? '' : 's'} · {p.grade}</span>
+        <span className="bt-bar"><i style={{ width: `${Math.round((p.titles / max) * 100)}%` }} /></span>
+      </button>
+    )
+  }
+
   return (
     <>
       <style>{`
@@ -362,19 +349,18 @@ export default function BattingClient({ batters, pitchers }: { batters: Batter[]
         .bt-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
         .bt-strip::-webkit-scrollbar { display: none; }
         .bt-pick {
-          flex: 0 0 auto; width: 98px; cursor: pointer; padding: 0 0 10px; text-align: center;
+          flex: 0 0 auto; width: 104px; cursor: pointer; padding: 0 0 10px; text-align: center;
           background: linear-gradient(160deg, #0C0F16 0%, #07080D 100%);
           border: 1px solid #ffffff14; transition: border-color 150ms ease, transform 150ms ease;
         }
         .bt-pick:hover { transform: translateY(-3px); border-color: #ffffff35; }
         .bt-pick[data-on="true"] { border-color: var(--neon); box-shadow: 0 0 20px color-mix(in srgb, var(--neon) 40%, transparent); }
-        .bt-face { height: 66px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
-          background: linear-gradient(180deg, color-mix(in srgb, var(--neon) 16%, transparent), transparent); }
-        .bt-face img { height: 96%; width: auto; object-fit: contain; }
-        .bt-ghost { width: 30px; height: 38px; border-radius: 50% 50% 6px 6px; background: color-mix(in srgb, var(--neon) 32%, transparent); margin-bottom: 5px; }
-        .bt-pn { font-family: var(--font-heading); font-weight: 900; font-size: 11px; color: #F5F1E8; margin-top: 8px; padding: 0 5px; line-height: 1.15; }
-        .bt-pm { font-size: 9px; color: #5C6878; margin-top: 3px; }
-        .bt-bar { height: 3px; background: #ffffff12; margin: 6px 8px 0; }
+        .bt-face { height: 58px; display: flex; align-items: center; justify-content: center;
+          background: linear-gradient(180deg, color-mix(in srgb, var(--neon) 18%, transparent), transparent); }
+        .bt-crest { font-family: var(--font-heading); font-weight: 900; font-size: 30px; color: var(--neon); text-shadow: 0 0 18px color-mix(in srgb, var(--neon) 60%, transparent); }
+        .bt-pn { font-family: var(--font-heading); font-weight: 900; font-size: 11px; color: #F5F1E8; margin-top: 8px; padding: 0 5px; line-height: 1.15; display: block; }
+        .bt-pm { font-size: 9px; color: #5C6878; margin-top: 3px; display: block; }
+        .bt-bar { height: 3px; background: #ffffff12; margin: 6px 8px 0; display: block; }
         .bt-bar i { display: block; height: 100%; background: var(--neon); }
 
         .bt-hud { display: flex; align-items: stretch; gap: 1px; margin: 20px 0 12px; background: #ffffff10; border: 1px solid #ffffff12; }
@@ -396,7 +382,6 @@ export default function BattingClient({ batters, pitchers }: { batters: Batter[]
         }
         @keyframes bt-slam { from { transform: skewX(-7deg) scale(2.1); opacity: 0; } }
         .bt-dist { font-size: 11px; font-weight: 900; letter-spacing: 0.26em; text-transform: uppercase; color: #F5F1E8; margin-top: 8px; }
-        /* How close the swing was — early to the left, late to the right */
         .bt-timing { width: 62%; max-width: 260px; height: 8px; background: #ffffff12; margin-top: 14px; position: relative; }
         .bt-timing i { position: absolute; top: -4px; width: 3px; height: 16px; background: #F5F1E8; box-shadow: 0 0 8px #fff; }
         .bt-timing u { position: absolute; top: 0; bottom: 0; left: 42%; width: 16%; background: #FFD70055; }
@@ -409,47 +394,28 @@ export default function BattingClient({ batters, pitchers }: { batters: Batter[]
         .bt-key { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #3E4A58; text-align: center; margin-top: 14px; }
         .bt-tape { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 16px; }
         .bt-dot { width: 26px; height: 5px; background: #ffffff10; }
-        .bt-spray { margin-top: 18px; }
       `}</style>
 
       <p className="bt-lede">
-        Ten pitches, three outs. A better average widens your window; the league&apos;s best strikeout
-        arms throw harder and move it more. Swing early and you pull it, late and it goes the other way.
+        Every batting and pitching champion the NFS has ever crowned, in one cage. Titles won stand in
+        for the stats — the more a hitter won, the wider your window; the more an arm won, the less
+        time you get.
       </p>
 
       {phase === 'setup' && (
         <>
-          <p className="bt-lbl">At the plate</p>
+          <p className="bt-lbl">In the box · most batting titles</p>
           <div className="bt-strip">
             {batters.map(b => (
-              <button key={b.id} className="bt-pick" data-on={batter.id === b.id} onClick={() => setBatter(b)}>
-                <span className="bt-face">
-                  {b.photoUrl
-                    // eslint-disable-next-line @next/next/no-img-element
-                    ? <img src={b.photoUrl} alt="" />
-                    : <span className="bt-ghost" />}
-                </span>
-                <span className="bt-pn">{caps(b.name)}</span>
-                <span className="bt-pm">{b.ba.toFixed(3).replace(/^0/, '')} · {b.grade}</span>
-                <span className="bt-bar"><i style={{ width: `${Math.min(100, b.ba * 170)}%` }} /></span>
-              </button>
+              <Card key={b.name + b.grade} p={b} max={maxBatTitles}
+                on={batter.name === b.name} onPick={() => setBatter(b)} />
             ))}
           </div>
-
-          <p className="bt-lbl">On the mound · most strikeouts</p>
+          <p className="bt-lbl">On the mound · most pitching titles</p>
           <div className="bt-strip">
             {pitchers.map(p => (
-              <button key={p.id} className="bt-pick" data-on={pitcher.id === p.id} onClick={() => setPitcher(p)}>
-                <span className="bt-face">
-                  {p.photoUrl
-                    // eslint-disable-next-line @next/next/no-img-element
-                    ? <img src={p.photoUrl} alt="" />
-                    : <span className="bt-ghost" />}
-                </span>
-                <span className="bt-pn">{caps(p.name)}</span>
-                <span className="bt-pm">{p.k} K · {p.grade}</span>
-                <span className="bt-bar"><i style={{ width: `${Math.round((p.k / maxK) * 100)}%` }} /></span>
-              </button>
+              <Card key={p.name + p.grade} p={p} max={maxPitTitles}
+                on={pitcher.name === p.name} onPick={() => setPitcher(p)} />
             ))}
           </div>
         </>
@@ -517,32 +483,11 @@ export default function BattingClient({ batters, pitchers }: { batters: Batter[]
       <p className="bt-key">Tap the field or hit space to swing</p>
 
       {log.length > 0 && (
-        <>
-          <div className="bt-tape">
-            {Array.from({ length: PITCHES }).map((_, i) => (
-              <span key={i} className="bt-dot" style={log[i] ? { background: RESULTS[log[i].key].colour } : undefined} />
-            ))}
-          </div>
-
-          {/* Spray chart — where each one went, pulled or pushed */}
-          <div className="bt-spray">
-            <p className="bt-lbl">Spray chart</p>
-            <svg viewBox="0 0 200 130" style={{ width: '100%', height: 'auto', background: '#07080D', border: '1px solid #ffffff12' }}>
-              <path d="M100 122 L8 34 A130 130 0 0 1 192 34 Z" fill="#12301C" opacity=".5" />
-              <path d="M100 122 L44 68 A78 78 0 0 1 156 68 Z" fill="#2A1D14" opacity=".55" />
-              <path d="M100 122 L8 34M100 122 L192 34" stroke="#ffffff22" strokeWidth="1" fill="none" />
-              {log.filter(l => l.key !== 'strike').map((l, i) => {
-                const reach = l.key === 'homer' ? 1.02 : l.key === 'triple' ? 0.82
-                  : l.key === 'double' ? 0.66 : l.key === 'single' ? 0.48 : 0.26
-                const a = -Math.PI / 2 + l.angle * 0.72
-                const x = 100 + Math.cos(a) * 92 * reach
-                const y = 122 + Math.sin(a) * 92 * reach
-                return <circle key={i} cx={x} cy={y} r="3.4" fill={RESULTS[l.key].colour}
-                  style={{ filter: `drop-shadow(0 0 5px ${RESULTS[l.key].colour})` }} />
-              })}
-            </svg>
-          </div>
-        </>
+        <div className="bt-tape">
+          {Array.from({ length: PITCHES }).map((_, i) => (
+            <span key={i} className="bt-dot" style={log[i] ? { background: RESULTS[log[i].key].colour } : undefined} />
+          ))}
+        </div>
       )}
     </>
   )

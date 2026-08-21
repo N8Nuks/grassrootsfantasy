@@ -5,7 +5,7 @@ const GAMES = [
   { href: '/games/higher', n: '02', title: 'Higher or Lower', blurb: 'Two cards, one stat. Keep the run alive.', tag: 'Endless', neon: '#00F0FF' },
   { href: '/games/lineup', n: '03', title: 'The Perfect Card', blurb: 'Sixteen cards, twelve slots, one best answer.', tag: 'Puzzle', neon: '#C6FF00' },
   { href: '/games/snake', n: '04', title: 'Diamond Snake', blurb: 'Your club crest, loose on the field. Eat everything.', tag: 'Arcade', neon: '#FFB800' },
-  { href: '/games/batting', n: '05', title: 'Batting Practice', blurb: 'Time the swing. Send it.', tag: 'Arcade', neon: '#B47CFF' },
+  { href: '/games/batting', n: '05', title: 'Legends Cage', blurb: 'Every champion the NFS has crowned. Pick your bat, pick your arm.', tag: 'Archive', neon: '#B47CFF' },
   { href: '/games/memory', n: '06', title: 'Card Sharp', blurb: 'Two of every card, face down. Remember what you saw.', tag: 'Memory', neon: '#FF6B9D' },
   { href: '/games/merge', n: '07', title: 'Tier Up', blurb: 'Two Commons make an Elite. Climb to Immortal.', tag: 'Puzzle', neon: '#39FF9E' },
   { href: '/games/season', n: '08', title: 'Guess the Season', blurb: 'Four award winners. Name the year they won.', tag: 'Archive', neon: '#FF8A3D' },

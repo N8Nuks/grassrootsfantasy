@@ -1,73 +1,54 @@
-import { createClient } from '@/lib/supabase/server'
 import ArcadeShell from '@/components/ArcadeShell'
-import BattingClient, { Batter, Pitcher } from './BattingClient'
+import LegendsClient, { Legend } from './BattingClient'
+import { HONOURS } from '@/lib/nfsHonours'
 
 const NEON = '#B47CFF'
 
-export default async function Batting() {
-  const supabase = await createClient()
+/* The cage is stocked from the Honours Board, so players who finished years ago
+   still get to stand in it. Titles won stand in for the stats we don't have —
+   more batting titles is a better eye, more pitching titles a better arm. */
+const BAT_KEYS = ['batting', 'bat_ave', 'batting_champion', 'top_bat']
+const PIT_KEYS = ['pitching', 'era', 'pitching_champion', 'top_pitcher', 'mvp_pitcher']
 
-  const { data: players } = await supabase
-    .from('players')
-    .select('id, full_name, grade, tier, positions, stats, photo_url, clubs(name)')
-    .eq('active', true)
-    .or('is_under18.eq.false,has_consent.eq.true')
-
-  type Row = {
-    id: string; full_name: string; grade: string; tier: string; positions: string[]
-    stats: Record<string, number> | null
-    photo_url: string | null
-    clubs: { name: string } | null
+function tally(grade: 'men' | 'women', keys: string[]) {
+  const counts = new Map<string, number>()
+  for (const s of HONOURS) {
+    for (const [key, winner] of Object.entries(s[grade])) {
+      if (!winner) continue
+      if (!keys.some(k => key.toLowerCase().includes(k))) continue
+      counts.set(winner as string, (counts.get(winner as string) ?? 0) + 1)
+    }
   }
-  const rows = (players ?? []) as unknown as Row[]
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])
+}
 
-  // Batters: anyone who has been to the plate. Their real average sets how
-  // forgiving the timing window is, so picking well actually matters.
-  const batters: Batter[] = rows
-    .filter(p => (p.stats?.season_ba ?? 0) > 0)
-    .map(p => ({
-      id: p.id,
-      name: p.full_name,
-      club: p.clubs?.name ?? '',
-      grade: p.grade === 'womens' ? "W" : "M",
-      tier: p.tier,
-      photoUrl: p.photo_url,
-      ba: Number(p.stats?.season_ba ?? 0),
-      hr: Number(p.stats?.season_hr ?? 0),
-      points: Number(p.stats?.season_points ?? 0),
-    }))
-    .sort((a, b) => b.points - a.points)
-    .slice(0, 24)
+function build(keys: string[]): Legend[] {
+  const out: Legend[] = []
+  for (const grade of ['men', 'women'] as const) {
+    for (const [name, titles] of tally(grade, keys).slice(0, 5)) {
+      out.push({ name, titles, grade: grade === 'men' ? 'M' : 'W' })
+    }
+  }
+  return out.sort((a, b) => b.titles - a.titles)
+}
 
-  // The eight most prolific strikeout pitchers in the league, both grades.
-  // More K's means faster and more movement.
-  const pitchers: Pitcher[] = rows
-    .filter(p => (p.stats?.season_k_pit ?? 0) > 0)
-    .map(p => ({
-      id: p.id,
-      name: p.full_name,
-      club: p.clubs?.name ?? '',
-      grade: p.grade === 'womens' ? "W" : "M",
-      photoUrl: p.photo_url,
-      k: Number(p.stats?.season_k_pit ?? 0),
-      wins: Number(p.stats?.season_wins ?? 0),
-    }))
-    .sort((a, b) => b.k - a.k)
-    .slice(0, 8)
+export default function LegendsCage() {
+  const batters = build(BAT_KEYS)
+  const pitchers = build(PIT_KEYS)
 
-  if (batters.length === 0 || pitchers.length === 0) {
+  if (batters.length < 2 || pitchers.length < 2) {
     return (
-      <ArcadeShell neon={NEON} eyebrow="Arcade · Ten pitches" title="Batting Practice">
+      <ArcadeShell neon={NEON} eyebrow="Arcade · The archive" title="Legends Cage">
         <p style={{ color: '#8FA0B4', fontSize: '13px' }}>
-          This one opens once a round has been scored — it needs real batters and real arms.
+          Not enough on the Honours Board to stock the cage yet.
         </p>
       </ArcadeShell>
     )
   }
 
   return (
-    <ArcadeShell neon={NEON} eyebrow="Arcade · Ten pitches" title="Batting Practice">
-      <BattingClient batters={batters} pitchers={pitchers} />
+    <ArcadeShell neon={NEON} eyebrow="Arcade · The archive" title="Legends Cage">
+      <LegendsClient batters={batters} pitchers={pitchers} />
     </ArcadeShell>
   )
 }
