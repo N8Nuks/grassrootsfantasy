@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 
-export type ClubOption = { id: string; name: string; crest: string }
+export type ClubOption = { id: string; name: string; crest: string; colours: [string, string] }
 
 /* Collectibles — a softball is the staple, the rest turn up less often and
    pay more. Every one grows the tail by its own amount. */
@@ -31,6 +31,8 @@ const levelFor = (score: number) => {
   return i
 }
 
+const BDL: [string, string] = ['#FFB800', '#FFE7A8']
+
 type Pt = { x: number; y: number }
 type Treat = { pos: Pt; kind: typeof TREATS[number] }
 
@@ -58,15 +60,6 @@ export default function SnakeClient({ clubs, initialClub }: {
   const raf = useRef<number>(0)
   const last = useRef(0)
 
-  // Load the head artwork — a club crest, or the BDL diamond by default
-  useEffect(() => {
-    const img = new Image()
-    img.src = club ? club.crest : '/bdl-diamond.webp'
-    img.onload = () => { crestRef.current = img; draw() }
-    img.onerror = () => { crestRef.current = null; draw() }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [club])
-
   const randomTreat = useCallback((body: Pt[]): Treat => {
     const total = TREATS.reduce((s, t) => s + t.weight, 0)
     let roll = Math.random() * total
@@ -85,6 +78,8 @@ export default function SnakeClient({ clubs, initialClub }: {
     const ctx = cv.getContext('2d')
     if (!ctx) return
     const cell = cv.width / COLS
+    // The tail runs in the club's kit — BDL amber when nobody's picked
+    const [c1, c2] = club?.colours ?? BDL
 
     // Field
     ctx.fillStyle = '#07080D'
@@ -126,22 +121,25 @@ export default function SnakeClient({ clubs, initialClub }: {
       ctx.restore()
     }
 
-    // Tail
+    // Tail — the club's two colours, banded down the body
     const body = snake.current
     body.forEach((p, i) => {
       if (i === 0) return
-      const fade = 1 - (i / body.length) * 0.55
-      ctx.fillStyle = `rgba(255, 184, 0, ${0.28 + fade * 0.5})`
+      const fade = 1 - (i / body.length) * 0.5
+      ctx.save()
+      ctx.globalAlpha = 0.45 + fade * 0.52
+      ctx.fillStyle = i % 2 ? c2 : c1
       ctx.fillRect(p.x * cell + cell * 0.1, p.y * cell + cell * 0.1, cell * 0.8, cell * 0.8)
+      ctx.restore()
     })
 
-    // Head — the club crest if we have one, a softball otherwise
+    // Head — the club crest, or the BDL diamond
     const h = body[0]
     if (h) {
       const hx = h.x * cell
       const hy = h.y * cell
       ctx.save()
-      ctx.shadowColor = '#FFB800'
+      ctx.shadowColor = c1
       ctx.shadowBlur = 16
       if (crestRef.current) {
         ctx.beginPath()
@@ -153,11 +151,19 @@ export default function SnakeClient({ clubs, initialClub }: {
         ctx.beginPath(); ctx.arc(hx + cell / 2, hy + cell / 2, cell * 0.44, 0, Math.PI * 2); ctx.fill()
       }
       ctx.restore()
-      ctx.strokeStyle = '#FFB800'
+      ctx.strokeStyle = c1
       ctx.lineWidth = 2
       ctx.beginPath(); ctx.arc(hx + cell / 2, hy + cell / 2, cell * 0.46, 0, Math.PI * 2); ctx.stroke()
     }
-  }, [])
+  }, [club])
+
+  // Load the head artwork — a club crest, or the BDL diamond by default
+  useEffect(() => {
+    const img = new Image()
+    img.src = club ? club.crest : '/bdl-diamond.webp'
+    img.onload = () => { crestRef.current = img; draw() }
+    img.onerror = () => { crestRef.current = null; draw() }
+  }, [club, draw])
 
   const step = useCallback(() => {
     const body = snake.current
@@ -181,8 +187,8 @@ export default function SnakeClient({ clubs, initialClub }: {
       grow.current += t.kind.grow
       setLastEaten(t.kind.label)
       setScore(s => {
-        const next = s + t.kind.points
-        const lv = levelFor(next)
+        const nextScore = s + t.kind.points
+        const lv = levelFor(nextScore)
         speed.current = LEVELS[lv].ms
         setLevel(prev => {
           if (lv > prev) {
@@ -191,7 +197,7 @@ export default function SnakeClient({ clubs, initialClub }: {
           }
           return lv
         })
-        return next
+        return nextScore
       })
       treat.current = randomTreat(body)
     }
@@ -229,7 +235,7 @@ export default function SnakeClient({ clubs, initialClub }: {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  // Swipe
+  // Swipe — captured on the stage, so a swipe that drifts off the board counts
   useEffect(() => {
     const cv = canvasRef.current?.parentElement
     if (!cv) return
@@ -248,6 +254,7 @@ export default function SnakeClient({ clubs, initialClub }: {
     cv.addEventListener('touchend', end, { passive: true })
     return () => { cv.removeEventListener('touchstart', start); cv.removeEventListener('touchend', end) }
   }, [])
+
   /* While a game is live the page mustn't scroll under the swipes — on a phone
      a swipe that drifts off the canvas otherwise drags the whole screen. */
   useEffect(() => {
@@ -261,6 +268,7 @@ export default function SnakeClient({ clubs, initialClub }: {
       document.body.style.touchAction = prevTouch
     }
   }, [state])
+
   function begin() {
     snake.current = [{ x: 9, y: 10 }, { x: 8, y: 10 }, { x: 7, y: 10 }]
     dir.current = { x: 1, y: 0 }
@@ -274,7 +282,9 @@ export default function SnakeClient({ clubs, initialClub }: {
     draw()
   }
 
-  useEffect(() => { draw() }, [draw, club])
+  useEffect(() => { draw() }, [draw])
+
+  const kit = club?.colours ?? BDL
 
   return (
     <>
@@ -323,17 +333,14 @@ export default function SnakeClient({ clubs, initialClub }: {
         .sn-club:hover { transform: scale(1.09); border-color: #ffffff40; }
         .sn-club[data-on="true"] { border-color: var(--neon); box-shadow: 0 0 16px color-mix(in srgb, var(--neon) 55%, transparent); }
         .sn-club img { width: 100%; height: 100%; object-fit: cover; }
-        .sn-ball {
-          width: 40px; height: 40px; border-radius: 50%; cursor: pointer; background: #F5F1E8;
-          border: 2px solid #ffffff18; padding: 0; transition: border-color 140ms ease, transform 140ms ease;
-        }
-        .sn-ball:hover { transform: scale(1.09); }
-        .sn-ball[data-on="true"] { border-color: var(--neon); box-shadow: 0 0 16px color-mix(in srgb, var(--neon) 55%, transparent); }
+        /* The kit the tail is currently wearing */
+        .sn-kit { display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; vertical-align: middle; }
+        .sn-kit i { width: 13px; height: 13px; border-radius: 3px; display: inline-block; }
       `}</style>
 
       <p className="sn-lede">
-        Your club crest, loose on the diamond. Eat what you find, keep off the fence, and don&apos;t
-        cross your own tail. It gets quicker every time you feed.
+        Your club crest, loose on the diamond, with the tail in your colours. Eat what you find, keep
+        off the fence, and don&apos;t cross yourself. It quickens every level.
       </p>
 
       <div className="sn-score">
@@ -377,7 +384,12 @@ export default function SnakeClient({ clubs, initialClub }: {
         ))}
       </div>
 
-      <p className="sn-clublbl">Pick your head</p>
+      <p className="sn-clublbl">
+        Pick your head
+        <span className="sn-kit">
+          <i style={{ background: kit[0] }} /><i style={{ background: kit[1] }} />
+        </span>
+      </p>
       <div className="sn-clubs">
         <button className="sn-club" data-on={club === null} onClick={() => setClub(null)} aria-label="Black Diamond Labs">
           {/* eslint-disable-next-line @next/next/no-img-element */}
