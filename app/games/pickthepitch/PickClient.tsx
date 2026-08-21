@@ -47,6 +47,17 @@ const NEED = 3
 
 const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)]
 
+/* Pitches are dealt from a bag rather than picked at random — the runner has to
+   find every sign, and five rises in a row teaches nothing. Every pitch in the
+   set turns up before any of them comes round again. */
+function makeBag<T>(items: T[]) {
+  let rest: T[] = []
+  return () => {
+    if (rest.length === 0) rest = [...items].sort(() => Math.random() - 0.5)
+    return rest.pop() as T
+  }
+}
+
 type Code = {
   setIdx: number
   pitchOf: Partial<Record<Shape, string>>
@@ -54,6 +65,8 @@ type Code = {
   fixedIndex: number
   magic: Shape | null
   pitchList: string[]
+  nextPitch: () => Shape
+  nextLoc: () => Shape
 }
 
 function makeCode(lv: number): Code {
@@ -78,6 +91,8 @@ function makeCode(lv: number): Code {
     fixedIndex: Math.floor(Math.random() * (L.n - 1)),   // never last — location follows
     magic,
     pitchList: Object.values(S.pitches) as string[],
+    nextPitch: makeBag(Object.keys(S.pitches) as Shape[]),
+    nextLoc: makeBag(S.locShapes),
   }
 }
 
@@ -85,10 +100,9 @@ function buildSequence(lv: number, code: Code, outs: number) {
   const L = LEVELS[lv]
   const S = SETS[code.setIdx]
 
-  const pitchShapes = Object.keys(S.pitches) as Shape[]
-  const pitchShape = pick(pitchShapes)
+  const pitchShape = code.nextPitch()
   const pitch = S.pitches[pitchShape]!
-  const locShape = pick(S.locShapes)
+  const locShape = code.nextLoc()
   const location = code.locOf[locShape]
 
   let pi: number
