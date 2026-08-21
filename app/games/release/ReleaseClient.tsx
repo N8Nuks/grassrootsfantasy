@@ -437,7 +437,7 @@ export default function ReleaseClient() {
                 <p style={{ fontSize: '12px', color: '#8FA0B4', maxWidth: '30ch', lineHeight: 1.6 }}>
                   Five pitches at Reserve. Take four and you move up.
                 </p>
-                <button className="ar-btn" onClick={start} style={{ marginTop: '14px' }}><span>Take the Base</span></button>
+                <button className="ar-btn" onClick={startOver} style={{ marginTop: '14px' }}><span>Take the Base</span></button>
               </>
             )}
           </div>
