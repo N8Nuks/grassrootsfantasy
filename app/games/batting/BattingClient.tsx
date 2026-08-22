@@ -200,7 +200,8 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
      from behind the plate that circle is foreshortened, so the barrel traces a
      flat ellipse — level through contact, never chopping down. */
   function drawBatter(ctx: CanvasRenderingContext2D, W: number, H: number, now: number) {
-    const side = batter.lefty ? -1 : 1
+    // A right-hander stands to the catcher's right, which is screen left from here
+    const side = batter.lefty ? 1 : -1
     const px = W * (ZONE.x - 0.155 * side)     // spine
     const py = H * 0.845                        // waist, the fulcrum
     const R = W * 0.125                         // barrel radius
@@ -427,7 +428,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     // ── The crowd, banked above the wall ──
     ctx.save()
     ctx.fillStyle = '#0A0E18'
-    ctx.fillRect(0, 0, W, H * (FENCE_Y - 0.005))
+    ctx.fillRect(0, 0, W + 2, H * (FENCE_Y - 0.005))
     for (const c of crowd.current) {
       ctx.fillStyle = c.c
       ctx.beginPath(); ctx.arc(c.x * W, c.y * H, c.r * W, 0, Math.PI * 2); ctx.fill()
@@ -459,22 +460,64 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     }
     ctx.restore()
 
-    // ── Outfield, foul lines, infield dirt ──
-    ctx.strokeStyle = '#ffffff12'; ctx.lineWidth = 2
+    /* ── The diamond, seen from behind the plate ──
+       Home is bottom centre, second sits straight out under the circle, and
+       first and third fall away to the sides. The dirt is a skinned infield —
+       an arc behind the bases with grass inside the base paths. */
+    const homeX = W * 0.5, homeY = H * 0.90
+    const secX = W * 0.5,  secY = H * (MOUND_Y - 0.075)
+    const firstX = W * 0.80, firstY = H * (MOUND_Y + 0.055)
+    const thirdX = W * 0.20, thirdY = firstY
+
+    // Skinned dirt, arcing behind the bases
+    ctx.fillStyle = '#8A5A34'
     ctx.beginPath()
-    ctx.moveTo(W * ZONE.x, H * 0.93); ctx.lineTo(W * 0.01, fy + fh)
-    ctx.moveTo(W * ZONE.x, H * 0.93); ctx.lineTo(W * 0.99, fy + fh)
+    ctx.moveTo(W * 0.055, H * 0.96)
+    ctx.quadraticCurveTo(W * 0.04, secY - H * 0.03, W * 0.5, secY - H * 0.052)
+    ctx.quadraticCurveTo(W * 0.96, secY - H * 0.03, W * 0.945, H * 0.96)
+    ctx.closePath(); ctx.fill()
+
+    // Infield grass inside the base paths
+    ctx.fillStyle = '#1B5E2A'
+    ctx.beginPath()
+    ctx.moveTo(homeX, homeY - H * 0.012)
+    ctx.lineTo(firstX - W * 0.035, firstY)
+    ctx.lineTo(secX, secY + H * 0.016)
+    ctx.lineTo(thirdX + W * 0.035, thirdY)
+    ctx.closePath(); ctx.fill()
+
+    // Base paths
+    ctx.strokeStyle = '#A9713F'; ctx.lineWidth = Math.max(5, W * 0.014)
+    ctx.beginPath()
+    ctx.moveTo(homeX, homeY); ctx.lineTo(firstX, firstY)
+    ctx.lineTo(secX, secY); ctx.lineTo(thirdX, thirdY)
+    ctx.closePath(); ctx.stroke()
+
+    // Foul lines running out to the fence corners
+    ctx.strokeStyle = '#ffffff2A'; ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(homeX, homeY); ctx.lineTo(W * 0.005, fy + fh)
+    ctx.moveTo(homeX, homeY); ctx.lineTo(W * 0.995, fy + fh)
     ctx.stroke()
-    // Infield dirt, reaching to the base paths and no further
-    ctx.fillStyle = '#2A1D14'
-    ctx.beginPath()
-    ctx.ellipse(W / 2, H * (INFIELD_TOP + 0.435), W * 0.62, H * 0.435, 0, Math.PI, 0)
-    ctx.fill()
-    // The circle
-    ctx.fillStyle = '#3A2A1E'
-    ctx.beginPath(); ctx.ellipse(W / 2, H * MOUND_Y, W * 0.085, H * 0.024, 0, 0, Math.PI * 2); ctx.fill()
-    ctx.strokeStyle = '#ffffff10'; ctx.lineWidth = 1.5
-    ctx.beginPath(); ctx.ellipse(W / 2, H * MOUND_Y, W * 0.085, H * 0.024, 0, 0, Math.PI * 2); ctx.stroke()
+
+    // The three bases
+    const drawBase = (x: number, y: number, s: number) => {
+      ctx.fillStyle = '#F5F1E8'
+      ctx.save(); ctx.translate(x, y); ctx.scale(1, 0.5); ctx.rotate(Math.PI / 4)
+      ctx.fillRect(-s, -s, s * 2, s * 2)
+      ctx.restore()
+    }
+    drawBase(firstX, firstY, W * 0.016)
+    drawBase(secX, secY, W * 0.015)
+    drawBase(thirdX, thirdY, W * 0.016)
+
+    // The pitcher's circle
+    ctx.fillStyle = '#A9713F'
+    ctx.beginPath(); ctx.ellipse(W / 2, H * MOUND_Y, W * 0.075, H * 0.021, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.strokeStyle = '#ffffff22'; ctx.lineWidth = 1.5
+    ctx.beginPath(); ctx.ellipse(W / 2, H * MOUND_Y, W * 0.075, H * 0.021, 0, 0, Math.PI * 2); ctx.stroke()
+    ctx.fillStyle = '#F5F1E8'
+    ctx.fillRect(W / 2 - W * 0.018, H * MOUND_Y - 2, W * 0.036, 3)
 
     // Plate, drawn to the same width as the zone above it
     const pw = W * ZONE.w
