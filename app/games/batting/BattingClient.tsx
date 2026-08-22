@@ -229,32 +229,90 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.beginPath(); ctx.ellipse(px, H * 0.955, W * 0.055, H * 0.014, 0, 0, Math.PI * 2); ctx.fill()
     ctx.restore()
 
-    // Legs — back foot pivots up onto the toe, front leg braces
+    /* Built as a player rather than a stick: white pants, a jersey that tapers
+       from the shoulders to the waist, a belt where the two meet, and legs that
+       bend at the knee. Everything above the belt turns; everything below drives. */
+    const PANTS = '#D7D3C9'
+    const SHADE = '#00000030'
     ctx.save()
     ctx.translate(px, py)
     ctx.scale(side, 1)
-    ctx.strokeStyle = ink; ctx.lineWidth = 11; ctx.lineCap = 'round'
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-19 - p * 4, H * 0.108); ctx.stroke()
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(20 + p * 9, H * 0.108); ctx.stroke()
-    // Hips open through the turn
-    ctx.strokeStyle = kit; ctx.lineWidth = 11
-    ctx.beginPath(); ctx.moveTo(-9, 0); ctx.lineTo(9, 0); ctx.stroke()
 
-    // Trunk turns about the waist; the head counter-rotates and stays level
+    // ── Legs ──
+    const kneeY = H * 0.055, footY = H * 0.108
+    const backKnee = -15 - p * 3, backFoot = -21 - p * 5
+    const frontKnee = 15 + p * 6, frontFoot = 22 + p * 11
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round'
+    // back leg, pivoting up onto the toe
+    ctx.strokeStyle = PANTS; ctx.lineWidth = 15
+    ctx.beginPath(); ctx.moveTo(-7, 2); ctx.lineTo(backKnee, kneeY); ctx.lineTo(backFoot, footY - 6); ctx.stroke()
+    // front leg, braced and straightening
+    ctx.beginPath(); ctx.moveTo(7, 2); ctx.lineTo(frontKnee, kneeY); ctx.lineTo(frontFoot, footY - 6); ctx.stroke()
+    // seam down the outside
+    ctx.strokeStyle = SHADE; ctx.lineWidth = 2
+    ctx.beginPath(); ctx.moveTo(-7, 2); ctx.lineTo(backKnee, kneeY); ctx.lineTo(backFoot, footY - 6); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(7, 2); ctx.lineTo(frontKnee, kneeY); ctx.lineTo(frontFoot, footY - 6); ctx.stroke()
+    // cleats
+    ctx.fillStyle = ink
+    ctx.beginPath(); ctx.ellipse(backFoot - 3, footY - 3, 11, 5.5, -0.35, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.ellipse(frontFoot + 3, footY - 3, 12, 5.5, 0.1, 0, Math.PI * 2); ctx.fill()
+
+    // ── Everything above the belt turns about the waist ──
     ctx.save()
     ctx.rotate(turn * 0.34)
-    ctx.strokeStyle = kit; ctx.lineWidth = 18
-    ctx.beginPath(); ctx.moveTo(0, -2); ctx.lineTo(0, -H * 0.085); ctx.stroke()
+
+    const shoulderY = -H * 0.088
+    const shoulderW = 15.5
+    const waistW = 9.5
+
+    // jersey, tapered from the shoulders down to the belt
+    ctx.fillStyle = kit
+    ctx.beginPath()
+    ctx.moveTo(-waistW, 0)
+    ctx.lineTo(-shoulderW, shoulderY + 6)
+    ctx.quadraticCurveTo(0, shoulderY - 4, shoulderW, shoulderY + 6)
+    ctx.lineTo(waistW, 0)
+    ctx.closePath(); ctx.fill()
+    // shading down the back half so it reads round
+    ctx.fillStyle = '#00000022'
+    ctx.beginPath()
+    ctx.moveTo(-waistW, 0); ctx.lineTo(-shoulderW, shoulderY + 6)
+    ctx.lineTo(-shoulderW * 0.3, shoulderY + 2); ctx.lineTo(-waistW * 0.3, 0)
+    ctx.closePath(); ctx.fill()
+
+    // belt
+    ctx.fillStyle = ink
+    ctx.fillRect(-waistW - 1, -3, (waistW + 1) * 2, 6)
+    ctx.fillStyle = '#C9A85E'
+    ctx.fillRect(-3, -3, 6, 6)
+
+    // sleeves capping the shoulders
+    ctx.fillStyle = kit
+    ctx.beginPath(); ctx.ellipse(-shoulderW + 1, shoulderY + 8, 6.5, 8, -0.25, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.ellipse(shoulderW - 1, shoulderY + 8, 6.5, 8, 0.25, 0, Math.PI * 2); ctx.fill()
+
+    // neck
+    ctx.fillStyle = '#8C6A46'
+    ctx.fillRect(-4, shoulderY - 4, 8, 8)
+
+    // head stays level and back — the counter-rotation is what a hitter does
     ctx.save()
     ctx.rotate(-turn * 0.34)
-    ctx.fillStyle = ink
-    ctx.beginPath(); ctx.arc(0, -H * 0.115, 12, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = '#8C6A46'
+    ctx.beginPath(); ctx.arc(0, shoulderY - 13, 11, 0, Math.PI * 2); ctx.fill()
+    // helmet shell and brim, brim pointing out at the pitcher
     ctx.fillStyle = kit
-    ctx.beginPath(); ctx.arc(0, -H * 0.12, 12, Math.PI, 0); ctx.fill()
-    ctx.fillRect(0, -H * 0.129, 17, 4)
+    ctx.beginPath(); ctx.arc(0, shoulderY - 14, 12, Math.PI * 1.02, Math.PI * 2.02); ctx.fill()
+    ctx.beginPath()
+    ctx.moveTo(2, shoulderY - 16); ctx.lineTo(19, shoulderY - 14)
+    ctx.lineTo(19, shoulderY - 10); ctx.lineTo(2, shoulderY - 11)
+    ctx.closePath(); ctx.fill()
+    // ear flap on the near side
+    ctx.beginPath(); ctx.ellipse(-6, shoulderY - 11, 5, 6.5, 0, 0, Math.PI * 2); ctx.fill()
     ctx.restore()
-    ctx.restore()
-    ctx.restore()
+
+    ctx.restore()   // trunk
+    ctx.restore()   // figure
 
     // Barrel trail through the zone
     if (s > 0.08 && s < 0.94) {
@@ -273,7 +331,12 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
 
     // Arms out to the hands
     ctx.strokeStyle = ink; ctx.lineWidth = 8; ctx.lineCap = 'round'
-    ctx.beginPath(); ctx.moveTo(px, py - H * 0.075); ctx.lineTo(handX, handY); ctx.stroke()
+    // Both arms run from the shoulders out to the hands on the bat
+    const shY = py - H * 0.088
+    ctx.strokeStyle = '#8C6A46'; ctx.lineWidth = 8
+    ctx.beginPath(); ctx.moveTo(px - 11 * side, shY + 8); ctx.lineTo(handX, handY); ctx.stroke()
+    ctx.strokeStyle = '#7A5C3D'; ctx.lineWidth = 7
+    ctx.beginPath(); ctx.moveTo(px + 11 * side, shY + 8); ctx.lineTo(handX, handY); ctx.stroke()
 
     // The bat itself — handle to barrel along the same line
     const grain = ctx.createLinearGradient(handX, handY, tipX, tipY)
