@@ -38,12 +38,16 @@ const STANCE_OFF = 0.155       // how far he stands off the plate
 /* Speed is a multiplier on the flight time. `spin` is the seam rotation you can
    read off the ball: forward for a drop, backward for a rise, sideways for a
    curve, and barely anything on a changeup. */
+/* Speed is a multiplier on the flight time. `spin` is the seam rotation you can
+   read off the ball — forward for a drop, backward for a rise, sideways for a
+   curve, barely anything on a changeup. `drop` moves where it finishes in the
+   zone: positive falls to the bottom of the box, negative climbs to the top. */
 const PITCH_TYPES = [
-  { name: 'Rise',     speed: 0.82, move: 1.0, spin: -1.0, tilt: 0 },
-  { name: 'Drop',     speed: 0.86, move: 1.1, spin:  1.0, tilt: 0 },
-  { name: 'Fastball', speed: 0.78, move: 0.5, spin: -0.6, tilt: 0 },
-  { name: 'Curve',    speed: 1.18, move: 1.5, spin:  0.8, tilt: 1 },
-  { name: 'Changeup', speed: 1.32, move: 0.7, spin:  0.12, tilt: 0 },
+  { name: 'Rise',     speed: 0.82, move: 1.0, spin: -1.0, tilt: 0, drop: -0.9 },
+  { name: 'Drop',     speed: 0.86, move: 1.1, spin:  1.0, tilt: 0, drop:  1.0 },
+  { name: 'Fastball', speed: 0.78, move: 0.5, spin: -0.6, tilt: 0, drop: -0.2 },
+  { name: 'Curve',    speed: 1.18, move: 1.5, spin:  0.8, tilt: 1, drop:  0.4 },
+  { name: 'Changeup', speed: 1.32, move: 0.7, spin:  0.12, tilt: 0, drop: 0.55 },
 ]
 
 type Flight = { kind: string; colour: string; t: number; dur: number
@@ -713,10 +717,16 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       // the glove has it
       if (!contact.current && t.current > -0.12 && t.current < 1.16) {
         const p = t.current
-        const x = W * ZONE.x + breakX.current * W * 0.12 * p * p
-        const y = H * MOUND_Y + (H * 0.9 - H * MOUND_Y) * ((p / 1.16) * (p / 1.16) * 0.55 + (p / 1.16) * 0.45)
-        const r = 3.5 + p * p * 9
         const kind = pitchKind.current
+        const x = W * ZONE.x + breakX.current * W * 0.12 * p * p
+        /* Late break — the ball tracks flat most of the way and moves in the
+           last third, which is what makes a drop hard to lay off. */
+        const late = Math.max(0, (p - 0.55) / 0.45)
+        const bend = kind.drop * (H * ZONE.h * 0.42) * late * late
+        const y = H * MOUND_Y
+          + (H * 0.9 - H * MOUND_Y) * ((p / 1.16) * (p / 1.16) * 0.55 + (p / 1.16) * 0.45)
+          + bend
+        const r = 3.5 + p * p * 9
         ctx.save()
         ctx.shadowColor = '#E8FF3D'; ctx.shadowBlur = 12 + p * 18
         ctx.fillStyle = '#E8FF3D'
