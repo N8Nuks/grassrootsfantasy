@@ -23,11 +23,19 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
   const [guesses, setGuesses] = useState<string[]>([])
   const [input, setInput] = useState('')
   const [error, setError] = useState('')
+  const [open, setOpen] = useState(false)
 
-  // Suggestions narrow as you type — a native datalist shows no marker on mobile
+  /* Suggestions from the first letter — a native datalist shows no marker on a
+     phone, so the list is drawn here. Already-guessed names drop out. */
   const q = input.trim().toLowerCase()
-  const matches = q.length < 2 ? []
-    : names.filter(n => n.toLowerCase().includes(q) && n.toLowerCase() !== q).slice(0, 6)
+  const matches = q.length < 1 ? []
+    : names
+        .filter(n => {
+          const l = n.toLowerCase()
+          return l.includes(q) && l !== q && !guesses.some(g => g.toLowerCase() === l)
+        })
+        .slice(0, 8)
+  const showDrop = open && matches.length > 0
 
   const won = guesses.some(g => g.toLowerCase() === answer.name.toLowerCase())
   const done = won || guesses.length >= MAX_GUESSES
@@ -43,16 +51,26 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
   ]
   const unlocked = Math.min(guesses.length + 1, clues.length)
 
+  function lodge(name: string) {
+    if (done) return
+    if (guesses.some(g => g.toLowerCase() === name.toLowerCase())) {
+      setError('You have already tried that one'); return
+    }
+    setError('')
+    setGuesses(prev => [...prev, name])
+    setInput('')
+    setOpen(false)
+  }
+
   function submit() {
     if (done) return
     const v = input.trim()
     if (!v) { setError('Type a player name first'); return }
     const match = names.find(n => n.toLowerCase() === v.toLowerCase())
-    if (!match) { setError('No NFS player by that name — check the spelling'); return }
-    if (guesses.some(g => g.toLowerCase() === match.toLowerCase())) { setError('You have already tried that one'); return }
-    setError('')
-    setGuesses(prev => [...prev, match])
-    setInput('')
+      // A single suggestion left is almost certainly the one meant
+      ?? (matches.length === 1 ? matches[0] : undefined)
+    if (!match) { setError('Pick a name from the list'); return }
+    lodge(match)
   }
 
   const caps = (n: string) => {
@@ -75,25 +93,35 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
         .dl-open { animation: dl-flick 320ms steps(2); }
         @keyframes dl-flick { 0%,60% { opacity: 0.25; } 61%,100% { opacity: 1; } }
 
-        .dl-bar { display: flex; border: 1px solid color-mix(in srgb, var(--neon) 45%, transparent); background: #07080D; }
+        .dl-wrap { position: relative; }
+        .dl-bar { display: flex; align-items: stretch; border: 1px solid color-mix(in srgb, var(--neon) 45%, transparent); background: #07080D; }
         .dl-bar:focus-within { border-color: var(--neon); box-shadow: 0 0 22px color-mix(in srgb, var(--neon) 30%, transparent); }
         .dl-input {
-          flex: 1; background: transparent; border: none; outline: none; color: #F5F1E8;
-          font-size: 16px; font-weight: 700; padding: 16px 20px; caret-color: var(--neon);
+          flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: #F5F1E8;
+          font-size: 16px; font-weight: 700; padding: 16px 8px 16px 20px; caret-color: var(--neon);
         }
         .dl-input::placeholder { color: #4E5A6A; }
+        /* A marker, so it reads as a list you can open rather than a plain box */
+        .dl-caret {
+          display: flex; align-items: center; padding: 0 12px; color: var(--neon);
+          font-size: 11px; transition: transform 180ms ease; pointer-events: none;
+        }
+        .dl-caret[data-open="true"] { transform: rotate(180deg); }
+
         .dl-drop {
-          position: absolute; left: 0; right: 0; top: 100%; z-index: 20;
-          background: #07080D; border: 1px solid color-mix(in srgb, var(--neon) 45%, transparent);
-          border-top: none; max-height: 244px; overflow-y: auto;
+          position: absolute; left: 0; right: 0; top: calc(100% - 1px); z-index: 30;
+          background: #05060A; border: 1px solid var(--neon);
+          max-height: 268px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+          box-shadow: 0 18px 40px #000000a0;
         }
         .dl-opt {
           display: block; width: 100%; text-align: left; cursor: pointer;
           background: transparent; border: none; border-bottom: 1px solid #ffffff0a;
-          color: #F5F1E8; font-size: 15px; font-weight: 700; padding: 14px 20px;
+          color: #F5F1E8; font-size: 15px; font-weight: 700; padding: 15px 20px;
         }
         .dl-opt:last-child { border-bottom: none; }
-        .dl-opt:hover, .dl-opt:active { background: color-mix(in srgb, var(--neon) 18%, transparent); }
+        .dl-opt:hover, .dl-opt:active { background: color-mix(in srgb, var(--neon) 20%, transparent); }
+
         .dl-guess {
           display: flex; align-items: center; gap: 12px; padding: 13px 18px;
           border: 1px solid #ffffff12; background: #ffffff05; margin-bottom: 8px;
@@ -117,11 +145,11 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
 
       <div className="ar-panel" style={{ marginBottom: '22px' }}>
         {clues.map((c, i) => {
-          const open = i < unlocked
+          const isOpen = i < unlocked
           return (
             <div key={c.label} className="dl-clue">
               <span className="dl-clue-k">{c.label}</span>
-              {open
+              {isOpen
                 ? <span className="dl-clue-v dl-open">{c.value}</span>
                 : <span className="dl-clue-v dl-locked">·····</span>}
             </div>
@@ -131,28 +159,37 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
 
       {!done && (
         <div style={{ marginBottom: '22px' }}>
-          <div style={{ position: 'relative' }}>
+          <div className="dl-wrap">
             <div className="dl-bar">
               <input
                 className="dl-input"
                 value={input}
-                onChange={e => { setInput(e.target.value); setError('') }}
+                onChange={e => { setInput(e.target.value); setError(''); setOpen(true) }}
+                onFocus={() => setOpen(true)}
                 onKeyDown={e => { if (e.key === 'Enter') submit() }}
                 placeholder="Start typing a name"
                 autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
               />
+              <span className="dl-caret" data-open={showDrop}>▼</span>
               <button className="ar-btn" onClick={submit} style={{ transform: 'none', boxShadow: 'none' }}>
                 <span style={{ transform: 'none' }}>Guess</span>
               </button>
             </div>
-            {matches.length > 0 && (
+
+            {showDrop && (
               <div className="dl-drop">
                 {matches.map(n => (
-                  <button key={n} className="dl-opt" onClick={() => setInput(n)}>{n}</button>
+                  // onMouseDown fires before the input loses focus, so the tap lands
+                  <button key={n} className="dl-opt" onMouseDown={e => { e.preventDefault(); lodge(n) }}>
+                    {n}
+                  </button>
                 ))}
               </div>
             )}
           </div>
+
           {error && <p className="dl-err">{error}</p>}
           <p className="dl-left">{MAX_GUESSES - guesses.length} guess{MAX_GUESSES - guesses.length === 1 ? '' : 'es'} left</p>
         </div>
