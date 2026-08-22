@@ -16,7 +16,7 @@ const BATTER_SWAPS: Record<string, string> = {
 }
 
 /* Which side they stood on. Right unless named here. */
-const LEFTIES = new Set(['Kaleo Eldredge', 'Heinie Shannon'])
+const LEFTIES = new Set(['Kaleo Eldredge', 'Shyah Hale', 'Heinie Shannon'])
 
 const PITCHER_ADDS: Legend[] = [
   { name: 'Daniel Chapman', grade: 'M', titles: 1, lefty: false },
