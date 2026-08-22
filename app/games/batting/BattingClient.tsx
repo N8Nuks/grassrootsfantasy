@@ -5,7 +5,6 @@ import { splitName } from '@/lib/names'
 export type Legend = { name: string; titles: number; grade: string; lefty: boolean }
 
 const PITCHES = 10
-const OUTS = 3
 
 /* Each result flies its own way: over the fence into the crowd, flat to the
    wall, one bounce and over, or through the infield. */
@@ -20,16 +19,19 @@ const RESULTS = {
 } as const
 type ResultKey = keyof typeof RESULTS
 
-// Knees to the letters, no wider than the plate beneath it
-const ZONE = { x: 0.5, y: 0.755, w: 0.105, h: 0.125 }
+// Bottom edge just below the middle of his pants, top around the letters
+const ZONE = { x: 0.5, y: 0.813, w: 0.105, h: 0.125 }
+
 /* Field depths, as fractions of the canvas. A softball diamond is tight in the
    middle and deep to the fence — 46 feet to the circle, 60 to the bases, and
    200 to the wall — so the pitcher stands close and the outfield runs away. */
-const FENCE_Y = 0.30           // top of the wall
-const MOUND_Y = 0.63           // the circle, well inside the dirt
-const INFIELD_TOP = 0.585      // where the dirt gives way to grass
+const FENCE_Y = 0.30
+const MOUND_Y = 0.63
 const CROWD_TOP = 0.055
+
 const SWING_MS = 340
+const CONTACT_AT = 0.458       // where in the swing the barrel meets the ball
+const WAIST_Y = 0.817          // the batter's belt, and his fulcrum
 
 /* Speed is a multiplier on the flight time — under 1 is quicker than standard. */
 const PITCH_TYPES = [
@@ -39,7 +41,6 @@ const PITCH_TYPES = [
   { name: 'Curve',    speed: 1.18, move: 1.5 },
   { name: 'Changeup', speed: 1.32, move: 0.7 },
 ]
-const CONTACT_AT = 0.458       // where in the swing the barrel meets the ball
 
 type Flight = { kind: string; colour: string; t: number; dur: number
   x0: number; y0: number; x1: number; y1: number; apex: number
@@ -129,8 +130,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     setFlash({ key, dist, off })
     setScore(s => s + RESULTS[key].points)
     setLog(l => [...l, { key, dist, off }])
-    // Outs are counted for the record but never cut the cage short — you get
-    // all ten swings whatever happens
+    // Outs are counted for the record but never cut the cage short
     const isOut = key === 'strike' || key === 'out'
     const nextPitch = pitchNo + 1
     if (isOut) setOuts(o => o + 1)
@@ -140,7 +140,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       if (nextPitch >= PITCHES) setPhase('done')
       else beginPitch()
     })
-  }, [outs, pitchNo, beginPitch])
+  }, [pitchNo, beginPitch])
 
   /* Flight paths, aimed rather than simulated — a home run has to clear the
      wall and land in the crowd, a triple has to die against it. */
@@ -194,16 +194,29 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     })
   }, [phase, paused, windowSize, batter.titles, finish])
 
-  /* ── The swing ──
+  /* How high the barrel rides at any point in the swing. High at the load,
+     exactly zero at contact so the bat meets the ball at belt height, then up
+     again into the follow-through. */
+  const liftAt = (p: number, H: number) =>
+    p < CONTACT_AT
+      ? H * 0.20 * Math.cos((p / CONTACT_AT) * (Math.PI / 2))
+      : H * 0.075 * Math.sin(((p - CONTACT_AT) / (1 - CONTACT_AT)) * (Math.PI / 2))
+
+  /* ── The batter ──
      The bat rotates about the spine through 240 degrees: loaded behind the
      head, round through the zone, and wrapped across the front shoulder. Seen
      from behind the plate that circle is foreshortened, so the barrel traces a
-     flat ellipse — level through contact, never chopping down. */
+     flat ellipse — level through contact, never chopping down.
+
+     His feet run along the plate line, so from this camera one is nearer than
+     the other rather than beside it. The back leg is large and low; the front
+     leg sits higher, smaller and partly behind him, and strides out toward the
+     plate as he goes. */
   function drawBatter(ctx: CanvasRenderingContext2D, W: number, H: number, now: number) {
     // A right-hander stands to the catcher's right, which is screen left from here
     const side = batter.lefty ? 1 : -1
     const px = W * (ZONE.x - 0.155 * side)     // spine
-    const py = H * 0.817                        // waist — puts his feet level with the plate
+    const py = H * WAIST_Y                      // waist, the fulcrum
     const R = W * 0.125                         // barrel radius
     const SQUASH = 0.38                         // how flat the circle looks
 
@@ -214,11 +227,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     // Compass angle in the horizontal plane: 0 points at the pitcher, 90 at
     // the plate. Runs 200 down to -40 — behind, through, and round.
     const phi = ((200 - 240 * p) * Math.PI) / 180
-    // The bat is up at the load, level at contact, up again on the follow
-    // High at the load, level through contact, high again on the follow-through
-    const lift = p < 0.5
-      ? H * 0.20 * Math.cos(p * Math.PI)
-      : H * 0.075 * -Math.cos(p * Math.PI)
+    const lift = liftAt(p, H)
 
     const tipX = px + Math.sin(phi) * R * side
     const tipY = py - Math.cos(phi) * R * SQUASH - lift
@@ -230,46 +239,63 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     const kit = '#B47CFF'
     const turn = -0.95 + p * 2.1
 
-    // Shadow on the dirt
+    // Shadow on the dirt, following the stride
     ctx.save()
     ctx.fillStyle = '#00000050'
-    ctx.beginPath(); ctx.ellipse(px, H * 0.955, W * 0.055, H * 0.014, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath()
+    ctx.ellipse(px + 8 * side * p, H * 0.94, W * 0.045, H * 0.012, 0, 0, Math.PI * 2)
+    ctx.fill()
     ctx.restore()
 
-    /* Built as a player rather than a stick: white pants, a jersey that tapers
-       from the shoulders to the waist, a belt where the two meet, and legs that
-       bend at the knee. Everything above the belt turns; everything below drives. */
-    const PANTS = '#D7D3C9'
-    const SHADE = '#00000030'
+    const PANTS_NEAR = '#D7D3C9'
+    const PANTS_FAR = '#A8A49B'
+    const CLEAT_FAR = '#14161C'
+
     ctx.save()
     ctx.translate(px, py)
-    ctx.scale(side, 1)
-
-    // ── Legs ──
-    const kneeY = H * 0.055, footY = H * 0.108
-    const backKnee = -15 - p * 3, backFoot = -21 - p * 5
-    const frontKnee = 15 + p * 6, frontFoot = 22 + p * 11
+    ctx.scale(side, 1)          // local +x points toward the plate
     ctx.lineCap = 'round'; ctx.lineJoin = 'round'
-    // back leg, pivoting up onto the toe
-    ctx.strokeStyle = PANTS; ctx.lineWidth = 15
-    ctx.beginPath(); ctx.moveTo(-7, 2); ctx.lineTo(backKnee, kneeY); ctx.lineTo(backFoot, footY - 6); ctx.stroke()
-    // front leg, braced and straightening
-    ctx.beginPath(); ctx.moveTo(7, 2); ctx.lineTo(frontKnee, kneeY); ctx.lineTo(frontFoot, footY - 6); ctx.stroke()
-    // seam down the outside
-    ctx.strokeStyle = SHADE; ctx.lineWidth = 2
-    ctx.beginPath(); ctx.moveTo(-7, 2); ctx.lineTo(backKnee, kneeY); ctx.lineTo(backFoot, footY - 6); ctx.stroke()
-    ctx.beginPath(); ctx.moveTo(7, 2); ctx.lineTo(frontKnee, kneeY); ctx.lineTo(frontFoot, footY - 6); ctx.stroke()
-    // cleats
+
+    /* ── Legs, stacked in depth ──
+       Far leg first so the near one covers it. The far foot sits higher up the
+       frame because it's further up-field, and steps out toward the plate. */
+    const nearKneeY = H * 0.055, nearFootY = H * 0.100
+    const farKneeY = H * 0.040, farFootY = H * 0.078
+
+    const farKneeX = 2 + p * 12
+    const farFootX = 4 + p * 24
+    const nearKneeX = -6 - p * 2
+    const nearFootX = -8 - p * 4
+
+    // far leg — thinner, dimmer, higher
+    ctx.strokeStyle = PANTS_FAR; ctx.lineWidth = 11
+    ctx.beginPath()
+    ctx.moveTo(-2, -2); ctx.lineTo(farKneeX, farKneeY); ctx.lineTo(farFootX, farFootY)
+    ctx.stroke()
+    ctx.fillStyle = CLEAT_FAR
+    ctx.save(); ctx.translate(farFootX + 2, farFootY + 3); ctx.rotate(-0.1 - p * 0.12)
+    ctx.beginPath(); ctx.ellipse(0, 0, 8.5, 3.8, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.restore()
+
+    // near leg — thicker, brighter, lower, pivoting onto the toe
+    ctx.strokeStyle = PANTS_NEAR; ctx.lineWidth = 15
+    ctx.beginPath()
+    ctx.moveTo(3, 2); ctx.lineTo(nearKneeX, nearKneeY); ctx.lineTo(nearFootX, nearFootY)
+    ctx.stroke()
+    ctx.strokeStyle = '#00000026'; ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(3, 2); ctx.lineTo(nearKneeX, nearKneeY); ctx.lineTo(nearFootX, nearFootY)
+    ctx.stroke()
     ctx.fillStyle = ink
-    ctx.beginPath(); ctx.ellipse(backFoot - 3, footY - 3, 11, 5.5, -0.35, 0, Math.PI * 2); ctx.fill()
-    ctx.beginPath(); ctx.ellipse(frontFoot + 3, footY - 3, 12, 5.5, 0.1, 0, Math.PI * 2); ctx.fill()
+    ctx.save(); ctx.translate(nearFootX - 2, nearFootY + 4); ctx.rotate(-p * 0.38)
+    ctx.beginPath(); ctx.ellipse(0, 0, 11, 5, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.restore()
 
     /* ── Above the belt ──
        Rotation about the spine doesn't tilt a hitter, it foreshortens him:
-       shoulders closed at the load, square at contact, open on the follow. So
-       the span breathes rather than the whole trunk leaning over. */
+       shoulders closed at the load, square at contact, open on the follow. */
     ctx.save()
-    ctx.rotate(turn * 0.09)              // just a trace of lean into the ball
+    ctx.rotate(turn * 0.09)
 
     const openness = Math.max(0, Math.min(1, (turn + 0.95) / 2.1))
     const shoulderY = -H * 0.088
@@ -291,7 +317,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.lineTo(-shoulderW * 0.3, shoulderY + 2); ctx.lineTo(-waistW * 0.3, 0)
     ctx.closePath(); ctx.fill()
 
-    // belt
+    // belt — the height the barrel meets the ball
     ctx.fillStyle = ink
     ctx.fillRect(-waistW - 1, -3, (waistW + 1) * 2, 6)
     ctx.fillStyle = '#C9A85E'
@@ -311,9 +337,9 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.rotate(-turn * 0.09)
     ctx.fillStyle = '#8C6A46'
     ctx.beginPath(); ctx.arc(0, shoulderY - 13, 11, 0, Math.PI * 2); ctx.fill()
-    // helmet shell and brim, brim pointing out at the pitcher
     ctx.fillStyle = kit
     ctx.beginPath(); ctx.arc(0, shoulderY - 14, 12, Math.PI * 1.02, Math.PI * 2.02); ctx.fill()
+    // brim pointing at the plate
     ctx.beginPath()
     ctx.moveTo(2, shoulderY - 16); ctx.lineTo(19, shoulderY - 14)
     ctx.lineTo(19, shoulderY - 10); ctx.lineTo(2, shoulderY - 11)
@@ -331,28 +357,23 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       for (let g = 1; g <= 6; g++) {
         const gp = Math.max(0, p - g * 0.045)
         const gphi = ((200 - 240 * gp) * Math.PI) / 180
-        const glift = gp < 0.5 ? H * 0.085 * Math.cos(gp * Math.PI) : H * 0.068 * -Math.cos(gp * Math.PI)
         ctx.fillStyle = `rgba(217,179,106,${0.16 - g * 0.022})`
         ctx.beginPath()
-        ctx.arc(px + Math.sin(gphi) * R * side, py - Math.cos(gphi) * R * SQUASH - glift, 9, 0, Math.PI * 2)
+        ctx.arc(px + Math.sin(gphi) * R * side, py - Math.cos(gphi) * R * SQUASH - liftAt(gp, H), 9, 0, Math.PI * 2)
         ctx.fill()
       }
       ctx.restore()
     }
 
-    // Arms out to the hands
-    ctx.strokeStyle = ink; ctx.lineWidth = 8; ctx.lineCap = 'round'
     /* Both arms run from the shoulders to the hands, drawn over the jersey so
-       the bat never looks like it's growing out of his chest. The span matches
-       the shoulders as they turn. */
+       the bat never looks like it's growing out of his chest. */
     const shY = py - H * 0.088 + 8
     const shSpan = 15.5 * (0.68 + 0.32 * Math.sin(Math.max(0, Math.min(1, (turn + 0.95) / 2.1)) * Math.PI))
-    // back arm first, a shade darker so the two read as separate limbs
-    ctx.strokeStyle = '#6B5036'; ctx.lineWidth = 7; ctx.lineCap = 'round'
+    ctx.lineCap = 'round'
+    ctx.strokeStyle = '#6B5036'; ctx.lineWidth = 7
     ctx.beginPath(); ctx.moveTo(px - shSpan * side, shY); ctx.lineTo(handX, handY); ctx.stroke()
     ctx.strokeStyle = '#8C6A46'; ctx.lineWidth = 8
     ctx.beginPath(); ctx.moveTo(px + shSpan * side, shY); ctx.lineTo(handX, handY); ctx.stroke()
-    // hands together on the handle
     ctx.fillStyle = '#2A2A32'
     ctx.beginPath(); ctx.arc(handX, handY, 6, 0, Math.PI * 2); ctx.fill()
 
@@ -367,7 +388,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.lineTo(tipX, tipY)
     ctx.stroke()
 
-    // Contact spark
+    // Contact spark, at the belt
     if (contact.current && s > CONTACT_AT - 0.12 && s < CONTACT_AT + 0.2) {
       const cx = W * ZONE.x, cy = H * ZONE.y
       const k = (s - (CONTACT_AT - 0.12)) / 0.32
@@ -435,14 +456,13 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       ctx.fillStyle = '#00000055'
       ctx.beginPath(); ctx.arc(c.x * W, (c.y - 0.011) * H, c.r * W * 0.58, 0, Math.PI * 2); ctx.fill()
     }
-    // Haze over the stand so it sits back
     const dim = ctx.createLinearGradient(0, 0, 0, H * FENCE_Y)
     dim.addColorStop(0, '#050810CC'); dim.addColorStop(1, '#0508101A')
     ctx.fillStyle = dim; ctx.fillRect(0, 0, W, H * FENCE_Y)
     ctx.restore()
 
     // ── The wall, with the name running along it ──
-    const fh = H * 0.062        // a real fence is low against that distance
+    const fh = H * 0.062
     const fy = H * FENCE_Y
     ctx.fillStyle = '#0C1420'; ctx.fillRect(0, fy, W, fh)
     ctx.fillStyle = '#B47CFF50'; ctx.fillRect(0, fy, W, 2)
@@ -462,14 +482,12 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
 
     /* ── The diamond, seen from behind the plate ──
        Home is bottom centre, second sits straight out under the circle, and
-       first and third fall away to the sides. The dirt is a skinned infield —
-       an arc behind the bases with grass inside the base paths. */
+       first and third fall away to the sides. */
     const homeX = W * 0.5, homeY = H * 0.90
     const secX = W * 0.5,  secY = H * (MOUND_Y - 0.075)
     const firstX = W * 0.80, firstY = H * (MOUND_Y + 0.055)
     const thirdX = W * 0.20, thirdY = firstY
 
-    // Skinned dirt, arcing behind the bases
     ctx.fillStyle = '#8A5A34'
     ctx.beginPath()
     ctx.moveTo(W * 0.055, H * 0.96)
@@ -477,7 +495,6 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.quadraticCurveTo(W * 0.96, secY - H * 0.03, W * 0.945, H * 0.96)
     ctx.closePath(); ctx.fill()
 
-    // Infield grass inside the base paths
     ctx.fillStyle = '#1B5E2A'
     ctx.beginPath()
     ctx.moveTo(homeX, homeY - H * 0.012)
@@ -486,15 +503,12 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.lineTo(thirdX + W * 0.035, thirdY)
     ctx.closePath(); ctx.fill()
 
-    // Base paths
     ctx.strokeStyle = '#A9713F'; ctx.lineWidth = Math.max(5, W * 0.014)
     ctx.beginPath()
     ctx.moveTo(homeX, homeY); ctx.lineTo(firstX, firstY)
     ctx.lineTo(secX, secY); ctx.lineTo(thirdX, thirdY)
     ctx.closePath(); ctx.stroke()
 
-    /* Foul lines run from home straight through first and third and keep going —
-       off the sides of the frame, which is where they'd really go. */
     ctx.strokeStyle = '#ffffff30'; ctx.lineWidth = 2
     const EXT = 5
     ctx.beginPath()
@@ -504,7 +518,6 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.lineTo(homeX + (thirdX - homeX) * EXT, homeY + (thirdY - homeY) * EXT)
     ctx.stroke()
 
-    // The three bases
     const drawBase = (x: number, y: number, s: number) => {
       ctx.fillStyle = '#F5F1E8'
       ctx.save(); ctx.translate(x, y); ctx.scale(1, 0.5); ctx.rotate(Math.PI / 4)
@@ -515,7 +528,6 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     drawBase(secX, secY, W * 0.015)
     drawBase(thirdX, thirdY, W * 0.016)
 
-    // The pitcher's circle
     ctx.fillStyle = '#A9713F'
     ctx.beginPath(); ctx.ellipse(W / 2, H * MOUND_Y, W * 0.075, H * 0.021, 0, 0, Math.PI * 2); ctx.fill()
     ctx.strokeStyle = '#ffffff22'; ctx.lineWidth = 1.5
@@ -560,7 +572,6 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
         const k = b.t
         let x: number, y: number
         if (b.hop) {
-          // One bounce in the outfield, then up and over the wall
           if (k < 0.55) {
             const k1 = k / 0.55
             x = b.x0 + (b.hop.x - b.x0) * k1
@@ -575,7 +586,6 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
           y = b.y0 + (b.y1 - b.y0) * k - Math.sin(k * Math.PI) * b.apex
         }
 
-        // Shrinks as it goes out, and a home run pops the crowd on landing
         const r = Math.max(2.5, 9 - (0.9 - y) * 7)
         ctx.save()
         ctx.shadowColor = '#E8FF3D'; ctx.shadowBlur = 16
@@ -761,7 +771,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
           align-items: center; justify-content: center; gap: 8px; text-align: center;
           background: #05060Aee; padding: 24px;
         }
-                .bt-count {
+        .bt-count {
           font-family: var(--font-heading); font-weight: 900; line-height: 1;
           font-size: clamp(80px, 26vw, 150px); color: var(--neon);
           text-shadow: 0 0 50px color-mix(in srgb, var(--neon) 70%, transparent);
@@ -824,8 +834,8 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       <div className="bt-stage">
         <canvas ref={canvasRef} className="bt-canvas" width={620} height={520} onClick={swing} />
 
-        {/* The whole field is the swing target — no panel, no waiting for the
-            release, so the tap lands the moment your finger touches. */}
+        {/* The whole field is the swing target — no waiting for the release,
+            so the tap lands the moment your finger touches. */}
         {phase === 'live' && !paused && (
           <button className="bt-hit" onPointerDown={e => { e.preventDefault(); swing() }} aria-label="Swing" />
         )}
