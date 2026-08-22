@@ -54,7 +54,10 @@ type Flight = { kind: string; colour: string; t: number; dur: number
    Angles are measured in local space where +x points at the plate. */
 const LOAD    = { hx: -15, hy: -46, deg: -130 }
 const CONTACT = { hx:  23, hy: -28, deg:   11 }
-const FINISH  = { hx: -14, hy: -39, deg:  180 }
+/* Same finishing direction as +180, but reached by rotating up and over the
+   shoulder rather than down past his feet — which is what made the swing read
+   backwards. */
+const FINISH  = { hx: -14, hy: -39, deg: -180 }
 
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k
 const easeOut = (k: number) => 1 - Math.pow(1 - k, 2.4)
