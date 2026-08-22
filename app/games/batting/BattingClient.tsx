@@ -463,7 +463,9 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     const py = H * (MOUND_Y - 0.012)       // her feet
     const s = pitcher.lefty ? -1 : 1       // which arm turns
     const w = Math.max(0, Math.min(1, windUp.current))
-    const angle = -Math.PI / 2 + w * Math.PI * 2
+    /* Anti-clockwise from here: the hand goes back, up over the top, down the
+       front and releases at the hip. Clockwise was what made it look reversed. */
+    const angle = -Math.PI / 2 - w * Math.PI * 2
     const armR = H * 0.055
 
     const SCALE = 0.62                     // she's further away than the batter
@@ -521,15 +523,16 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.beginPath(); ctx.ellipse(-12, shoulderY + 7, 5.5, 7, -0.25, 0, Math.PI * 2); ctx.fill()
     ctx.beginPath(); ctx.ellipse(12, shoulderY + 7, 5.5, 7, 0.25, 0, Math.PI * 2); ctx.fill()
 
-    // Glove arm, held out in front of her
+    /* Glove arm reaches out toward the plate — down the frame rather than off to
+       the side, so she reads as square to us rather than turned toward first. */
     ctx.strokeStyle = SKIN; ctx.lineWidth = 6
     ctx.beginPath()
-    ctx.moveTo(12, shoulderY + 8)
-    ctx.lineTo(20 + stride * 6, shoulderY + 20 - stride * 8)
+    ctx.moveTo(11, shoulderY + 8)
+    ctx.lineTo(13 + stride * 4, shoulderY + 26 - stride * 10)
     ctx.stroke()
     ctx.fillStyle = '#4A3520'
     ctx.beginPath()
-    ctx.ellipse(23 + stride * 7, shoulderY + 22 - stride * 9, 8, 9.5, 0.3, 0, Math.PI * 2)
+    ctx.ellipse(14 + stride * 5, shoulderY + 29 - stride * 11, 7.5, 9, 0.15, 0, Math.PI * 2)
     ctx.fill()
 
     // Neck, head, cap — brim toward us because she's facing the plate
@@ -555,7 +558,8 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
 
     /* The ball shows only once the hand has come over the top — until then the
        glove has it, which is what gives the hitter their first look. */
-    if (w > 0.28) {
+    // Gone from the hand the moment the pitch is away
+    if (w > 0.28 && w < 0.995 && t.current < 0.02) {
       ctx.save()
       ctx.globalAlpha = Math.min(1, (w - 0.28) / 0.12)
       ctx.shadowColor = '#E8FF3D'; ctx.shadowBlur = 10
