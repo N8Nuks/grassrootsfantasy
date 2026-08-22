@@ -25,7 +25,7 @@ const ZONE = { x: 0.5, y: 0.813, w: 0.105, h: 0.125 }
 /* Field depths, as fractions of the canvas. A softball diamond is tight in the
    middle and deep to the fence, so the pitcher stands close and the outfield
    runs away. */
-const FENCE_Y = 0.30
+const FENCE_Y = 0.245          // deeper, so there's real outfield to hit into
 const MOUND_Y = 0.63
 const CROWD_TOP = 0.055
 
@@ -174,8 +174,9 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     } else if (kind === 'wall') {
       ball.current = { ...base, x1: 0.5 + spread * 1.7, y1: FENCE_Y + 0.045, apex: 0.10, dur: 950 }
     } else if (kind === 'bounce') {
-      ball.current = { ...base, x1: 0.5 + spread * 1.5, y1: FENCE_Y - 0.02, apex: 0.16, dur: 1250,
-        hop: { x: 0.5 + spread * 0.9, y: 0.545 } }
+      // Lands in the outfield grass, then one big hop over the wall
+      ball.current = { ...base, x1: 0.5 + spread * 1.5, y1: FENCE_Y - 0.03, apex: 0.20, dur: 1350,
+        hop: { x: 0.5 + spread * 1.2, y: FENCE_Y + 0.095 } }
     } else if (kind === 'through') {
       ball.current = { ...base, x1: 0.5 + spread * 0.9, y1: FENCE_Y + 0.115, apex: 0.05, dur: 900 }
     } else if (kind === 'back') {
@@ -504,13 +505,34 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.restore()
 
     // ── The wall, with the name running along it ──
-    const fh = H * 0.062
+    /* The wall arcs away from us, deepest through centre — so it dips lower at
+       the foul poles and rides higher in the middle of the frame. */
+    const fh = H * 0.055
     const fy = H * FENCE_Y
-    ctx.fillStyle = '#0C1420'; ctx.fillRect(0, fy, W, fh)
-    ctx.fillStyle = '#B47CFF50'; ctx.fillRect(0, fy, W, 2)
-    ctx.fillStyle = '#ffffff10'; ctx.fillRect(0, fy + fh - 2, W, 2)
+    const bow = H * 0.045                 // how far the corners drop
+    const wallTop = (x: number) => fy + bow * Math.pow((x / W - 0.5) * 2, 2)
+
+    ctx.beginPath()
+    ctx.moveTo(0, wallTop(0))
+    for (let x = 0; x <= W; x += 8) ctx.lineTo(x, wallTop(x))
+    ctx.lineTo(W, wallTop(W) + fh)
+    for (let x = W; x >= 0; x -= 8) ctx.lineTo(x, wallTop(x) + fh)
+    ctx.closePath()
+    ctx.fillStyle = '#0C1420'; ctx.fill()
+    ctx.strokeStyle = '#B47CFF50'; ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(0, wallTop(0))
+    for (let x = 0; x <= W; x += 8) ctx.lineTo(x, wallTop(x))
+    ctx.stroke()
+
     ctx.save()
-    ctx.beginPath(); ctx.rect(0, fy, W, fh); ctx.clip()
+    ctx.beginPath()
+    ctx.moveTo(0, wallTop(0))
+    for (let x = 0; x <= W; x += 8) ctx.lineTo(x, wallTop(x))
+    ctx.lineTo(W, wallTop(W) + fh)
+    for (let x = W; x >= 0; x -= 8) ctx.lineTo(x, wallTop(x) + fh)
+    ctx.closePath()
+    ctx.clip()
     ctx.font = `900 ${Math.round(fh * 0.42)}px var(--font-heading), sans-serif`
     ctx.textBaseline = 'middle'
     const word = 'GRASSROOTS FANTASY   ·   '
@@ -518,7 +540,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     const scroll = (now / 26) % wordW
     ctx.fillStyle = '#B47CFF30'
     for (let x = -wordW - scroll; x < W + wordW; x += wordW) {
-      ctx.fillText(word, x, fy + fh * 0.5)
+      ctx.fillText(word, x, wallTop(Math.max(0, Math.min(W, x + wordW / 2))) + fh * 0.5)
     }
     ctx.restore()
 
