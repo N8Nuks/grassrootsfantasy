@@ -23,6 +23,17 @@ const PITCHER_ADDS: Legend[] = [
   { name: 'Blaire Luna', grade: 'W', titles: 1, lefty: false },
 ]
 
+/* Titles measure availability as much as ability — the hardest of these missed
+   seasons to rep duty and injury, so the order is set by hand. Anyone not named
+   sits in the middle. 1 is the toughest to face. */
+const ARM_RANK: Record<string, number> = {
+  'Blaire Luna': 1,
+  'Daniel Chapman': 1,
+  'Michal Tangaroa': 2,
+  'Brad Rona': 3,
+}
+const rankOf = (name: string) => ARM_RANK[name] ?? 4
+
 /* Counts every award named in `keys` for one grade. A shared award is recorded
    as a single string, so it splits and each winner is credited. */
 function tally(grade: 'men' | 'women', keys: string[]): [string, number][] {
@@ -60,10 +71,14 @@ export default function LegendsCage() {
   const batters = build(['top_batter', 'mvp'], BATTER_SWAPS).sort((a, b) => b.titles - a.titles)
 
   // The two named arms come in at the expense of the lowest title-holders
+  /* `titles` carries the difficulty rather than the award count — the ranking
+     above is inverted into a 1-to-4 scale the game reads as heat. */
   const pitchers = [
     ...build(['top_pitcher']).sort((a, b) => b.titles - a.titles).slice(0, 8),
     ...PITCHER_ADDS,
-  ].sort((a, b) => b.titles - a.titles)
+  ]
+    .map(p => ({ ...p, titles: 5 - rankOf(p.name) }))
+    .sort((a, b) => b.titles - a.titles)
 
   if (batters.length < 2 || pitchers.length < 2) {
     return (

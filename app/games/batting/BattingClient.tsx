@@ -121,7 +121,8 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
 
   const maxBat = Math.max(...batters.map(b => b.titles), 1)
   const maxPit = Math.max(...pitchers.map(p => p.titles), 1)
-  const heat = pitcher.titles / maxPit
+  // Even the gentlest of these was a Premier champion — the floor keeps them honest
+  const heat = 0.45 + 0.55 * (pitcher.titles / maxPit)
   const eye = batter.titles / maxBat
   const windowSize = 0.058 + eye * 0.055
 
