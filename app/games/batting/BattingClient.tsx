@@ -550,11 +550,15 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.ellipse(0, shoulderY - 12, 11, 4, 0, 0, Math.PI)
     ctx.fill()
 
-    // Throwing arm on the windmill
-    const hx = Math.cos(angle) * armR
+    /* Seen from behind, a windmill is nearly edge-on: the hand travels up and
+       down a long way and sideways very little. Squashing the horizontal axis
+       is what stops the release throwing across toward first. */
+    const hx = Math.cos(angle) * armR * 0.22
     const hy = shoulderY + 6 + Math.sin(angle) * armR
-    ctx.strokeStyle = SKIN; ctx.lineWidth = 6
-    ctx.beginPath(); ctx.moveTo(-12, shoulderY + 8); ctx.lineTo(hx, hy); ctx.stroke()
+    // The arm swings out toward us through the bottom half, so it thickens there
+    const near = Math.max(0, Math.sin(angle))
+    ctx.strokeStyle = SKIN; ctx.lineWidth = 5.5 + near * 2.5
+    ctx.beginPath(); ctx.moveTo(-11, shoulderY + 8); ctx.lineTo(hx, hy); ctx.stroke()
 
     /* The ball shows only once the hand has come over the top — until then the
        glove has it, which is what gives the hitter their first look. */
@@ -564,7 +568,8 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       ctx.globalAlpha = Math.min(1, (w - 0.28) / 0.12)
       ctx.shadowColor = '#E8FF3D'; ctx.shadowBlur = 10
       ctx.fillStyle = '#E8FF3D'
-      ctx.beginPath(); ctx.arc(hx, hy, 5.5, 0, Math.PI * 2); ctx.fill()
+      // Grows as the hand comes round toward us on the way down
+      ctx.beginPath(); ctx.arc(hx, hy, 4.6 + near * 2.2, 0, Math.PI * 2); ctx.fill()
       ctx.restore()
     }
 
