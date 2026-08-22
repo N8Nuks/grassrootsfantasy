@@ -453,26 +453,117 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     }
   }
 
+  /* ── The pitcher ──
+     Built the same way as the batter: pants, belt, jersey, cap. She faces the
+     plate, so we see her front on — brim toward us, glove out in front, ponytail
+     behind. The throwing arm runs the windmill and the ball only appears once
+     the hand clears the top, since the glove hides it before that. */
   function drawPitcher(ctx: CanvasRenderingContext2D, W: number, H: number) {
-    const px = W * 0.5, py = H * (MOUND_Y - 0.055), armR = H * 0.06
+    const px = W * 0.5                     // on the rubber, set back in the circle
+    const py = H * (MOUND_Y - 0.012)       // her feet
+    const s = pitcher.lefty ? -1 : 1       // which arm turns
     const w = Math.max(0, Math.min(1, windUp.current))
     const angle = -Math.PI / 2 + w * Math.PI * 2
-    const s = pitcher.lefty ? -1 : 1
+    const armR = H * 0.055
+
+    const SCALE = 0.62                     // she's further away than the batter
+    const ink = '#0A0C10'
+    const kit = '#5C3E8E'
+    const PANTS = '#C9C5BC'
+    const SKIN = '#8C6A46'
+
     ctx.save()
+    // Shadow first, on the dirt
     ctx.fillStyle = '#00000045'
-    ctx.beginPath(); ctx.ellipse(px, py + H * 0.055, W * 0.035, H * 0.01, 0, 0, Math.PI * 2); ctx.fill()
-    ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 6; ctx.lineCap = 'round'
-    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px - 9 * s, py + H * 0.05); ctx.stroke()
-    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + (10 + w * 13) * s, py + H * 0.05); ctx.stroke()
-    ctx.strokeStyle = '#5C3E8E'; ctx.lineWidth = 10
-    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py - H * 0.042); ctx.stroke()
-    ctx.fillStyle = '#0A0C10'
-    ctx.beginPath(); ctx.arc(px, py - H * 0.055, 7, 0, Math.PI * 2); ctx.fill()
-    ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 5
+    ctx.beginPath(); ctx.ellipse(px, py + 3, W * 0.035, H * 0.009, 0, 0, Math.PI * 2); ctx.fill()
+
+    ctx.translate(px, py)
+    ctx.scale(s * SCALE, SCALE)            // local +x is her glove side
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round'
+
+    // Stride — the front leg lands as the arm comes over
+    const stride = Math.max(0, (w - 0.35) / 0.65)
+    const legLen = H * 0.075
+
+    // Back leg, dragging off the rubber
+    ctx.strokeStyle = PANTS; ctx.lineWidth = 13
     ctx.beginPath()
-    ctx.moveTo(px, py - H * 0.038)
-    ctx.lineTo(px + Math.cos(angle) * armR * s, py - H * 0.038 + Math.sin(angle) * armR)
+    ctx.moveTo(-4, -legLen); ctx.lineTo(-10 - stride * 6, -legLen * 0.45); ctx.lineTo(-14 - stride * 10, -4)
     ctx.stroke()
+    ctx.fillStyle = ink
+    ctx.beginPath(); ctx.ellipse(-16 - stride * 11, -2, 8, 3.8, 0, 0, Math.PI * 2); ctx.fill()
+
+    // Front leg, striding out toward the plate
+    ctx.strokeStyle = PANTS; ctx.lineWidth = 13
+    ctx.beginPath()
+    ctx.moveTo(4, -legLen); ctx.lineTo(9 + stride * 9, -legLen * 0.42); ctx.lineTo(11 + stride * 17, -4)
+    ctx.stroke()
+    ctx.fillStyle = ink
+    ctx.beginPath(); ctx.ellipse(13 + stride * 18, -2, 8.5, 3.8, 0, 0, Math.PI * 2); ctx.fill()
+
+    // Belt and jersey — tapered, same construction as the hitter
+    const shoulderY = -legLen - H * 0.058
+    ctx.fillStyle = kit
+    ctx.beginPath()
+    ctx.moveTo(-8, -legLen)
+    ctx.lineTo(-13, shoulderY + 5)
+    ctx.quadraticCurveTo(0, shoulderY - 3, 13, shoulderY + 5)
+    ctx.lineTo(8, -legLen)
+    ctx.closePath(); ctx.fill()
+    // number on the chest
+    ctx.fillStyle = '#ffffff26'
+    ctx.fillRect(-3, shoulderY + 14, 6, 9)
+    ctx.fillStyle = ink
+    ctx.fillRect(-9, -legLen - 3, 18, 5)
+
+    // Sleeves
+    ctx.fillStyle = kit
+    ctx.beginPath(); ctx.ellipse(-12, shoulderY + 7, 5.5, 7, -0.25, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.ellipse(12, shoulderY + 7, 5.5, 7, 0.25, 0, Math.PI * 2); ctx.fill()
+
+    // Glove arm, held out in front of her
+    ctx.strokeStyle = SKIN; ctx.lineWidth = 6
+    ctx.beginPath()
+    ctx.moveTo(12, shoulderY + 8)
+    ctx.lineTo(20 + stride * 6, shoulderY + 20 - stride * 8)
+    ctx.stroke()
+    ctx.fillStyle = '#4A3520'
+    ctx.beginPath()
+    ctx.ellipse(23 + stride * 7, shoulderY + 22 - stride * 9, 8, 9.5, 0.3, 0, Math.PI * 2)
+    ctx.fill()
+
+    // Neck, head, cap — brim toward us because she's facing the plate
+    ctx.fillStyle = SKIN
+    ctx.fillRect(-3.5, shoulderY - 4, 7, 7)
+    // ponytail out the back
+    ctx.fillStyle = '#2A1E14'
+    ctx.beginPath(); ctx.ellipse(-9, shoulderY - 9, 5, 9, -0.4, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = SKIN
+    ctx.beginPath(); ctx.arc(0, shoulderY - 11, 9.5, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = kit
+    ctx.beginPath(); ctx.arc(0, shoulderY - 12, 10.5, Math.PI, 0); ctx.fill()
+    // brim, pointing down at us
+    ctx.beginPath()
+    ctx.ellipse(0, shoulderY - 12, 11, 4, 0, 0, Math.PI)
+    ctx.fill()
+
+    // Throwing arm on the windmill
+    const hx = Math.cos(angle) * armR
+    const hy = shoulderY + 6 + Math.sin(angle) * armR
+    ctx.strokeStyle = SKIN; ctx.lineWidth = 6
+    ctx.beginPath(); ctx.moveTo(-12, shoulderY + 8); ctx.lineTo(hx, hy); ctx.stroke()
+
+    /* The ball shows only once the hand has come over the top — until then the
+       glove has it, which is what gives the hitter their first look. */
+    if (w > 0.28) {
+      ctx.save()
+      ctx.globalAlpha = Math.min(1, (w - 0.28) / 0.12)
+      ctx.shadowColor = '#E8FF3D'; ctx.shadowBlur = 10
+      ctx.fillStyle = '#E8FF3D'
+      ctx.beginPath(); ctx.arc(hx, hy, 5.5, 0, Math.PI * 2); ctx.fill()
+      ctx.restore()
+    }
+
     ctx.restore()
   }
 
