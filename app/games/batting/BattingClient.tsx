@@ -793,6 +793,8 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
             <p key={count} className="bt-count">{count}</p>
           </div>
         )}
+
+        {phase === 'live' && paused && (
           <div className="bt-overlay">
             <p className="bt-paused">Paused</p>
             <button className="ar-btn" onClick={togglePause} style={{ marginTop: '14px' }}><span>Resume</span></button>
