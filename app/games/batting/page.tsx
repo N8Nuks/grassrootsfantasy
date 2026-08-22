@@ -12,7 +12,7 @@ const NEON = '#B47CFF'
    than title count, and the swap carries the count with it. */
 const BATTER_SWAPS: Record<string, string> = {
   'Sina Hunkin': 'Katrina Nukunuku',
-  'Shyah Hale': 'Katie Hetherington',
+  'Katie Hetherington': 'Shyah Hale',
 }
 
 /* Which side they stood on. Right unless named here. */
