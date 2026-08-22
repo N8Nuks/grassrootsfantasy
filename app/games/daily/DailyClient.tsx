@@ -28,13 +28,14 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
   /* Suggestions from the first letter — a native datalist shows no marker on a
      phone, so the list is drawn here. Already-guessed names drop out. */
   const q = input.trim().toLowerCase()
-  const matches = q.length < 1 ? []
-    : names
-        .filter(n => {
-          const l = n.toLowerCase()
-          return l.includes(q) && l !== q && !guesses.some(g => g.toLowerCase() === l)
-        })
-        .slice(0, 8)
+  const untried = names.filter(n => !guesses.some(g => g.toLowerCase() === n.toLowerCase()))
+  // Empty box shows the whole roster to scroll; typing narrows it
+  const matches = q.length < 1
+    ? untried
+    : untried.filter(n => {
+        const l = n.toLowerCase()
+        return l.includes(q) && l !== q
+      }).slice(0, 8)
   const showDrop = open && matches.length > 0
 
   const won = guesses.some(g => g.toLowerCase() === answer.name.toLowerCase())
@@ -111,7 +112,7 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
         .dl-drop {
           position: absolute; left: 0; right: 0; top: calc(100% - 1px); z-index: 30;
           background: #05060A; border: 1px solid var(--neon);
-          max-height: 268px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+          max-height: 46vh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
           box-shadow: 0 18px 40px #000000a0;
         }
         .dl-opt {
