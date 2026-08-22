@@ -12,6 +12,8 @@ export type DailyPlayer = {
   careerBa: string | null
 }
 
+export type PoolPlayer = { name: string; positions: string[]; club: string }
+
 const SLOT_LABELS: Record<string, string> = { B1: '1B', B2: '2B', B3: '3B', PB: 'P(B)' }
 const posLabel = (p: string) => SLOT_LABELS[p] ?? p
 
@@ -19,24 +21,11 @@ const WIN = '#C6FF00'
 const LOSE = '#FF4D4D'
 const MAX_GUESSES = 6
 
-export default function DailyClient({ answer, names }: { answer: DailyPlayer; names: string[] }) {
+export default function DailyClient({ answer, pool }: { answer: DailyPlayer; pool: PoolPlayer[] }) {
   const [guesses, setGuesses] = useState<string[]>([])
   const [input, setInput] = useState('')
   const [error, setError] = useState('')
   const [open, setOpen] = useState(false)
-
-  /* Suggestions from the first letter — a native datalist shows no marker on a
-     phone, so the list is drawn here. Already-guessed names drop out. */
-  const q = input.trim().toLowerCase()
-  const untried = names.filter(n => !guesses.some(g => g.toLowerCase() === n.toLowerCase()))
-  // Empty box shows the whole roster to scroll; typing narrows it
-  const matches = q.length < 1
-    ? untried
-    : untried.filter(n => {
-        const l = n.toLowerCase()
-        return l.includes(q) && l !== q
-      }).slice(0, 8)
-  const showDrop = open && matches.length > 0
 
   const won = guesses.some(g => g.toLowerCase() === answer.name.toLowerCase())
   const done = won || guesses.length >= MAX_GUESSES
@@ -52,6 +41,29 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
   ]
   const unlocked = Math.min(guesses.length + 1, clues.length)
 
+  /* The list narrows as the clues do. Grade is applied before it reaches here.
+     Position joins when it's revealed, club when it's revealed, and nothing
+     narrows it after that — the remaining clues are yours to work with. */
+  const eligible = pool.filter(p => {
+    if (unlocked >= 2 && answer.positions.length > 0) {
+      if (!p.positions.some(x => answer.positions.includes(x))) return false
+    }
+    if (unlocked >= 3 && p.club !== answer.club) return false
+    return true
+  })
+
+  const q = input.trim().toLowerCase()
+  const untried = eligible.filter(p => !guesses.some(g => g.toLowerCase() === p.name.toLowerCase()))
+  // Empty box shows everything still in play; typing narrows it
+  const matches = (q.length < 1
+    ? untried
+    : untried.filter(p => {
+        const l = p.name.toLowerCase()
+        return l.includes(q) && l !== q
+      }).slice(0, 8)
+  ).map(p => p.name)
+  const showDrop = open && matches.length > 0
+
   function lodge(name: string) {
     if (done) return
     if (guesses.some(g => g.toLowerCase() === name.toLowerCase())) {
@@ -66,9 +78,9 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
   function submit() {
     if (done) return
     const v = input.trim()
-    if (!v) { setError('Type a player name first'); return }
-    const match = names.find(n => n.toLowerCase() === v.toLowerCase())
-      // A single suggestion left is almost certainly the one meant
+    if (!v) { setError('Tap the box and pick a name'); return }
+    // Typing is still allowed, against the whole grade rather than the narrowed list
+    const match = pool.find(p => p.name.toLowerCase() === v.toLowerCase())?.name
       ?? (matches.length === 1 ? matches[0] : undefined)
     if (!match) { setError('Pick a name from the list'); return }
     lodge(match)
@@ -78,6 +90,10 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
     const s = splitName(n)
     return <>{s.first} <span style={{ textTransform: 'uppercase' }}>{s.last}</span></>
   }
+
+  const narrowedBy = unlocked >= 3 ? `${answer.club} · ${answer.grade}`
+    : unlocked >= 2 ? `${answer.positions.map(posLabel).join(' / ')} · ${answer.grade}`
+    : answer.grade
 
   return (
     <>
@@ -102,7 +118,6 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
           font-size: 16px; font-weight: 700; padding: 16px 8px 16px 20px; caret-color: var(--neon);
         }
         .dl-input::placeholder { color: #4E5A6A; }
-        /* A marker, so it reads as a list you can open rather than a plain box */
         .dl-caret {
           display: flex; align-items: center; padding: 0 12px; color: var(--neon);
           font-size: 11px; transition: transform 180ms ease; pointer-events: none;
@@ -114,6 +129,11 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
           background: #05060A; border: 1px solid var(--neon);
           max-height: 46vh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
           box-shadow: 0 18px 40px #000000a0;
+        }
+        .dl-scope {
+          font-size: 9px; font-weight: 900; letter-spacing: .24em; text-transform: uppercase;
+          color: #5C6878; padding: 11px 20px; border-bottom: 1px solid #ffffff12;
+          position: sticky; top: 0; background: #05060A;
         }
         .dl-opt {
           display: block; width: 100%; text-align: left; cursor: pointer;
@@ -141,7 +161,8 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
       `}</style>
 
       <p className="dl-lede">
-        One NFS player, six guesses. Every miss unlocks another clue. Same player for everyone, all day.
+        One NFS player, six guesses. Every miss unlocks another clue — and the list you pick from
+        shrinks with it. Same player for everyone, all day.
       </p>
 
       <div className="ar-panel" style={{ marginBottom: '22px' }}>
@@ -168,7 +189,7 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
                 onChange={e => { setInput(e.target.value); setError(''); setOpen(true) }}
                 onFocus={() => setOpen(true)}
                 onKeyDown={e => { if (e.key === 'Enter') submit() }}
-                placeholder="Start typing a name"
+                placeholder="Tap to pick a player"
                 autoComplete="off"
                 autoCorrect="off"
                 spellCheck={false}
@@ -181,6 +202,7 @@ export default function DailyClient({ answer, names }: { answer: DailyPlayer; na
 
             {showDrop && (
               <div className="dl-drop">
+                <div className="dl-scope">{narrowedBy} · {matches.length}</div>
                 {matches.map(n => (
                   // onMouseDown fires before the input loses focus, so the tap lands
                   <button key={n} className="dl-opt" onMouseDown={e => { e.preventDefault(); lodge(n) }}>

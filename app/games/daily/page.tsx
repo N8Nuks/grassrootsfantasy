@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import ArcadeShell from '@/components/ArcadeShell'
-import DailyClient, { DailyPlayer } from './DailyClient'
+import DailyClient, { DailyPlayer, PoolPlayer } from './DailyClient'
 
 const NEON = '#FF2D95'
 
@@ -31,10 +31,10 @@ export default async function Daily() {
     career_games: number | null; stats: Record<string, number> | null
     clubs: { name: string } | null
   }
-  const pool = ((players ?? []) as unknown as Row[])
+  const all = ((players ?? []) as unknown as Row[])
     .sort((a, b) => a.id.localeCompare(b.id))   // stable order so the seed is reliable
 
-  if (pool.length === 0) {
+  if (all.length === 0) {
     return (
       <ArcadeShell neon={NEON} eyebrow="Daily" title="Player of the Day">
         <p style={{ color: '#8FA0B4', fontSize: '13px' }}>No players available yet.</p>
@@ -42,7 +42,7 @@ export default async function Daily() {
     )
   }
 
-  const p = pool[daySeed() % pool.length]
+  const p = all[daySeed() % all.length]
   const games = p.career_games ?? 0
   const gamesBand = games >= 300 ? '300+' : games >= 200 ? '200–299' : games >= 100 ? '100–199' : 'Under 100'
 
@@ -56,16 +56,21 @@ export default async function Daily() {
     careerBa: p.stats?.career_ba != null ? Number(p.stats.career_ba).toFixed(3) : null,
   }
 
-  /* Only the answer's grade goes in the guess box. Grade is the free first
-     clue, so this gives nothing away — it just halves what you scroll. */
-  const names = pool
+  /* The guess list carries each player's position and club so it can narrow as
+     those clues unlock — the grade is applied here, since it's free from the
+     first look and halves the scrolling. */
+  const pool: PoolPlayer[] = all
     .filter(r => r.grade === p.grade)
-    .map(r => r.full_name)
-    .sort((a, b) => a.localeCompare(b))
+    .map(r => ({
+      name: r.full_name,
+      positions: r.positions ?? [],
+      club: r.clubs?.name ?? 'Unknown',
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
     <ArcadeShell neon={NEON} eyebrow="Daily · One shot" title="Who is it?">
-      <DailyClient answer={answer} names={names} />
+      <DailyClient answer={answer} pool={pool} />
     </ArcadeShell>
   )
 }
