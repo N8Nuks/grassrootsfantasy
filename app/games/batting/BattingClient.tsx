@@ -45,6 +45,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
   const [pitcher, setPitcher] = useState<Legend>(pitchers[0])
   const [phase, setPhase] = useState<'setup' | 'live' | 'done'>('setup')
   const [paused, setPaused] = useState(false)
+  const [count, setCount] = useState<number | null>(null)
 
   const [pitchNo, setPitchNo] = useState(0)
   const [outs, setOuts] = useState(0)
@@ -608,11 +609,17 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     })
   }
 
+  /* Three seconds to settle before the first one comes in — starting on a pitch
+     already halfway to the plate is a poor way to begin. */
   function start() {
     clearTimers()
     setPitchNo(0); setOuts(0); setScore(0); setLog([]); setFlash(null); setPaused(false)
     pauseOffset.current = 0
-    setPhase('live'); beginPitch()
+    setPhase('live')
+    setCount(3)
+    after(900, () => setCount(2))
+    after(1800, () => setCount(1))
+    after(2700, () => { setCount(null); beginPitch() })
   }
 
   const caps = (n: string) => {
@@ -684,6 +691,17 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
           position: absolute; inset: 0; display: flex; flex-direction: column;
           align-items: center; justify-content: center; gap: 8px; text-align: center;
           background: #05060Aee; padding: 24px;
+        }
+                .bt-count {
+          font-family: var(--font-heading); font-weight: 900; line-height: 1;
+          font-size: clamp(80px, 26vw, 150px); color: var(--neon);
+          text-shadow: 0 0 50px color-mix(in srgb, var(--neon) 70%, transparent);
+          animation: bt-count 900ms cubic-bezier(.2,1.5,.4,1);
+        }
+        @keyframes bt-count {
+          0% { transform: scale(2.4); opacity: 0; }
+          22% { transform: scale(1); opacity: 1; }
+          100% { transform: scale(0.9); opacity: 0.35; }
         }
         .bt-paused {
           font-family: var(--font-heading); font-weight: 900; text-transform: uppercase;
@@ -770,7 +788,11 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
           </div>
         )}
 
-        {phase === 'live' && paused && (
+        {count !== null && (
+          <div className="bt-overlay" style={{ background: '#05060Ab8' }}>
+            <p key={count} className="bt-count">{count}</p>
+          </div>
+        )}
           <div className="bt-overlay">
             <p className="bt-paused">Paused</p>
             <button className="ar-btn" onClick={togglePause} style={{ marginTop: '14px' }}><span>Resume</span></button>
