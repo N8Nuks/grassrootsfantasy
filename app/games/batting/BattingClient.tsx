@@ -22,8 +22,13 @@ type ResultKey = keyof typeof RESULTS
 
 // Knees to the letters, no wider than the plate beneath it
 const ZONE = { x: 0.5, y: 0.755, w: 0.105, h: 0.125 }
-const FENCE_Y = 0.335          // top of the wall
-const CROWD_TOP = 0.06
+/* Field depths, as fractions of the canvas. A softball diamond is tight in the
+   middle and deep to the fence — 46 feet to the circle, 60 to the bases, and
+   200 to the wall — so the pitcher stands close and the outfield runs away. */
+const FENCE_Y = 0.30           // top of the wall
+const MOUND_Y = 0.63           // the circle, well inside the dirt
+const INFIELD_TOP = 0.585      // where the dirt gives way to grass
+const CROWD_TOP = 0.055
 const SWING_MS = 340
 
 /* Speed is a multiplier on the flight time — under 1 is quicker than standard. */
@@ -258,12 +263,16 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.beginPath(); ctx.ellipse(backFoot - 3, footY - 3, 11, 5.5, -0.35, 0, Math.PI * 2); ctx.fill()
     ctx.beginPath(); ctx.ellipse(frontFoot + 3, footY - 3, 12, 5.5, 0.1, 0, Math.PI * 2); ctx.fill()
 
-    // ── Everything above the belt turns about the waist ──
+    /* ── Above the belt ──
+       Rotation about the spine doesn't tilt a hitter, it foreshortens him:
+       shoulders closed at the load, square at contact, open on the follow. So
+       the span breathes rather than the whole trunk leaning over. */
     ctx.save()
-    ctx.rotate(turn * 0.34)
+    ctx.rotate(turn * 0.09)              // just a trace of lean into the ball
 
+    const openness = Math.max(0, Math.min(1, (turn + 0.95) / 2.1))
     const shoulderY = -H * 0.088
-    const shoulderW = 15.5
+    const shoulderW = 15.5 * (0.68 + 0.32 * Math.sin(openness * Math.PI))
     const waistW = 9.5
 
     // jersey, tapered from the shoulders down to the belt
@@ -298,7 +307,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
 
     // head stays level and back — the counter-rotation is what a hitter does
     ctx.save()
-    ctx.rotate(-turn * 0.34)
+    ctx.rotate(-turn * 0.09)
     ctx.fillStyle = '#8C6A46'
     ctx.beginPath(); ctx.arc(0, shoulderY - 13, 11, 0, Math.PI * 2); ctx.fill()
     // helmet shell and brim, brim pointing out at the pitcher
@@ -332,12 +341,19 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
 
     // Arms out to the hands
     ctx.strokeStyle = ink; ctx.lineWidth = 8; ctx.lineCap = 'round'
-    // Both arms run from the shoulders out to the hands on the bat
-    const shY = py - H * 0.088
+    /* Both arms run from the shoulders to the hands, drawn over the jersey so
+       the bat never looks like it's growing out of his chest. The span matches
+       the shoulders as they turn. */
+    const shY = py - H * 0.088 + 8
+    const shSpan = 15.5 * (0.68 + 0.32 * Math.sin(Math.max(0, Math.min(1, (turn + 0.95) / 2.1)) * Math.PI))
+    // back arm first, a shade darker so the two read as separate limbs
+    ctx.strokeStyle = '#6B5036'; ctx.lineWidth = 7; ctx.lineCap = 'round'
+    ctx.beginPath(); ctx.moveTo(px - shSpan * side, shY); ctx.lineTo(handX, handY); ctx.stroke()
     ctx.strokeStyle = '#8C6A46'; ctx.lineWidth = 8
-    ctx.beginPath(); ctx.moveTo(px - 11 * side, shY + 8); ctx.lineTo(handX, handY); ctx.stroke()
-    ctx.strokeStyle = '#7A5C3D'; ctx.lineWidth = 7
-    ctx.beginPath(); ctx.moveTo(px + 11 * side, shY + 8); ctx.lineTo(handX, handY); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(px + shSpan * side, shY); ctx.lineTo(handX, handY); ctx.stroke()
+    // hands together on the handle
+    ctx.fillStyle = '#2A2A32'
+    ctx.beginPath(); ctx.arc(handX, handY, 6, 0, Math.PI * 2); ctx.fill()
 
     // The bat itself — handle to barrel along the same line
     const grain = ctx.createLinearGradient(handX, handY, tipX, tipY)
@@ -369,7 +385,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
   }
 
   function drawPitcher(ctx: CanvasRenderingContext2D, W: number, H: number) {
-    const px = W * 0.5, py = H * 0.47, armR = H * 0.06
+    const px = W * 0.5, py = H * (MOUND_Y - 0.055), armR = H * 0.06
     const w = Math.max(0, Math.min(1, windUp.current))
     const angle = -Math.PI / 2 + w * Math.PI * 2
     const s = pitcher.lefty ? -1 : 1
@@ -425,7 +441,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.restore()
 
     // ── The wall, with the name running along it ──
-    const fh = H * 0.085
+    const fh = H * 0.062        // a real fence is low against that distance
     const fy = H * FENCE_Y
     ctx.fillStyle = '#0C1420'; ctx.fillRect(0, fy, W, fh)
     ctx.fillStyle = '#B47CFF50'; ctx.fillRect(0, fy, W, 2)
@@ -449,10 +465,16 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.moveTo(W * ZONE.x, H * 0.93); ctx.lineTo(W * 0.01, fy + fh)
     ctx.moveTo(W * ZONE.x, H * 0.93); ctx.lineTo(W * 0.99, fy + fh)
     ctx.stroke()
+    // Infield dirt, reaching to the base paths and no further
     ctx.fillStyle = '#2A1D14'
-    ctx.beginPath(); ctx.ellipse(W / 2, H * 1.1, W * 0.56, H * 0.34, 0, Math.PI, 0); ctx.fill()
+    ctx.beginPath()
+    ctx.ellipse(W / 2, H * (INFIELD_TOP + 0.435), W * 0.62, H * 0.435, 0, Math.PI, 0)
+    ctx.fill()
+    // The circle
     ctx.fillStyle = '#3A2A1E'
-    ctx.beginPath(); ctx.ellipse(W / 2, H * 0.5, W * 0.07, H * 0.021, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.ellipse(W / 2, H * MOUND_Y, W * 0.085, H * 0.024, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.strokeStyle = '#ffffff10'; ctx.lineWidth = 1.5
+    ctx.beginPath(); ctx.ellipse(W / 2, H * MOUND_Y, W * 0.085, H * 0.024, 0, 0, Math.PI * 2); ctx.stroke()
 
     // Plate, drawn to the same width as the zone above it
     const pw = W * ZONE.w
@@ -570,7 +592,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
         const p = t.current
         const x = W * ZONE.x + breakX.current * W * 0.12 * p * p
         // Keeps travelling past the zone to the catcher — it never hangs
-        const y = H * 0.5 + (H * 0.9 - H * 0.5) * ((p / 1.16) * (p / 1.16) * 0.55 + (p / 1.16) * 0.45)
+        const y = H * MOUND_Y + (H * 0.9 - H * MOUND_Y) * ((p / 1.16) * (p / 1.16) * 0.55 + (p / 1.16) * 0.45)
         const r = 3.5 + p * p * 9
         ctx.save()
         ctx.shadowColor = '#E8FF3D'; ctx.shadowBlur = 12 + p * 18
