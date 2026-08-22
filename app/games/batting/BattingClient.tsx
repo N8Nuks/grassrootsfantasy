@@ -710,12 +710,16 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
   const furthest = log.reduce((m, l) => Math.max(m, l.dist), 0)
   const contactRate = log.length ? Math.round((log.filter(l => l.key !== 'strike').length / log.length) * 100) : 0
 
-  function Card({ p, on, onPick, max }: { p: Legend; on: boolean; onPick: () => void; max: number }) {
+  function Card({ p, on, onPick, max, role }: {
+    p: Legend; on: boolean; onPick: () => void; max: number; role: 'bat' | 'pit'
+  }) {
+    // A hitter bats right or left; an arm throws it
+    const hand = role === 'pit' ? (p.lefty ? 'LHP' : 'RHP') : (p.lefty ? 'LHB' : 'RHB')
     return (
       <button className="bt-pick" data-on={on} onClick={onPick}>
         <span className="bt-face"><span className="bt-crest">{p.titles}</span></span>
         <span className="bt-pn">{caps(p.name)}</span>
-        <span className="bt-pm">{p.grade} · {p.lefty ? 'LHB' : 'RHB'}</span>
+        <span className="bt-pm">{p.grade} · {hand}</span>
         <span className="bt-bar"><i style={{ width: `${Math.round((p.titles / max) * 100)}%` }} /></span>
       </button>
     )
@@ -800,24 +804,24 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       `}</style>
 
       <p className="bt-lede">
-        Every batting and pitching champion the NFS has ever crowned, in one cage. Titles won stand in
-        for the stats — the more a hitter won, the wider your window; the more an arm won, the less
-        time you get.
+        A selection of Batting Champions and MVPs line up against 10 of the best Pitchers the NFS has
+        seen. Titles won stand in for the stats — the more a hitter won, the wider your window; the
+        more an arm won, the less time you get.
       </p>
 
       {phase === 'setup' && (
         <>
-          <p className="bt-lbl">In the box · most batting titles</p>
+          <p className="bt-lbl">In the box · Batting Titles &amp; MVPs</p>
           <div className="bt-strip">
             {batters.map(b => (
-              <Card key={b.name + b.grade} p={b} max={maxBat}
+              <Card key={b.name + b.grade} p={b} max={maxBat} role="bat"
                 on={batter.name === b.name} onPick={() => setBatter(b)} />
             ))}
           </div>
           <p className="bt-lbl">On the mound · most pitching titles</p>
           <div className="bt-strip">
             {pitchers.map(p => (
-              <Card key={p.name + p.grade} p={p} max={maxPit}
+              <Card key={p.name + p.grade} p={p} max={maxPit} role="pit"
                 on={pitcher.name === p.name} onPick={() => setPitcher(p)} />
             ))}
           </div>
