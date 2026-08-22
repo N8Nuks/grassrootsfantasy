@@ -23,20 +23,16 @@ type ResultKey = keyof typeof RESULTS
 const ZONE = { x: 0.5, y: 0.813, w: 0.105, h: 0.125 }
 
 /* Field depths, as fractions of the canvas. A softball diamond is tight in the
-   middle and deep to the fence — 46 feet to the circle, 60 to the bases, and
-   200 to the wall — so the pitcher stands close and the outfield runs away. */
+   middle and deep to the fence, so the pitcher stands close and the outfield
+   runs away. */
 const FENCE_Y = 0.30
 const MOUND_Y = 0.63
 const CROWD_TOP = 0.055
 
 const SWING_MS = 340
-/* The barrel's compass angle: 90 points at the plate, 195 is behind the head,
-   20 is wrapped across the front shoulder. Ending short of a full wrap keeps
-   the sweep reading as one direction rather than out and back. */
-const PHI_START = 195
-const PHI_END = 20
-const CONTACT_AT = (PHI_START - 90) / (PHI_START - PHI_END)   // barrel at the plate
+const CONTACT_AT = 0.46        // where in the swing the barrel meets the ball
 const WAIST_Y = 0.817          // the batter's belt, and his fulcrum
+const STANCE_OFF = 0.155       // how far he stands off the plate
 
 /* Speed is a multiplier on the flight time — under 1 is quicker than standard. */
 const PITCH_TYPES = [
@@ -50,6 +46,19 @@ const PITCH_TYPES = [
 type Flight = { kind: string; colour: string; t: number; dur: number
   x0: number; y0: number; x1: number; y1: number; apex: number
   hop?: { x: number; y: number }; landed: boolean }
+
+/* ── The swing, as three keyframes ──
+   Hands travel from over the rear shoulder, out through the ball, then across
+   and back to finish flat. The bat is a fixed length throughout — only its
+   angle changes — so it never appears to grow or shrink.
+   Angles are measured in local space where +x points at the plate. */
+const LOAD    = { hx: -15, hy: -46, deg: -130 }
+const CONTACT = { hx:  23, hy: -28, deg:   11 }
+const FINISH  = { hx: -14, hy: -39, deg:  180 }
+
+const lerp = (a: number, b: number, k: number) => a + (b - a) * k
+const easeOut = (k: number) => 1 - Math.pow(1 - k, 2.4)
+const easeIn = (k: number) => k * k
 
 export default function LegendsClient({ batters, pitchers }: { batters: Legend[]; pitchers: Legend[] }) {
   const [batter, setBatter] = useState<Legend>(batters[0])
@@ -161,12 +170,10 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       ball.current = { ...base, x1: 0.5 + spread * 1.5, y1: FENCE_Y - 0.02, apex: 0.16, dur: 1250,
         hop: { x: 0.5 + spread * 0.9, y: 0.545 } }
     } else if (kind === 'through') {
-      // Flat through the infield, dying just short of the wall
       ball.current = { ...base, x1: 0.5 + spread * 0.9, y1: FENCE_Y + 0.115, apex: 0.05, dur: 900 }
     } else if (kind === 'back') {
       ball.current = { ...base, x1: 0.5 + (pull > 0 ? 0.7 : -0.7), y1: 1.15, apex: 0.42, dur: 1000 }
     } else {
-      // Grounder — dribbles forward between the lines and stops in the dirt
       ball.current = { ...base, x1: 0.5 + spread * 0.4, y1: 0.76, apex: 0.012, dur: 800 }
     }
   }
@@ -199,49 +206,56 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     })
   }, [phase, paused, windowSize, batter.titles, finish])
 
-  /* How high the barrel rides at any point in the swing. High at the load,
-     exactly zero at contact so the bat meets the ball at belt height, then up
-     again into the follow-through. */
-  const liftAt = (p: number, H: number) =>
-    p < CONTACT_AT
-      ? H * 0.20 * Math.cos((p / CONTACT_AT) * (Math.PI / 2))
-      : H * 0.075 * Math.sin(((p - CONTACT_AT) / (1 - CONTACT_AT)) * (Math.PI / 2))
+  /* Where the hands are and which way the bat points at any point in the swing.
+     Before contact the hands come forward and the barrel whips round; after it
+     they carry across and settle flat. */
+  function poseAt(p: number) {
+    if (p <= CONTACT_AT) {
+      const k = easeIn(p / CONTACT_AT)
+      return {
+        hx: lerp(LOAD.hx, CONTACT.hx, k),
+        hy: lerp(LOAD.hy, CONTACT.hy, k),
+        deg: lerp(LOAD.deg, CONTACT.deg, k),
+      }
+    }
+    const k = easeOut((p - CONTACT_AT) / (1 - CONTACT_AT))
+    return {
+      hx: lerp(CONTACT.hx, FINISH.hx, k),
+      hy: lerp(CONTACT.hy, FINISH.hy, k),
+      deg: lerp(CONTACT.deg, FINISH.deg, k),
+    }
+  }
 
   /* ── The batter ──
-     The bat rotates about the spine through 240 degrees: loaded behind the
-     head, round through the zone, and wrapped across the front shoulder. Seen
-     from behind the plate that circle is foreshortened, so the barrel traces a
-     flat ellipse — level through contact, never chopping down.
-
      His feet run along the plate line, so from this camera one is nearer than
      the other rather than beside it. The back leg is large and low; the front
-     leg sits higher, smaller and partly behind him, and strides out toward the
-     plate as he goes. */
+     leg sits higher, smaller and partly behind him, and strides across toward
+     the plate. Everything above the belt turns about the spine. */
   function drawBatter(ctx: CanvasRenderingContext2D, W: number, H: number, now: number) {
-    // First base is screen right, so a left-hander stands on that side of the
-    // plate and a right-hander on the third-base side, screen left.
+    // Handedness is called from the pitcher's view, so a right-hander stands on
+    // the third base side — screen left from behind the plate.
     const side = batter.lefty ? -1 : 1
-    const px = W * (ZONE.x - 0.155 * side)     // spine
-    const py = H * WAIST_Y                      // waist, the fulcrum
-    const R = W * 0.125                         // barrel radius
-    const SQUASH = 0.38                         // how flat the circle looks
+    const px = W * (ZONE.x - STANCE_OFF * side)
+    const py = H * WAIST_Y
+    const BAT_LEN = W * 0.125            // fixed — only the angle ever changes
 
     let s = 0
     if (swung.current && swingAt.current) s = Math.min(1, (now - swingAt.current) / SWING_MS)
-    const p = s < 0.5 ? 2 * s * s : 1 - Math.pow(-2 * s + 2, 2) / 2
+    const p = s
+    const pose = poseAt(p)
+    const rad = (pose.deg * Math.PI) / 180
 
-    const phi = ((PHI_START - (PHI_START - PHI_END) * p) * Math.PI) / 180
-    const lift = liftAt(p, H)
-
-    const tipX = px + Math.sin(phi) * R * side
-    const tipY = py - Math.cos(phi) * R * SQUASH - lift
-    const handR = R * 0.34
-    const handX = px + Math.sin(phi) * handR * side
-    const handY = py - Math.cos(phi) * handR * SQUASH - lift * 0.55
+    // Hands and barrel in world space
+    const handX = px + pose.hx * side
+    const handY = py + pose.hy
+    const tipX = handX + Math.cos(rad) * BAT_LEN * side
+    const tipY = handY + Math.sin(rad) * BAT_LEN
 
     const ink = '#0A0C10'
     const kit = '#B47CFF'
     const turn = -0.95 + p * 2.1
+    // Both arms have crossed in front of his chest by the finish, so they go
+    const armFade = p < 0.7 ? 1 : Math.max(0, 1 - (p - 0.7) / 0.28)
 
     // Shadow on the dirt, following the stride
     ctx.save()
@@ -262,26 +276,25 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
 
     /* ── Legs, stacked in depth ──
        Far leg first so the near one covers it. The far foot sits higher up the
-       frame because it's further up-field, and steps out toward the plate. */
+       frame because it's further up-field, and strides out toward the plate;
+       the back knee drives in while its foot stays planted behind. */
     const nearKneeY = H * 0.055, nearFootY = H * 0.100
     const farKneeY = H * 0.040, farFootY = H * 0.078
 
-    const farKneeX = 2 + p * 12
-    const farFootX = 4 + p * 24
-    const nearKneeX = -6 - p * 2
-    const nearFootX = -8 - p * 4
+    const farKneeX = 3 + p * 15
+    const farFootX = 6 + p * 27
+    const nearKneeX = 2 + p * 10
+    const nearFootX = -9 - p * 3
 
-    // far leg — thinner, dimmer, higher
     ctx.strokeStyle = PANTS_FAR; ctx.lineWidth = 11
     ctx.beginPath()
     ctx.moveTo(-2, -2); ctx.lineTo(farKneeX, farKneeY); ctx.lineTo(farFootX, farFootY)
     ctx.stroke()
     ctx.fillStyle = CLEAT_FAR
-    ctx.save(); ctx.translate(farFootX + 2, farFootY + 3); ctx.rotate(-0.1 - p * 0.12)
+    ctx.save(); ctx.translate(farFootX + 2, farFootY + 3); ctx.rotate(-0.1 + p * 0.2)
     ctx.beginPath(); ctx.ellipse(0, 0, 8.5, 3.8, 0, 0, Math.PI * 2); ctx.fill()
     ctx.restore()
 
-    // near leg — thicker, brighter, lower, pivoting onto the toe
     ctx.strokeStyle = PANTS_NEAR; ctx.lineWidth = 15
     ctx.beginPath()
     ctx.moveTo(3, 2); ctx.lineTo(nearKneeX, nearKneeY); ctx.lineTo(nearFootX, nearFootY)
@@ -291,7 +304,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.moveTo(3, 2); ctx.lineTo(nearKneeX, nearKneeY); ctx.lineTo(nearFootX, nearFootY)
     ctx.stroke()
     ctx.fillStyle = ink
-    ctx.save(); ctx.translate(nearFootX - 2, nearFootY + 4); ctx.rotate(-p * 0.38)
+    ctx.save(); ctx.translate(nearFootX - 2, nearFootY + 4); ctx.rotate(-p * 0.5)
     ctx.beginPath(); ctx.ellipse(0, 0, 11, 5, 0, 0, Math.PI * 2); ctx.fill()
     ctx.restore()
 
@@ -306,7 +319,6 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     const shoulderW = 15.5 * (0.68 + 0.32 * Math.sin(openness * Math.PI))
     const waistW = 9.5
 
-    // jersey, tapered from the shoulders down to the belt
     ctx.fillStyle = kit
     ctx.beginPath()
     ctx.moveTo(-waistW, 0)
@@ -314,7 +326,6 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.quadraticCurveTo(0, shoulderY - 4, shoulderW, shoulderY + 6)
     ctx.lineTo(waistW, 0)
     ctx.closePath(); ctx.fill()
-    // shading down the back half so it reads round
     ctx.fillStyle = '#00000022'
     ctx.beginPath()
     ctx.moveTo(-waistW, 0); ctx.lineTo(-shoulderW, shoulderY + 6)
@@ -327,12 +338,10 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.fillStyle = '#C9A85E'
     ctx.fillRect(-3, -3, 6, 6)
 
-    // sleeves capping the shoulders
     ctx.fillStyle = kit
     ctx.beginPath(); ctx.ellipse(-shoulderW + 1, shoulderY + 8, 6.5, 8, -0.25, 0, Math.PI * 2); ctx.fill()
     ctx.beginPath(); ctx.ellipse(shoulderW - 1, shoulderY + 8, 6.5, 8, 0.25, 0, Math.PI * 2); ctx.fill()
 
-    // neck
     ctx.fillStyle = '#8C6A46'
     ctx.fillRect(-4, shoulderY - 4, 8, 8)
 
@@ -343,12 +352,10 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.beginPath(); ctx.arc(0, shoulderY - 13, 11, 0, Math.PI * 2); ctx.fill()
     ctx.fillStyle = kit
     ctx.beginPath(); ctx.arc(0, shoulderY - 14, 12, Math.PI * 1.02, Math.PI * 2.02); ctx.fill()
-    // brim pointing at the plate
     ctx.beginPath()
     ctx.moveTo(2, shoulderY - 16); ctx.lineTo(19, shoulderY - 14)
     ctx.lineTo(19, shoulderY - 10); ctx.lineTo(2, shoulderY - 11)
     ctx.closePath(); ctx.fill()
-    // ear flap on the near side
     ctx.beginPath(); ctx.ellipse(-6, shoulderY - 11, 5, 6.5, 0, 0, Math.PI * 2); ctx.fill()
     ctx.restore()
 
@@ -359,38 +366,62 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     if (s > 0.08 && s < 0.94) {
       ctx.save()
       for (let g = 1; g <= 6; g++) {
-        const gp = Math.max(0, p - g * 0.045)
-        const gphi = ((PHI_START - (PHI_START - PHI_END) * gp) * Math.PI) / 180
-        ctx.fillStyle = `rgba(217,179,106,${0.16 - g * 0.022})`
+        const gp = Math.max(0, p - g * 0.05)
+        const gpose = poseAt(gp)
+        const grad2 = (gpose.deg * Math.PI) / 180
+        const ghx = px + gpose.hx * side
+        const ghy = py + gpose.hy
+        ctx.fillStyle = `rgba(170,172,182,${0.15 - g * 0.021})`
         ctx.beginPath()
-        ctx.arc(px + Math.sin(gphi) * R * side, py - Math.cos(gphi) * R * SQUASH - liftAt(gp, H), 9, 0, Math.PI * 2)
+        ctx.arc(ghx + Math.cos(grad2) * BAT_LEN * side, ghy + Math.sin(grad2) * BAT_LEN, 9, 0, Math.PI * 2)
         ctx.fill()
       }
       ctx.restore()
     }
 
-    /* Both arms run from the shoulders to the hands, drawn over the jersey so
-       the bat never looks like it's growing out of his chest. */
-    const shY = py - H * 0.088 + 8
-    const shSpan = 15.5 * (0.68 + 0.32 * Math.sin(Math.max(0, Math.min(1, (turn + 0.95) / 2.1)) * Math.PI))
-    ctx.lineCap = 'round'
-    ctx.strokeStyle = '#6B5036'; ctx.lineWidth = 7
-    ctx.beginPath(); ctx.moveTo(px - shSpan * side, shY); ctx.lineTo(handX, handY); ctx.stroke()
-    ctx.strokeStyle = '#8C6A46'; ctx.lineWidth = 8
-    ctx.beginPath(); ctx.moveTo(px + shSpan * side, shY); ctx.lineTo(handX, handY); ctx.stroke()
-    ctx.fillStyle = '#2A2A32'
-    ctx.beginPath(); ctx.arc(handX, handY, 6, 0, Math.PI * 2); ctx.fill()
+    /* Arms run from the shoulders to the hands, over the jersey. They fade out
+       through the follow-through — by the finish both have crossed in front of
+       his chest and only the hands are left on the handle. */
+    if (armFade > 0.02) {
+      const shY = py - H * 0.088 + 8
+      const shSpan = 15.5 * (0.68 + 0.32 * Math.sin(openness * Math.PI))
+      ctx.save()
+      ctx.globalAlpha = armFade
+      ctx.lineCap = 'round'
+      ctx.strokeStyle = '#6B5036'; ctx.lineWidth = 7
+      ctx.beginPath(); ctx.moveTo(px - shSpan * side, shY); ctx.lineTo(handX, handY); ctx.stroke()
+      ctx.strokeStyle = '#8C6A46'; ctx.lineWidth = 8
+      ctx.beginPath(); ctx.moveTo(px + shSpan * side, shY); ctx.lineTo(handX, handY); ctx.stroke()
+      ctx.restore()
+    }
 
-    // The bat itself — handle to barrel along the same line
+    /* ── The bat ──
+       Grey barrel with a yellow mark on the handle, one fixed length. */
     const grain = ctx.createLinearGradient(handX, handY, tipX, tipY)
-    grain.addColorStop(0, '#6E4F2C'); grain.addColorStop(0.7, '#B58A4F'); grain.addColorStop(1, '#E4C480')
-    ctx.strokeStyle = grain; ctx.lineWidth = 6
+    grain.addColorStop(0, '#5E6068'); grain.addColorStop(0.6, '#8E9099'); grain.addColorStop(1, '#BFC1CA')
+    ctx.lineCap = 'round'
+    ctx.strokeStyle = grain; ctx.lineWidth = 7
     ctx.beginPath(); ctx.moveTo(handX, handY); ctx.lineTo(tipX, tipY); ctx.stroke()
-    ctx.lineWidth = 11
+    // thicker barrel over the last quarter
+    ctx.strokeStyle = '#BFC1CA'; ctx.lineWidth = 11
     ctx.beginPath()
-    ctx.moveTo(handX + (tipX - handX) * 0.74, handY + (tipY - handY) * 0.74)
+    ctx.moveTo(handX + (tipX - handX) * 0.78, handY + (tipY - handY) * 0.78)
     ctx.lineTo(tipX, tipY)
     ctx.stroke()
+    // the mark on the handle
+    ctx.strokeStyle = '#E8FF3D'; ctx.lineWidth = 2.5
+    ctx.beginPath()
+    ctx.moveTo(handX + (tipX - handX) * 0.19, handY + (tipY - handY) * 0.19)
+    ctx.lineTo(handX + (tipX - handX) * 0.30, handY + (tipY - handY) * 0.30)
+    ctx.stroke()
+
+    // Both hands on the handle, always visible
+    ctx.fillStyle = '#2A2A32'
+    ctx.beginPath(); ctx.ellipse(handX, handY, 6, 5, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = '#232329'
+    ctx.beginPath()
+    ctx.ellipse(handX - Math.cos(rad) * 8 * side, handY - Math.sin(rad) * 8, 5.5, 4.5, 0, 0, Math.PI * 2)
+    ctx.fill()
 
     // Contact spark, at the belt
     if (contact.current && s > CONTACT_AT - 0.12 && s < CONTACT_AT + 0.2) {
@@ -484,9 +515,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     }
     ctx.restore()
 
-    /* ── The diamond, seen from behind the plate ──
-       Home is bottom centre, second sits straight out under the circle, and
-       first and third fall away to the sides. */
+    /* ── The diamond, seen from behind the plate ── */
     const homeX = W * 0.5, homeY = H * 0.90
     const secX = W * 0.5,  secY = H * (MOUND_Y - 0.075)
     const firstX = W * 0.80, firstY = H * (MOUND_Y + 0.055)
@@ -652,7 +681,6 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       if (!contact.current && t.current > 0 && t.current < 1.16) {
         const p = t.current
         const x = W * ZONE.x + breakX.current * W * 0.12 * p * p
-        // Keeps travelling past the zone to the catcher — it never hangs
         const y = H * MOUND_Y + (H * 0.9 - H * MOUND_Y) * ((p / 1.16) * (p / 1.16) * 0.55 + (p / 1.16) * 0.45)
         const r = 3.5 + p * p * 9
         ctx.save()
@@ -692,8 +720,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     })
   }
 
-  /* Three seconds to settle before the first one comes in — starting on a pitch
-     already halfway to the plate is a poor way to begin. */
+  /* Three seconds to settle before the first one comes in */
   function start() {
     clearTimers()
     setPitchNo(0); setOuts(0); setScore(0); setLog([]); setFlash(null); setPaused(false)
@@ -842,8 +869,6 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       <div className="bt-stage">
         <canvas ref={canvasRef} className="bt-canvas" width={620} height={520} onClick={swing} />
 
-        {/* The whole field is the swing target — no waiting for the release,
-            so the tap lands the moment your finger touches. */}
         {phase === 'live' && !paused && (
           <button className="bt-hit" onPointerDown={e => { e.preventDefault(); swing() }} aria-label="Swing" />
         )}
