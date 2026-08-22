@@ -744,17 +744,18 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
   const furthest = log.reduce((m, l) => Math.max(m, l.dist), 0)
   const contactRate = log.length ? Math.round((log.filter(l => l.key !== 'strike').length / log.length) * 100) : 0
 
-  function Card({ p, on, onPick, max, role }: {
-    p: Legend; on: boolean; onPick: () => void; max: number; role: 'bat' | 'pit'
+  function Card({ p, on, onPick, role }: {
+    p: Legend; on: boolean; onPick: () => void; role: 'bat' | 'pit'
   }) {
     // A hitter bats right or left; an arm throws it
     const hand = role === 'pit' ? (p.lefty ? 'LHP' : 'RHP') : (p.lefty ? 'LHB' : 'RHB')
     return (
+      /* No count and no bar — titles measure availability as much as ability,
+         and the best of them missed seasons to rep duty and injury. */
       <button className="bt-pick" data-on={on} onClick={onPick}>
-        <span className="bt-face"><span className="bt-crest">{p.titles}</span></span>
+        <span className="bt-face"><span className="bt-mono">{p.grade}</span></span>
         <span className="bt-pn">{caps(p.name)}</span>
-        <span className="bt-pm">{p.grade} · {hand}</span>
-        <span className="bt-bar"><i style={{ width: `${Math.round((p.titles / max) * 100)}%` }} /></span>
+        <span className="bt-pm">{hand}</span>
       </button>
     )
   }
@@ -775,7 +776,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
         .bt-pick[data-on="true"] { border-color: var(--neon); box-shadow: 0 0 22px color-mix(in srgb, var(--neon) 42%, transparent); }
         .bt-face { height: 60px; display: flex; align-items: center; justify-content: center;
           background: linear-gradient(180deg, color-mix(in srgb, var(--neon) 20%, transparent), transparent); }
-        .bt-crest { font-family: var(--font-heading); font-weight: 900; font-size: 32px; color: var(--neon); text-shadow: 0 0 20px color-mix(in srgb, var(--neon) 65%, transparent); }
+        .bt-mono { font-family: var(--font-heading); font-weight: 900; font-size: 26px; color: var(--neon); text-shadow: 0 0 18px color-mix(in srgb, var(--neon) 55%, transparent); }
         .bt-pn { font-family: var(--font-heading); font-weight: 900; font-size: 11px; color: #F5F1E8; margin-top: 8px; padding: 0 5px; line-height: 1.15; display: block; }
         .bt-pm { font-size: 9px; color: #5C6878; margin-top: 3px; display: block; letter-spacing: .1em; }
         .bt-bar { height: 3px; background: #ffffff12; margin: 6px 8px 0; display: block; }
@@ -848,14 +849,14 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
           <p className="bt-lbl">In the box · Batting Titles &amp; MVPs</p>
           <div className="bt-strip">
             {batters.map(b => (
-              <Card key={b.name + b.grade} p={b} max={maxBat} role="bat"
+              <Card key={b.name + b.grade} p={b} role="bat"
                 on={batter.name === b.name} onPick={() => setBatter(b)} />
             ))}
           </div>
           <p className="bt-lbl">On the mound · most pitching titles</p>
           <div className="bt-strip">
             {pitchers.map(p => (
-              <Card key={p.name + p.grade} p={p} max={maxPit} role="pit"
+              <Card key={p.name + p.grade} p={p} role="pit"
                 on={pitcher.name === p.name} onPick={() => setPitcher(p)} />
             ))}
           </div>
