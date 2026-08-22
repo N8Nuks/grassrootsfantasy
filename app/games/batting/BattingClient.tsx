@@ -30,7 +30,12 @@ const MOUND_Y = 0.63
 const CROWD_TOP = 0.055
 
 const SWING_MS = 340
-const CONTACT_AT = 0.458       // where in the swing the barrel meets the ball
+/* The barrel's compass angle: 90 points at the plate, 195 is behind the head,
+   20 is wrapped across the front shoulder. Ending short of a full wrap keeps
+   the sweep reading as one direction rather than out and back. */
+const PHI_START = 195
+const PHI_END = 20
+const CONTACT_AT = (PHI_START - 90) / (PHI_START - PHI_END)   // barrel at the plate
 const WAIST_Y = 0.817          // the batter's belt, and his fulcrum
 
 /* Speed is a multiplier on the flight time — under 1 is quicker than standard. */
@@ -213,8 +218,9 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
      leg sits higher, smaller and partly behind him, and strides out toward the
      plate as he goes. */
   function drawBatter(ctx: CanvasRenderingContext2D, W: number, H: number, now: number) {
-    // A right-hander stands to the catcher's right, which is screen left from here
-    const side = batter.lefty ? 1 : -1
+    // First base is screen right, so a left-hander stands on that side of the
+    // plate and a right-hander on the third-base side, screen left.
+    const side = batter.lefty ? -1 : 1
     const px = W * (ZONE.x - 0.155 * side)     // spine
     const py = H * WAIST_Y                      // waist, the fulcrum
     const R = W * 0.125                         // barrel radius
@@ -224,9 +230,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     if (swung.current && swingAt.current) s = Math.min(1, (now - swingAt.current) / SWING_MS)
     const p = s < 0.5 ? 2 * s * s : 1 - Math.pow(-2 * s + 2, 2) / 2
 
-    // Compass angle in the horizontal plane: 0 points at the pitcher, 90 at
-    // the plate. Runs 200 down to -40 — behind, through, and round.
-    const phi = ((200 - 240 * p) * Math.PI) / 180
+    const phi = ((PHI_START - (PHI_START - PHI_END) * p) * Math.PI) / 180
     const lift = liftAt(p, H)
 
     const tipX = px + Math.sin(phi) * R * side
@@ -356,7 +360,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       ctx.save()
       for (let g = 1; g <= 6; g++) {
         const gp = Math.max(0, p - g * 0.045)
-        const gphi = ((200 - 240 * gp) * Math.PI) / 180
+        const gphi = ((PHI_START - (PHI_START - PHI_END) * gp) * Math.PI) / 180
         ctx.fillStyle = `rgba(217,179,106,${0.16 - g * 0.022})`
         ctx.beginPath()
         ctx.arc(px + Math.sin(gphi) * R * side, py - Math.cos(gphi) * R * SQUASH - liftAt(gp, H), 9, 0, Math.PI * 2)
