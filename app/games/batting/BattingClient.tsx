@@ -161,8 +161,8 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     } else if (kind === 'back') {
       ball.current = { ...base, x1: 0.5 + (pull > 0 ? 0.7 : -0.7), y1: 1.15, apex: 0.42, dur: 1000 }
     } else {
-      // Grounder — stays in the infield
-      ball.current = { ...base, x1: 0.5 + spread * 1.1, y1: 0.62, apex: 0.015, dur: 850 }
+      // Grounder — dribbles forward between the lines and stops in the dirt
+      ball.current = { ...base, x1: 0.5 + spread * 0.4, y1: 0.76, apex: 0.012, dur: 800 }
     }
   }
 
@@ -493,11 +493,15 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.lineTo(secX, secY); ctx.lineTo(thirdX, thirdY)
     ctx.closePath(); ctx.stroke()
 
-    // Foul lines running out to the fence corners
-    ctx.strokeStyle = '#ffffff2A'; ctx.lineWidth = 2
+    /* Foul lines run from home straight through first and third and keep going —
+       off the sides of the frame, which is where they'd really go. */
+    ctx.strokeStyle = '#ffffff30'; ctx.lineWidth = 2
+    const EXT = 5
     ctx.beginPath()
-    ctx.moveTo(homeX, homeY); ctx.lineTo(W * 0.005, fy + fh)
-    ctx.moveTo(homeX, homeY); ctx.lineTo(W * 0.995, fy + fh)
+    ctx.moveTo(homeX, homeY)
+    ctx.lineTo(homeX + (firstX - homeX) * EXT, homeY + (firstY - homeY) * EXT)
+    ctx.moveTo(homeX, homeY)
+    ctx.lineTo(homeX + (thirdX - homeX) * EXT, homeY + (thirdY - homeY) * EXT)
     ctx.stroke()
 
     // The three bases
@@ -774,17 +778,10 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
           text-shadow: 0 0 30px color-mix(in srgb, var(--neon) 60%, transparent);
         }
         .bt-hit {
-          position: absolute; top: 0; bottom: 0; width: 42%; border: none; cursor: pointer;
-          background: linear-gradient(to var(--dir, left), color-mix(in srgb, var(--neon) 12%, transparent), transparent);
-          display: flex; align-items: flex-end; justify-content: center; padding-bottom: 22px;
-          transition: background 120ms ease;
+          position: absolute; inset: 0; border: none; cursor: pointer; padding: 0;
+          background: transparent; touch-action: manipulation;
         }
-        .bt-hit span {
-          font-family: var(--font-heading); font-weight: 900; font-size: 13px;
-          letter-spacing: .3em; color: color-mix(in srgb, var(--neon) 55%, transparent);
-        }
-        .bt-hit:active { background: color-mix(in srgb, var(--neon) 22%, transparent); }
-        .bt-hit:active span { color: var(--neon); }
+        .bt-hit:active { background: color-mix(in srgb, var(--neon) 10%, transparent); }
         .bt-swing { font-size: 18px !important; padding: 19px 52px !important; }
         .bt-swing:active { transform: skewX(-8deg) translate(3px, 3px) scale(0.97) !important; }
         .bt-key { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #3E4A58; text-align: center; margin-top: 14px; }
@@ -827,12 +824,10 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       <div className="bt-stage">
         <canvas ref={canvasRef} className="bt-canvas" width={620} height={520} onClick={swing} />
 
-        {/* A wide target over the empty side of the field, away from the hitter */}
+        {/* The whole field is the swing target — no panel, no waiting for the
+            release, so the tap lands the moment your finger touches. */}
         {phase === 'live' && !paused && (
-          <button className="bt-hit" onClick={swing}
-            style={batter.lefty ? { left: 0 } : { right: 0 }}>
-            <span>SWING</span>
-          </button>
+          <button className="bt-hit" onPointerDown={e => { e.preventDefault(); swing() }} aria-label="Swing" />
         )}
 
         {flash && (
@@ -899,7 +894,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
 
       {phase === 'live' && !paused && (
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', alignItems: 'center', marginTop: '14px', flexWrap: 'wrap' }}>
-          <button className="ar-btn bt-swing" onClick={swing}>
+          <button className="ar-btn bt-swing" onPointerDown={e => { e.preventDefault(); swing() }}>
             <span>Swing</span>
           </button>
           <button className="ar-btn" onClick={togglePause}
