@@ -203,7 +203,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     // A right-hander stands to the catcher's right, which is screen left from here
     const side = batter.lefty ? 1 : -1
     const px = W * (ZONE.x - 0.155 * side)     // spine
-    const py = H * 0.845                        // waist, the fulcrum
+    const py = H * 0.817                        // waist — puts his feet level with the plate
     const R = W * 0.125                         // barrel radius
     const SQUASH = 0.38                         // how flat the circle looks
 
