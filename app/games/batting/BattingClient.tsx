@@ -35,12 +35,15 @@ const WAIST_Y = 0.817          // the batter's belt, and his fulcrum
 const STANCE_OFF = 0.155       // how far he stands off the plate
 
 /* Speed is a multiplier on the flight time — under 1 is quicker than standard. */
+/* Speed is a multiplier on the flight time. `spin` is the seam rotation you can
+   read off the ball: forward for a drop, backward for a rise, sideways for a
+   curve, and barely anything on a changeup. */
 const PITCH_TYPES = [
-  { name: 'Rise',     speed: 0.82, move: 1.0 },
-  { name: 'Drop',     speed: 0.86, move: 1.1 },
-  { name: 'Fastball', speed: 0.78, move: 0.5 },
-  { name: 'Curve',    speed: 1.18, move: 1.5 },
-  { name: 'Changeup', speed: 1.32, move: 0.7 },
+  { name: 'Rise',     speed: 0.82, move: 1.0, spin: -1.0, tilt: 0 },
+  { name: 'Drop',     speed: 0.86, move: 1.1, spin:  1.0, tilt: 0 },
+  { name: 'Fastball', speed: 0.78, move: 0.5, spin: -0.6, tilt: 0 },
+  { name: 'Curve',    speed: 1.18, move: 1.5, spin:  0.8, tilt: 1 },
+  { name: 'Changeup', speed: 1.32, move: 0.7, spin:  0.12, tilt: 0 },
 ]
 
 type Flight = { kind: string; colour: string; t: number; dur: number
@@ -520,16 +523,19 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     ctx.restore()
 
     /* ── The diamond, seen from behind the plate ── */
+    /* The pitcher stays where she is so there's time to read the ball, but the
+       bases sit further back and wider — closer to a real diamond, where the
+       circle is barely a third of the way to second. */
     const homeX = W * 0.5, homeY = H * 0.90
-    const secX = W * 0.5,  secY = H * (MOUND_Y - 0.075)
-    const firstX = W * 0.80, firstY = H * (MOUND_Y + 0.055)
-    const thirdX = W * 0.20, thirdY = firstY
+    const secX = W * 0.5,  secY = H * 0.435
+    const firstX = W * 0.885, firstY = H * 0.605
+    const thirdX = W * 0.115, thirdY = firstY
 
     ctx.fillStyle = '#8A5A34'
     ctx.beginPath()
-    ctx.moveTo(W * 0.055, H * 0.96)
-    ctx.quadraticCurveTo(W * 0.04, secY - H * 0.03, W * 0.5, secY - H * 0.052)
-    ctx.quadraticCurveTo(W * 0.96, secY - H * 0.03, W * 0.945, H * 0.96)
+    ctx.moveTo(W * 0.01, H * 0.97)
+    ctx.quadraticCurveTo(W * -0.01, secY - H * 0.025, W * 0.5, secY - H * 0.045)
+    ctx.quadraticCurveTo(W * 1.01, secY - H * 0.025, W * 0.99, H * 0.97)
     ctx.closePath(); ctx.fill()
 
     ctx.fillStyle = '#1B5E2A'
@@ -565,12 +571,11 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     drawBase(secX, secY, W * 0.015)
     drawBase(thirdX, thirdY, W * 0.016)
 
-    ctx.fillStyle = '#A9713F'
-    ctx.beginPath(); ctx.ellipse(W / 2, H * MOUND_Y, W * 0.075, H * 0.021, 0, 0, Math.PI * 2); ctx.fill()
-    ctx.strokeStyle = '#ffffff22'; ctx.lineWidth = 1.5
-    ctx.beginPath(); ctx.ellipse(W / 2, H * MOUND_Y, W * 0.075, H * 0.021, 0, 0, Math.PI * 2); ctx.stroke()
+    // The eight-foot circle is chalk on the dirt, with the rubber set back in it
+    ctx.strokeStyle = '#ffffff40'; ctx.lineWidth = 2
+    ctx.beginPath(); ctx.ellipse(W / 2, H * MOUND_Y, W * 0.105, H * 0.030, 0, 0, Math.PI * 2); ctx.stroke()
     ctx.fillStyle = '#F5F1E8'
-    ctx.fillRect(W / 2 - W * 0.018, H * MOUND_Y - 2, W * 0.036, 3)
+    ctx.fillRect(W / 2 - W * 0.026, H * (MOUND_Y - 0.012), W * 0.052, 3.5)
 
     // Plate, drawn to the same width as the zone above it
     const pw = W * ZONE.w
@@ -682,18 +687,39 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       }
 
       // ── The pitch on its way in ──
-      if (!contact.current && t.current > 0 && t.current < 1.16) {
+      // Nothing to see until the hand clears the top of the circle — before that
+      // the glove has it
+      if (!contact.current && t.current > -0.12 && t.current < 1.16) {
         const p = t.current
         const x = W * ZONE.x + breakX.current * W * 0.12 * p * p
         const y = H * MOUND_Y + (H * 0.9 - H * MOUND_Y) * ((p / 1.16) * (p / 1.16) * 0.55 + (p / 1.16) * 0.45)
         const r = 3.5 + p * p * 9
+        const kind = pitchKind.current
         ctx.save()
         ctx.shadowColor = '#E8FF3D'; ctx.shadowBlur = 12 + p * 18
         ctx.fillStyle = '#E8FF3D'
         ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill()
         ctx.restore()
-        ctx.strokeStyle = '#C41E3A'; ctx.lineWidth = Math.max(1, r * 0.24)
-        ctx.beginPath(); ctx.arc(x - r * 1.1, y, r * 0.98, -0.9, 0.9); ctx.stroke()
+
+        /* Seams turning the way the pitch does — forward on a drop, backward on
+           a rise, over sideways on a curve, and nearly still on a changeup. */
+        ctx.save()
+        ctx.translate(x, y)
+        if (kind.tilt) ctx.rotate(Math.PI / 2)
+        const roll = p * kind.spin * 22
+        ctx.strokeStyle = '#C41E3A'
+        ctx.lineWidth = Math.max(1, r * 0.22)
+        for (const off of [0, Math.PI]) {
+          const a = roll + off
+          // A seam wraps out of sight as it turns, so it fades at the edges
+          const face = Math.cos(a)
+          if (face <= 0.05) continue
+          ctx.globalAlpha = Math.min(1, face * 1.6)
+          ctx.beginPath()
+          ctx.ellipse(0, 0, r * 0.92 * Math.abs(Math.sin(a)) + r * 0.1, r * 0.92, 0, 0, Math.PI * 2)
+          ctx.stroke()
+        }
+        ctx.restore()
       }
     }
 
