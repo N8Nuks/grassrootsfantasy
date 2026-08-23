@@ -395,6 +395,8 @@ export default function SnakeClient({ clubs, initialClub }: {
             <p key={count} className="sn-count">{count}</p>
           </div>
         )}
+        {state === 'playing' && paused && (
+          <div className="sn-over">
             <p style={{ fontFamily: 'var(--font-heading)', fontWeight: 900, fontSize: 'clamp(30px, 9vw, 52px)',
                         textTransform: 'uppercase', color: 'var(--neon)', transform: 'skewX(-7deg)',
                         textShadow: '0 0 30px #FFB80090' }}>PAUSED</p>
