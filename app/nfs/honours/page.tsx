@@ -3,6 +3,7 @@ import Footer from '@/components/Footer'
 import FactsTicker from '@/components/FactsTicker'
 import GradeSwitch from '@/components/GradeSwitch'
 import HonoursTicker from '@/components/HonoursTicker'
+import ViewTicker from '@/components/ViewTicker'
 import { HONOURS, AWARD_LABELS, MEN_AWARDS, WOMEN_AWARDS } from '@/lib/nfsHonours'
 import { splitName } from '@/lib/names'
 
@@ -139,6 +140,7 @@ export default async function Honours({ searchParams }: { searchParams: Promise<
             Records from the Auckland Softball Association. Seasons without a competition or award are
             omitted from each roll.
           </p>
+          <ViewTicker page="honours" accent={GOLD} />
         </div>
       </section>
 

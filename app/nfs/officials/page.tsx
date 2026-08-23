@@ -3,6 +3,7 @@ import Footer from '@/components/Footer'
 import { OFFICIALS, OFFICIAL_MILESTONES } from '@/lib/nfsOfficials'
 import OfficialCard from '@/components/OfficialCard'
 import { createClient } from '@/lib/supabase/server'
+import ViewTicker from '@/components/ViewTicker'
 
 const COBALT = '#2456E6'
 const GOLD = '#E8C15A'
@@ -198,6 +199,7 @@ export default async function Officials() {
             span. Figures cover NFC, AFC and NFS from 2005 to 2026, and are supplied by the Auckland
             Softball Association.
           </p>
+          <ViewTicker page="officials" accent={GOLD} />
         </div>
       </section>
 
