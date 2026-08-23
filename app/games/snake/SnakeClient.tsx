@@ -47,6 +47,7 @@ export default function SnakeClient({ clubs, initialClub }: {
   const [level, setLevel] = useState(0)
   const [levelUp, setLevelUp] = useState<string | null>(null)
   const [paused, setPaused] = useState(false)
+  const [count, setCount] = useState<number | null>(null)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const crestRef = useRef<HTMLImageElement | null>(null)
@@ -273,6 +274,8 @@ export default function SnakeClient({ clubs, initialClub }: {
     }
   }, [state])
 
+  /* A count-in before the first move, so the board is on screen and read before
+     anything starts travelling. */
   function begin() {
     snake.current = [{ x: 9, y: 10 }, { x: 8, y: 10 }, { x: 7, y: 10 }]
     dir.current = { x: 1, y: 0 }
@@ -282,8 +285,22 @@ export default function SnakeClient({ clubs, initialClub }: {
     setLevel(0); setLevelUp(null)
     last.current = 0
     treat.current = randomTreat(snake.current)
-    setScore(0); setLastEaten(null); setPaused(false); setState('playing')
+    setScore(0); setLastEaten(null); setPaused(false)
     draw()
+
+    setCount(5)
+    let n = 5
+    const tick = setInterval(() => {
+      n -= 1
+      if (n <= 0) {
+        clearInterval(tick)
+        setCount(null)
+        last.current = 0
+        setState('playing')
+      } else {
+        setCount(n)
+      }
+    }, 1000)
   }
 
   useEffect(() => { draw() }, [draw])
@@ -318,6 +335,17 @@ export default function SnakeClient({ clubs, initialClub }: {
           background: #05060AE8; text-align: center; padding: 20px;
         }
         .sn-eaten { font-size: 10px; font-weight: 900; letter-spacing: 0.24em; text-transform: uppercase; color: var(--neon); min-height: 14px; margin-bottom: 14px; }
+        .sn-count {
+          font-family: var(--font-heading); font-weight: 900; line-height: 1;
+          font-size: clamp(80px, 26vw, 150px); color: var(--neon);
+          text-shadow: 0 0 50px color-mix(in srgb, var(--neon) 70%, transparent);
+          animation: sn-count 1000ms cubic-bezier(.2,1.5,.4,1);
+        }
+        @keyframes sn-count {
+          0% { transform: scale(2.2); opacity: 0; }
+          20% { transform: scale(1); opacity: 1; }
+          100% { transform: scale(0.92); opacity: 0.35; }
+        }
         .sn-key { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #3E4A58; text-align: center; margin-top: 16px; }
         .sn-treats { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
         .sn-treat {
@@ -362,8 +390,11 @@ export default function SnakeClient({ clubs, initialClub }: {
 
       <div className="sn-stage">
         <canvas ref={canvasRef} className="sn-canvas" width={600} height={600} />
-        {state === 'playing' && paused && (
-          <div className="sn-over">
+        {count !== null && (
+          <div className="sn-over" style={{ background: '#05060AC4' }}>
+            <p key={count} className="sn-count">{count}</p>
+          </div>
+        )}
             <p style={{ fontFamily: 'var(--font-heading)', fontWeight: 900, fontSize: 'clamp(30px, 9vw, 52px)',
                         textTransform: 'uppercase', color: 'var(--neon)', transform: 'skewX(-7deg)',
                         textShadow: '0 0 30px #FFB80090' }}>PAUSED</p>
