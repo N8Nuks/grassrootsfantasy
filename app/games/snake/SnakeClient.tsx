@@ -391,8 +391,12 @@ export default function SnakeClient({ clubs, initialClub }: {
       <div className="sn-stage">
         <canvas ref={canvasRef} className="sn-canvas" width={600} height={600} />
         {count !== null && (
-          <div className="sn-over" style={{ background: '#05060AC4' }}>
+          <div className="sn-over" style={{ background: '#05060AF2', zIndex: 5 }}>
             <p key={count} className="sn-count">{count}</p>
+            <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.3em',
+                        textTransform: 'uppercase', color: '#5C6878', marginTop: '10px' }}>
+              Get ready
+            </p>
           </div>
         )}
         {state === 'playing' && paused && (
@@ -405,7 +409,7 @@ export default function SnakeClient({ clubs, initialClub }: {
             </button>
           </div>
         )}
-        {state !== 'playing' && (
+        {state !== 'playing' && count === null && (
           <div className="sn-over">
             {state === 'over' && (
               <>
