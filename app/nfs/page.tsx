@@ -3,6 +3,7 @@ import Footer from '@/components/Footer'
 import FactsTicker from '@/components/FactsTicker'
 import SandboxBanner from '@/components/SandboxBanner'
 import NfsBackdrop from '@/components/NfsBackdrop'
+import ViewTicker from '@/components/ViewTicker'
 
 const COBALT = '#2456E6'
 const GOLD = '#E8C15A'
@@ -316,6 +317,7 @@ export default function NFS() {
               Register your team
             </a>
             <p className="text-[11px] text-white/60 mt-4">Your Starter Pack lands instantly.</p>
+            <ViewTicker page="nfs" accent={GOLD} />
           </div>
         </div>
       </section>

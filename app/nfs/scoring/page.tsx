@@ -1,5 +1,6 @@
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
+import ViewTicker from '@/components/ViewTicker'
 
 const COBALT = '#2456E6'
 const GOLD = '#E8C15A'
@@ -163,6 +164,7 @@ export default function Scoring() {
           <p className="text-xs leading-relaxed" style={{ color: SILVER, opacity: 0.8 }}>
             Fantasy scoring reflects what happens on the field — it must never influence it. Players play for their teams and their coaches make the calls. Grassroots Fantasy just keeps score. All points come from official game records; never fan voting, never popularity.
           </p>
+          <ViewTicker page="scoring" accent={GOLD} />
         </div>
       </section>
 
