@@ -288,8 +288,8 @@ export default function SnakeClient({ clubs, initialClub }: {
     setScore(0); setLastEaten(null); setPaused(false)
     draw()
 
-    setCount(5)
-    let n = 5
+    setCount(3)
+    let n = 3
     const tick = setInterval(() => {
       n -= 1
       if (n <= 0) {
