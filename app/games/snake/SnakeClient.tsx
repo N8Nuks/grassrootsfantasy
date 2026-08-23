@@ -31,7 +31,8 @@ const levelFor = (score: number) => {
   return i
 }
 
-const BDL: [string, string] = ['#FFB800', '#FFE7A8']
+// The BDL mark is chrome and gold on black — the tail should read the same
+const BDL: [string, string] = ['#C9CDD4', '#C9A227']
 
 type Pt = { x: number; y: number }
 type Treat = { pos: Pt; kind: typeof TREATS[number] }
