@@ -285,7 +285,7 @@ export default function GoldenGloveClient() {
         ArrowUp: 'jump', w: 'jump', W: 'jump',
         ArrowDown: 'charge', s: 'charge', S: 'charge',
       }
-      if (e.code === 'Space') { e.preventDefault(); answer('square'); return }
+      if (e.code === 'Space') { e.preventDefault(); return }
       const p = map[e.key]
       if (!p) return
       e.preventDefault()
@@ -361,7 +361,7 @@ export default function GoldenGloveClient() {
           background: #05060AF2; padding: 24px;
         }
 
-        .gg-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 12px; }
+        .gg-pad { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
         .gg-key {
           background: #10141F; border: 1px solid #ffffff18; color: #F5F1E8; cursor: pointer;
           font-family: var(--font-heading); font-weight: 900; font-size: 11px; line-height: 1.2;
@@ -463,26 +463,24 @@ export default function GoldenGloveClient() {
         )}
       </div>
 
+      {/* Four buttons, two rows. Reaches on top the way they appear on screen,
+          depth below. A ball straight at him wants nothing pressed at all. */}
       <div className="gg-pad">
+        <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('backhand') }}>
+          Backhand<span>◀ LEFT</span>
+        </button>
         <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('fronthand') }}>
-          Fronthand<span>◀ LEFT</span>
+          Fronthand<span>RIGHT ▶</span>
         </button>
         <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('jump') }}>
-          Jump<span>▲ OVER</span>
-        </button>
-        <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('backhand') }}>
-          Backhand<span>RIGHT ▶</span>
+          Jump<span>▲ OVER HIM</span>
         </button>
         <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('charge') }}>
-          Charge<span>▼ SHORT</span>
-        </button>
-        <button className="gg-key" style={{ gridColumn: 'span 2' }}
-          onPointerDown={e => { e.preventDefault(); answer('square') }}>
-          Square<span>SPACE · STRAIGHT AT HIM</span>
+          Charge<span>▼ DIES SHORT</span>
         </button>
       </div>
 
-      <p className="gg-hint">Arrows or WASD · space for square</p>
+      <p className="gg-hint">Arrows or WASD · straight at him, leave it</p>
 
       {/* Always shown — the memory is in which ball goes where, not in hiding
           the legend. From level three the light is white and this is history. */}
