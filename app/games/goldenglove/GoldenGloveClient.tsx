@@ -25,8 +25,10 @@ const ART: Record<Pose, string> = {
 
 /* Colours are arbitrary — there's nothing to reason out, only to remember. */
 const BALLS: Record<Kind, { pose: Pose; label: string; light: string; drift: number }> = {
-  left:     { pose: 'fronthand', label: 'Fronthand', light: '#FF4FD8', drift: -1 },
-  right:    { pose: 'backhand',  label: 'Backhand',  light: '#00F0FF', drift: 1 },
+  /* We're behind him, so his glove hand is on our right. A ball to screen right
+     is his fronthand; a ball to screen left he has to reach across for. */
+  left:     { pose: 'backhand',  label: 'Backhand',  light: '#FF4FD8', drift: -1 },
+  right:    { pose: 'fronthand', label: 'Fronthand', light: '#00F0FF', drift: 1 },
   straight: { pose: 'square',    label: 'Straight',  light: '#C6FF00', drift: 0 },
   over:     { pose: 'jump',      label: 'Over him',  light: '#FF7A2E', drift: 0 },
   short:    { pose: 'charge',    label: 'Short',     light: '#9D7CFF', drift: 0 },
@@ -44,6 +46,7 @@ const POSE_HOLD = 400
 const CLEARED_RUNS = 2         // perfect runs at the top level to conquer it
 
 type Phase = 'ready' | 'live' | 'levelEnd' | 'conquered'
+type LiveBall = { kind: Kind; born: number; answered: boolean; caught: boolean }
 
 export default function GoldenGloveClient() {
   const [phase, setPhase] = useState<Phase>('ready')
@@ -60,8 +63,9 @@ export default function GoldenGloveClient() {
   const pose = useRef<Pose>('square')
   const poseUntil = useRef(0)
   const light = useRef<{ colour: string; until: number } | null>(null)
-  const ball = useRef<{ kind: Kind; born: number; answered: boolean } | null>(null)
+  const ball = useRef<LiveBall | null>(null)
   const miss = useRef(0)
+  const squaresSoFar = useRef(0)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const after = (ms: number, fn: () => void) => { timers.current.push(setTimeout(fn, ms)) }
   const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = [] }
@@ -80,7 +84,14 @@ export default function GoldenGloveClient() {
   /* One ball: the light, then the flight, then the verdict. */
   const throwBall = useCallback((n: number, lv: number) => {
     const cfg = LEVELS[lv]
-    const kind = KINDS[Math.floor(Math.random() * KINDS.length)]
+    /* A ball straight at him needs no move, so too many of them makes the level
+       a waiting game. Two to four a round, spread through it. */
+    const squaresWanted = 2 + Math.floor(Math.random() * 3)
+    const wantSquare = squaresSoFar.current < squaresWanted
+      && Math.random() < squaresWanted / Math.max(1, cfg.balls - n + 1)
+    const pool = wantSquare ? (['straight'] as Kind[]) : KINDS.filter(k => k !== 'straight')
+    const kind = pool[Math.floor(Math.random() * pool.length)]
+    if (kind === 'straight') squaresSoFar.current += 1
     light.current = {
       colour: cfg.coded ? BALLS[kind].light : '#F5F1E8',
       until: performance.now() + cfg.lightMs,
@@ -130,6 +141,7 @@ export default function GoldenGloveClient() {
     b.answered = true
     const want = BALLS[b.kind]
     const ok = want.pose === p
+    b.caught = ok
     if (!ok) miss.current = 700
     setFlash({ ok, label: ok ? want.label : `It was ${want.label.toLowerCase()}` })
     after(900, () => setFlash(null))
@@ -177,7 +189,10 @@ export default function GoldenGloveClient() {
     const ORIGIN = { x: 0.5, y: 1.06 }
     const b = ball.current
     let ballPos: { x: number; y: number; r: number } | null = null
-    if (b) {
+    // Taken cleanly, so it's in the glove and gone
+    if (b && b.answered && b.caught) {
+      // nothing to draw
+    } else if (b) {
       const p = Math.min(1.25, (now - b.born) / FLIGHT_MS)
       const cfg = BALLS[b.kind]
       // Ends up beside him, over him, or short of him
@@ -285,6 +300,7 @@ export default function GoldenGloveClient() {
     ball.current = null
     light.current = null
     miss.current = 0
+    squaresSoFar.current = 0
     pose.current = 'square'
     setLevel(lv); setClean(0); setBallNo(0); setFlash(null)
     setPhase('live')
@@ -468,16 +484,20 @@ export default function GoldenGloveClient() {
 
       <p className="gg-hint">Arrows or WASD · space for square</p>
 
-      {L.coded && (
-        <div className="gg-key-list">
+      {/* Always shown — the memory is in which ball goes where, not in hiding
+          the legend. From level three the light is white and this is history. */}
+      <p style={{ fontSize: '9px', fontWeight: 900, letterSpacing: '.28em', textTransform: 'uppercase',
+                  color: '#4E5A6A', margin: '20px 0 8px' }}>
+        {L.coded ? 'What the light means' : 'The light is white from here'}
+      </p>
+      <div className="gg-key-list" style={{ opacity: L.coded ? 1 : 0.35 }}>
           {KINDS.map(k => (
             <span key={k} className="gg-swatch">
               <span className="gg-dot" style={{ background: BALLS[k].light, boxShadow: `0 0 10px ${BALLS[k].light}` }} />
               <b>{BALLS[k].label}</b>
             </span>
           ))}
-        </div>
-      )}
+      </div>
 
       <div className="gg-ladder">
         {LEVELS.map((lv, i) => (
