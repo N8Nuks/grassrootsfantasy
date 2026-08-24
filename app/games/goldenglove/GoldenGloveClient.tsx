@@ -1,15 +1,19 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 
-/* A sixty-second fielding drill. Three lanes running away from you, a coach
-   hitting from one spot, and five ways to field what comes.
+/* A reaction drill. The fielder stands up-field facing you; balls fire from one
+   spot below the frame and go left, right, straight at him, over his head, or
+   die short.
 
-   The fielder holds his ground and reaches — left lane fronthand, right lane
-   backhand, and in the middle you read the ball: a high bouncer you charge, a
-   two hopper you stay back on. A line drive in any lane has to be jumped. */
+   A light warns you it's coming. On the first two levels the light is colour
+   coded to the ball, so it's a memory test. From level three it's white — the
+   light is only a starter's gun and the ball itself is the read.
+
+   Ten balls a level to begin with, then twenty. Ninety percent moves you up,
+   and the last two levels want perfection. */
 
 type Pose = 'square' | 'fronthand' | 'backhand' | 'charge' | 'jump'
-type Kind = 'left' | 'right' | 'bouncer' | 'hopper' | 'liner'
+type Kind = 'left' | 'right' | 'straight' | 'over' | 'short'
 
 const ART: Record<Pose, string> = {
   square: '/field-square.png',
@@ -19,58 +23,51 @@ const ART: Record<Pose, string> = {
   jump: '/field-jump.png',
 }
 
-/* Each ball wants one answer. Points reward the harder reads. */
-const BALLS: Record<Kind, { pose: Pose; lane: number; points: number; colour: string }> = {
-  left:    { pose: 'fronthand', lane: 0,  points: 10, colour: '#FFC93C' },
-  right:   { pose: 'backhand',  lane: 2,  points: 15, colour: '#7DF9FF' },
-  bouncer: { pose: 'charge',    lane: 1,  points: 20, colour: '#FF9E2C' },
-  hopper:  { pose: 'square',    lane: 1,  points: 10, colour: '#5CFF6B' },
-  liner:   { pose: 'jump',      lane: -1, points: 30, colour: '#FF6BD5' },
+/* Colours are arbitrary — there's nothing to reason out, only to remember. */
+const BALLS: Record<Kind, { pose: Pose; label: string; light: string; drift: number }> = {
+  left:     { pose: 'fronthand', label: 'Fronthand', light: '#FF4FD8', drift: -1 },
+  right:    { pose: 'backhand',  label: 'Backhand',  light: '#00F0FF', drift: 1 },
+  straight: { pose: 'square',    label: 'Straight',  light: '#C6FF00', drift: 0 },
+  over:     { pose: 'jump',      label: 'Over him',  light: '#FF7A2E', drift: 0 },
+  short:    { pose: 'charge',    label: 'Short',     light: '#9D7CFF', drift: 0 },
 }
+const KINDS = Object.keys(BALLS) as Kind[]
 
-const ROUND_MS = 60_000
-const POSE_HOLD = 420
+const LEVELS = [
+  { balls: 10, lightMs: 700, need: 0.9,  coded: true,  name: 'Warm-up' },
+  { balls: 10, lightMs: 500, need: 0.9,  coded: true,  name: 'Infield' },
+  { balls: 20, lightMs: 350, need: 1,    coded: false, name: 'Gold' },
+  { balls: 20, lightMs: 250, need: 1,    coded: false, name: 'Platinum' },
+]
+const FLIGHT_MS = 900          // light going out to the ball arriving
+const POSE_HOLD = 400
+const CLEARED_RUNS = 2         // perfect runs at the top level to conquer it
 
-/* The pace across the minute: a rising floor with bursts that fall back but
-   never all the way. */
-function flightMs(elapsed: number) {
-  const t = elapsed / ROUND_MS
-  const floor = 1750 - t * 700
-  const burst = Math.sin(t * Math.PI * 5) > 0.82 ? 320 : 0
-  return Math.max(620, floor - burst)
-}
-function gapMs(elapsed: number) {
-  return Math.max(430, 1000 - (elapsed / ROUND_MS) * 420)
-}
-
-type Ball = { id: number; kind: Kind; lane: number; born: number; dur: number; resolved: boolean }
-let nextId = 1
+type Phase = 'ready' | 'live' | 'levelEnd' | 'conquered'
 
 export default function GoldenGloveClient() {
-  const [phase, setPhase] = useState<'ready' | 'count' | 'live' | 'done'>('ready')
-  const [count, setCount] = useState(3)
-  const [score, setScore] = useState(0)
+  const [phase, setPhase] = useState<Phase>('ready')
+  const [level, setLevel] = useState(0)
+  const [ballNo, setBallNo] = useState(0)
   const [clean, setClean] = useState(0)
-  const [faced, setFaced] = useState(0)
-  const [best, setBest] = useState(0)
-  const [left, setLeft] = useState(60)
+  const [perfectRuns, setPerfectRuns] = useState(0)
+  const [flash, setFlash] = useState<{ ok: boolean; label: string } | null>(null)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const raf = useRef(0)
   const imgs = useRef<Partial<Record<Pose, HTMLImageElement>>>({})
 
-  const startedAt = useRef(0)
-  const balls = useRef<Ball[]>([])
-  const spawnAt = useRef(0)
   const pose = useRef<Pose>('square')
   const poseUntil = useRef(0)
-  const pops = useRef<{ x: number; y: number; text: string; colour: string; life: number }[]>([])
+  const light = useRef<{ colour: string; until: number } | null>(null)
+  const ball = useRef<{ kind: Kind; born: number; answered: boolean } | null>(null)
   const miss = useRef(0)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const after = (ms: number, fn: () => void) => { timers.current.push(setTimeout(fn, ms)) }
   const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = [] }
 
-  // Load the five figures once
+  const L = LEVELS[level]
+
   useEffect(() => {
     ;(Object.keys(ART) as Pose[]).forEach(k => {
       const img = new Image()
@@ -80,36 +77,64 @@ export default function GoldenGloveClient() {
     return clearTimers
   }, [])
 
-  /* Answering a ball. The nearest unresolved one is the one you're playing. */
+  /* One ball: the light, then the flight, then the verdict. */
+  const throwBall = useCallback((n: number, lv: number) => {
+    const cfg = LEVELS[lv]
+    const kind = KINDS[Math.floor(Math.random() * KINDS.length)]
+    light.current = {
+      colour: cfg.coded ? BALLS[kind].light : '#F5F1E8',
+      until: performance.now() + cfg.lightMs,
+    }
+    setBallNo(n)
+    after(cfg.lightMs, () => {
+      ball.current = { kind, born: performance.now(), answered: false }
+      // If nothing has been done by the time it arrives, it's through you
+      after(FLIGHT_MS + 120, () => {
+        if (ball.current && !ball.current.answered) {
+          ball.current.answered = true
+          miss.current = 700
+          setFlash({ ok: false, label: 'Through you' })
+          after(900, () => setFlash(null))
+          settle(false, n, lv)
+        }
+      })
+    })
+  }, [])
+
+  /* After each ball, either the next one or the end of the level. */
+  const settle = useCallback((ok: boolean, n: number, lv: number) => {
+    const cfg = LEVELS[lv]
+    setClean(c => {
+      const next = c + (ok ? 1 : 0)
+      // The top two levels want perfection, so one miss ends the attempt there
+      if (!ok && cfg.need === 1) {
+        after(1100, () => setPhase('levelEnd'))
+        return next
+      }
+      if (n >= cfg.balls) {
+        after(1100, () => setPhase('levelEnd'))
+        return next
+      }
+      after(1000, () => throwBall(n + 1, lv))
+      return next
+    })
+  }, [throwBall])
+
   const answer = useCallback((p: Pose) => {
     if (phase !== 'live') return
     pose.current = p
     poseUntil.current = performance.now() + POSE_HOLD
 
-    const now = performance.now()
-    const live = balls.current
-      .filter(b => !b.resolved && (now - b.born) / b.dur > 0.45)
-      .sort((a, b) => (now - b.born) / b.dur - (now - a.born) / a.dur)[0]
-    if (!live) return
-
-    const want = BALLS[live.kind]
-    live.resolved = true
-    setFaced(f => f + 1)
-
-    if (want.pose === p) {
-      setScore(s => s + want.points)
-      setClean(c => c + 1)
-      pops.current.push({ x: 0.5, y: 0.72, text: `+${want.points}`, colour: want.colour, life: 900 })
-    } else {
-      miss.current = 700
-    }
-  }, [phase])
-
-  const endRun = useCallback(() => {
-    clearTimers()
-    setScore(s => { setBest(b => Math.max(b, s)); return s })
-    setPhase('done')
-  }, [])
+    const b = ball.current
+    if (!b || b.answered) return
+    b.answered = true
+    const want = BALLS[b.kind]
+    const ok = want.pose === p
+    if (!ok) miss.current = 700
+    setFlash({ ok, label: ok ? want.label : `It was ${want.label.toLowerCase()}` })
+    after(900, () => setFlash(null))
+    settle(ok, ballNo, level)
+  }, [phase, ballNo, level, settle])
 
   const draw = useCallback((now: number) => {
     const cv = canvasRef.current
@@ -117,167 +142,103 @@ export default function GoldenGloveClient() {
     const ctx = cv.getContext('2d')
     if (!ctx) return
     const W = cv.width, H = cv.height
-    const HORIZON = H * 0.24
+    const HORIZON = H * 0.20
 
     // ── The park ──
     const sky = ctx.createLinearGradient(0, 0, 0, HORIZON)
     sky.addColorStop(0, '#080A14'); sky.addColorStop(1, '#16233C')
     ctx.fillStyle = sky; ctx.fillRect(0, 0, W, HORIZON)
-    for (const fx of [W * 0.16, W * 0.84]) {
+    for (const fx of [W * 0.17, W * 0.83]) {
       ctx.strokeStyle = '#1B2436'; ctx.lineWidth = 4
-      ctx.beginPath(); ctx.moveTo(fx, HORIZON); ctx.lineTo(fx, H * 0.05); ctx.stroke()
-      ctx.fillStyle = '#26314A'; ctx.fillRect(fx - 20, H * 0.03, 40, 18)
+      ctx.beginPath(); ctx.moveTo(fx, HORIZON); ctx.lineTo(fx, H * 0.045); ctx.stroke()
+      ctx.fillStyle = '#26314A'; ctx.fillRect(fx - 19, H * 0.026, 38, 17)
       for (let r = 0; r < 2; r++) for (let c = 0; c < 4; c++) {
         ctx.fillStyle = '#F3ECCB'
-        ctx.beginPath(); ctx.arc(fx - 14 + c * 9.5, H * 0.037 + r * 8, 2.6, 0, Math.PI * 2); ctx.fill()
+        ctx.beginPath(); ctx.arc(fx - 13 + c * 9, H * 0.033 + r * 7.5, 2.5, 0, Math.PI * 2); ctx.fill()
       }
-      const glow = ctx.createRadialGradient(fx, H * 0.045, 4, fx, H * 0.045, W * 0.42)
-      glow.addColorStop(0, '#F3ECCB1C'); glow.addColorStop(1, 'transparent')
-      ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H)
     }
-    ctx.fillStyle = '#0D1522'; ctx.fillRect(0, HORIZON - H * 0.035, W, H * 0.035)
-    ctx.fillStyle = '#FFC93C28'; ctx.fillRect(0, HORIZON - H * 0.035, W, 2)
+    ctx.fillStyle = '#0D1522'; ctx.fillRect(0, HORIZON - H * 0.03, W, H * 0.03)
+    ctx.fillStyle = '#FFC93C2E'; ctx.fillRect(0, HORIZON - H * 0.03, W, 2)
 
     const grass = ctx.createLinearGradient(0, HORIZON, 0, H)
-    grass.addColorStop(0, '#123A22'); grass.addColorStop(1, '#0A2214')
+    grass.addColorStop(0, '#144026'); grass.addColorStop(1, '#0A2214')
     ctx.fillStyle = grass; ctx.fillRect(0, HORIZON, W, H - HORIZON)
-
-    // Perspective: z runs 0 at the coach to 1 at your feet
-    const persp = (z: number) => Math.pow(z, 2.1)
-    const yAt = (z: number) => HORIZON + (H - HORIZON) * persp(z)
-    const halfAt = (z: number) => W * (0.04 + 0.4 * persp(z))
-    const xAt = (l: number, z: number) => W / 2 + (l - 1) * halfAt(z)
-
     for (let i = 0; i < 6; i++) {
-      const z0 = i / 6, z1 = Math.min(1, z0 + 1 / 12)
       ctx.fillStyle = '#ffffff05'
-      ctx.beginPath()
-      ctx.moveTo(0, yAt(z0)); ctx.lineTo(W, yAt(z0))
-      ctx.lineTo(W, yAt(z1)); ctx.lineTo(0, yAt(z1))
-      ctx.fill()
+      ctx.fillRect(0, HORIZON + (H - HORIZON) * (i / 6), W, (H - HORIZON) / 12)
     }
 
-    ctx.strokeStyle = '#ffffff16'; ctx.lineWidth = 2
-    for (const edge of [-1.5, -0.5, 0.5, 1.5]) {
-      ctx.beginPath()
-      ctx.moveTo(W / 2 + edge * halfAt(0.02), yAt(0.02))
-      ctx.lineTo(W / 2 + edge * halfAt(1), yAt(1))
-      ctx.stroke()
+    /* The fielder stands up-field. He's small because he's a long way off, which
+       is what gives the ball room to travel. */
+    const FIELD_Y = H * 0.30                 // where his feet are
+    const fh = H * 0.30
+
+    // ── The ball's flight: from the bottom of the frame up to him ──
+    const ORIGIN = { x: 0.5, y: 1.06 }
+    const b = ball.current
+    let ballPos: { x: number; y: number; r: number } | null = null
+    if (b) {
+      const p = Math.min(1.25, (now - b.born) / FLIGHT_MS)
+      const cfg = BALLS[b.kind]
+      // Ends up beside him, over him, or short of him
+      const endY = b.kind === 'short' ? 0.52 : b.kind === 'over' ? 0.20 : FIELD_Y / H
+      const endX = 0.5 + cfg.drift * 0.13
+      const x = ORIGIN.x + (endX - ORIGIN.x) * p
+      let y = ORIGIN.y + (endY - ORIGIN.y) * p
+      // A ball over his head climbs; a short one dies with a hop
+      if (b.kind === 'over') y -= Math.sin(p * Math.PI) * 0.10
+      if (b.kind === 'short') y -= Math.abs(Math.sin(p * 7)) * 0.03 * (1 - p)
+      const r = Math.max(3, 20 - p * 15)
+      ballPos = { x: x * W, y: y * H, r }
     }
 
-    // Cones marking the near end of each lane
-    for (const l of [0, 1, 2]) {
-      const cx = xAt(l, 0.9), cy = yAt(0.9)
-      ctx.fillStyle = '#FF7A2E'
-      ctx.beginPath(); ctx.moveTo(cx - 7, cy); ctx.lineTo(cx, cy - 18); ctx.lineTo(cx + 7, cy); ctx.closePath(); ctx.fill()
-      ctx.fillStyle = '#C4551A'
-      ctx.beginPath(); ctx.ellipse(cx, cy, 9, 3, 0, 0, Math.PI * 2); ctx.fill()
-    }
-
-    // The coach, at the vanishing point
-    const cxx = W / 2, cyy = HORIZON + H * 0.03
-    ctx.strokeStyle = '#0A0C10'; ctx.lineWidth = 4; ctx.lineCap = 'round'
-    ctx.beginPath(); ctx.moveTo(cxx, cyy); ctx.lineTo(cxx - 5, cyy + 12); ctx.stroke()
-    ctx.beginPath(); ctx.moveTo(cxx, cyy); ctx.lineTo(cxx + 6, cyy + 12); ctx.stroke()
-    ctx.strokeStyle = '#2E4A5C'; ctx.lineWidth = 8
-    ctx.beginPath(); ctx.moveTo(cxx, cyy); ctx.lineTo(cxx, cyy - 13); ctx.stroke()
-    ctx.fillStyle = '#8C6A46'
-    ctx.beginPath(); ctx.arc(cxx, cyy - 18, 4.6, 0, Math.PI * 2); ctx.fill()
-    ctx.strokeStyle = '#B9BBC4'; ctx.lineWidth = 2.6
-    ctx.beginPath(); ctx.moveTo(cxx + 4, cyy - 11); ctx.lineTo(cxx + 18, cyy - 17); ctx.stroke()
-
-    if (phase === 'live') {
-      const elapsed = now - startedAt.current
-      setLeft(Math.max(0, Math.ceil((ROUND_MS - elapsed) / 1000)))
-      if (elapsed >= ROUND_MS) { endRun(); return }
-
-      if (now >= spawnAt.current) {
-        const roll = Math.random()
-        const kind: Kind = roll < 0.28 ? 'left'
-          : roll < 0.56 ? 'right'
-          : roll < 0.72 ? 'bouncer'
-          : roll < 0.88 ? 'hopper' : 'liner'
-        const lane = BALLS[kind].lane === -1 ? Math.floor(Math.random() * 3) : BALLS[kind].lane
-        balls.current.push({ id: nextId++, kind, lane, born: now, dur: flightMs(elapsed), resolved: false })
-        spawnAt.current = now + gapMs(elapsed)
-      }
-
-      for (const b of balls.current) {
-        if ((now - b.born) / b.dur > 1.08 && !b.resolved) {
-          b.resolved = true
-          miss.current = 700
-          setFaced(f => f + 1)
-        }
-      }
-      balls.current = balls.current.filter(b => (now - b.born) / b.dur < 1.35)
-
-      // ── The balls, far to near ──
-      const sorted = [...balls.current].sort((a, b) => b.born - a.born)
-      for (const b of sorted) {
-        const p = Math.min(1.3, (now - b.born) / b.dur)
-        if (b.resolved && p > 1.08) continue
-        const z = Math.min(1, p)
-        const x = xAt(b.lane, z)
-        const ground = yAt(z)
-        const scale = 0.12 + persp(z) * 1.45
-
-        // Each kind flies its own way, which is the tell
-        let air = 0
-        if (b.kind === 'bouncer') air = Math.abs(Math.sin(z * 5.2)) * H * 0.14 * persp(z)
-        else if (b.kind === 'hopper') air = Math.abs(Math.sin(z * 9.4)) * H * 0.05 * persp(z)
-        else if (b.kind === 'liner') air = H * 0.13 * (1 - persp(z) * 0.35)
-        else air = Math.abs(Math.sin(z * 11)) * H * 0.022 * persp(z)
-
-        const sh = Math.max(2, 8 * scale * (1 - air / (H * 0.15)))
-        ctx.fillStyle = '#00000055'
-        ctx.beginPath(); ctx.ellipse(x, ground, sh * 1.6, sh * 0.5, 0, 0, Math.PI * 2); ctx.fill()
-
-        const r = 9 * scale
-        const y = ground - air - r
-        ctx.save()
-        ctx.shadowColor = '#E8FF3D'; ctx.shadowBlur = 12 * Math.max(scale, 0.5)
-        ctx.fillStyle = '#E8FF3D'
-        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill()
-        ctx.restore()
-        if (r > 4) {
-          ctx.strokeStyle = '#C41E3A'; ctx.lineWidth = Math.max(1, r * 0.22)
-          ctx.beginPath(); ctx.arc(x - r * 1.1, y, r * 0.98, -0.9, 0.9); ctx.stroke()
-        }
-        if (b.kind === 'liner' && r > 3) {
-          const trail = ctx.createLinearGradient(x, y, x, y - H * 0.08)
-          trail.addColorStop(0, '#E8FF3D66'); trail.addColorStop(1, 'transparent')
-          ctx.strokeStyle = trail; ctx.lineWidth = r * 0.8
-          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - H * 0.08); ctx.stroke()
-        }
-      }
+    // shadow first
+    if (ballPos && b) {
+      const gy = Math.max(ballPos.y, HORIZON + 10)
+      ctx.fillStyle = '#00000045'
+      ctx.beginPath(); ctx.ellipse(ballPos.x, gy + ballPos.r * 1.4, ballPos.r * 1.4, ballPos.r * 0.45, 0, 0, Math.PI * 2); ctx.fill()
     }
 
     // ── The fielder ──
     if (now > poseUntil.current) pose.current = 'square'
     const art = imgs.current[pose.current]
     if (art) {
-      const fh = H * 0.42
       const fw = fh * (art.width / art.height)
       ctx.save()
-      ctx.shadowColor = '#00000090'; ctx.shadowBlur = 22
-      ctx.drawImage(art, W / 2 - fw / 2, H * 0.98 - fh, fw, fh)
+      ctx.shadowColor = '#00000090'; ctx.shadowBlur = 18
+      ctx.drawImage(art, W / 2 - fw / 2, FIELD_Y - fh * 0.86, fw, fh)
       ctx.restore()
     }
 
-    // ── Points off the glove ──
-    for (const p of pops.current) {
-      if (phase === 'live') p.life -= 16
-      const k = 1 - p.life / 900
+    // ── The ball, over him ──
+    if (ballPos) {
       ctx.save()
-      ctx.globalAlpha = Math.max(0, 1 - k * k)
-      ctx.font = `900 ${Math.round(H * 0.085)}px var(--font-heading), sans-serif`
-      ctx.textAlign = 'center'
-      ctx.fillStyle = p.colour
-      ctx.shadowColor = p.colour; ctx.shadowBlur = 26
-      ctx.fillText(p.text, p.x * W, p.y * H - k * H * 0.18)
+      ctx.shadowColor = '#E8FF3D'; ctx.shadowBlur = 16
+      ctx.fillStyle = '#E8FF3D'
+      ctx.beginPath(); ctx.arc(ballPos.x, ballPos.y, ballPos.r, 0, Math.PI * 2); ctx.fill()
+      ctx.restore()
+      if (ballPos.r > 5) {
+        ctx.strokeStyle = '#C41E3A'; ctx.lineWidth = Math.max(1, ballPos.r * 0.2)
+        ctx.beginPath(); ctx.arc(ballPos.x - ballPos.r * 1.1, ballPos.y, ballPos.r * 0.98, -0.9, 0.9); ctx.stroke()
+      }
+    }
+
+    // ── The light ──
+    const lg = light.current
+    if (lg && now < lg.until) {
+      const k = 1 - (lg.until - now) / L.lightMs
+      const lx = W / 2, ly = H * 0.88
+      ctx.save()
+      ctx.globalAlpha = 0.35 + Math.sin(k * Math.PI) * 0.65
+      const halo = ctx.createRadialGradient(lx, ly, 4, lx, ly, W * 0.26)
+      halo.addColorStop(0, lg.colour + 'CC'); halo.addColorStop(1, 'transparent')
+      ctx.fillStyle = halo
+      ctx.beginPath(); ctx.arc(lx, ly, W * 0.26, 0, Math.PI * 2); ctx.fill()
+      ctx.shadowColor = lg.colour; ctx.shadowBlur = 34
+      ctx.fillStyle = lg.colour
+      ctx.beginPath(); ctx.arc(lx, ly, 17, 0, Math.PI * 2); ctx.fill()
       ctx.restore()
     }
-    pops.current = pops.current.filter(p => p.life > 0)
 
     // ── The miss ──
     if (miss.current > 0) {
@@ -285,32 +246,31 @@ export default function GoldenGloveClient() {
       const k = 1 - miss.current / 700
       ctx.save()
       ctx.globalAlpha = Math.max(0, 1 - k * k)
-      ctx.font = `900 ${Math.round(H * 0.34)}px var(--font-heading), sans-serif`
+      ctx.font = `900 ${Math.round(H * 0.30)}px var(--font-heading), sans-serif`
       ctx.textAlign = 'center'
       ctx.fillStyle = '#FF4D4D'
       ctx.shadowColor = '#FF4D4D'; ctx.shadowBlur = 40
-      ctx.fillText('!', W / 2, H * 0.56 + k * H * 0.04)
+      ctx.fillText('!', W / 2, H * 0.62 + k * H * 0.03)
       ctx.restore()
     }
 
     raf.current = requestAnimationFrame(draw)
-  }, [phase, endRun])
+  }, [phase, L.lightMs])
 
   useEffect(() => {
     raf.current = requestAnimationFrame(draw)
     return () => cancelAnimationFrame(raf.current)
   }, [draw])
 
-  // Keys
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const map: Record<string, Pose> = {
         ArrowLeft: 'fronthand', a: 'fronthand', A: 'fronthand',
         ArrowRight: 'backhand', d: 'backhand', D: 'backhand',
-        ArrowUp: 'charge', w: 'charge', W: 'charge',
-        ArrowDown: 'square', s: 'square', S: 'square',
+        ArrowUp: 'jump', w: 'jump', W: 'jump',
+        ArrowDown: 'charge', s: 'charge', S: 'charge',
       }
-      if (e.code === 'Space') { e.preventDefault(); answer('jump'); return }
+      if (e.code === 'Space') { e.preventDefault(); answer('square'); return }
       const p = map[e.key]
       if (!p) return
       e.preventDefault()
@@ -320,73 +280,70 @@ export default function GoldenGloveClient() {
     return () => window.removeEventListener('keydown', onKey)
   }, [answer])
 
-  // Swipe and tap
-  useEffect(() => {
-    const cv = canvasRef.current
-    if (!cv) return
-    let sx = 0, sy = 0
-    const start = (e: TouchEvent) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY }
-    const end = (e: TouchEvent) => {
-      const dx = e.changedTouches[0].clientX - sx
-      const dy = e.changedTouches[0].clientY - sy
-      if (Math.abs(dx) < 26 && Math.abs(dy) < 26) { answer('jump'); return }
-      if (Math.abs(dx) > Math.abs(dy)) answer(dx > 0 ? 'backhand' : 'fronthand')
-      else answer(dy > 0 ? 'square' : 'charge')
-    }
-    cv.addEventListener('touchstart', start, { passive: true })
-    cv.addEventListener('touchend', end, { passive: true })
-    return () => { cv.removeEventListener('touchstart', start); cv.removeEventListener('touchend', end) }
-  }, [answer])
-
-  function start() {
+  function beginLevel(lv: number) {
     clearTimers()
-    balls.current = []
-    pops.current = []
+    ball.current = null
+    light.current = null
     miss.current = 0
     pose.current = 'square'
-    setScore(0); setClean(0); setFaced(0); setLeft(60)
-    setPhase('count'); setCount(3)
-    after(1000, () => setCount(2))
-    after(2000, () => setCount(1))
-    after(3000, () => {
-      setCount(0)
-      startedAt.current = performance.now()
-      spawnAt.current = performance.now() + 500
-      setPhase('live')
-    })
+    setLevel(lv); setClean(0); setBallNo(0); setFlash(null)
+    setPhase('live')
+    after(900, () => throwBall(1, lv))
   }
 
-  const avg = faced > 0 ? (clean / faced).toFixed(3).replace(/^0/, '') : '.000'
+  const passed = clean / L.balls >= L.need
+  const isTop = level === LEVELS.length - 1
+
+  function next() {
+    if (passed && isTop) {
+      const runs = perfectRuns + 1
+      setPerfectRuns(runs)
+      if (runs >= CLEARED_RUNS) { setPhase('conquered'); return }
+      beginLevel(level)
+      return
+    }
+    if (passed) { beginLevel(level + 1); return }
+    beginLevel(level)      // same level again
+  }
+
+  async function share() {
+    const text = `I conquered Golden Glove in the Grassroots Fantasy Arcade — two perfect runs at Platinum.\ngrassrootsfantasy.co.nz/games`
+    if (navigator.share) {
+      try { await navigator.share({ text }) } catch { /* dismissed */ }
+    } else {
+      await navigator.clipboard.writeText(text)
+    }
+  }
+
+  const pct = L.balls > 0 ? Math.round((clean / Math.max(ballNo, 1)) * 100) : 0
 
   return (
     <>
       <style>{`
-        .gg-lede { font-size: 13px; line-height: 1.7; color: #8FA0B4; max-width: 42ch; margin-bottom: 18px; }
-        .gg-hud { display: flex; align-items: stretch; gap: 1px; margin-bottom: 10px; background: #ffffff10; border: 1px solid #ffffff12; }
+        .gg-lede { font-size: 13px; line-height: 1.7; color: #8FA0B4; max-width: 42ch; margin-bottom: 16px; }
+        .gg-hud { display: flex; align-items: stretch; gap: 1px; margin-bottom: 12px; background: #ffffff10; border: 1px solid #ffffff12; }
         .gg-stat { flex: 1; background: #07080D; padding: 10px 6px; text-align: center; }
         .gg-stat span { display: block; font-size: 8px; font-weight: 900; letter-spacing: .22em; text-transform: uppercase; color: #4E5A6A; }
-        .gg-stat b { display: block; font-family: var(--font-heading); font-size: 20px; color: #F5F1E8; margin-top: 3px; }
-        .gg-clock { height: 4px; background: #ffffff12; margin-bottom: 12px; }
-        .gg-clock i { display: block; height: 100%; background: var(--neon); transition: width 1s linear; }
+        .gg-stat b { display: block; font-family: var(--font-heading); font-size: 18px; color: #F5F1E8; margin-top: 3px; }
 
         .gg-stage { position: relative; }
         .gg-canvas {
-          width: 100%; height: auto; display: block; touch-action: none; cursor: pointer;
+          width: 100%; height: auto; display: block; touch-action: none;
           border: 1px solid color-mix(in srgb, var(--neon) 34%, transparent);
           box-shadow: 0 0 0 1px #ffffff08 inset, 0 18px 40px #00000090;
         }
+        .gg-call {
+          position: absolute; left: 0; right: 0; bottom: 12%; text-align: center; pointer-events: none;
+          font-family: var(--font-heading); font-weight: 900; font-size: clamp(16px, 4.6vw, 24px);
+          text-transform: uppercase; letter-spacing: .04em;
+          animation: gg-pop 260ms cubic-bezier(.2,1.6,.4,1);
+        }
+        @keyframes gg-pop { from { transform: scale(1.5); opacity: 0; } }
         .gg-overlay {
           position: absolute; inset: 0; display: flex; flex-direction: column;
           align-items: center; justify-content: center; gap: 8px; text-align: center;
-          background: #05060AEE; padding: 24px;
+          background: #05060AF2; padding: 24px;
         }
-        .gg-count {
-          font-family: var(--font-heading); font-weight: 900; line-height: 1;
-          font-size: clamp(80px, 26vw, 150px); color: var(--neon);
-          text-shadow: 0 0 50px color-mix(in srgb, var(--neon) 70%, transparent);
-          animation: gg-count 1000ms cubic-bezier(.2,1.5,.4,1);
-        }
-        @keyframes gg-count { 0% { transform: scale(2.2); opacity: 0; } 20% { transform: scale(1); opacity: 1; } 100% { transform: scale(.92); opacity: .35; } }
 
         .gg-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 12px; }
         .gg-key {
@@ -394,92 +351,144 @@ export default function GoldenGloveClient() {
           font-family: var(--font-heading); font-weight: 900; font-size: 11px; line-height: 1.2;
           padding: 15px 4px; text-align: center; touch-action: manipulation;
         }
-        .gg-key:active { background: color-mix(in srgb, var(--neon) 22%, transparent); border-color: var(--neon); }
+        .gg-key:active { background: color-mix(in srgb, var(--neon) 24%, transparent); border-color: var(--neon); }
         .gg-key span { display: block; font-size: 8px; letter-spacing: .16em; color: #5C6878; margin-top: 3px; font-weight: 900; }
 
         .gg-hint { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: #3E4A58; text-align: center; margin-top: 12px; }
-        .gg-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 20px; }
-        .gg-item { display: flex; align-items: center; gap: 9px; padding: 10px 12px; border: 1px solid #ffffff12; background: #ffffff05; font-size: 11px; color: #B8C4D2; }
-        .gg-pip { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-        .gg-val { margin-left: auto; font-family: var(--font-heading); font-weight: 900; color: var(--neon); }
+        .gg-key-list { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 18px; }
+        .gg-swatch { border: 1px solid #ffffff12; background: #ffffff05; padding: 9px 4px; text-align: center; }
+        .gg-dot { width: 14px; height: 14px; border-radius: 50%; margin: 0 auto 5px; }
+        .gg-swatch b { display: block; font-size: 9px; font-weight: 900; color: #B8C4D2; }
+
+        .gg-ladder { display: flex; flex-direction: column; gap: 6px; margin-top: 20px; }
+        .gg-rung { display: flex; align-items: center; gap: 11px; padding: 10px 13px; border: 1px solid #ffffff12; background: #ffffff05; font-size: 11px; color: #7D8B9C; }
+        .gg-rung[data-on="true"] { border-color: var(--neon); color: #F5F1E8; background: color-mix(in srgb, var(--neon) 10%, transparent); }
+        .gg-rung[data-done="true"] { color: #5CFF6B; }
+        .gg-n { font-family: var(--font-heading); font-weight: 900; color: #3E4A58; width: 14px; }
       `}</style>
 
       <p className="gg-lede">
-        Sixty seconds of fungo. Left lane you take fronthand, right lane backhand. In the middle you
-        read it — a high bouncer you charge, a two hopper you stay back on. Anything on a line has to
-        be jumped.
+        A light, then a ball. It goes left, right, straight at him, over his head or dies short —
+        and you have to be in the right shape before it arrives. The first two levels colour the
+        light. After that it tells you nothing but <em>now</em>.
       </p>
 
       <div className="gg-hud">
-        <span className="gg-stat"><span>Time</span><b>{left}</b></span>
-        <span className="gg-stat"><span>Score</span><b style={{ color: 'var(--neon)' }}>{score}</b></span>
+        <span className="gg-stat"><span>Level</span><b style={{ color: 'var(--neon)', fontSize: '13px' }}>{L.name}</b></span>
+        <span className="gg-stat"><span>Ball</span><b>{Math.min(ballNo, L.balls)}/{L.balls}</b></span>
         <span className="gg-stat"><span>Clean</span><b>{clean}</b></span>
-        <span className="gg-stat"><span>Fielding</span><b>{avg}</b></span>
+        <span className="gg-stat"><span>Rate</span><b>{ballNo ? `${pct}%` : '—'}</b></span>
       </div>
-      <div className="gg-clock"><i style={{ width: `${(left / 60) * 100}%` }} /></div>
 
       <div className="gg-stage">
-        <canvas ref={canvasRef} className="gg-canvas" width={620} height={560} />
+        <canvas ref={canvasRef} className="gg-canvas" width={620} height={520} />
 
-        {phase === 'count' && count > 0 && (
-          <div className="gg-overlay" style={{ background: '#05060AC0' }}>
-            <p key={count} className="gg-count">{count}</p>
-            <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '.3em', textTransform: 'uppercase', color: '#5C6878' }}>
-              Get ready
-            </p>
-          </div>
+        {flash && (
+          <p className="gg-call" style={{
+            color: flash.ok ? '#5CFF6B' : '#FF4D4D',
+            textShadow: `0 0 24px ${flash.ok ? '#5CFF6B' : '#FF4D4D'}80`,
+          }}>{flash.label}</p>
         )}
 
         {phase === 'ready' && (
           <div className="gg-overlay">
-            <p style={{ fontSize: '12px', color: '#8FA0B4', maxWidth: '30ch', lineHeight: 1.6 }}>
-              One minute. Take as many as you can.
+            <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '.32em', textTransform: 'uppercase', color: 'var(--neon)' }}>
+              Level 1 · {LEVELS[0].name}
             </p>
-            <button className="ar-btn" onClick={start} style={{ marginTop: '14px' }}><span>Take the field</span></button>
+            <p style={{ fontSize: '12px', color: '#8FA0B4', maxWidth: '32ch', lineHeight: 1.6, marginTop: '6px' }}>
+              Ten balls. The light is colour coded — learn what each one means.
+            </p>
+            <button className="ar-btn" onClick={() => beginLevel(0)} style={{ marginTop: '16px' }}>
+              <span>Take the field</span>
+            </button>
           </div>
         )}
 
-        {phase === 'done' && (
+        {phase === 'levelEnd' && (
           <div className="gg-overlay">
-            <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '.34em', textTransform: 'uppercase', color: 'var(--neon)' }}>
-              Time
+            <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '.32em', textTransform: 'uppercase',
+                        color: passed ? '#5CFF6B' : '#FF4D4D' }}>
+              {passed ? (isTop ? `Perfect run ${perfectRuns + 1} of ${CLEARED_RUNS}` : 'Level cleared') : 'Not this time'}
             </p>
-            <p className="ar-num" style={{ fontSize: '58px', color: '#F5F1E8', textShadow: 'none', margin: '10px 0 2px' }}>{score}</p>
-            <p style={{ fontSize: '11px', color: '#7D8B9C' }}>{clean} clean from {faced} · fielding {avg}</p>
-            {best > 0 && <p style={{ fontSize: '10px', color: '#4E5A6A', marginTop: '4px' }}>Best {best}</p>}
-            <button className="ar-btn" onClick={start} style={{ marginTop: '20px' }}><span>Go again</span></button>
+            <p className="ar-num" style={{ fontSize: '46px', color: '#F5F1E8', textShadow: 'none', margin: '10px 0 2px' }}>
+              {clean}/{L.balls}
+            </p>
+            <p style={{ fontSize: '12px', color: '#7D8B9C', maxWidth: '32ch', lineHeight: 1.6 }}>
+              {passed
+                ? (isTop
+                    ? `One more clean sheet at ${L.name} and it's yours.`
+                    : `Up to ${LEVELS[level + 1].name}${LEVELS[level + 1].coded ? '' : ' — the light goes white from here'}.`)
+                : L.need === 1
+                  ? `${L.name} wants all ${L.balls}. Go again.`
+                  : `You need ${Math.ceil(L.balls * L.need)} of ${L.balls}. Go again.`}
+            </p>
+            <button className="ar-btn" onClick={next} style={{ marginTop: '16px' }}>
+              <span>{passed && !isTop ? `Face ${LEVELS[level + 1].name}` : 'Go again'}</span>
+            </button>
+          </div>
+        )}
+
+        {phase === 'conquered' && (
+          <div className="gg-overlay">
+            <p style={{ fontFamily: 'var(--font-heading)', fontWeight: 900, textTransform: 'uppercase',
+                        fontSize: 'clamp(26px, 8vw, 44px)', color: '#FFC93C', transform: 'skewX(-7deg)',
+                        textShadow: '0 0 40px #FFC93C90' }}>
+              Golden Glove
+            </p>
+            <p style={{ fontSize: '12px', color: '#B8C4D2', maxWidth: '30ch', lineHeight: 1.7, marginTop: '10px' }}>
+              Two perfect runs at Platinum. Nobody gets one of these by accident.
+            </p>
+            <button className="ar-btn" onClick={share} style={{ marginTop: '18px' }}><span>Share it</span></button>
+            <button className="ar-btn" onClick={() => { setPerfectRuns(0); beginLevel(0) }}
+              style={{ marginTop: '10px', background: 'transparent', color: 'var(--neon)', border: '1px solid var(--neon)', boxShadow: 'none' }}>
+              <span>Start again</span>
+            </button>
           </div>
         )}
       </div>
 
-      {/* Thumb pad — the same five inputs as the keyboard */}
       <div className="gg-pad">
         <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('fronthand') }}>
           Fronthand<span>◀ LEFT</span>
         </button>
-        <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('charge') }}>
-          Charge<span>▲ BOUNCER</span>
+        <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('jump') }}>
+          Jump<span>▲ OVER</span>
         </button>
         <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('backhand') }}>
           Backhand<span>RIGHT ▶</span>
         </button>
-        <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('square') }}>
-          Stay back<span>▼ TWO HOPPER</span>
+        <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('charge') }}>
+          Charge<span>▼ SHORT</span>
         </button>
         <button className="gg-key" style={{ gridColumn: 'span 2' }}
-          onPointerDown={e => { e.preventDefault(); answer('jump') }}>
-          Jump<span>LINE DRIVE</span>
+          onPointerDown={e => { e.preventDefault(); answer('square') }}>
+          Square<span>SPACE · STRAIGHT AT HIM</span>
         </button>
       </div>
 
-      <p className="gg-hint">Arrows or WASD · space to jump · swipe or tap on a phone</p>
+      <p className="gg-hint">Arrows or WASD · space for square</p>
 
-      <div className="gg-legend">
-        <span className="gg-item"><span className="gg-pip" style={{ background: '#FFC93C', boxShadow: '0 0 8px #FFC93C' }} />Fronthand<span className="gg-val">10</span></span>
-        <span className="gg-item"><span className="gg-pip" style={{ background: '#7DF9FF', boxShadow: '0 0 8px #7DF9FF' }} />Backhand<span className="gg-val">15</span></span>
-        <span className="gg-item"><span className="gg-pip" style={{ background: '#FF9E2C', boxShadow: '0 0 8px #FF9E2C' }} />Charge a bouncer<span className="gg-val">20</span></span>
-        <span className="gg-item"><span className="gg-pip" style={{ background: '#5CFF6B', boxShadow: '0 0 8px #5CFF6B' }} />Stay back<span className="gg-val">10</span></span>
-        <span className="gg-item" style={{ gridColumn: '1 / -1' }}><span className="gg-pip" style={{ background: '#FF6BD5', boxShadow: '0 0 8px #FF6BD5' }} />Jump a line drive<span className="gg-val">30</span></span>
+      {L.coded && (
+        <div className="gg-key-list">
+          {KINDS.map(k => (
+            <span key={k} className="gg-swatch">
+              <span className="gg-dot" style={{ background: BALLS[k].light, boxShadow: `0 0 10px ${BALLS[k].light}` }} />
+              <b>{BALLS[k].label}</b>
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div className="gg-ladder">
+        {LEVELS.map((lv, i) => (
+          <span key={i} className="gg-rung" data-on={i === level} data-done={i < level}>
+            <span className="gg-n">{i + 1}</span>
+            {lv.name}
+            <span style={{ marginLeft: 'auto', fontSize: '10px', letterSpacing: '.14em', textTransform: 'uppercase' }}>
+              {lv.balls} balls · {lv.need === 1 ? 'perfect' : '90%'}{lv.coded ? '' : ' · white light'}
+            </span>
+          </span>
+        ))}
       </div>
     </>
   )
