@@ -13,6 +13,7 @@ const GAMES = [
   { href: '/games/release', n: '10', title: 'Release Point', blurb: 'The windmill comes round. Tap the instant it leaves.', tag: 'Reaction', neon: '#FF4FD8' },
   { href: '/games/fielding', n: '11', title: 'Take the Field', blurb: 'Three lanes. Catch everything, dodge the runners.', tag: 'Endless', neon: '#5CFF6B' },
   { href: '/games/pickthepitch', n: '12', title: 'Pick the Pitch', blurb: "Steal the catcher's signs from second. Nobody tells you the code.", tag: 'Expert', neon: '#FFD400', featured: true },
+  { href: '/games/goldenglove', n: '13', title: 'Golden Glove', blurb: 'Sixty seconds of fungo. Read it, reach it, take it clean.', tag: 'Drill', neon: '#FFC93C', gold: true },
 ]
 
 export default function Games() {
@@ -165,6 +166,26 @@ export default function Games() {
         .gm-tile[data-featured="true"] .gm-tag { animation: gm-flick 2.6s steps(1) infinite; }
         @keyframes gm-flick { 0%, 88%, 100% { opacity: 1; } 90% { opacity: 0.45; } 94% { opacity: 1; } 96% { opacity: 0.6; } }
         .gm-tile[data-featured="true"] .gm-name { color: var(--neon); text-shadow: 0 0 18px #FFD40060; }
+
+        /* A gold sheen travelling across the tile — slower and subtler than the
+           featured one, an honour rather than a headline. */
+        .gm-tile[data-gold="true"] {
+          background: linear-gradient(155deg, #14110A 0%, #0A0906 100%);
+          border-color: #FFC93C55;
+        }
+        .gm-tile[data-gold="true"]::before {
+          content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+          background: linear-gradient(105deg,
+            transparent 38%, #FFC93C00 44%, #FFE9A833 50%, #FFC93C00 56%, transparent 62%);
+          background-size: 260% 100%;
+          animation: gm-sheen 4.6s ease-in-out infinite;
+        }
+        @keyframes gm-sheen {
+          0% { background-position: 130% 0; }
+          55%, 100% { background-position: -130% 0; }
+        }
+        .gm-tile[data-gold="true"]:hover { border-color: #FFC93C; }
+        .gm-tile[data-gold="true"] .gm-name { color: #FFE9A8; }
         /* Hollow number with a travelling colour on the stroke. Done in SVG
            because background-clip on text fills the glyph — stroke and fill are
            only genuinely separate in SVG. */
@@ -185,6 +206,7 @@ export default function Games() {
           .gm-tile { transition: none; }
           .gm-tile[data-featured="true"] { animation: none; border-color: var(--neon); }
           .gm-tile[data-featured="true"] .gm-tag { animation: none; }
+          .gm-tile[data-gold="true"]::before { animation: none; }
         }
       `}</style>
 
@@ -207,6 +229,7 @@ export default function Games() {
             {GAMES.map(g => (
               <a key={g.href} href={g.href} className="gm-tile"
                 data-featured={'featured' in g ? 'true' : undefined}
+                data-gold={'gold' in g ? 'true' : undefined}
                 style={{ ['--neon' as string]: g.neon }}>
                 <span className="gm-n" data-n={g.n}>{g.n}</span>
                 {'featured' in g && (
