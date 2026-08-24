@@ -98,7 +98,7 @@ export default function GoldenGloveClient() {
     }
     setBallNo(n)
     after(cfg.lightMs, () => {
-      ball.current = { kind, born: performance.now(), answered: false }
+      ball.current = { kind, born: performance.now(), answered: false, caught: false }
       // If nothing has been done by the time it arrives, it's through you
       after(FLIGHT_MS + 120, () => {
         if (ball.current && !ball.current.answered) {
