@@ -156,6 +156,7 @@ function Hand({ shape, size = 1 }: { shape: Shape | null; size?: number }) {
 
   return (
     <svg viewBox="0 0 120 160" style={{ width: '100%', height: '100%' }}>
+    <g transform="translate(120,0) scale(-1,1)">
       <rect x="34" y="0" width="52" height="38" rx="16" fill={SKIN} stroke={EDGE} strokeWidth="2" />
       <rect x="12" y="30" width="96" height="54" rx="18" fill={SKIN} stroke={EDGE} strokeWidth="2.5" />
       {fingers}
@@ -163,6 +164,7 @@ function Hand({ shape, size = 1 }: { shape: Shape | null; size?: number }) {
         <rect x="-4" y="48" width="19" height="42" rx="9.5" fill={SKIN} stroke={EDGE} strokeWidth="2"
           transform={`rotate(${size ? 26 : 26} 6 68)`} />
       )}
+    </g>
     </svg>
   )
 }
