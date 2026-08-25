@@ -398,7 +398,7 @@ export default function GoldenGloveClient() {
       </div>
 
       <div className="gg-stage">
-        <canvas ref={canvasRef} className="gg-canvas" width={620} height={520} />
+        <canvas ref={canvasRef} className="gg-canvas" width={620} height={480} />
 
         {flash && (
           <p className="gg-call" style={{
