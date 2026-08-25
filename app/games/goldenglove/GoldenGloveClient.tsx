@@ -64,7 +64,7 @@ export default function GoldenGloveClient() {
   const raf = useRef(0)
   const imgs = useRef<Partial<Record<Pose, HTMLImageElement>>>({})
 
-  const pose = useRef<Pose>('square')
+  const pose = useRef<Pose>('ready')
   const poseUntil = useRef(0)
   const light = useRef<{ colour: string; until: number } | null>(null)
   const ball = useRef<LiveBall | null>(null)
@@ -306,7 +306,7 @@ export default function GoldenGloveClient() {
     light.current = null
     miss.current = 0
     squaresSoFar.current = 0
-    pose.current = 'square'
+    pose.current = 'ready'
     setLevel(lv); setClean(0); setBallNo(0); setFlash(null)
     setPhase('live')
     after(900, () => throwBall(1, lv))
