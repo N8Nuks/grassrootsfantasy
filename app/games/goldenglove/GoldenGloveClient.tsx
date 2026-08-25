@@ -162,25 +162,68 @@ export default function GoldenGloveClient() {
     const HORIZON = H * 0.20
 
     // ── The park ──
-    const sky = ctx.createLinearGradient(0, 0, 0, HORIZON)
-    sky.addColorStop(0, '#080A14'); sky.addColorStop(1, '#16233C')
-    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, HORIZON)
+    /* Seen from behind the plate on a long lens, so everything behind him
+       compresses: fence high and flat, a thin band of outfield, then dirt. */
+    ctx.fillStyle = '#0E1729'; ctx.fillRect(0, 0, W, H * 0.13)
+
     for (const fx of [W * 0.17, W * 0.83]) {
-      ctx.strokeStyle = '#1B2436'; ctx.lineWidth = 4
-      ctx.beginPath(); ctx.moveTo(fx, HORIZON); ctx.lineTo(fx, H * 0.045); ctx.stroke()
-      ctx.fillStyle = '#26314A'; ctx.fillRect(fx - 19, H * 0.026, 38, 17)
+      ctx.fillStyle = '#26314A'; ctx.fillRect(fx - 22, H * 0.012, 44, H * 0.040)
+      ctx.fillStyle = '#1B2436'; ctx.fillRect(fx - 2.5, H * 0.052, 5, H * 0.071)
       for (let r = 0; r < 2; r++) for (let c = 0; c < 4; c++) {
         ctx.fillStyle = '#F3ECCB'
-        ctx.beginPath(); ctx.arc(fx - 13 + c * 9, H * 0.033 + r * 7.5, 2.5, 0, Math.PI * 2); ctx.fill()
+        ctx.beginPath()
+        ctx.arc(fx - 16 + c * 10, H * 0.027 + r * H * 0.0146, 2.6, 0, Math.PI * 2)
+        ctx.fill()
       }
     }
-    ctx.fillStyle = '#0D1522'; ctx.fillRect(0, HORIZON - H * 0.03, W, H * 0.03)
-    ctx.fillStyle = '#FFC93C2E'; ctx.fillRect(0, HORIZON - H * 0.03, W, 2)
 
-    const grass = ctx.createLinearGradient(0, HORIZON, 0, H)
-    grass.addColorStop(0, '#144026'); grass.addColorStop(1, '#0A2214')
-    ctx.fillStyle = grass; ctx.fillRect(0, HORIZON, W, H - HORIZON)
-    for (let i = 0; i < 6; i++) {
+    ctx.fillStyle = '#101A2B'; ctx.fillRect(0, H * 0.121, W, H * 0.054)
+    ctx.fillStyle = '#FFC93C4D'; ctx.fillRect(0, H * 0.121, W, 3)
+    ctx.fillStyle = '#0B1119'; ctx.fillRect(0, H * 0.158, W, H * 0.017)
+
+    ctx.fillStyle = '#164429'; ctx.fillRect(0, H * 0.175, W, H * 0.083)
+    ctx.fillStyle = '#1B5232'; ctx.fillRect(0, H * 0.200, W, H * 0.025)
+
+    const arcTop = H * 0.225, arcMid = H * 0.288
+    ctx.fillStyle = '#6B4630'
+    ctx.beginPath()
+    ctx.moveTo(-20, H); ctx.lineTo(-20, arcMid)
+    ctx.quadraticCurveTo(W / 2, arcTop, W + 20, arcMid)
+    ctx.lineTo(W + 20, H); ctx.closePath(); ctx.fill()
+
+    ctx.fillStyle = '#8A5C3D'
+    ctx.beginPath()
+    ctx.moveTo(-20, arcMid)
+    ctx.quadraticCurveTo(W / 2, arcTop, W + 20, arcMid)
+    ctx.lineTo(W + 20, arcMid + 9)
+    ctx.quadraticCurveTo(W / 2, arcTop + 9, -20, arcMid + 9)
+    ctx.closePath(); ctx.fill()
+
+    ctx.fillStyle = '#5E3D2A'; ctx.fillRect(0, H * 0.625, W, H * 0.375)
+    ctx.fillStyle = '#6B4630'
+    ctx.beginPath()
+    ctx.moveTo(-20, H * 0.625)
+    ctx.quadraticCurveTo(W / 2, H * 0.600, W + 20, H * 0.625)
+    ctx.lineTo(W + 20, H * 0.650)
+    ctx.quadraticCurveTo(W / 2, H * 0.625, -20, H * 0.650)
+    ctx.closePath(); ctx.fill()
+
+    ctx.strokeStyle = '#F5F1E84D'; ctx.lineWidth = 3
+    ctx.beginPath(); ctx.ellipse(W * 0.51, H * 0.733, W * 0.242, H * 0.071, 0, 0, Math.PI * 2); ctx.stroke()
+    ctx.fillStyle = '#E8E2D273'; ctx.fillRect(W * 0.474, H * 0.704, W * 0.071, H * 0.021)
+
+    ctx.fillStyle = '#F5F1E8F0'
+    ctx.beginPath()
+    ctx.moveTo(W * 0.684, H * 0.317); ctx.lineTo(W * 0.745, H * 0.306)
+    ctx.lineTo(W * 0.755, H * 0.327); ctx.lineTo(W * 0.694, H * 0.340)
+    ctx.closePath(); ctx.fill()
+    ctx.beginPath()
+    ctx.moveTo(W * 0.139, H * 0.408); ctx.lineTo(W * 0.223, H * 0.392)
+    ctx.lineTo(W * 0.239, H * 0.419); ctx.lineTo(W * 0.155, H * 0.438)
+    ctx.closePath(); ctx.fill()
+
+    ctx.strokeStyle = '#F5F1E821'; ctx.lineWidth = 3
+    ctx.beginPath(); ctx.moveTo(W * 0.568, H); ctx.lineTo(W * 0.103, H * 0.396); ctx.stroke()
       ctx.fillStyle = '#ffffff05'
       ctx.fillRect(0, HORIZON + (H - HORIZON) * (i / 6), W, (H - HORIZON) / 12)
     }
