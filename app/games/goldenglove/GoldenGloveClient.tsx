@@ -12,10 +12,11 @@ import { useState, useRef, useEffect, useCallback } from 'react'
    Ten balls a level to begin with, then twenty. Ninety percent moves you up,
    and the last two levels want perfection. */
 
-type Pose = 'square' | 'fronthand' | 'backhand' | 'charge' | 'jump'
+type Pose = 'ready' | 'square' | 'fronthand' | 'backhand' | 'charge' | 'jump'
 type Kind = 'left' | 'right' | 'straight' | 'over' | 'short'
 
 const ART: Record<Pose, string> = {
+  ready: '/field-ready.png',
   square: '/field-square.png',
   fronthand: '/field-fronthand.png',
   backhand: '/field-backhand.png',
@@ -219,7 +220,7 @@ export default function GoldenGloveClient() {
     }
 
     // ── The fielder ──
-    if (now > poseUntil.current) pose.current = 'square'
+    if (now > poseUntil.current) pose.current = 'ready'
     const art = imgs.current[pose.current]
     if (art) {
       const fw = fh * (art.width / art.height)
