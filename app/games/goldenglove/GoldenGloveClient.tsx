@@ -374,7 +374,7 @@ export default function GoldenGloveClient() {
         .gg-hint { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: #3E4A58; text-align: center; margin-top: 12px; }
         .gg-key-list { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 18px; }
         .gg-swatch { border: 1px solid #ffffff12; background: #ffffff05; padding: 9px 4px; text-align: center; }
-        .gg-dot { width: 14px; height: 14px; border-radius: 50%; margin: 0 auto 5px; }
+        .gg-dot { display: block; width: 14px; height: 14px; border-radius: 50%; margin: 0 auto 5px; }
         .gg-swatch b { display: block; font-size: 9px; font-weight: 900; color: #B8C4D2; }
 
         .gg-ladder { display: flex; flex-direction: column; gap: 6px; margin-top: 20px; }
