@@ -495,7 +495,7 @@ export default function GoldenGloveClient() {
       <div className="gg-key-list" style={{ opacity: L.coded ? 1 : 0.35 }}>
           {KINDS.map(k => (
             <span key={k} className="gg-swatch">
-              <span className="gg-dot" style={{ background: BALLS[k].light, boxShadow: `0 0 10px ${BALLS[k].light}` }} />
+              <i className="gg-dot" style={{ background: BALLS[k].light, boxShadow: `0 0 10px ${BALLS[k].light}` }} />
               <b>{BALLS[k].label}</b>
             </span>
           ))}
