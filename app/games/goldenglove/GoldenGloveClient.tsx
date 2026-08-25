@@ -35,11 +35,14 @@ const BALLS: Record<Kind, { pose: Pose; label: string; light: string; drift: num
 }
 const KINDS = Object.keys(BALLS) as Kind[]
 
-const LEVELS = [
-  { balls: 10, lightMs: 700, need: 0.9,  coded: true,  name: 'Warm-up' },
-  { balls: 10, lightMs: 500, need: 0.9,  coded: true,  name: 'Infield' },
-  { balls: 20, lightMs: 350, need: 1,    coded: true,  name: 'Gold' },
-  { balls: 20, lightMs: 250, need: 1,    coded: false, name: 'Platinum' },
+/* `plain` lists the balls whose light gives nothing away — white instead of
+   coded. Empty means every light is coded; all five means the light is only a
+   starter's gun. */
+const LEVELS: { balls: number; lightMs: number; need: number; plain: Kind[]; name: string }[] = [
+  { balls: 10, lightMs: 700, need: 0.9, plain: [], name: 'Warm-up' },
+  { balls: 10, lightMs: 500, need: 0.9, plain: [], name: 'Infield' },
+  { balls: 20, lightMs: 350, need: 1,   plain: ['left', 'right'], name: 'Gold' },
+  { balls: 20, lightMs: 250, need: 1,   plain: KINDS, name: 'Platinum' },
 ]
 const FLIGHT_MS = 900          // light going out to the ball arriving
 const POSE_HOLD = 400
