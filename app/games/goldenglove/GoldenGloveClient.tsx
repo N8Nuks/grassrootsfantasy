@@ -87,8 +87,9 @@ export default function GoldenGloveClient() {
     /* A ball straight at him needs no move, so too many of them makes the level
        a waiting game. Two to four a round, spread through it. */
     const squaresWanted = 2 + Math.floor(Math.random() * 3)
-    const wantSquare = squaresSoFar.current < squaresWanted
-      && Math.random() < squaresWanted / Math.max(1, cfg.balls - n + 1)
+    const remaining = Math.max(1, cfg.balls - n + 1)
+    const stillNeeded = Math.max(0, squaresWanted - squaresSoFar.current)
+    const wantSquare = stillNeeded > 0 && Math.random() < stillNeeded / remaining
     const pool = wantSquare ? (['straight'] as Kind[]) : KINDS.filter(k => k !== 'straight')
     const kind = pool[Math.floor(Math.random() * pool.length)]
     if (kind === 'straight') squaresSoFar.current += 1
