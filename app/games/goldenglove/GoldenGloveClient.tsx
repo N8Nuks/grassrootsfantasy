@@ -286,7 +286,7 @@ export default function GoldenGloveClient() {
         ArrowUp: 'jump', w: 'jump', W: 'jump',
         ArrowDown: 'charge', s: 'charge', S: 'charge',
       }
-      if (e.code === 'Space') { e.preventDefault(); return }
+      if (e.code === 'Space') { e.preventDefault(); answer('square'); return }
       const p = map[e.key]
       if (!p) return
       e.preventDefault()
