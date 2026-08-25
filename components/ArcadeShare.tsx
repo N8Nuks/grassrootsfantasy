@@ -34,7 +34,7 @@ export default function ArcadeShare({ lines, teamName, label = 'Share', classNam
   const name = teamName !== undefined ? teamName : fetchedName
   function buildMessage() {
     const parts: string[] = []
-    if (teamName && teamName.trim()) parts.push(teamName.trim())
+    if (name && name.trim()) parts.push(name.trim())
     for (const l of lines) {
       if (l && l.length) parts.push(l)
     }
