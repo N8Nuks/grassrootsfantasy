@@ -38,7 +38,7 @@ const KINDS = Object.keys(BALLS) as Kind[]
 const LEVELS = [
   { balls: 10, lightMs: 700, need: 0.9,  coded: true,  name: 'Warm-up' },
   { balls: 10, lightMs: 500, need: 0.9,  coded: true,  name: 'Infield' },
-  { balls: 20, lightMs: 350, need: 1,    coded: false, name: 'Gold' },
+  { balls: 20, lightMs: 350, need: 1,    coded: true,  name: 'Gold' },
   { balls: 20, lightMs: 250, need: 1,    coded: false, name: 'Platinum' },
 ]
 const FLIGHT_MS = 900          // light going out to the ball arriving
