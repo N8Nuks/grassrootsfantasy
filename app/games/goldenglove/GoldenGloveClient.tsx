@@ -97,7 +97,7 @@ export default function GoldenGloveClient() {
     const kind = pool[Math.floor(Math.random() * pool.length)]
     if (kind === 'straight') squaresSoFar.current += 1
     light.current = {
-      colour: cfg.coded ? BALLS[kind].light : '#F5F1E8',
+      colour: cfg.plain.includes(kind) ? '#F5F1E8' : BALLS[kind].light,
       until: performance.now() + cfg.lightMs,
     }
     setBallNo(n)
@@ -437,7 +437,7 @@ export default function GoldenGloveClient() {
               {passed
                 ? (isTop
                     ? `One more clean sheet at ${L.name} and it's yours.`
-                    : `Up to ${LEVELS[level + 1].name}${LEVELS[level + 1].coded ? '' : ' — the light goes white from here'}.`)
+                    : `Up to ${LEVELS[level + 1].name}${LEVELS[level + 1].plain.length > LEVELS[level].plain.length ? ' — fewer lights tell you anything from here' : ''}.`)
                 : L.need === 1
                   ? `${L.name} wants all ${L.balls}. Go again.`
                   : `You need ${Math.ceil(L.balls * L.need)} of ${L.balls}. Go again.`}
@@ -493,12 +493,15 @@ export default function GoldenGloveClient() {
           the legend. From level three the light is white and this is history. */}
       <p style={{ fontSize: '9px', fontWeight: 900, letterSpacing: '.28em', textTransform: 'uppercase',
                   color: '#4E5A6A', margin: '20px 0 8px' }}>
-        {L.coded ? 'What the light means' : 'The light is white from here'}
+        {L.plain.length === KINDS.length ? 'Every light is white from here' : 'What the light means'}
       </p>
-      <div className="gg-key-list" style={{ opacity: L.coded ? 1 : 0.35 }}>
+      <div className="gg-key-list" style={{ opacity: L.plain.length === KINDS.length ? 0.35 : 1 }}>
           {KINDS.map(k => (
             <span key={k} className="gg-swatch">
-              <i className="gg-dot" style={{ background: BALLS[k].light, boxShadow: `0 0 10px ${BALLS[k].light}` }} />
+              <i className="gg-dot" style={{
+                background: L.plain.includes(k) ? '#F5F1E8' : BALLS[k].light,
+                boxShadow: `0 0 10px ${L.plain.includes(k) ? '#F5F1E8' : BALLS[k].light}`,
+              }} />
               <b>{BALLS[k].label}</b>
             </span>
           ))}
@@ -510,7 +513,7 @@ export default function GoldenGloveClient() {
             <span className="gg-n">{i + 1}</span>
             {lv.name}
             <span style={{ marginLeft: 'auto', fontSize: '10px', letterSpacing: '.14em', textTransform: 'uppercase' }}>
-              {lv.balls} balls · {lv.need === 1 ? 'perfect' : '90%'}{lv.coded ? '' : ' · white light'}
+              {lv.balls} balls · {lv.need === 1 ? 'perfect' : '90%'}{lv.plain.length === KINDS.length ? ' · white light' : lv.plain.length > 0 ? ' · some white' : ''}
             </span>
           </span>
         ))}
