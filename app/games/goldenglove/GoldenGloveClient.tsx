@@ -280,8 +280,8 @@ export default function GoldenGloveClient() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const map: Record<string, Pose> = {
-        ArrowLeft: 'fronthand', a: 'fronthand', A: 'fronthand',
-        ArrowRight: 'backhand', d: 'backhand', D: 'backhand',
+        ArrowLeft: 'backhand', a: 'backhand', A: 'backhand',
+        ArrowRight: 'fronthand', d: 'fronthand', D: 'fronthand',
         ArrowUp: 'jump', w: 'jump', W: 'jump',
         ArrowDown: 'charge', s: 'charge', S: 'charge',
       }
