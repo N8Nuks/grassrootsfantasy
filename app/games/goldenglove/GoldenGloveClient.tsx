@@ -468,16 +468,19 @@ export default function GoldenGloveClient() {
           depth below. A ball straight at him wants nothing pressed at all. */}
       <div className="gg-pad">
         <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('backhand') }}>
-          Backhand<span>◀ LEFT</span>
+          <span className="gg-arrow">◀</span>Backhand
         </button>
-        <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('fronthand') }}>
-          Fronthand<span>RIGHT ▶</span>
-        </button>
-        <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('jump') }}>
-          Jump<span>▲ OVER HIM</span>
+        <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('square') }}>
+          <span className="gg-arrow">▬</span>Straight At&apos;em
         </button>
         <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('charge') }}>
-          Charge<span>▼ DIES SHORT</span>
+          <span className="gg-arrow">▼</span>Charge
+        </button>
+        <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('jump') }}>
+          <span className="gg-arrow">▲</span>Jump
+        </button>
+        <button className="gg-key" onPointerDown={e => { e.preventDefault(); answer('fronthand') }}>
+          <span className="gg-arrow">▶</span>Fronthand
         </button>
       </div>
 
