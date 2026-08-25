@@ -369,7 +369,7 @@ export default function GoldenGloveClient() {
           padding: 15px 4px; text-align: center; touch-action: manipulation;
         }
         .gg-key:active { background: color-mix(in srgb, var(--neon) 24%, transparent); border-color: var(--neon); }
-        .gg-key span { display: block; font-size: 8px; letter-spacing: .16em; color: #5C6878; margin-top: 3px; font-weight: 900; }
+        .gg-arrow { display: block; font-size: 13px; color: #5C6878; margin-bottom: 4px; font-weight: 400; line-height: 1; }
 
         .gg-hint { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: #3E4A58; text-align: center; margin-top: 12px; }
         .gg-key-list { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 18px; }
