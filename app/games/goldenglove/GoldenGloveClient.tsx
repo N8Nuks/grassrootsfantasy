@@ -143,7 +143,7 @@ export default function GoldenGloveClient() {
     const ok = want.pose === p
     b.caught = ok
     if (!ok) miss.current = 700
-    setFlash({ ok, label: ok ? want.label : `It was ${want.label.toLowerCase()}` })
+    setFlash({ ok, label: ok ? 'Success' : `It was ${want.label.toLowerCase()}` })
     after(900, () => setFlash(null))
     settle(ok, ballNo, level)
   }, [phase, ballNo, level, settle])
