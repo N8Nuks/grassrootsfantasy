@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 const GAMES_URL = 'grassrootsfantasy.co.nz/games'
 
@@ -13,7 +14,24 @@ type Props = {
 
 export default function ArcadeShare({ lines, teamName, label = 'Share', className = '' }: Props) {
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle')
+  
+  const [fetchedName, setFetchedName] = useState<string | null>(null)
 
+  useEffect(() => {
+    let cancelled = false
+    if (teamName !== undefined) return
+    ;(async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase
+        .from('profiles').select('team_name').eq('id', user.id).maybeSingle()
+      if (!cancelled) setFetchedName(data?.team_name ?? null)
+    })()
+    return () => { cancelled = true }
+  }, [teamName])
+
+  const name = teamName !== undefined ? teamName : fetchedName
   function buildMessage() {
     const parts: string[] = []
     if (teamName && teamName.trim()) parts.push(teamName.trim())
