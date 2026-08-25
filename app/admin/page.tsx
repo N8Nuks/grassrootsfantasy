@@ -48,12 +48,13 @@ export default async function AdminPage() {
     .map(([source, count]) => ({ source, count }))
     .sort((a, b) => a.source.localeCompare(b.source))
 
-  // Rounds scored (rounds with any user_scores)
-  const { data: scoredRounds } = await admin.from('user_scores').select('round_id, grade')
+  // Rounds scored (rounds marked provisional or confirmed)
+  const { data: scoredRounds } = await admin.from('rounds')
+    .select('id, grade').in('status', ['provisional', 'confirmed'])
   const scoredByGrade = { mens: new Set<string>(), womens: new Set<string>() }
   for (const s of scoredRounds ?? []) {
-    if (s.grade === 'mens') scoredByGrade.mens.add(s.round_id)
-    if (s.grade === 'womens') scoredByGrade.womens.add(s.round_id)
+    if (s.grade === 'mens') scoredByGrade.mens.add(s.id)
+    if (s.grade === 'womens') scoredByGrade.womens.add(s.id)
   }
 
   // Latest scored round summary per grade
