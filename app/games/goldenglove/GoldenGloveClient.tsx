@@ -362,7 +362,7 @@ export default function GoldenGloveClient() {
           background: #05060AF2; padding: 24px;
         }
 
-        .gg-pad { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
+        .gg-pad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 12px; }
         .gg-key {
           background: #10141F; border: 1px solid #ffffff18; color: #F5F1E8; cursor: pointer;
           font-family: var(--font-heading); font-weight: 900; font-size: 11px; line-height: 1.2;
