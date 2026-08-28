@@ -29,7 +29,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
             .eq('grade', grade)
             .order('rounds(round_number)', { ascending: false })
             .limit(1)
-        : supabase.from('user_scores').select('owner_id, points').eq('grade', grade),
+        : supabase.rpc('season_totals', { p_grade: grade }),
   ])
   const siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
   const T = theme(grade, siteTheme)
