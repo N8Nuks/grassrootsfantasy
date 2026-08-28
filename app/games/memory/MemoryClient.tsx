@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { splitName } from '@/lib/names'
+import ArcadeShare from '@/components/ArcadeShare'
 
 export type MemoryPlayer = {
   id: string; name: string; club: string; tier: string
@@ -208,6 +209,9 @@ export default function MemoryClient({ pool }: { pool: MemoryPlayer[] }) {
           <p className="ar-num" style={{ fontSize: '50px', color: '#F5F1E8', textShadow: 'none', margin: '12px 0 4px' }}>{mm(elapsed)}</p>
           <p style={{ fontSize: '11px', color: '#7D8B9C' }}>{moves} moves · {level.pairs} pairs</p>
           <button className="ar-btn" onClick={() => deal(level)} style={{ marginTop: '22px' }}><span>Shuffle again</span></button>
+          <div style={{ marginTop: '12px' }}>
+            <ArcadeShare lines={[`Card Sharp — ${level.label.toLowerCase()} in ${mm(elapsed)}, ${moves} moves`]} />
+          </div>
         </div>
       )}
     </>
