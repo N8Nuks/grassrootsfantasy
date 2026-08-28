@@ -107,6 +107,7 @@ export default function DailyClient({ answer, pool }: { answer: DailyPlayer; poo
         .dl-clue-k { font-size: 9px; font-weight: 900; letter-spacing: 0.28em; text-transform: uppercase; color: #5C6878; }
         .dl-clue-v { font-family: var(--font-heading); font-weight: 900; font-size: 15px; color: #F5F1E8; text-align: right; }
         .dl-locked { letter-spacing: 0.3em; color: #ffffff20; font-weight: 900; }
+        .dl-unused { color: #ffffff38; font-weight: 900; font-style: italic; }
         .dl-open { animation: dl-flick 320ms steps(2); }
         @keyframes dl-flick { 0%,60% { opacity: 0.25; } 61%,100% { opacity: 1; } }
 
@@ -168,12 +169,17 @@ export default function DailyClient({ answer, pool }: { answer: DailyPlayer; poo
       <div className="ar-panel" style={{ marginBottom: '22px' }}>
         {clues.map((c, i) => {
           const isOpen = i < unlocked
+          /* Once it's over, everything shows — but the ones you never needed
+             sit back so you can see how much you had left in hand. */
+          const unused = done && !isOpen
           return (
             <div key={c.label} className="dl-clue">
               <span className="dl-clue-k">{c.label}</span>
               {isOpen
                 ? <span className="dl-clue-v dl-open">{c.value}</span>
-                : <span className="dl-clue-v dl-locked">·····</span>}
+                : unused
+                  ? <span className="dl-clue-v dl-unused">{c.value}</span>
+                  : <span className="dl-clue-v dl-locked">·····</span>}
             </div>
           )
         })}
