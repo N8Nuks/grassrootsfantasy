@@ -26,9 +26,21 @@ export default function Footer() {
         <a href="https://blackdiamondlabs.co.nz" className="bdl-shimmer text-xs font-semibold text-center hover:opacity-80 transition-opacity">
           Platform delivered by Black Diamond Labs Ltd
         </a>
-        <a href="mailto:info@grassrootsfantasy.co.nz" className="text-xs text-[#F5F1E8]/40 hover:text-[#F5F1E8]/70 transition-colors">
-          info@grassrootsfantasy.co.nz
-        </a>
+        <div className="flex items-center gap-4">
+          <a href="mailto:info@grassrootsfantasy.co.nz" className="text-xs text-[#F5F1E8]/40 hover:text-[#F5F1E8]/70 transition-colors">
+            info@grassrootsfantasy.co.nz
+          </a>
+          <a href="https://instagram.com/grassrootsfantasy" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs text-[#F5F1E8]/40 hover:text-[#F5F1E8]/70 transition-colors">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              className="h-3.5 w-3.5" aria-hidden="true">
+              <rect x="2" y="2" width="20" height="20" rx="5" />
+              <circle cx="12" cy="12" r="4" />
+              <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+            </svg>
+            @grassrootsfantasy
+          </a>
+        </div>
       </div>
     </footer>
   )
