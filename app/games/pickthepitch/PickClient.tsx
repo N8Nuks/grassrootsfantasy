@@ -413,7 +413,7 @@ export default function PickClient() {
         /* Both figures lift off the dark field, and the batter is held back
            from the middle so he can't crowd the catcher on a narrow screen. */
         .pk-batter {
-          position: absolute; bottom: 6px; height: 108%; max-width: 52%; width: auto; object-fit: contain;
+          position: absolute; bottom: 6px; height: 96%; max-width: 46%; width: auto; object-fit: contain;
           filter: brightness(0.55) contrast(1.2) drop-shadow(0 0 16px #00000090);
         }
         .pk-hand { position: absolute; left: 50%; bottom: 28%; transform: translateX(-50%); width: 44px; height: 60px; filter: drop-shadow(0 0 12px #00000090); }
@@ -459,7 +459,11 @@ export default function PickClient() {
         .pk-keyitem { background: #0C0F16; border: 1px solid #ffffff12; padding: 5px 1px 4px; text-align: center; }
         .pk-keyitem svg { height: 34px; width: 100%; }
         .pk-keyitem span { display: block; font-size: 7px; font-weight: 900; color: #7D8B9C; margin-top: 2px; line-height: 1.1; }
-        @media (max-width: 560px) { .pk-keyitem svg { height: 26px; } }
+        /* On a phone the field is narrow, so the batter needs more height to
+           read properly beside the catcher. On PC the original size was right. */
+        @media (max-width: 560px) {
+          .pk-batter { height: 108%; max-width: 56%; }
+        }
 
         .pk-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
         .pk-lives { display: flex; align-items: center; gap: 7px; font-size: 9px; font-weight: 900; letter-spacing: .24em; text-transform: uppercase; color: #5C6878; }
@@ -523,8 +527,8 @@ export default function PickClient() {
         <img className="pk-batter" alt=""
           src={lefty ? '/batter-lh-pick.png' : '/batter-rh-pick.png'}
           style={lefty
-            ? { left: '1%' }
-            : { right: '1%' }} />
+            ? { left: '-4%' }
+            : { right: '-4%' }} />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="pk-catcher" src="/catcher-pick.png" alt="" />
         <span className="pk-hand"><Hand shape={shownIdx >= 0 ? seq[shownIdx] ?? null : null} /></span>
