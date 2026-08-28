@@ -43,14 +43,17 @@ const TIERS = [
 
 /* One level of the ladder. The first three teach; the rest turn it up. */
 function levelCfg(lv: number) {
-  const t = (lv - 1) / (MAX_LEVEL - 1)
+  /* The old ramp topped out at twelve. It now tops out at nine, and eveything
+     above that is new ground — faster, tighter, and thick with rares. */
+  const t = Math.min(1, (lv - 1) / 8)
+  const over = Math.max(0, lv - 9) / 3        // 0 through 1 across 10, 11, 12
   const species: 'fielder' | 'runner' | 'mixed' =
     lv === 1 ? 'fielder' : lv === 2 ? 'runner' : 'mixed'
   return {
     species,
-    speed: 0.000150 + t * 0.000165,
-    gap: 1600 - t * 780,
-    rare: lv < 3 ? 0.04 : 0.05 + t * 0.26,
+    speed: 0.000150 + t * 0.000165 + over * 0.000120,
+    gap: 1600 - t * 780 - over * 300,
+    rare: lv < 3 ? 0.04 : 0.05 + t * 0.26 + over * 0.24,
     elite: lv < 3 ? 0.18 : 0.20 + t * 0.16,
   }
 }
@@ -618,10 +621,10 @@ export default function FieldingClient() {
             <p style={{ fontFamily: 'var(--font-heading)', fontWeight: 900, textTransform: 'uppercase',
                         fontSize: 'clamp(24px, 7vw, 42px)', color: '#5CFF6B', transform: 'skewX(-7deg)',
                         textShadow: '0 0 36px #5CFF6B90' }}>
-              All twelve
+              Golden Arm!
             </p>
             <p style={{ fontSize: '12px', color: '#B8C4D2', maxWidth: '30ch', lineHeight: 1.7, marginTop: '10px' }}>
-              Nothing crossed the line all night.
+              Twelve levels and not one of them got past you. Well done!
             </p>
             <div style={{ marginTop: '16px' }}>
               <ArcadeShare lines={[`Take the Field — all ${MAX_LEVEL} levels, nothing past me`]} />
