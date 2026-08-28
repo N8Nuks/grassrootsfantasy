@@ -402,7 +402,7 @@ export default function PickClient() {
         .pk-dirt { position: absolute; left: 50%; bottom: -40px; transform: translateX(-50%); width: 122%; height: 116px; border-radius: 50%; background: #2A1D14; opacity: .8; }
         /* Home plate and a suggestion of the box, painted on the dirt behind
            both figures — the batter's feet cross it, which is what feet do. */
-        .pk-plate { position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%); width: 42%; max-width: 300px; height: 52px; pointer-events: none; opacity: .42; }
+        .pk-plate { position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%); width: 56%; max-width: 400px; height: 52px; pointer-events: none; opacity: .42; }
         .pk-catcher {
           position: absolute; left: 50%; bottom: 20%; transform: translateX(-50%);
           height: 60%; max-width: 48%; width: auto; object-fit: contain;
@@ -513,7 +513,7 @@ export default function PickClient() {
         <span className="pk-dirt" />
         {/* Home plate and the box, painted on the dirt behind both figures */}
         <svg className="pk-plate" viewBox="0 0 200 60" aria-hidden="true">
-          <polygon points="78,14 122,14 130,28 100,44 70,28" fill="#EFEADC" />
+          <polygon points="100,14 130,30 122,44 78,44 70,30" fill="#EFEADC" />
           <path d="M14 8 L14 54" stroke="#EFEADC" strokeWidth="3" fill="none" opacity=".55" />
           <path d="M186 8 L186 54" stroke="#EFEADC" strokeWidth="3" fill="none" opacity=".55" />
           <path d="M14 54 L186 54" stroke="#EFEADC" strokeWidth="3" fill="none" opacity=".35" />
