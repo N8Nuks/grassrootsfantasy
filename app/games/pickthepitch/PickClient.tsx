@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
+import ArcadeShare from '@/components/ArcadeShare'
 
 /* You are the runner on second, and the catcher's hand is in plain sight
    between his knees. Nobody tells you the code.
@@ -607,6 +608,14 @@ export default function PickClient() {
             {finished
               ? <button className="ar-btn" onClick={restartAll} style={{ marginTop: '14px' }}><span>Start again</span></button>
               : <button className="ar-btn" onClick={nextLevel} style={{ marginTop: '14px' }}><span>Level {level + 2}</span></button>}
+            <div style={{ marginTop: '12px' }}>
+              <ArcadeShare lines={[
+                finished
+                  ? 'Pick the Pitch — all four codes cracked'
+                  : `Pick the Pitch — level ${level + 1} cracked`,
+                'Walk-off home run',
+              ]} />
+            </div>
           </div>
         )}
       </div>
