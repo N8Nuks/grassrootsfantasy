@@ -265,13 +265,28 @@ export default function SnakeClient({ clubs, initialClub }: {
      a swipe that drifts off the canvas otherwise drags the whole screen. */
   useEffect(() => {
     if (state !== 'playing') return
-    const prev = document.body.style.overscrollBehavior
-    const prevTouch = document.body.style.touchAction
-    document.body.style.overscrollBehavior = 'none'
-    document.body.style.touchAction = 'none'
+    const y = window.scrollY
+    const b = document.body.style
+    const prev = {
+      position: b.position, top: b.top, left: b.left, right: b.right,
+      width: b.width, overscroll: b.overscrollBehavior, touch: b.touchAction,
+    }
+    b.position = 'fixed'
+    b.top = `-${y}px`
+    b.left = '0'
+    b.right = '0'
+    b.width = '100%'
+    b.overscrollBehavior = 'none'
+    b.touchAction = 'none'
     return () => {
-      document.body.style.overscrollBehavior = prev
-      document.body.style.touchAction = prevTouch
+      b.position = prev.position
+      b.top = prev.top
+      b.left = prev.left
+      b.right = prev.right
+      b.width = prev.width
+      b.overscrollBehavior = prev.overscroll
+      b.touchAction = prev.touch
+      window.scrollTo(0, y)
     }
   }, [state])
 
