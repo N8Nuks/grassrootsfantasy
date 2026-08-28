@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import ArcadeShare from '@/components/ArcadeShare'
 
 /* The tier ladder. The first four are the real card tiers; past a 2WP A the
    game keeps going into ranks that don't exist in the competition, which is
@@ -278,6 +279,13 @@ export default function MergeClient() {
             <p className="ar-num" style={{ fontSize: '52px', color: '#F5F1E8', textShadow: 'none', margin: '10px 0 2px' }}>{score}</p>
             <p style={{ fontSize: '11px', color: '#7D8B9C' }}>Best card: {peakMeta.label}</p>
             <button className="ar-btn" onClick={start} style={{ marginTop: '20px' }}><span>New board</span></button>
+            <div style={{ marginTop: '10px' }}>
+              <ArcadeShare lines={[
+                won
+                  ? `Tier Up — Immortal, ${score}`
+                  : `Tier Up — ${score}, best card ${peakMeta.label}`,
+              ]} />
+            </div>
           </div>
         )}
       </div>
