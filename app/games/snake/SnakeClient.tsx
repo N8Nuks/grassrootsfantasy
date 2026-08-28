@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
+import ArcadeShare from '@/components/ArcadeShare'
 
 export type ClubOption = { id: string; name: string; crest: string; colours: [string, string] }
 
@@ -436,6 +437,14 @@ export default function SnakeClient({ clubs, initialClub }: {
             <button className="ar-btn" onClick={begin} style={{ marginTop: '18px' }}>
               <span>{state === 'over' ? 'Go again' : 'Start'}</span>
             </button>
+            {state === 'over' && (
+              <div style={{ marginTop: '10px' }}>
+                <ArcadeShare lines={[
+                  `Diamond Snake — ${score}${club ? `, ${club.name} colours` : ''}`,
+                  `Reached ${LEVELS[level].name}`,
+                ]} />
+              </div>
+            )}
           </div>
         )}
       </div>
