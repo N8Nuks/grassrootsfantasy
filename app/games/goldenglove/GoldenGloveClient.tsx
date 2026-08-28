@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
+import ArcadeShare from '@/components/ArcadeShare'
  
 /* A reaction drill. You're behind the plate looking out at the shortstop; balls
    fire from below the frame and go to his backhand, his fronthand, straight at
@@ -393,14 +394,6 @@ export default function GoldenGloveClient() {
     beginLevel(Math.max(0, level - 1))
   }
  
-  async function share() {
-    const text = `I conquered Golden Glove in the Grassroots Fantasy Arcade — two perfect runs at Platinum.\ngrassrootsfantasy.co.nz/games`
-    if (navigator.share) {
-      try { await navigator.share({ text }) } catch { /* dismissed */ }
-    } else {
-      await navigator.clipboard.writeText(text)
-    }
-  }
  
   const pct = L.balls > 0 ? Math.round((clean / Math.max(ballNo, 1)) * 100) : 0
  
@@ -535,7 +528,9 @@ export default function GoldenGloveClient() {
             <p style={{ fontSize: '12px', color: '#B8C4D2', maxWidth: '30ch', lineHeight: 1.7, marginTop: '10px' }}>
               Two perfect runs at Platinum. Nobody gets one of these by accident.
             </p>
-            <button className="ar-btn" onClick={share} style={{ marginTop: '18px' }}><span>Share it</span></button>
+            <div style={{ marginTop: '18px' }}>
+              <ArcadeShare lines={['Golden Glove — Platinum, conquered', 'Two perfect runs, no drops']} />
+            </div>
             <button className="ar-btn gg-ghost" onClick={() => { setPerfectRuns(0); beginLevel(0) }}
               style={{ marginTop: '10px' }}>
               <span>Start again</span>
