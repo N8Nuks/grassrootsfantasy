@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { splitName } from '@/lib/names'
+import ArcadeShare from '@/components/ArcadeShare'
 
 export type DailyPlayer = {
   name: string
@@ -248,7 +249,21 @@ export default function DailyClient({ answer, pool }: { answer: DailyPlayer; poo
           <p style={{ fontSize: '11px', color: '#7D8B9C', letterSpacing: '0.1em' }}>
             {answer.club} · {answer.grade} · {answer.seasonPoints} season points
           </p>
-          <p style={{ fontSize: '12px', color: '#5C6878', marginTop: '22px' }}>
+          <div style={{ marginTop: '22px' }}>
+            <ArcadeShare
+              lines={[
+                won
+                  ? `Player of the Day — got it in ${guesses.length}`
+                  : 'Player of the Day — no luck today',
+                guesses.map((g, i) =>
+                  g.toLowerCase() === answer.name.toLowerCase()
+                    ? '🟩'
+                    : i === 0 ? '⬜' : '🟨'
+                ).join(''),
+              ]}
+            />
+          </div>
+          <p style={{ fontSize: '12px', color: '#5C6878', marginTop: '18px' }}>
             A new player at midnight.
           </p>
         </div>
