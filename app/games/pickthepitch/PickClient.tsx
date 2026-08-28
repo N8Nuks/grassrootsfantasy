@@ -399,7 +399,9 @@ export default function PickClient() {
           border: 1px solid color-mix(in srgb, var(--neon) 34%, transparent);
           box-shadow: 0 0 0 1px #ffffff08 inset, 0 18px 40px #00000090;
         }
-        .pk-dirt { position: absolute; left: 50%; bottom: -40px; transform: translateX(-50%); width: 122%; height: 116px; border-radius: 50%; background: #2A1D14; opacity: .8; }
+        /* Home plate and a suggestion of the box, painted on the dirt behind
+           both figures — the batter's feet cross it, which is what feet do. */
+        .pk-plate { position: absolute; left: 50%; bottom: 15%; transform: translateX(-50%); width: 30%; height: 46px; pointer-events: none; opacity: .5; }
         .pk-catcher {
           position: absolute; left: 50%; bottom: 20%; transform: translateX(-50%);
           height: 60%; max-width: 48%; width: auto; object-fit: contain;
