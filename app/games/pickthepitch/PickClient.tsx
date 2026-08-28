@@ -401,9 +401,9 @@ export default function PickClient() {
         }
         .pk-dirt { position: absolute; left: 50%; bottom: -40px; transform: translateX(-50%); width: 122%; height: 116px; border-radius: 50%; background: #2A1D14; opacity: .8; }
         .pk-catcher {
-          position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%);
-          height: 68%; max-width: 52%; width: auto; object-fit: contain;
-          filter: brightness(0.3) contrast(1.4) drop-shadow(0 0 22px #00000090);
+          position: absolute; left: 50%; bottom: 20%; transform: translateX(-50%);
+          height: 60%; max-width: 48%; width: auto; object-fit: contain;
+          filter: brightness(0.62) contrast(1.15) drop-shadow(0 0 22px #00000090);
         }
         /* The batter stands upright next to a crouching catcher, so he reads
            taller — scaled to match a real standing figure beside a crouch. */
@@ -411,9 +411,9 @@ export default function PickClient() {
            from the middle so he can't crowd the catcher on a narrow screen. */
         .pk-batter {
           position: absolute; bottom: 6px; height: 96%; max-width: 46%; width: auto; object-fit: contain;
-          filter: brightness(0.22) contrast(1.5) drop-shadow(0 0 16px #00000090);
+          filter: brightness(0.55) contrast(1.2) drop-shadow(0 0 16px #00000090);
         }
-        .pk-hand { position: absolute; left: 50%; bottom: 15%; transform: translateX(-50%); width: 44px; height: 60px; filter: drop-shadow(0 0 12px #00000090); }
+        .pk-hand { position: absolute; left: 50%; bottom: 28%; transform: translateX(-50%); width: 44px; height: 60px; filter: drop-shadow(0 0 12px #00000090); }
         .pk-status { position: absolute; left: 0; right: 0; bottom: 0; padding: 8px; text-align: center; background: #05060Ad9; }
         .pk-status span { font-size: 9px; font-weight: 900; letter-spacing: .28em; text-transform: uppercase; color: var(--neon); }
         .pk-pop { position: absolute; top: 12px; right: 12px; background: #05060Aee; padding: 9px 14px; text-align: right; animation: pk-in 240ms ease; }
