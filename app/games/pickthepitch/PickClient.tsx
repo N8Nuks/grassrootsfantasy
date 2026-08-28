@@ -513,7 +513,7 @@ export default function PickClient() {
         <span className="pk-dirt" />
         {/* Home plate and the box, painted on the dirt behind both figures */}
         <svg className="pk-plate" viewBox="0 0 200 60" aria-hidden="true">
-          <polygon points="100,14 130,30 122,44 78,44 70,30" fill="#EFEADC" />
+          <polygon points="100,12 130,30 130,46 70,46 70,30" fill="#EFEADC" />
           <path d="M14 8 L14 54" stroke="#EFEADC" strokeWidth="3" fill="none" opacity=".55" />
           <path d="M186 8 L186 54" stroke="#EFEADC" strokeWidth="3" fill="none" opacity=".55" />
           <path d="M14 54 L186 54" stroke="#EFEADC" strokeWidth="3" fill="none" opacity=".35" />
