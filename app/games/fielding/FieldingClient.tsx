@@ -588,7 +588,7 @@ export default function FieldingClient() {
             </button>
             {level >= 6 && (
               <div style={{ marginTop: '10px' }}>
-                <ArcadeShare lines={[`Take the Field — level ${level} of ${MAX_LEVEL}`]} />
+                <ArcadeShare lines={[`Knock 'em Down — level ${level} of ${MAX_LEVEL}`]} />
               </div>
             )}
           </div>
@@ -610,7 +610,7 @@ export default function FieldingClient() {
             </button>
             {level >= 6 && (
               <div style={{ marginTop: '10px' }}>
-                <ArcadeShare lines={[`Take the Field — cleared level ${level} of ${MAX_LEVEL}`]} />
+                <ArcadeShare lines={[`Knock 'em Down — cleared level ${level} of ${MAX_LEVEL}`]} />
               </div>
             )}
           </div>
@@ -627,7 +627,7 @@ export default function FieldingClient() {
               Twelve levels and not one of them got past you. Well done!
             </p>
             <div style={{ marginTop: '16px' }}>
-              <ArcadeShare lines={[`Take the Field — all ${MAX_LEVEL} levels, nothing past me`]} />
+              <ArcadeShare lines={[`Knock 'em Down — all ${MAX_LEVEL} levels, nothing past me`]} />
             </div>
             <button className="ar-btn fd-ghost" onClick={() => beginLevel(1)} style={{ marginTop: '10px' }}>
               <span>Start again</span>
