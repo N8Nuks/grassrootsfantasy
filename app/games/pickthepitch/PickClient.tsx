@@ -511,6 +511,13 @@ export default function PickClient() {
       <div className="pk-stage">
       <div className="pk-field">
         <span className="pk-dirt" />
+        {/* Home plate and the box, painted on the dirt behind both figures */}
+        <svg className="pk-plate" viewBox="0 0 200 60" aria-hidden="true">
+          <polygon points="78,14 122,14 130,28 100,44 70,28" fill="#EFEADC" />
+          <path d="M14 8 L14 54" stroke="#EFEADC" strokeWidth="3" fill="none" opacity=".55" />
+          <path d="M186 8 L186 54" stroke="#EFEADC" strokeWidth="3" fill="none" opacity=".55" />
+          <path d="M14 54 L186 54" stroke="#EFEADC" strokeWidth="3" fill="none" opacity=".35" />
+        </svg>
         {/* Batter stands on the side he bats from, facing the plate in the middle */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="pk-batter" alt=""
@@ -521,7 +528,6 @@ export default function PickClient() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="pk-catcher" src="/catcher-pick.png" alt="" />
         <span className="pk-hand"><Hand shape={shownIdx >= 0 ? seq[shownIdx] ?? null : null} /></span>
-
         {phase === 'signals' && !paused && (
           <div className="pk-status"><span>{shownIdx >= 0 ? `Signal ${shownIdx + 1} of ${seq.length}` : '·'}</span></div>
         )}
