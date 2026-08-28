@@ -1,6 +1,7 @@
 'use client'
 import { useState, useCallback } from 'react'
 import { splitName } from '@/lib/names'
+import ArcadeShare from '@/components/ArcadeShare'
 
 export type GamePlayer = {
   id: string
@@ -179,6 +180,9 @@ export default function HigherClient({ pool }: { pool: GamePlayer[] }) {
           <p className="ar-num" style={{ fontSize: '64px', color: '#F5F1E8', margin: '16px 0 6px', textShadow: 'none' }}>{streak}</p>
           <p style={{ fontSize: '10px', letterSpacing: '0.26em', textTransform: 'uppercase', color: '#5C6878' }}>in a row</p>
           <button className="ar-btn" onClick={restart} style={{ marginTop: '28px' }}><span>Go again</span></button>
+          <div style={{ marginTop: '12px' }}>
+            <ArcadeShare lines={[`Higher or Lower — ${streak} in a row`]} />
+          </div>
         </div>
       ) : (
         <>
