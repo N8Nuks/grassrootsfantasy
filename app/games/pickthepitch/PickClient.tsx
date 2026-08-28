@@ -413,7 +413,7 @@ export default function PickClient() {
         /* Both figures lift off the dark field, and the batter is held back
            from the middle so he can't crowd the catcher on a narrow screen. */
         .pk-batter {
-          position: absolute; bottom: 6px; height: 96%; max-width: 46%; width: auto; object-fit: contain;
+          position: absolute; bottom: 6px; height: 108%; max-width: 52%; width: auto; object-fit: contain;
           filter: brightness(0.55) contrast(1.2) drop-shadow(0 0 16px #00000090);
         }
         .pk-hand { position: absolute; left: 50%; bottom: 28%; transform: translateX(-50%); width: 44px; height: 60px; filter: drop-shadow(0 0 12px #00000090); }
