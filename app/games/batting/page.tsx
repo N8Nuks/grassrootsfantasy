@@ -107,8 +107,4 @@ export default function LegendsCage() {
       <LegendsClient batters={batters} pitchers={pitchers} />
     </ArcadeShell>
   )
-}>
-      <LegendsClient batters={batters} pitchers={pitchers} />
-    </ArcadeShell>
-  )
 }
