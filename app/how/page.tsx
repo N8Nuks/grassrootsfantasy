@@ -189,6 +189,31 @@ const groups = [
       },
     ],
   },
+  {
+    title: 'On your phone',
+    items: [
+      {
+        q: 'Is there an app to download?',
+        a: 'There\u2019s no App Store or Play Store download — Grassroots Fantasy installs straight from the website and then behaves like any other app. No store account, no update prompts, and it takes a fraction of the space.',
+      },
+      {
+        q: 'How do I add it to my home screen on iPhone?',
+        a: 'Open grassrootsfantasy.co.nz in Safari — it has to be Safari, not Chrome. Tap the Share button at the bottom of the screen, scroll down the list, and tap Add to Home Screen. Name it whatever you like and tap Add. The icon appears with your other apps.',
+      },
+      {
+        q: 'How do I add it to my home screen on Android?',
+        a: 'Open grassrootsfantasy.co.nz in Chrome. You\u2019ll usually get a prompt at the bottom offering to install — tap it. If it doesn\u2019t appear, tap the three dots at the top right and choose Add to Home screen or Install app.',
+      },
+      {
+        q: 'How do I remove it?',
+        a: 'Same as any app — press and hold the icon on your home screen and choose Remove App or Uninstall. Removing it doesn\u2019t touch your team, your cards, or your score. Sign back in any time and everything is where you left it.',
+      },
+      {
+        q: 'I can\u2019t delete it — holding the icon does nothing',
+        a: 'This one catches people out and it isn\u2019t our app misbehaving. On iPhone, go to Settings, then Screen Time, then Content & Privacy Restrictions, then iTunes & App Store Purchases, and check Deleting Apps. If it\u2019s set to Don\u2019t Allow, it silently blocks every way of deleting anything — no error, no message, the option just isn\u2019t there. Set it to Allow and the icon deletes normally.',
+      },
+    ],
+  },
 ]
 
 // Phone-framed screenshot
