@@ -411,7 +411,24 @@ export default function GoldenGloveClient() {
     return () => window.removeEventListener('keydown', onKey)
   }, [answer])
  
+  /* Black Diamond runs outside the ladder — no level, no light, twelve balls. */
+  function beginBlackDiamond() {
+    clearTimers()
+    bdRef.current = true
+    setBlackDiamond(true)
+    ball.current = null
+    light.current = null
+    miss.current = 0
+    squaresSoFar.current = 0
+    pose.current = 'ready'
+    setClean(0); setBallNo(0); setFlash(null)
+    setPhase('live')
+    after(900, () => throwBall(1, LEVELS.length - 1))
+  }
+
   function beginLevel(lv: number) {
+    bdRef.current = false
+    setBlackDiamond(false)
     clearTimers()
     ball.current = null
     light.current = null
@@ -537,6 +554,11 @@ export default function GoldenGloveClient() {
             <button className="ar-btn" onClick={() => beginLevel(0)} style={{ marginTop: '16px' }}>
               <span>Take the field</span>
             </button>
+            {bdUnlocked && (
+              <button className="ar-btn gg-ghost" onClick={beginBlackDiamond} style={{ marginTop: '10px' }}>
+                <span>Black Diamond{bdWon ? ' · taken' : ''}</span>
+              </button>
+            )}
           </div>
         )}
  
@@ -582,6 +604,13 @@ export default function GoldenGloveClient() {
             <div style={{ marginTop: '18px' }}>
               <ArcadeShare lines={['Golden Glove — Platinum, conquered', 'Two perfect runs, no drops']} />
             </div>
+            <button className="ar-btn gg-ghost" onClick={() => {
+              try { localStorage.setItem(BD_KEY, '1') } catch { /* blocked */ }
+              setBdUnlocked(true)
+              beginBlackDiamond()
+            }} style={{ marginTop: '10px' }}>
+              <span>Black Diamond</span>
+            </button>
             <button className="ar-btn gg-ghost" onClick={() => { setPerfectRuns(0); beginLevel(0) }}
               style={{ marginTop: '10px' }}>
               <span>Start again</span>
