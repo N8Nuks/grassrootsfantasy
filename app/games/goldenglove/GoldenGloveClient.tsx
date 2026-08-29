@@ -591,6 +591,47 @@ export default function GoldenGloveClient() {
           </div>
         )}
  
+                {phase === 'bdEnd' && (
+          <div className="gg-overlay">
+            <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '.32em',
+                        textTransform: 'uppercase', color: '#FF4D4D' }}>
+              Black Diamond holds
+            </p>
+            <p className="ar-num" style={{ fontSize: '46px', color: '#F5F1E8', textShadow: 'none', margin: '10px 0 2px' }}>
+              {clean}/{BD_BALLS}
+            </p>
+            <p style={{ fontSize: '12px', color: '#7D8B9C', maxWidth: '32ch', lineHeight: 1.6 }}>
+              No light, no warning, and all twelve or nothing. Go again.
+            </p>
+            <button className="ar-btn" onClick={beginBlackDiamond} style={{ marginTop: '16px' }}>
+              <span>Go again</span>
+            </button>
+            <button className="ar-btn gg-ghost" onClick={() => beginLevel(0)} style={{ marginTop: '10px' }}>
+              <span>Back to the ladder</span>
+            </button>
+          </div>
+        )}
+
+        {phase === 'bdWon' && (
+          <div className="gg-overlay">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/bdl-diamond.webp" alt="" style={{ width: '96px', height: 'auto', marginBottom: '6px' }} />
+            <p style={{ fontFamily: 'var(--font-heading)', fontWeight: 900, textTransform: 'uppercase',
+                        fontSize: 'clamp(22px, 7vw, 38px)', color: '#C9CDD4', transform: 'skewX(-7deg)',
+                        textShadow: '0 0 40px #C9CDD470' }}>
+              Black Diamond
+            </p>
+            <p style={{ fontSize: '12px', color: '#B8C4D2', maxWidth: '30ch', lineHeight: 1.7, marginTop: '8px' }}>
+              Twelve balls, no light on any of them, and not one got past you.
+            </p>
+            <div style={{ marginTop: '16px' }}>
+              <ArcadeShare lines={['Golden Glove — Black Diamond', 'Twelve blind, none dropped']} />
+            </div>
+            <button className="ar-btn gg-ghost" onClick={() => beginLevel(0)} style={{ marginTop: '10px' }}>
+              <span>Start again</span>
+            </button>
+          </div>
+        )}
         {phase === 'conquered' && (
           <div className="gg-overlay">
             <p style={{ fontFamily: 'var(--font-heading)', fontWeight: 900, textTransform: 'uppercase',
