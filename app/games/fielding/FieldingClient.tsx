@@ -302,10 +302,10 @@ export default function FieldingClient() {
       const k = 1 - p.life / 800
       ctx.save()
       ctx.globalAlpha = Math.max(0, 1 - k * k)
-      ctx.font = `900 ${Math.round(H * 0.050)}px var(--font-heading), sans-serif`
+      ctx.font = `900 ${Math.round(H * 0.250)}px var(--font-heading), sans-serif`
       ctx.textAlign = 'center'
       ctx.fillStyle = p.colour
-      ctx.shadowColor = p.colour; ctx.shadowBlur = 18
+      ctx.shadowColor = p.colour; ctx.shadowBlur = 40
       ctx.fillText(p.text, xAt(p.x, 0.8), yAt(0.8) - k * H * 0.12)
       ctx.restore()
     }
