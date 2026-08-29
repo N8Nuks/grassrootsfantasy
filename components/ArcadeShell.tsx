@@ -4,6 +4,7 @@
 
    Each game brings its own neon, passed in as `neon`, which tints the haze,
    the headings and every control on the page. */
+import ArcadeSignIn from './ArcadeSignIn'   
 export default function ArcadeShell({ neon, eyebrow, title, children }: {
   neon: string
   eyebrow: string
@@ -113,6 +114,7 @@ export default function ArcadeShell({ neon, eyebrow, title, children }: {
           <p className="ar-eyebrow">{eyebrow}</p>
           <h1 className="ar-title">{title}</h1>
           {children}
+          <ArcadeSignIn />
           <p className="ar-foot">Grassroots Fantasy Arcade</p>
         </div>
       </div>
