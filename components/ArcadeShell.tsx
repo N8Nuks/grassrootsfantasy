@@ -4,11 +4,13 @@
 
    Each game brings its own neon, passed in as `neon`, which tints the haze,
    the headings and every control on the page. */
-import ArcadeSignIn from './ArcadeSignIn'   
-export default function ArcadeShell({ neon, eyebrow, title, children }: {
+import ArcadeSignIn from './ArcadeSignIn'
+import ViewTicker from './ViewTicker'   
+export default function ArcadeShell({ neon, eyebrow, title, page, children }: {
   neon: string
   eyebrow: string
   title: string
+  page?: string
   children: React.ReactNode
 }) {
   return (
@@ -115,6 +117,7 @@ export default function ArcadeShell({ neon, eyebrow, title, children }: {
           <h1 className="ar-title">{title}</h1>
           {children}
           <ArcadeSignIn />
+          {page && <ViewTicker page={page} accent={neon} />}
           <p className="ar-foot">Grassroots Fantasy Arcade</p>
         </div>
       </div>
