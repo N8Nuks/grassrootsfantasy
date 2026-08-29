@@ -24,7 +24,7 @@ export default function GuessTheSeason() {
   }).filter(c => c.rows.length >= 3)
 
   return (
-    <ArcadeShell neon={NEON} eyebrow="Daily · From the archive" title="Guess the Season">
+    <ArcadeShell neon={NEON} eyebrow="Daily · From the archive" title="Guess the Season" page="game-season">
       {cards.length < 4
         ? <p style={{ color: '#8FA0B4', fontSize: '13px' }}>Not enough on the Honours Board yet.</p>
         : <SeasonClient cards={cards} />}

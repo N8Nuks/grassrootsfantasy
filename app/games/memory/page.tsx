@@ -35,7 +35,7 @@ export default async function Memory() {
     .slice(0, 40)
 
   return (
-    <ArcadeShell neon={NEON} eyebrow="Memory · Find the pairs" title="Card Sharp">
+    <ArcadeShell neon={NEON} eyebrow="Memory · Find the pairs" title="Card Sharp" page="game-memory">
       {pool.length < 8
         ? <p style={{ color: '#8FA0B4', fontSize: '13px' }}>Not enough cards yet — this one opens as the season fills out.</p>
         : <MemoryClient pool={pool} />}

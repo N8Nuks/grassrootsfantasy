@@ -69,7 +69,7 @@ export default async function Daily() {
     .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
-    <ArcadeShell neon={NEON} eyebrow="Daily · One shot" title="Who is it?">
+    <ArcadeShell neon={NEON} eyebrow="Daily · One shot" title="Who is it?" page="game-daily">
       <DailyClient answer={answer} pool={pool} />
     </ArcadeShell>
   )

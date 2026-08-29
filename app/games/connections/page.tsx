@@ -91,7 +91,7 @@ export default async function Connections() {
   }
 
   return (
-    <ArcadeShell neon={NEON} eyebrow="Daily · Four of a kind" title="Connections">
+    <ArcadeShell neon={NEON} eyebrow="Daily · Four of a kind" title="Connections" page="game-connections">
       {groups.length < 4
         ? <p style={{ color: '#8FA0B4', fontSize: '13px' }}>
             Not enough to build today&apos;s puzzle — this one fills out as the season goes.

@@ -41,7 +41,7 @@ export default async function Higher() {
   }))
 
   return (
-    <ArcadeShell neon={NEON} eyebrow="Endless · Keep it alive" title="Higher or Lower">
+    <ArcadeShell neon={NEON} eyebrow="Endless · Keep it alive" title="Higher or Lower" page="game-higher">
       {pool.length < 2
         ? <p style={{ color: '#8FA0B4', fontSize: '13px' }}>
             No scored players yet — this one opens once a round has been played.

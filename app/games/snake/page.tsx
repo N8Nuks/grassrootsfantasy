@@ -50,7 +50,7 @@ export default async function Snake() {
   const mine = options.find(o => o.id === myClubId) ?? null
 
   return (
-    <ArcadeShell neon={NEON} eyebrow="Arcade · Don't hit the fence" title="Diamond Snake">
+    <ArcadeShell neon={NEON} eyebrow="Arcade · Don't hit the fence" title="Diamond Snake" page="game-snake">
       <SnakeClient clubs={options} initialClub={mine} />
     </ArcadeShell>
   )

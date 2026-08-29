@@ -91,7 +91,23 @@ export default function LegendsCage() {
   }
 
   return (
-    <ArcadeShell neon={NEON} eyebrow="Arcade · The archive" title="Legends Cage">
+    <ArcadeShell neon={NEON} eyebrow="Arcade · The archive" title="Legends Cage" 
+  if (batters.length < 2 || pitchers.length < 2) {
+    return (
+      <ArcadeShell neon={NEON} eyebrow="Arcade · The archive" title="Legends Cage">
+        <p style={{ color: '#8FA0B4', fontSize: '13px' }}>
+          Not enough on the Honours Board to stock the cage yet.
+        </p>
+      </ArcadeShell>
+    )
+  }
+
+  return (
+    <ArcadeShell neon={NEON} eyebrow="Arcade · The archive" title="Legends Cage" page="game-batting">
+      <LegendsClient batters={batters} pitchers={pitchers} />
+    </ArcadeShell>
+  )
+}>
       <LegendsClient batters={batters} pitchers={pitchers} />
     </ArcadeShell>
   )

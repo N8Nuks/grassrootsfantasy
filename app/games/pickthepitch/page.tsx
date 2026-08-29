@@ -5,7 +5,7 @@ const NEON = '#FFD400'
 
 export default function PickThePitch() {
   return (
-    <ArcadeShell neon={NEON} eyebrow="Expert · Steal the signs" title="Pick the Pitch">
+    <ArcadeShell neon={NEON} eyebrow="Expert · Steal the signs" title="Pick the Pitch" page="game-pickthepitch">
       <PickClient />
     </ArcadeShell>
   )

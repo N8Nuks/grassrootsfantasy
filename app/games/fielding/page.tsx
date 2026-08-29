@@ -5,7 +5,7 @@ const NEON = '#5CFF6B'
 
 export default function Fielding() {
   return (
-    <ArcadeShell neon={NEON} eyebrow="Endless · Three lanes" title="Knock 'em Down">
+    <ArcadeShell neon={NEON} eyebrow="Endless · Three lanes" title="Knock 'em Down" page="game-fielding">
       <FieldingClient />
     </ArcadeShell>
   )

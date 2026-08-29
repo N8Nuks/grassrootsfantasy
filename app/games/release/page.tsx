@@ -5,7 +5,7 @@ const NEON = '#FF4FD8'
 
 export default function Release() {
   return (
-    <ArcadeShell neon={NEON} eyebrow="Reaction · One frame" title="Release Point">
+    <ArcadeShell neon={NEON} eyebrow="Reaction · One frame" title="Release Point" page="game-release">
       <ReleaseClient />
     </ArcadeShell>
   )

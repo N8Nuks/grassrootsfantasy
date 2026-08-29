@@ -32,7 +32,7 @@ export default async function LineupPuzzle({ searchParams }: {
     .order('round_number', { ascending: false }).limit(1).maybeSingle()
 
   const shell = (children: React.ReactNode) => (
-    <ArcadeShell neon={NEON} eyebrow="Puzzle · Sixteen into twelve" title="The Perfect Card">
+    <ArcadeShell neon={NEON} eyebrow="Puzzle · Sixteen into twelve" title="The Perfect Card" page="game-lineup">
       <GradeToggle grade={grade} />
       {children}
     </ArcadeShell>
