@@ -58,7 +58,7 @@ const FIELD_Y = 0.300          // the fielder's feet
 const FORE_Y = 0.625           // foreground dirt between us and him
 const CIRCLE_Y = 0.733         // the pitching circle
  
-type Phase = 'ready' | 'live' | 'levelEnd' | 'conquered'
+type Phase = 'ready' | 'live' | 'levelEnd' | 'conquered' | 'bdEnd' | 'bdWon'
 type LiveBall = { kind: Kind; born: number; answered: boolean; caught: boolean }
  
 export default function GoldenGloveClient() {
@@ -68,6 +68,17 @@ export default function GoldenGloveClient() {
   const [clean, setClean] = useState(0)
   const [perfectRuns, setPerfectRuns] = useState(0)
   const [flash, setFlash] = useState<{ ok: boolean; label: string } | null>(null)
+  const [bdUnlocked, setBdUnlocked] = useState(false)
+  const [bdWon, setBdWon] = useState(false)
+  const [blackDiamond, setBlackDiamond] = useState(false)
+  const bdRef = useRef(false)
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(BD_KEY) === '1') setBdUnlocked(true)
+      if (localStorage.getItem(BD_WON_KEY) === '1') setBdWon(true)
+    } catch { /* storage blocked */ }
+  }, [])
  
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const raf = useRef(0)
