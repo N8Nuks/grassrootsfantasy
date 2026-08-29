@@ -749,7 +749,7 @@ export default function FieldingClient() {
         <button className="fd-key" onPointerDown={e => { e.preventDefault(); moveTo(lane.current + 1) }}>▶</button>
       </div>
 
-      <p className="fd-hint">Arrows or A / D to move · space to throw · lane {laneUi + 1}</p>
+      <p className="fd-hint">Swipe to move · tap to throw · arrows and space on a keyboard</p>
 
       <div className="fd-legend">
         {TIERS.map((t, i) => (
