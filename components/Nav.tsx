@@ -125,8 +125,12 @@ export default function Nav() {
 
       {/* Mobile menu */}
       {open && (
-        <div className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 md:hidden"
-          style={{ background: '#141210F5', paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        <div className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 md:hidden overflow-y-auto"
+          style={{
+            background: '#141210F5',
+            paddingTop: 'calc(env(safe-area-inset-top, 0px) + 96px)',
+            paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 40px)',
+          }}
           onClick={() => setOpen(false)}>
           <a href="/join"
             className="text-2xl font-black uppercase tracking-widest"
