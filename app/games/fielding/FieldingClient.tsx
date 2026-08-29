@@ -15,6 +15,8 @@ import ArcadeShare from '@/components/ArcadeShare'
 
 const LANES = 3
 const TARGETS_PER_LEVEL = 12
+/* The back half is longer as well as harder — twenty to clear from six on. */
+const targetsFor = (lv: number) => (lv >= 6 ? 20 : TARGETS_PER_LEVEL)
 const MAX_LEVEL = 12
 const LINE_Z = 1.0                 // where they beat you
 const ENDLESS_LEVEL = 10           // Endless runs at level 10 forever
@@ -158,7 +160,7 @@ export default function FieldingClient() {
     if (cooldown.current > 0) cooldown.current -= dt
     if (arm.current > 0) arm.current -= dt
 
-    if (spawned.current < TARGETS_PER_LEVEL) {
+    if (spawned.current < targetsFor(levelRef.current)) {
       spawnTimer.current -= dt
       if (spawnTimer.current <= 0) {
         spawn()
@@ -223,7 +225,7 @@ export default function FieldingClient() {
     pops.current = pops.current.filter(p => p.life > 0)
 
     /* Endless never ends by clearing — it just keeps dealing at level 10. */
-    if (!endlessRef.current && cleared.current >= TARGETS_PER_LEVEL) {
+    if (!endlessRef.current && cleared.current >= targetsFor(levelRef.current)) {
       setScore(s => { setBest(b => Math.max(b, s)); return s })
       if (levelRef.current >= MAX_LEVEL) {
         try { localStorage.setItem(UNLOCK_KEY, '1') } catch { /* blocked */ }
@@ -234,7 +236,7 @@ export default function FieldingClient() {
       }
       return
     }
-    if (endlessRef.current && spawned.current >= TARGETS_PER_LEVEL) {
+    if (endlessRef.current && spawned.current >= targetsFor(levelRef.current)) {
       spawned.current = 0
     }
 
@@ -592,7 +594,7 @@ export default function FieldingClient() {
 
       <div className="fd-hud">
         <span className="fd-stat"><span>Level</span><b style={{ color: 'var(--neon)' }}>{level}</b></span>
-        <span className="fd-stat"><span>Down</span><b>{done}/{TARGETS_PER_LEVEL}</b></span>
+        <span className="fd-stat"><span>Down</span><b>{done}/{targetsFor(level)}</b></span>
         <span className="fd-stat"><span>Score</span><b>{score}</b></span>
         <span className="fd-stat"><span>Best</span><b>{best}</b></span>
       </div>
@@ -612,7 +614,7 @@ export default function FieldingClient() {
               Level {level} · {stage}
             </p>
             <p style={{ fontSize: '12px', color: '#8FA0B4', maxWidth: '32ch', lineHeight: 1.6, marginTop: '6px' }}>
-              Twelve of them. Not one gets past the line.
+              {targetsFor(level)} of them. Not one gets past the line.
             </p>
             <button className="ar-btn" onClick={() => beginLevel(level)} style={{ marginTop: '16px' }}>
               <span>Take the field</span>
@@ -641,7 +643,7 @@ export default function FieldingClient() {
               One got through
             </p>
             <p className="ar-num" style={{ fontSize: '48px', color: '#F5F1E8', textShadow: 'none', margin: '10px 0 2px' }}>
-              {done}/{TARGETS_PER_LEVEL}
+              {done}/{targetsFor(level)}
             </p>
             <p style={{ fontSize: '12px', color: '#7D8B9C', maxWidth: '30ch', lineHeight: 1.6 }}>
               {endless
