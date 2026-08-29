@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
+import ArcadeShare from '@/components/ArcadeShare'
 
 /* You are the runner at first, watching side on. Home is off to the left.
 
