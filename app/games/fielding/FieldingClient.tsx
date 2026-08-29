@@ -209,7 +209,11 @@ export default function FieldingClient() {
     for (const t of targets.current) {
       if (t.z >= LINE_Z && t.z < 90) {
         setPhase('lost')
-        setScore(s => { setBest(b => Math.max(b, s)); return s })
+        setScore(s => {
+          setBest(b => Math.max(b, s))
+          if (endlessRef.current) bankEndless(s)
+          return s
+        })
         return
       }
     }
@@ -497,10 +501,29 @@ export default function FieldingClient() {
   }
 
   function beginLevel(lv: number) {
+    endlessRef.current = false
+    setEndless(false)
     reset(lv)
     setLevel(lv)
     setScore(0)
     setPhase('live')
+  }
+
+  /* Endless holds at level ten and never stops dealing. Its record is its own. */
+  function beginEndless() {
+    endlessRef.current = true
+    setEndless(true)
+    reset(ENDLESS_LEVEL)
+    setLevel(ENDLESS_LEVEL)
+    setScore(0)
+    setPhase('live')
+  }
+
+  function bankEndless(final: number) {
+    if (final > endlessBest) {
+      setEndlessBest(final)
+      try { localStorage.setItem(HIGH_KEY, String(final)) } catch { /* blocked */ }
+    }
   }
 
   const cfg = levelCfg(level)
@@ -594,6 +617,21 @@ export default function FieldingClient() {
             <button className="ar-btn" onClick={() => beginLevel(level)} style={{ marginTop: '16px' }}>
               <span>Take the field</span>
             </button>
+            {level > 1 && (
+              <button className="ar-btn fd-ghost" onClick={() => beginLevel(1)} style={{ marginTop: '10px' }}>
+                <span>Back to level 1</span>
+              </button>
+            )}
+            {unlocked ? (
+              <button className="ar-btn fd-ghost" onClick={beginEndless} style={{ marginTop: '10px' }}>
+                <span>Endless{endlessBest > 0 ? ` · best ${endlessBest}` : ''}</span>
+              </button>
+            ) : (
+              <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '.2em',
+                          textTransform: 'uppercase', color: '#4E5A6A', marginTop: '14px' }}>
+                Endless mode unlocks at level 12
+              </p>
+            )}
           </div>
         )}
 
@@ -606,14 +644,23 @@ export default function FieldingClient() {
               {done}/{TARGETS_PER_LEVEL}
             </p>
             <p style={{ fontSize: '12px', color: '#7D8B9C', maxWidth: '30ch', lineHeight: 1.6 }}>
-              Level {level} again — you pick up where you fell.
+              {endless
+                ? `${score} down${endlessBest > 0 ? ` · best ${endlessBest}` : ''}. Level ten never lets up.`
+                : `Level ${level} again — you pick up where you fell.`}
             </p>
-            <button className="ar-btn" onClick={() => beginLevel(level)} style={{ marginTop: '16px' }}>
+            <button className="ar-btn" onClick={() => endless ? beginEndless() : beginLevel(level)} style={{ marginTop: '16px' }}>
               <span>Back out there</span>
             </button>
-            {level >= 6 && (
+            {!endless && level > 1 && (
+              <button className="ar-btn fd-ghost" onClick={() => beginLevel(1)} style={{ marginTop: '10px' }}>
+                <span>Back to level 1</span>
+              </button>
+            )}
+            {(endless || level >= 6) && (
               <div style={{ marginTop: '10px' }}>
-                <ArcadeShare lines={[`Knock 'em Down — level ${level} of ${MAX_LEVEL}`]} />
+                <ArcadeShare lines={[endless
+                ? `Knock 'em Down — Endless, ${score}`
+                : `Knock 'em Down — level ${level} of ${MAX_LEVEL}`]} />
               </div>
             )}
           </div>
