@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { splitName } from '@/lib/names'
+import ArcadeShare from '@/components/ArcadeShare'
 
 export type Legend = { name: string; titles: number; grade: string; lefty: boolean }
 
@@ -1098,6 +1099,12 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
                 <button className="ar-btn" onClick={start} style={{ marginTop: '10px', background: 'transparent', color: 'var(--neon)', border: '1px solid var(--neon)', boxShadow: 'none' }}>
                   <span>Same again</span>
                 </button>
+                <div style={{ marginTop: '12px' }}>
+                  <ArcadeShare lines={[
+                    `Legends Cage — ${hits} for ${PITCHES}, ${score} points`,
+                    `${splitName(batter.name).last} vs ${splitName(pitcher.name).last}${homers > 0 ? ` · ${homers} HR` : ''}${furthest > 0 ? ` · ${furthest}m` : ''}`,
+                  ]} />
+                </div>
               </>
             ) : (
               <>
