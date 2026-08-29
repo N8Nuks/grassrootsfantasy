@@ -1,4 +1,5 @@
 import Footer from '@/components/Footer'
+import ViewTicker from '@/components/ViewTicker'
 
 const GAMES = [
   { href: '/games/daily', n: '01', title: 'Player of the Day', blurb: 'One player. Six guesses. A clue for every miss.', tag: 'Daily', neon: '#FF2D95' },
@@ -261,7 +262,10 @@ export default function Games() {
             ))}
           </div>
 
-          <p className="gm-foot">Black Diamond Labs · Built on real game records</p>
+          <p className="gm-foot">
+            Black Diamond Labs · Built on real game records
+            <ViewTicker page="arcade" />
+          </p>
         </div>
       </div>
 
