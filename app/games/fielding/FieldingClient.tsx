@@ -497,7 +497,38 @@ export default function FieldingClient() {
     return () => window.removeEventListener('keydown', onKey)
   }, [fire])
 
-  function moveTo(l: number) {
+  /* Swipe across the canvas to change lanes, tap anywhere on it to throw. A
+     tap is anything that doesn't travel far enough to be a swipe. */
+  useEffect(() => {
+    const cv = canvasRef.current
+    if (!cv) return
+    let sx = 0, sy = 0, moved = false
+    const start = (e: TouchEvent) => {
+      sx = e.touches[0].clientX
+      sy = e.touches[0].clientY
+      moved = false
+    }
+    const move = (e: TouchEvent) => {
+      const dx = e.touches[0].clientX - sx
+      const dy = e.touches[0].clientY - sy
+      if (!moved && Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy)) {
+        moved = true
+        lane.current = dx > 0
+          ? Math.min(LANES - 1, lane.current + 1)
+          : Math.max(0, lane.current - 1)
+        setLaneUi(lane.current)
+      }
+    }
+    const end = () => { if (!moved) fire() }
+    cv.addEventListener('touchstart', start, { passive: true })
+    cv.addEventListener('touchmove', move, { passive: true })
+    cv.addEventListener('touchend', end, { passive: true })
+    return () => {
+      cv.removeEventListener('touchstart', start)
+      cv.removeEventListener('touchmove', move)
+      cv.removeEventListener('touchend', end)
+    }
+  }, [fire])
     lane.current = Math.max(0, Math.min(LANES - 1, l))
     setLaneUi(lane.current)
   }
