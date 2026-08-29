@@ -425,7 +425,12 @@ export default function ReleaseClient() {
                         : `Four steals moves you up. Run the ${LEVELS[level].name} set again.`}
                 </p>
                 {outcome === 'crowned' ? (
-                  <button className="ar-btn" onClick={startOver} style={{ marginTop: '18px' }}><span>Start again</span></button>
+                  <>
+                    <div style={{ marginTop: '18px' }}>
+                      <ArcadeShare lines={['Release Point — Black Diamond', 'Five clean steals off Black Sox']} />
+                    </div>
+                    <button className="ar-btn" onClick={startOver} style={{ marginTop: '10px' }}><span>Start again</span></button>
+                  </>
                 ) : (
                   <button className="ar-btn" onClick={nextSet} style={{ marginTop: '18px' }}>
                     <span>{outcome === 'up' ? `Face ${LEVELS[level + 1].name}` : 'Run it again'}</span>

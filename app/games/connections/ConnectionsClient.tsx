@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { splitName } from '@/lib/names'
+import ArcadeShare from '@/components/ArcadeShare'
 
 export type Group = { label: string; names: string[] }
 
@@ -179,7 +180,17 @@ export default function ConnectionsClient({ groups }: { groups: Group[] }) {
                       color: wrong < MISTAKES ? '#39FF9E' : '#FF4D4D' }}>
             {wrong < MISTAKES ? `Solved with ${MISTAKES - wrong} to spare` : 'Board opened'}
           </p>
-          <p style={{ fontSize: '12px', color: '#7D8B9C', marginTop: '14px' }}>
+          <div style={{ marginTop: '16px' }}>
+            <ArcadeShare lines={[
+              wrong < MISTAKES
+                ? `Connections — solved with ${MISTAKES - wrong} to spare`
+                : 'Connections — the board beat me',
+              ...solved.map(s =>
+                ['🟩', '🟦', '🟨', '🟪'][s.band % 4].repeat(4)
+              ),
+            ]} />
+          </div>
+          <p style={{ fontSize: '12px', color: '#7D8B9C', marginTop: '16px' }}>
             A new sixteen at midnight.
           </p>
         </div>

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useMemo } from 'react'
 import { splitName } from '@/lib/names'
+import ArcadeShare from '@/components/ArcadeShare'
 
 export type PuzzleCard = {
   id: string
@@ -249,7 +250,10 @@ export default function LineupClient({ cards, roundNumber, grade, nextDealHref }
               : pct >= 75 ? 'Solid, but there were points sitting in your hand.'
               : 'Plenty left on the table — check the cyan rows for where.'}
           </p>
-          <a href={nextDealHref} className="ar-btn" style={{ marginTop: '26px' }}><span>Deal a new hand</span></a>
+          <div style={{ marginTop: '22px' }}>
+            <ArcadeShare lines={[`The Perfect Card — ${pct}% of the best card, ${fmt(yourScore)} points`]} />
+          </div>
+          <a href={nextDealHref} className="ar-btn" style={{ marginTop: '14px' }}><span>Deal a new hand</span></a>
         </div>
       )}
     </>
