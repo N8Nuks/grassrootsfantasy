@@ -529,6 +529,8 @@ export default function FieldingClient() {
       cv.removeEventListener('touchend', end)
     }
   }, [fire])
+
+  function moveTo(l: number) {
     lane.current = Math.max(0, Math.min(LANES - 1, l))
     setLaneUi(lane.current)
   }
