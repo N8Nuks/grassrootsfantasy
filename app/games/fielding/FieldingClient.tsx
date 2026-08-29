@@ -17,6 +17,9 @@ const LANES = 3
 const TARGETS_PER_LEVEL = 12
 const MAX_LEVEL = 12
 const LINE_Z = 1.0                 // where they beat you
+const ENDLESS_LEVEL = 10           // Endless runs at level 10 forever
+const UNLOCK_KEY = 'ked-endless-unlocked'
+const HIGH_KEY = 'ked-endless-best'
 const THROW_MS = 620               // horizon to the line
 const COOLDOWN_MS = 240
 const HIT_WINDOW = 0.055
@@ -61,6 +64,10 @@ function levelCfg(lv: number) {
 export default function FieldingClient() {
   const [phase, setPhase] = useState<'ready' | 'live' | 'lost' | 'cleared' | 'won'>('ready')
   const [level, setLevel] = useState(1)
+  const [endless, setEndless] = useState(false)
+  const [unlocked, setUnlocked] = useState(false)
+  const [endlessBest, setEndlessBest] = useState(0)
+  const endlessRef = useRef(false)
   const [score, setScore] = useState(0)
   const [best, setBest] = useState(0)
   const [done, setDone] = useState(0)
@@ -81,7 +88,15 @@ export default function FieldingClient() {
   const cooldown = useRef(0)
   const arm = useRef(0)
   const levelRef = useRef(1)
-
+  /* The unlock and the endless record live on the device — it's a game unlock,
+     not a record worth protecting, and it works for signed-out visitors. */
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(UNLOCK_KEY) === '1') setUnlocked(true)
+      const h = parseInt(localStorage.getItem(HIGH_KEY) ?? '0', 10)
+      if (h > 0) setEndlessBest(h)
+    } catch { /* storage blocked */ }
+  }, [])
   const reset = useCallback((lv: number) => {
     lane.current = 1; facing.current = 1
     targets.current = []; throws.current = []; pops.current = []
@@ -203,10 +218,20 @@ export default function FieldingClient() {
     for (const p of pops.current) p.life -= dt
     pops.current = pops.current.filter(p => p.life > 0)
 
-    if (cleared.current >= TARGETS_PER_LEVEL) {
+    /* Endless never ends by clearing — it just keeps dealing at level 10. */
+    if (!endlessRef.current && cleared.current >= TARGETS_PER_LEVEL) {
       setScore(s => { setBest(b => Math.max(b, s)); return s })
-      setPhase(levelRef.current >= MAX_LEVEL ? 'won' : 'cleared')
+      if (levelRef.current >= MAX_LEVEL) {
+        try { localStorage.setItem(UNLOCK_KEY, '1') } catch { /* blocked */ }
+        setUnlocked(true)
+        setPhase('won')
+      } else {
+        setPhase('cleared')
+      }
       return
+    }
+    if (endlessRef.current && spawned.current >= TARGETS_PER_LEVEL) {
+      spawned.current = 0
     }
 
     draw()
