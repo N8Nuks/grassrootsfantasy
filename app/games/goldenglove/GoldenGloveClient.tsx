@@ -46,6 +46,14 @@ const LEVELS: { balls: number; lightMs: number; need: number; plain: Kind[]; nam
 const FLIGHT_MS = 900          // light going out to the ball arriving
 const POSE_HOLD = 400
 const CLEARED_RUNS = 2         // perfect runs at the top level to conquer it
+
+/* Black Diamond sits above the ladder. Twelve balls at Platinum's pace with no
+   light at all — the ball appearing is the only cue you get. All twelve, or
+   back to Platinum. */
+const BD_BALLS = 12
+const BD_LIGHT_MS = 250
+const BD_KEY = 'gg-bd-unlocked'
+const BD_WON_KEY = 'gg-bd-won'
  
 /* The ground plane, as fractions of canvas height. The field is drawn to these
    so the ball and the fielder share one geometry. */
