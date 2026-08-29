@@ -79,7 +79,7 @@ export default function Nav() {
               style={boxLink('/leagues', '#39FF6A')}>
               Leagues
             </a>
-            <a href="/games"
+            <a href="/arcade"
               className="text-xs font-bold uppercase tracking-widest px-4 py-2 transition-all hover:scale-[1.03]"
               style={boxLink('/games', '#B47CFF')}>
               Arcade
@@ -144,7 +144,7 @@ export default function Nav() {
             onClick={() => setOpen(false)}>
             Leagues
           </a>
-          <a href="/games"
+          <a href="/arcade"
             className="text-2xl font-black uppercase tracking-widest"
             style={{ fontFamily: 'var(--font-label)', color: '#B47CFF' }}
             onClick={() => setOpen(false)}>
