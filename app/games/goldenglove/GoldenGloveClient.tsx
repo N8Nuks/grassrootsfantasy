@@ -115,6 +115,26 @@ export default function GoldenGloveClient() {
  
   /* One ball: the light, then the flight, then the verdict. */
   const throwBall = useCallback((n: number, lv: number) => {
+    /* Black Diamond deals from the same bag but never lights the way — the
+       light fires with nothing in it, purely as a clock. */
+    if (bdRef.current) {
+      const kind = KINDS[Math.floor(Math.random() * KINDS.length)]
+      light.current = null
+      setBallNo(n)
+      after(BD_LIGHT_MS, () => {
+        ball.current = { kind, born: performance.now(), answered: false, caught: false }
+        after(FLIGHT_MS + 120, () => {
+          if (ball.current && !ball.current.answered) {
+            ball.current.answered = true
+            miss.current = 700
+            setFlash({ ok: false, label: 'Through you' })
+            after(900, () => setFlash(null))
+            settle(false, n, lv)
+          }
+        })
+      })
+      return
+    }
     const cfg = LEVELS[lv]
     /* A ball straight at him is a different shape of play, so two to four a
        round, spread through it rather than bunched. */
@@ -150,6 +170,18 @@ export default function GoldenGloveClient() {
     const cfg = LEVELS[lv]
     setClean(c => {
       const next = c + (ok ? 1 : 0)
+      /* Black Diamond wants all twelve. One miss and it's over. */
+      if (bdRef.current) {
+        if (!ok) { after(1100, () => setPhase('bdEnd')); return next }
+        if (n >= BD_BALLS) {
+          try { localStorage.setItem(BD_WON_KEY, '1') } catch { /* blocked */ }
+          setBdWon(true)
+          after(1100, () => setPhase('bdWon'))
+          return next
+        }
+        after(1000, () => throwBall(n + 1, lv))
+        return next
+      }
       // The top two levels want perfection, so one miss ends the attempt there
       if (!ok && cfg.need === 1) {
         after(1100, () => setPhase('levelEnd'))
