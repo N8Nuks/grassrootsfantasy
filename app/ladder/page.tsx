@@ -157,6 +157,12 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
     listRows = rows
   } else if (view === 'weekly') {
     listRows = rows.slice(1, 1 + CAP)
+    /* The champion is already the headline above, so only pin someone who
+       finished outside the chasing pack. */
+    if (user) {
+      const idx = rows.findIndex(r => r.id === user.id)
+      if (idx > CAP) pinned = { row: rows[idx], rank: idx + 1 }
+    }
   } else {
     listRows = rows.slice(0, CAP)
     if (user) {
