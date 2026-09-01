@@ -34,22 +34,15 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
   const siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
   const T = theme(grade, siteTheme)
   const isW = grade === 'womens'
-  
-  /* The record to beat. Shown on the weekly board because that's where people
-     come to see what a big round looks like. */
-  const { data: hiRows } = view === 'weekly'
-    ? await supabase.rpc('current_high_score', { p_grade: grade })
-    : { data: null }
-  const hi = (hiRows as { points: number; team_name: string; round_number: number; is_new: boolean }[] | null)?.[0] ?? null
   const shimmer = T.shimmer ? ' gf-shimmer' : ''
-  
+
   /* The record to beat. Shown on the weekly board because that's where people
      come to see what a big round looks like. */
   const { data: hiRows } = view === 'weekly'
     ? await supabase.rpc('current_high_score', { p_grade: grade })
     : { data: null }
   const hi = (hiRows as { points: number; team_name: string; round_number: number; is_new: boolean }[] | null)?.[0] ?? null
-  
+
   type TeamRow = { id: string; team_name: string; is_house: boolean | null; clubs: { name: string } | null }
   const teamRows = (teams ?? []) as unknown as TeamRow[]
   const teamById = new Map(teamRows.map(t => [t.id, t]))
@@ -61,7 +54,6 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
   type Row = { id: string; team: string; club: string; main: string; sub: string; sortKey: number; tieKey: number; unranked?: boolean }
   let rows: Row[] = []
   let weeklyRoundNumber: number | null = null
-
   if (view === 'points') {
     const scores = (primary.data ?? []) as { owner_id: string; points: number }[]
     const totals = new Map<string, number>()
