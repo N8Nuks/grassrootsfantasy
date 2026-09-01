@@ -82,13 +82,17 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
       add(m.user_a, Number(m.points_a), Number(m.score_a ?? 0))
       add(m.user_b, Number(m.points_b), Number(m.score_b ?? 0))
     }
+    /* Ranked on wins, not win rate. A late joiner can't out-accumulate a team
+       that's played all season, so nobody needs a games-played minimum and
+       nobody gets shut out for starting late. Percentage breaks the tie. */
     rows = [...recs.entries()].map(([id, r]) => {
       const games = r.w + r.d + r.l
       const pct = games ? (r.w + 0.5 * r.d) / games : 0
       return {
         id, team: nameOf(id), club: clubOf(id),
-        main: pct.toFixed(3).replace(/^0/, ''), sub: `${r.w}–${r.d}–${r.l}`,
-        sortKey: pct, tieKey: r.pf,
+        main: `${r.w}–${r.d}–${r.l}`,
+        sub: `${pct.toFixed(3).replace(/^0/, '')} · ${r.pf} pts`,
+        sortKey: r.w + 0.5 * r.d, tieKey: pct,
       }
     })
   } else if (view === 'weekly') {
@@ -260,7 +264,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
                   {view === 'weekly' ? 'The Chasing Pack' : view === 'clubs' ? 'Club' : 'Team'}
                 </span>
                 <span className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: T.text, paddingRight: '2px' }}>
-                  {view === 'h2h' ? 'Win %' : view === 'clubs' ? 'Avg' : 'Points'}
+                  {view === 'h2h' ? 'W–D–L' : view === 'clubs' ? 'Avg' : 'Points'}
                 </span>
               </div>
               {listRows.map((row, i) => {
@@ -340,7 +344,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
           </div>
           <p className="text-[11px] text-center mt-6" style={{ color: T.textDim }}>
             {view === 'points' && 'Top 20 shown. Cumulative points from all scored rounds. Provisional scores update once official stats are confirmed.'}
-            {view === 'h2h' && 'Top 20 shown. Win percentage: W=1, D=0.5, L=0. Ties broken by total points scored. Minimum half a season to qualify for the title.'}
+            {view === 'h2h' && 'Top 20 shown. Ranked on wins, with a draw counting half. Ties broken by win rate, then by points scored. No minimum — join whenever, every win counts.'}
             {view === 'weekly' && 'Top score from the latest round. A new champion is crowned every week.'}
             {view === 'clubs' && 'Ranked on average points per team, minimum five teams to rank. Ties broken by club total.'}
           </p>
