@@ -73,7 +73,9 @@ export default function DailyClient({ answer, pool }: { answer: DailyPlayer; poo
     setError('')
     setGuesses(prev => [...prev, name])
     setInput('')
-    setOpen(false)
+    /* Stay open — the clue that just unlocked has narrowed the list, and the
+       next pick is the whole point. Closing it forces a tap out and back in. */
+    setOpen(true)
   }
 
   function submit() {
