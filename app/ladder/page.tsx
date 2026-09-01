@@ -190,9 +190,21 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
           </div>
                     {/* The all-time record, sitting above the week's champion */}
           {view === 'weekly' && hi && (
-            <div className="rounded-2xl overflow-hidden mb-6"
+            <div className="rounded-2xl overflow-hidden mb-6 relative"
               style={{ background: '#07080D', border: `1px solid ${T.accent}55` }}>
-              <div className="flex items-center justify-between gap-4" style={{ padding: '18px 24px' }}>
+              {/* Neon haze drifting behind the record — the arcade treatment,
+                  turned down so the number still reads first. */}
+              <div aria-hidden="true" className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: `radial-gradient(ellipse 40% 120% at 88% 50%, ${T.accent}22 0%, transparent 70%),
+                               radial-gradient(ellipse 55% 140% at 8% 20%, ${T.accent}14 0%, transparent 72%)`,
+                }} />
+              <div aria-hidden="true" className="absolute inset-0 pointer-events-none"
+                style={{
+                  opacity: 0.5,
+                  background: `repeating-linear-gradient(180deg, ${T.accent}0A 0px, ${T.accent}0A 1px, transparent 1px, transparent 5px)`,
+                }} />
+              <div className="relative flex items-center justify-between gap-4" style={{ padding: '18px 24px' }}>
                 <div className="min-w-0">
                   <p className="text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: T.textDim }}>
                     All-time high score
