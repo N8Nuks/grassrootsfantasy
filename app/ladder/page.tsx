@@ -34,8 +34,22 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
   const siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
   const T = theme(grade, siteTheme)
   const isW = grade === 'womens'
+  
+  /* The record to beat. Shown on the weekly board because that's where people
+     come to see what a big round looks like. */
+  const { data: hiRows } = view === 'weekly'
+    ? await supabase.rpc('current_high_score', { p_grade: grade })
+    : { data: null }
+  const hi = (hiRows as { points: number; team_name: string; round_number: number; is_new: boolean }[] | null)?.[0] ?? null
   const shimmer = T.shimmer ? ' gf-shimmer' : ''
-
+  
+  /* The record to beat. Shown on the weekly board because that's where people
+     come to see what a big round looks like. */
+  const { data: hiRows } = view === 'weekly'
+    ? await supabase.rpc('current_high_score', { p_grade: grade })
+    : { data: null }
+  const hi = (hiRows as { points: number; team_name: string; round_number: number; is_new: boolean }[] | null)?.[0] ?? null
+  
   type TeamRow = { id: string; team_name: string; is_house: boolean | null; clubs: { name: string } | null }
   const teamRows = (teams ?? []) as unknown as TeamRow[]
   const teamById = new Map(teamRows.map(t => [t.id, t]))
@@ -182,6 +196,37 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
               </div>
             </div>
           </div>
+                    {/* The all-time record, sitting above the week's champion */}
+          {view === 'weekly' && hi && (
+            <div className="rounded-2xl overflow-hidden mb-6"
+              style={{ background: '#07080D', border: `1px solid ${T.accent}55` }}>
+              <div className="flex items-center justify-between gap-4" style={{ padding: '18px 24px' }}>
+                <div className="min-w-0">
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: T.textDim }}>
+                    All-time high score
+                  </p>
+                  <p className="text-sm font-black truncate" style={{ fontFamily: 'var(--font-heading)', color: T.text, marginTop: '5px' }}>
+                    {hi.team_name}
+                  </p>
+                  <p className="text-[10px] uppercase tracking-widest" style={{ color: T.textDim, marginTop: '2px' }}>
+                    Round {hi.round_number}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  {hi.is_new && (
+                    <span className="text-[9px] font-black uppercase tracking-[0.22em]"
+                      style={{ background: T.accent, color: T.buttonText, padding: '5px 9px' }}>
+                      New
+                    </span>
+                  )}
+                  <p className="text-3xl sm:text-4xl font-black"
+                    style={{ fontFamily: 'var(--font-heading)', color: T.accent, textShadow: T.glow }}>
+                    {hi.points}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Weekly champion honour board */}
           {champion && (
             <div className="relative rounded-2xl overflow-hidden text-center mb-8 pinstripe-fine"
