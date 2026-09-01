@@ -88,11 +88,15 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
     rows = [...recs.entries()].map(([id, r]) => {
       const games = r.w + r.d + r.l
       const pct = games ? (r.w + 0.5 * r.d) / games : 0
+      /* Four wins qualifies you outright; otherwise six games played. A late
+         joiner on a hot streak gets there quicker than one grinding it out. */
+      const qualified = r.w >= 4 || games >= 6
       return {
         id, team: nameOf(id), club: clubOf(id),
         main: `${r.w}–${r.d}–${r.l}`,
         sub: `${pct.toFixed(3).replace(/^0/, '')} · ${r.pf} pts`,
         sortKey: r.w + 0.5 * r.d, tieKey: pct,
+        unranked: !qualified,
       }
     })
   } else if (view === 'weekly') {
@@ -139,7 +143,12 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
       Number(!!a.unranked) - Number(!!b.unranked) || b.sortKey - a.sortKey || b.tieKey - a.tieKey)
   }
 
-  if (view !== 'clubs') rows.sort((a, b) => b.sortKey - a.sortKey || b.tieKey - a.tieKey)
+  if (view === 'h2h') {
+    rows.sort((a, b) =>
+      Number(!!a.unranked) - Number(!!b.unranked) || b.sortKey - a.sortKey || b.tieKey - a.tieKey)
+  } else if (view !== 'clubs') {
+    rows.sort((a, b) => b.sortKey - a.sortKey || b.tieKey - a.tieKey)
+  }
   const champion = view === 'weekly' && rows.length > 0 ? rows[0] : null
   const CAP = view === 'weekly' ? 10 : 20
   let listRows: Row[]
