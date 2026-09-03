@@ -21,7 +21,7 @@ export default function Footer() {
         </a>
         <div className="flex items-center gap-5">
           <a href="/policy" className="text-xs text-[#F5F1E8]/40 hover:text-[#F5F1E8]/70 transition-colors">
-            Player policy
+            Player Policy
           </a>
           <a href="https://instagram.com/grassrootsfantasy" target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-xs text-[#F5F1E8]/40 hover:text-[#F5F1E8]/70 transition-colors">
