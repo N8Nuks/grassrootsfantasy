@@ -16,19 +16,12 @@ export default function Footer() {
         }
       `}</style>
       <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-5">
-        <div className="flex items-center gap-2.5">
-          <img src="/gf-mark.png" alt="" className="h-8 w-auto" />
-          <span className="flex flex-col leading-none gap-0.5">
-            <span className="text-[12px] font-bold tracking-wide" style={{ color: '#3FBF63', fontFamily: 'var(--font-heading)' }}>GRASSROOTS</span>
-            <span className="text-[12px] font-black tracking-wider" style={{ color: '#F5F1E8', fontFamily: 'var(--font-wordmark)', fontStretch: '125%' }}>FANTASY</span>
-          </span>
-        </div>
-        <a href="https://blackdiamondlabs.co.nz" className="bdl-shimmer text-xs font-semibold text-center hover:opacity-80 transition-opacity">
+        <a href="https://blackdiamondlabs.co.nz" className="bdl-shimmer text-xs font-semibold hover:opacity-80 transition-opacity">
           Platform delivered by Black Diamond Labs Ltd
         </a>
-        <div className="flex items-center gap-4">
-          <a href="mailto:info@grassrootsfantasy.co.nz" className="text-xs text-[#F5F1E8]/40 hover:text-[#F5F1E8]/70 transition-colors">
-            info@grassrootsfantasy.co.nz
+        <div className="flex items-center gap-5">
+          <a href="/policy" className="text-xs text-[#F5F1E8]/40 hover:text-[#F5F1E8]/70 transition-colors">
+            Player policy
           </a>
           <a href="https://instagram.com/grassrootsfantasy" target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-xs text-[#F5F1E8]/40 hover:text-[#F5F1E8]/70 transition-colors">
@@ -41,6 +34,9 @@ export default function Footer() {
             @grassrootsfantasy
           </a>
         </div>
+        <a href="mailto:info@grassrootsfantasy.co.nz" className="text-xs text-[#F5F1E8]/40 hover:text-[#F5F1E8]/70 transition-colors">
+          info@grassrootsfantasy.co.nz
+        </a>
       </div>
     </footer>
   )
