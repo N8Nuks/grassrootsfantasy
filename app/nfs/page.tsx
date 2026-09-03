@@ -248,7 +248,13 @@ export default function NFS() {
       <section className="px-5 sm:px-12" style={{ borderTop: '1px solid #ffffff0a', paddingTop: "36px", paddingBottom: "36px" }}>
         <div className="text-center" style={{ maxWidth: "680px", marginLeft: "auto", marginRight: "auto" }}>
           <p className="text-xs leading-relaxed text-white/70">
-            Grassroots Fantasy scoring is built entirely on on-field statistics from official game records — never fan voting or popularity. Players under 18 appear only with written parent or guardian consent, and any player can opt out at any time. Endorsed by the Auckland Softball Association.
+            Grassroots Fantasy scoring is built entirely on on-field statistics from official game records — never fan voting or popularity. Players under 18 appear only with written parent or guardian consent. Endorsed by the Auckland Softball Association.
+          </p>
+          <p className="text-xs leading-relaxed text-white/70" style={{ marginTop: '14px' }}>
+            Any player can opt out at any time. Email{' '}
+            <a href="mailto:info@grassrootsfantasy.co.nz?subject=Opt%20out%20of%20Grassroots%20Fantasy"
+              style={{ color: SILVER, fontWeight: 700 }}>info@grassrootsfantasy.co.nz</a>
+            {' '}and your card comes down within 48 hours. No reason needed, and nothing is asked of you.
           </p>
         </div>
       </section>
@@ -295,6 +301,10 @@ export default function NFS() {
               {
                 q: 'Where\u2019s the full point table?',
                 a: 'On the Scoring & Competitions page \u2014 every batting and pitching event and exactly what it\u2019s worth, plus how each lineup slot scores.',
+              },
+              {
+                q: 'I don\u2019t want a card. How do I opt out?',
+                a: 'Email info@grassrootsfantasy.co.nz and say so \u2014 that\u2019s the whole process. Your card is removed within 48 hours, you don\u2019t need to give a reason, and nobody will ask you to reconsider. If you change your mind later, email again.',
               },
               {
                 q: 'Men\u2019s and Women\u2019s \u2014 can I play both?',
