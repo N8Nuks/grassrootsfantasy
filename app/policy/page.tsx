@@ -18,6 +18,14 @@ const SECTIONS: { h: string; ps: string[] }[] = [
     ],
   },
   {
+    h: 'You can ask what we hold, and have it corrected',
+    ps: [
+      'You never signed up for this, so you may not know what\u2019s on your card. Ask us and we\u2019ll tell you \u2014 everything we hold about you, in plain terms.',
+      'If something is wrong, tell us and we\u2019ll fix it. A misspelled name, the wrong club, a statistic that doesn\u2019t match the official record \u2014 all of it. Statistics come from official scoring, so a correction there usually means correcting the source too, and we\u2019ll take that up with the scorers rather than asking you to.',
+      'Email info@grassrootsfantasy.co.nz. This is your right under the Privacy Act 2020, not a favour we\u2019re doing you.',
+    ],
+  },
+  {
     h: 'Scoring reflects only what happens on the field',
     ps: [
       'Every point comes from an official statistic in a real game \u2014 hits, runs, steals, innings pitched, strikeouts. There is no fan voting, no popularity ranking, and no subjective rating of any player.',
