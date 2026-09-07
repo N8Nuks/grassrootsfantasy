@@ -317,10 +317,10 @@ export default function How() {
             Play along with your favourite players.
           </h2>
           <p className="text-sm sm:text-base text-[#F5F1E8]/45 leading-relaxed" style={{ maxWidth: "480px", marginLeft: "auto", marginRight: "auto", marginBottom: "56px" }}>
-            Every player in the competition has a card. Your teammates. Your club legends. The young gun hitting ninth.
+            The players of the NFS Premier League, on cards of their own. Your teammates. Your club legends. The young gun hitting ninth.
           </p>
           <div className="flex justify-center">
-            <PhoneShot shot={{ src: '/how-athlete-hall.png', alt: 'The Athlete Hall', caption: 'The Athlete Hall — every player, every club, waiting to be collected' }} />
+            <PhoneShot shot={{ src: '/how-athlete-hall.png', alt: 'The Athlete Hall', caption: 'The Athlete Hall — the players of the league, club by club' }} />
           </div>
         </div>
       </section>
