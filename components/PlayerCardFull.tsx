@@ -383,14 +383,21 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
           {/* Badges */}
           <p className="text-[8px] font-black uppercase tracking-[0.3em]" style={{ color: T.textDim, marginBottom: '8px' }}>Badges</p>
           {badges.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5" style={{ marginBottom: '18px' }}>
+            /* Two wide, scrolled through — the artwork earns the room. */
+            <div className="grid grid-cols-2" style={{ gap: '10px', marginBottom: '18px' }}>
               {badges.map(b => {
-                const bm = badgeMeta(b, meta.accent)
+                const bm = badgeMeta(b)
+                if (!bm) return null
                 return (
-                  <span key={b} className="text-[9px] font-black uppercase tracking-widest rounded-full"
-                    style={{ color: bm.accent, background: `${bm.accent}18`, border: `1px solid ${bm.accent}60`, padding: '5px 11px' }}>
-                    {bm.label}
-                  </span>
+                  <div key={b} className="flex flex-col items-center rounded-lg"
+                    style={{ background: '#ffffff08', border: `1px solid ${bm.accent}35`, padding: '12px 8px 10px' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={bm.img} alt="" style={{ height: '78px', width: 'auto', filter: 'drop-shadow(0 2px 8px #00000090)' }} />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-center"
+                      style={{ color: bm.accent, marginTop: '8px', lineHeight: 1.3 }}>
+                      {bm.label}
+                    </span>
+                  </div>
                 )
               })}
             </div>
