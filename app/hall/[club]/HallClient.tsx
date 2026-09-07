@@ -11,7 +11,7 @@ import { splitName } from '@/lib/names'
 
 const HALL_GUIDE: GuideStep[] = [
   {
-    title: 'Every player, every club',
+    title: 'Every club, every NFSPL player',
     body: 'This is the full roster — cards you own glow in full colour, the rest wait greyed out. Collect them through weekly packs, bonus codes, and the season drops.',
   },
   {

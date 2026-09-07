@@ -80,7 +80,7 @@ export default async function Hall() {
           <div className="text-center" style={{ marginBottom: '56px' }}>
             <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: '#E8D5A3' }}>Athlete Hall</p>
             <h1 className="text-3xl sm:text-4xl font-black text-[#F5F1E8] mb-4" style={{ fontFamily: 'var(--font-heading)' }}>
-              Every player. Every club.
+              Every club. Every Premier League participant
             </h1>
             <p className="text-sm text-[#F5F1E8]/45" style={{ maxWidth: '440px', margin: '0 auto' }}>
               Walk the hall. Open a club&apos;s door to see every card — the ones you own in full colour, the rest waiting to be collected.
