@@ -27,32 +27,34 @@ const clubSlug = (name: string) => name.toLowerCase().replace(/\s+/g, '-')
    · honour     — competition awards
    · special    — selected or derived marks
    Unknown keys still render, title-cased, in the tier colour. */
-const BADGE_META: Record<string, { label: string; accent: string }> = {
-  // longevity
-  veteran: { label: 'Veteran', accent: '#E8C15A' },
-  club_legend: { label: 'Club Legend', accent: '#E8C15A' },
-  icon: { label: 'Icon', accent: '#FFD700' },
-  // entry
-  newcomer: { label: 'Newcomer', accent: '#3FBF63' },
-  rookie: { label: 'Rookie', accent: '#3FBF63' },
-  // representative
-  akl_junior: { label: 'Auckland Junior', accent: '#4DA6FF' },
-  nz_junior: { label: 'NZ Junior', accent: '#4DA6FF' },
-  akl_senior: { label: 'Auckland Rep', accent: '#2456E6' },
-  nz_senior: { label: 'Black Sox / White Sox', accent: '#2456E6' },
-  // honours
-  mvp: { label: 'MVP', accent: '#FFD700' },
-  series_team: { label: 'Series Team', accent: '#C0C0C0' },
-  champion: { label: 'Champion', accent: '#FFD700' },
-  // special
-  superstar: { label: 'Superstar', accent: '#FF8C42' },
-  speed: { label: 'Speed', accent: '#C0C0C0' },
+const BADGE_META: Record<string, { label: string; accent: string; img: string }> = {
+  // longevity — career games, highest only, and the one badge the front carries
+  newcomer:    { label: 'Newcomer',     accent: '#C9CDD4', img: '/badges/01-newcomer.png' },
+  rookie:      { label: 'Rookie',       accent: '#C97F3D', img: '/badges/02-rookie.png' },
+  prospect:    { label: 'Prospect',     accent: '#3FBF63', img: '/badges/03-prospect.png' },
+  established: { label: 'Established',  accent: '#4DA6FF', img: '/badges/04-established.png' },
+  veteran:     { label: 'Veteran',      accent: '#9B59D0', img: '/badges/05-veteran.png' },
+  club_legend: { label: 'Club Legend',  accent: '#E8C15A', img: '/badges/06-club-legend.png' },
+  icon:        { label: 'Icon',         accent: '#FFD700', img: '/badges/07-icon.png' },
+  // representative — highest only, from ASA's ratified lists
+  akl_junior:  { label: 'Auckland Junior', accent: '#4DA6FF', img: '/badges/08-auckland-junior.png' },
+  nz_junior:   { label: 'NZ Junior',       accent: '#C9CDD4', img: '/badges/09-nz-junior.png' },
+  akl_senior:  { label: 'Auckland Senior', accent: '#2456E6', img: '/badges/10-auckland-senior.png' },
+  nz_senior:   { label: 'Black Sox / White Sox', accent: '#E8E4DC', img: '/badges/11-black-sox.png' },
+  // honour
+  mvp:         { label: 'MVP',          accent: '#E8C15A', img: '/badges/12-mvp.png' },
+  // special — both are possible on one card, rarely
+  superstar:   { label: 'Superstar',    accent: '#FFD700', img: '/badges/13-superstar.png' },
+  speed:       { label: 'Speed',        accent: '#C9CDD4', img: '/badges/14-speed.png' },
 }
-const badgeMeta = (b: string, fallback: string) =>
-  BADGE_META[b.toLowerCase()] ?? {
-    label: b.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-    accent: fallback,
-  }
+
+/* The front of the card carries one badge only — the longevity tier. Everything
+   else lives on the career face, where there's room to see it. */
+const LONGEVITY = ['icon', 'club_legend', 'veteran', 'established', 'prospect', 'rookie', 'newcomer']
+const longevityOf = (badges: string[]) =>
+  LONGEVITY.find(t => badges.some(b => b.toLowerCase() === t)) ?? null
+
+const badgeMeta = (b: string) => BADGE_META[b.toLowerCase()] ?? null
 
 export type FullCardPlayer = {
   id: string
