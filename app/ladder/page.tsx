@@ -346,7 +346,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
                   {view === 'weekly' ? 'The board awaits its first champion.' : view === 'clubs' ? 'The club race hasn\u2019t started.' : 'The season hasn\u2019t started.'}
                 </p>
                 <p className="text-sm" style={{ color: T.textDim, maxWidth: '380px', margin: '0 auto' }}>
-                  {view === 'points' && 'Every team starts level. The ladder comes alive when Round 1 is scored — first pitch October 3.'}
+                  {view === 'points' && 'Every team starts level. The ladder comes alive when Round 1 is scored.'}
                   {view === 'h2h' && 'Every team starts 0–0–0. Your first head-to-head opponent is drawn when Round 1 locks.'}
                   {view === 'weekly' && 'One team tops the league every single week. The first honour board is crowned after Round 1.'}
                   {view === 'clubs' && 'Every point your team scores counts toward your club. Five teams from a club opens their campaign.'}
