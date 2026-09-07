@@ -283,19 +283,24 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
             <span className="absolute top-3 right-3.5 text-[9px] font-black uppercase tracking-widest"
               style={{ color: T.textDim, textShadow: '0 0 8px #00000090' }}>Unowned</span>
           )}
-          {badges.length > 0 && (
-            <div className="absolute left-3 flex flex-col gap-1 items-start" style={{ bottom: '10px' }}>
-              {badges.slice(0, 3).map(b => {
-                const bm = badgeMeta(b, meta.accent)
-                return (
-                  <span key={b} className="text-[8px] font-black uppercase tracking-widest rounded-full"
-                    style={{ color: '#141210', background: bm.accent, padding: '3px 9px', boxShadow: `0 0 10px ${bm.accent}70` }}>
-                    {bm.label}
-                  </span>
-                )
-              })}
-            </div>
-          )}
+          {/* One badge on the front — the longevity tier. The rest are on the
+              career face, where they can be seen properly. */}
+          {(() => {
+            const tier = longevityOf(badges)
+            const bm = tier ? badgeMeta(tier) : null
+            if (!bm) return null
+            return (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={bm.img} alt={bm.label} title={bm.label}
+                className="absolute left-3"
+                style={{
+                  bottom: '10px', height: '52px', width: 'auto',
+                  filter: owned
+                    ? 'drop-shadow(0 2px 8px #000000A0)'
+                    : 'grayscale(1) brightness(0.55)',
+                }} />
+            )
+          })()}
           {flippable && (
             <span className="absolute bottom-2 right-3 text-[8px] font-bold uppercase tracking-widest"
               style={{ color: T.textDim, textShadow: '0 0 6px #000000' }}>Tap for career ⟳</span>
