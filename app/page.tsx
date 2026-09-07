@@ -20,7 +20,7 @@ const ROUND_CYCLE = [
 const PILLARS = [
   { t: 'Built on real games', d: 'Every point comes from a real result in your competition — nothing invented, nothing simulated.' },
   { t: 'Made for communities', d: 'Clubs, supporters, families and old teammates playing along together.' },
-  { t: 'Players celebrated', d: 'Every player gets a card. Careers, milestones and big weeks recognised — not just the stars.' },
+  { t: 'Players celebrated', d: 'The players of your competition on cards of their own. Careers, milestones and big weeks recognised — not just the stars.' },
 ]
 
 export default function Home() {
