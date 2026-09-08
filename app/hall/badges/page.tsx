@@ -23,14 +23,14 @@ type Badge = {
 const GROUPS: { title: string; note: string; badges: Badge[] }[] = [
   {
     title: 'Longevity',
-    note: 'Premier games across NRC, AFC and NFS. A card carries the highest tier reached and nothing below it.',
+    note: 'Premier games across NRC, AFC and NFS \u2014 a full season is around twenty. A card carries the highest tier reached and nothing below it.',
     badges: [
-      { key: 'icon', label: 'Icon', crit: '300 or more Premier games', accent: '#FFD700', img: '/badges/07-icon.png', nameHolders: true },
-      { key: 'club_legend', label: 'Club Legend', crit: '200–299 Premier games', accent: '#E8C15A', img: '/badges/06-club-legend.png', nameHolders: true },
-      { key: 'veteran', label: 'Veteran', crit: '100–199 Premier games', accent: '#9B59D0', img: '/badges/05-veteran.png' },
-      { key: 'established', label: 'Established', crit: '50–99 Premier games', accent: '#4DA6FF', img: '/badges/04-established.png' },
-      { key: 'prospect', label: 'Prospect', crit: '25–49 Premier games', accent: '#3FBF63', img: '/badges/03-prospect.png' },
-      { key: 'rookie', label: 'Rookie', crit: '1–24 Premier games', accent: '#C97F3D', img: '/badges/02-rookie.png' },
+      { key: 'icon', label: 'Icon', crit: '301 or more Premier games — fifteen seasons and beyond', accent: '#FFD700', img: '/badges/07-icon.png', nameHolders: true },
+      { key: 'club_legend', label: 'Club Legend', crit: '201–300 Premier games — around fifteen seasons', accent: '#E8C15A', img: '/badges/06-club-legend.png', nameHolders: true },
+      { key: 'veteran', label: 'Veteran', crit: '101–200 Premier games — around ten seasons', accent: '#9B59D0', img: '/badges/05-veteran.png' },
+      { key: 'established', label: 'Established', crit: '61–100 Premier games — around five seasons', accent: '#4DA6FF', img: '/badges/04-established.png' },
+      { key: 'prospect', label: 'Prospect', crit: '21–60 Premier games — two or three seasons', accent: '#3FBF63', img: '/badges/03-prospect.png' },
+      { key: 'rookie', label: 'Rookie', crit: '1–20 Premier games — a first full season', accent: '#C97F3D', img: '/badges/02-rookie.png' },
       { key: 'newcomer', label: 'Newcomer', crit: 'First season, no Premier games yet', accent: '#C9CDD4', img: '/badges/01-newcomer.png' },
     ],
   },
