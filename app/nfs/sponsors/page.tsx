@@ -106,16 +106,18 @@ export default function Sponsors() {
 
       <section className="px-5 sm:px-12" style={{ paddingTop: '84px', paddingBottom: '30px' }}>
         <div className="text-center" style={{ maxWidth: '620px', marginLeft: 'auto', marginRight: 'auto' }}>
+          <a href="/nfs" className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#F5F1E860' }}>← NFS Premier League</a>  
           <p className="text-xs font-black uppercase tracking-[0.3em]" style={{ color: GOLD, marginBottom: '14px' }}>
-            Our partners
+            NFS Premier League · Partners
           </p>
           <h1 className="text-3xl sm:text-4xl font-black text-white" style={{ fontFamily: 'var(--font-heading)', marginBottom: '16px' }}>
             The people backing it.
           </h1>
           <p className="text-sm leading-relaxed" style={{ color: '#F5F1E870' }}>
-            Grassroots Fantasy is free to play, and it stays that way because these
+            The GF NFS Premier League is free to play, and it stays that way because these
             businesses put up the prizes. They&apos;re all part of Auckland softball —
-            worth your support in return.
+            worth your support in return. Every Grassroots Fantasy league carries its
+            own partners.
           </p>
         </div>
       </section>
@@ -197,7 +199,7 @@ export default function Sponsors() {
           )}
 
           <p className="text-xs text-center leading-relaxed" style={{ color: '#F5F1E835', marginTop: '36px' }}>
-            Interested in backing a Grassroots Fantasy league?{' '}
+            Interested in backing this league or another?{' '}
             <a href="mailto:info@grassrootsfantasy.co.nz?subject=Partnership%20enquiry"
               style={{ color: GOLD }}>Get in touch.</a>
           </p>
