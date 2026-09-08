@@ -42,7 +42,7 @@ const PARTNERS: Partner[] = [
   {
     key: 'iathletic',
     name: 'iAthletic',
-    confirmed: false,
+    confirmed: true,
     logo: '/sponsors/iathletic.png',
     tile: '#000000',
     site: 'https://iathletic.co.nz',
