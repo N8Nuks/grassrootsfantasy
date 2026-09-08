@@ -80,7 +80,6 @@ const PARTNERS: Partner[] = [
       'Season Ladder Champion \u00b7 Men\u2019s and Women\u2019s',
       'Finals Challenge Champion \u00b7 Men\u2019s and Women\u2019s',
     ],
-    offer: 'Six months of Coach Nate to each winner \u2014 yours to use or to gift to your coach.',
   },
   {
     key: 'placemakers',
