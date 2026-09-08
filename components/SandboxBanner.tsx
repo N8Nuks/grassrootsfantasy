@@ -58,9 +58,14 @@ export default function SandboxBanner() {
         style={{ maxWidth: '760px', marginLeft: 'auto', marginRight: 'auto' }}>
 
         {n !== null && n >= 1 && n <= 10 && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={`/countdown/cd-${n}.png`} alt={`${n} days`} className="shrink-0"
-            style={{ height: '64px', width: 'auto', opacity: 0.9 }} />
+          <div className="shrink-0 flex flex-col items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`/countdown/cd-${n}.png`} alt="" style={{ height: '64px', width: 'auto', opacity: 0.9 }} />
+            <span className="font-black uppercase tracking-[0.3em]"
+              style={{ color: '#E8983A', fontSize: '9px', marginTop: '4px' }}>
+              {n === 1 ? 'Day to go' : 'Days to go'}
+            </span>
+          </div>
         )}
 
         <div className="text-center sm:text-left" style={{ maxWidth: '460px' }}>
