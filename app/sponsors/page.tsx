@@ -13,6 +13,9 @@ type Partner = {
   name: string
   confirmed: boolean
   logo?: string          // /sponsors/____.png
+  /* Each logo carries its own background as part of the mark, so the tile takes
+     that colour rather than sitting the logo on ours. */
+  tile?: string
   site?: string
   what: string
   awards: string[]
@@ -25,6 +28,8 @@ const PARTNERS: Partner[] = [
     key: 'fieldhouse',
     name: 'The Fieldhouse',
     confirmed: false,
+    logo: '/sponsors/fieldhouse.png',
+    tile: '#02132D',
     site: 'https://fieldhouse.co.nz',
     accent: '#4DA6FF',
     what: 'Indoor training and batting cages in Pakuranga, and our exclusive equipment and cage partner for the season.',
@@ -38,6 +43,8 @@ const PARTNERS: Partner[] = [
     key: 'iathletic',
     name: 'iAthletic',
     confirmed: false,
+    logo: '/sponsors/iathletic.png',
+    tile: '#000000',
     site: 'https://iathletic.co.nz',
     accent: '#FF6B9D',
     what: 'Teamwear and custom kit, and the apparel partner of the Women\u2019s grade.',
@@ -51,6 +58,8 @@ const PARTNERS: Partner[] = [
     key: 'remindr',
     name: 'Remindr Sports',
     confirmed: false,
+    logo: '/sponsors/remindr.png',
+    tile: '#010101',
     accent: '#39FF9E',
     what: 'Teamwear and clubstores, and the apparel partner of the Men\u2019s grade.',
     awards: [
@@ -61,7 +70,9 @@ const PARTNERS: Partner[] = [
     key: 'placemakers',
     name: 'PlaceMakers',
     confirmed: false,
-    accent: '#FF8A3D',
+    logo: '/sponsors/placemakers.png',
+    tile: '#012C9E',
+    accent: '#4D8DFF',
     what: 'Supporting the Finals Challenge prize packs in both grades.',
     awards: [
       'Finals Challenge · prize pack',
@@ -113,7 +124,7 @@ export default function Sponsors() {
                   <div className="flex items-start gap-5">
                     {/* Logo slot — the name stands in until the file arrives */}
                     <div className="shrink-0 rounded-lg flex items-center justify-center"
-                      style={{ width: '92px', height: '92px', background: '#0D0D0F', border: '1px solid #ffffff12' }}>
+                      style={{ width: '92px', height: '92px', background: p.tile ?? '#0D0D0F', border: '1px solid #ffffff18' }}>
                       {p.logo ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={p.logo} alt={p.name} style={{ maxWidth: '78%', maxHeight: '78%', width: 'auto', height: 'auto' }} />
