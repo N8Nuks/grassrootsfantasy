@@ -60,6 +60,7 @@ const PARTNERS: Partner[] = [
     confirmed: true,
     logo: '/sponsors/remindr.png',
     tile: '#010101',
+    site: 'https://remindrsports.co.nz',
     accent: '#39FF9E',
     what: 'Teamwear and clubstores, and the apparel partner of the Men\u2019s grade.',
     awards: [
@@ -72,6 +73,7 @@ const PARTNERS: Partner[] = [
     confirmed: true,
     logo: '/sponsors/placemakers.png',
     tile: '#012C9E',
+    site: 'https://www.placemakers.co.nz',
     accent: '#4D8DFF',
     what: 'Supporting the Finals Challenge prize packs in both grades.',
     awards: [
