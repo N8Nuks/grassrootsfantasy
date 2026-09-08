@@ -8,6 +8,9 @@ import SandboxBanner from '@/components/SandboxBanner'
 
 type PackQueueItem = { grade: 'mens' | 'womens'; cards: RevealCard[]; packName?: string }
 
+/* Closed between the sandbox ending and the real season loading. Set to false on
+   18 September once the rosters are in and the packs are ready to deal. */
+const REGISTRATION_CLOSED = true
 export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -145,6 +148,39 @@ export default function Register() {
   const field = "w-full rounded-lg px-4 py-3.5 text-sm text-[#F5F1E8] outline-none transition-shadow focus:border-[#3FBF63] focus:shadow-[0_0_14px_#3FBF6340]"
   const fieldStyle = { background: '#181510', border: '1px solid #ffffff15' }
   const label = "block text-xs font-bold uppercase tracking-wider text-[#F5F1E8]/50 mb-1.5"
+
+  if (REGISTRATION_CLOSED) {
+    return (
+      <main className="min-h-screen flex flex-col" style={{ background: '#141210' }}>
+        <Nav /><SandboxBanner />
+        <section className="relative flex-1 px-6 overflow-hidden flex items-center" style={{ paddingTop: '56px', paddingBottom: '80px' }}>
+          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
+          <div className="relative z-10 text-center" style={{ maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>
+            <p className="text-xs font-black uppercase tracking-[0.3em] mb-4" style={{ color: '#E8983A' }}>Closed for the changeover</p>
+            <h1 className="text-3xl sm:text-4xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)', marginBottom: '18px' }}>
+              Back on 18 September.
+            </h1>
+            <p className="text-sm leading-relaxed text-[#F5F1E8]/60" style={{ marginBottom: '26px' }}>
+              The sandbox season has closed and we&apos;re loading the real 2026/27
+              rosters, with player photos and full career details. Registration reopens
+              on <b style={{ color: '#F5F1E8' }}>18 September</b>, first round is
+              {' '}<b style={{ color: '#F5F1E8' }}>26 September</b>, and the first scores
+              lock in on <b style={{ color: '#F5F1E8' }}>29 September</b>.
+            </p>
+            <a href="/arcade"
+              className="inline-block text-base font-bold tracking-wide transition-all hover:scale-[1.02] rounded-full"
+              style={{ color: '#B47CFF', border: '1px solid #B47CFF', background: 'transparent', padding: '16px 40px', textShadow: '0 0 12px #B47CFF80', boxShadow: '0 0 16px #B47CFF30, inset 0 0 16px #B47CFF15' }}>
+              Play the Arcade
+            </a>
+            <p className="text-xs text-[#F5F1E8]/50" style={{ marginTop: '22px' }}>
+              Already registered? <a href="/login" className="underline" style={{ color: '#3FBF63' }}>Log in</a>
+            </p>
+          </div>
+        </section>
+        <Footer />
+      </main>
+    )
+  }
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#141210' }}>
