@@ -27,7 +27,7 @@ const PARTNERS: Partner[] = [
   {
     key: 'fieldhouse',
     name: 'The Fieldhouse',
-    confirmed: false,
+    confirmed: true,
     logo: '/sponsors/fieldhouse.png',
     tile: '#02132D',
     site: 'https://fieldhouse.co.nz',
@@ -57,7 +57,7 @@ const PARTNERS: Partner[] = [
   {
     key: 'remindr',
     name: 'Remindr Sports',
-    confirmed: false,
+    confirmed: true,
     logo: '/sponsors/remindr.png',
     tile: '#010101',
     accent: '#39FF9E',
@@ -69,7 +69,7 @@ const PARTNERS: Partner[] = [
   {
     key: 'placemakers',
     name: 'PlaceMakers',
-    confirmed: false,
+    confirmed: true,
     logo: '/sponsors/placemakers.png',
     tile: '#012C9E',
     accent: '#4D8DFF',
