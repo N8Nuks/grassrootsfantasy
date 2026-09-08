@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
    real season opening. Both computed from the visitor's own date, so it moves
    on its own and nobody has to remember to change it. */
 
-const CLOSE = new Date(2026, 8, 11)    // 11 September — sandbox ends
+const CLOSE = new Date(2026, 8, 12)    // 12 September — sandbox ends
 const LAUNCH = new Date(2026, 8, 18)   // 18 September — registration reopens
 
 const daysBetween = (from: Date, to: Date) =>
