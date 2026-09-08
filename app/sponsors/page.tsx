@@ -67,6 +67,21 @@ const PARTNERS: Partner[] = [
       'Finals Challenge Champion · Men\u2019s',
     ],
   },
+    {
+    key: 'bdl',
+    name: 'Black Diamond Labs',
+    confirmed: true,
+    logo: '/sponsors/bdl.png',
+    tile: '#0A0C10',
+    site: 'https://blackdiamondlabs.co.nz',
+    accent: '#C9CDD4',
+    what: 'The Auckland technology company behind Grassroots Fantasy, and the makers of Coach Nate.',
+    awards: [
+      'Season Ladder Champion \u00b7 Men\u2019s and Women\u2019s',
+      'Finals Challenge Champion \u00b7 Men\u2019s and Women\u2019s',
+    ],
+    offer: 'Six months of Coach Nate to each winner \u2014 yours to use or to gift to your coach.',
+  },
   {
     key: 'placemakers',
     name: 'PlaceMakers',
