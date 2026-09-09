@@ -17,6 +17,9 @@ type Partner = {
      that colour rather than sitting the logo on ours. */
   tile?: string
   site?: string
+  /* What the link actually goes to, so it isn't a generic "visit" — a booking
+     page and a teamwear range want different words. */
+  siteLabel?: string
   what: string
   awards: string[]
   offer?: string
@@ -30,7 +33,8 @@ const PARTNERS: Partner[] = [
     confirmed: true,
     logo: '/sponsors/fieldhouse.png',
     tile: '#02132D',
-    site: 'https://fieldhouse.co.nz',
+    site: 'https://fieldhouse.setmore.com/',
+    siteLabel: 'Book a cage',
     accent: '#4DA6FF',
     what: 'Indoor training and batting cages in Pakuranga, and our exclusive equipment and cage partner for the season.',
     awards: [
@@ -46,7 +50,8 @@ const PARTNERS: Partner[] = [
     confirmed: true,
     logo: '/sponsors/iathletic.png',
     tile: '#000000',
-    site: 'https://iathletic.co.nz',
+    site: 'https://iathletic.co.nz/pages/teamwear',
+    siteLabel: 'Teamwear and custom kit',
     accent: '#FF6B9D',
     what: 'Teamwear and custom kit, made here in Auckland, and the apparel partner of the whole competition.',
     awards: [
@@ -75,6 +80,7 @@ const PARTNERS: Partner[] = [
     logo: '/sponsors/bdl.png',
     tile: '#0A0C10',
     site: 'https://blackdiamondlabs.co.nz',
+    siteLabel: 'What we build',
     accent: '#C9CDD4',
     what: 'The Auckland technology company behind Grassroots Fantasy, and the makers of Coach Nate.',
     awards: [
@@ -89,6 +95,7 @@ const PARTNERS: Partner[] = [
     logo: '/sponsors/placemakers.png',
     tile: '#012C9E',
     site: 'https://www.placemakers.co.nz',
+    siteLabel: 'Find your local store',
     accent: '#4D8DFF',
     what: 'Supporting the biggest title on the calendar, in both grades.',
     awards: [
@@ -188,7 +195,7 @@ export default function Sponsors() {
                         <a href={p.site} target="_blank" rel="noopener noreferrer"
                           className="inline-block text-[11px] font-black uppercase tracking-widest"
                           style={{ color: p.accent, marginTop: '14px' }}>
-                          Visit {p.name} →
+                          {p.siteLabel ?? `Visit ${p.name}`} →
                         </a>
                       )}
                     </div>
