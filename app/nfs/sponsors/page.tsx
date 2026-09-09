@@ -36,8 +36,9 @@ const PARTNERS: Partner[] = [
     awards: [
       'Mid-Season Leader · Men\u2019s and Women\u2019s',
       'Head-to-Head Champion · Men\u2019s and Women\u2019s',
+      'Finals Challenge Champion · Men\u2019s and Women\u2019s',
     ],
-    offer: '10% off full-priced gear and cage use for Grassroots Fantasy players, all season.',
+    offer: '10% off full-priced gear and standard cage bookings for Grassroots Fantasy players, all season.',
   },
   {
     key: 'iathletic',
@@ -67,7 +68,7 @@ const PARTNERS: Partner[] = [
       'Finals Challenge Champion · Men\u2019s',
     ],
   },
-    {
+  {
     key: 'bdl',
     name: 'Black Diamond Labs',
     confirmed: true,
@@ -89,9 +90,9 @@ const PARTNERS: Partner[] = [
     tile: '#012C9E',
     site: 'https://www.placemakers.co.nz',
     accent: '#4D8DFF',
-    what: 'Supporting the Finals Challenge prize packs in both grades.',
+    what: 'Supporting the biggest title on the calendar, in both grades.',
     awards: [
-      'Finals Challenge · prize pack',
+      'Finals Challenge Champion · Men\u2019s and Women\u2019s',
     ],
   },
 ]
@@ -105,8 +106,8 @@ export default function Sponsors() {
 
       <section className="px-5 sm:px-12" style={{ paddingTop: '84px', paddingBottom: '30px' }}>
         <div className="text-center" style={{ maxWidth: '620px', marginLeft: 'auto', marginRight: 'auto' }}>
-          <a href="/nfs" className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#F5F1E860' }}>← NFS Premier League</a>  
-          <p className="text-xs font-black uppercase tracking-[0.3em]" style={{ color: GOLD, marginBottom: '14px' }}>
+          <a href="/nfs" className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#F5F1E860' }}>← NFS Premier League</a>
+          <p className="text-xs font-black uppercase tracking-[0.3em]" style={{ color: GOLD, marginBottom: '14px', marginTop: '20px' }}>
             NFS Premier League · Partners
           </p>
           <h1 className="text-3xl sm:text-4xl font-black text-white" style={{ fontFamily: 'var(--font-heading)', marginBottom: '16px' }}>
