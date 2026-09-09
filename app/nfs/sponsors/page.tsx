@@ -47,11 +47,11 @@ const PARTNERS: Partner[] = [
     tile: '#000000',
     site: 'https://iathletic.co.nz',
     accent: '#FF6B9D',
-    what: 'Teamwear and custom kit, and the apparel partner of the Women\u2019s grade.',
+    what: 'Teamwear and custom kit, made here in Auckland, and the apparel partner of the whole competition.',
     awards: [
-      'Season Ladder Champion · Women\u2019s',
-      'All-Time High Score · Women\u2019s',
-      'Finals Challenge Champion · Women\u2019s',
+      'Season Ladder Champion · Men\u2019s and Women\u2019s',
+      'All-Time High Score · Men\u2019s and Women\u2019s',
+      'Finals Challenge Champion · Men\u2019s and Women\u2019s',
     ],
   },
   {
