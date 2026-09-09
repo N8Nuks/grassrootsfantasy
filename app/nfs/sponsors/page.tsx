@@ -57,7 +57,7 @@ const PARTNERS: Partner[] = [
   {
     key: 'remindr',
     name: 'Remindr Sports',
-    confirmed: true,
+    confirmed: false,
     logo: '/sponsors/remindr.png',
     tile: '#010101',
     site: 'https://remindrsports.co.nz',
