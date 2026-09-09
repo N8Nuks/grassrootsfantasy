@@ -33,8 +33,8 @@ const PARTNERS: Partner[] = [
     confirmed: true,
     logo: '/sponsors/fieldhouse.png',
     tile: '#02132D',
-    site: 'https://fieldhouse.setmore.com/',
-    siteLabel: 'Book a cage',
+    site: 'https://fieldhouse.co.nz/pages/batting-cages',
+    siteLabel: 'Batting cages',
     accent: '#4DA6FF',
     what: 'Indoor training and batting cages in Pakuranga, and our exclusive equipment and cage partner for the season.',
     awards: [
