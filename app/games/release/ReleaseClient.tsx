@@ -64,7 +64,8 @@ export default function ReleaseClient() {
   const judged = useRef(false)
   const goneAt = useRef(0)
   const meterAt = useRef(0)          // where the needle stopped, in ms off release
-
+  const lastFrame = useRef(0)
+  const animT = useRef(0)          // seconds elapsed, for stride and pulse
   const beginPitch = useCallback((lv: number) => {
     judged.current = false
     goneAt.current = 0
@@ -125,6 +126,9 @@ export default function ReleaseClient() {
   }
 
   const draw = useCallback((now: number) => {
+    const dt = lastFrame.current ? Math.min(now - lastFrame.current, 48) : 16
+    lastFrame.current = now
+    animT.current += dt
     const cv = canvasRef.current
     if (!cv) return
     const ctx = cv.getContext('2d')
@@ -220,7 +224,7 @@ export default function ReleaseClient() {
 
     // ── The ball ──
     if (!released) {
-      const pulse = loading ? 0.55 + Math.sin(now / 50) * 0.45 : 0
+      const pulse = loading ? 0.55 + Math.sin(animT.current / 50) * 0.45 : 0
       ctx.save()
       ctx.shadowColor = BALL_YELLOW
       ctx.shadowBlur = loading ? 16 + pulse * 26 : 10
@@ -290,7 +294,7 @@ export default function ReleaseClient() {
     let runP = 0
     if (goneAt.current) runP = Math.min(1, (now - goneAt.current) / 1150)
     const rx = firstX + (secondX - firstX) * runP
-    const stride = goneAt.current ? Math.sin(now / 52) : 0
+    const stride = goneAt.current ? Math.sin(animT.current / 52) : 0
     const lean = goneAt.current ? 0.36 : 0.1
 
     ctx.save()
