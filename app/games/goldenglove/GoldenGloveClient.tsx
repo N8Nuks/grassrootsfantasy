@@ -91,6 +91,7 @@ export default function GoldenGloveClient() {
  
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const raf = useRef(0)
+  const lastFrame = useRef(0)
   const imgs = useRef<Partial<Record<Pose, HTMLImageElement>>>({})
  
   const pose = useRef<Pose>('ready')
@@ -215,6 +216,8 @@ export default function GoldenGloveClient() {
   }, [phase, ballNo, level, settle])
  
   const draw = useCallback((now: number) => {
+    const dt = lastFrame.current ? Math.min(now - lastFrame.current, 48) : 16
+    lastFrame.current = now
     const cv = canvasRef.current
     if (!cv) return
     const ctx = cv.getContext('2d')
@@ -374,7 +377,7 @@ export default function GoldenGloveClient() {
  
     // ── The miss ──
     if (miss.current > 0) {
-      if (phase === 'live') miss.current -= 16
+      if (phase === 'live') miss.current -= dt
       const k = 1 - miss.current / 700
       ctx.save()
       ctx.globalAlpha = Math.max(0, 1 - k * k)
