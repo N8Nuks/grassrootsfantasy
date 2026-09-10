@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import ArcadeShare from '@/components/ArcadeShare'
 import { fitCanvas, headingFont } from '@/lib/gamekit'
+import { celebrate } from '@/lib/celebrate'
 
 /* You are the runner at first, watching side on. Home is off to the left.
 
@@ -71,6 +72,7 @@ export default function ReleaseClient() {
   const [outcome, setOutcome] = useState<'up' | 'stay' | 'crowned' | null>(null)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const stageRef = useRef<HTMLDivElement>(null)
   const raf = useRef(0)
   const rockAt = useRef(0)
   const startAt = useRef(0)
@@ -385,6 +387,12 @@ export default function ReleaseClient() {
   const size = setSizeFor(level)
   const won = outcome === 'crowned'
 
+  /* The burst belongs to the moment the overlay appears, not to every render
+     while it's on screen. */
+  useEffect(() => {
+    if (outcome === 'crowned') celebrate(stageRef.current)
+  }, [outcome])
+
   return (
     <>
       <style>{`
@@ -439,7 +447,7 @@ export default function ReleaseClient() {
         <span className="rl-stat"><span>To pass</span><b>{needFor(level)}</b></span>
       </div>
 
-      <div className="rl-stage">
+      <div className="rl-stage" ref={stageRef}>
         <canvas ref={canvasRef} className="rl-canvas" onClick={go} />
 
         {last && phase === 'judged' && (
