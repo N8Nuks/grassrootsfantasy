@@ -4,8 +4,6 @@
    rather than to the arcade. A single flat colour reads cheap, so the burst
    mixes the neon at full strength, a dimmed version of it, and bone white. */
 
-import confetti from 'canvas-confetti'
-
 const BONE = '#F5F1E8'
 
 /* --neon is a CSS variable, and canvas-confetti wants real colours, so it has
@@ -29,13 +27,31 @@ function dim(hex: string) {
 }
 
 /* Two cannons firing inward from the lower corners, then a wider fall a beat
-   later. Reads as a stadium moment rather than a page effect. */
-export function celebrate(el?: HTMLElement | null) {
+   later. Reads as a stadium moment rather than a page effect.
+
+   The library is pulled in dynamically rather than imported at the top of the
+   file: it resolves to a UMD source that checks for `window` when the module
+   first evaluates, and on the server that check fails and leaves a no-op
+   behind. Importing it here guarantees a browser. */
+export async function celebrate(el?: HTMLElement | null) {
   if (typeof window === 'undefined') return
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
+  let confetti
+  try {
+    confetti = (await import('canvas-confetti')).default
+  } catch (err) {
+    console.warn('confetti failed to load', err)
+    return
+  }
+  if (typeof confetti !== 'function') {
+    console.warn('confetti did not resolve to a function')
+    return
+  }
+
   const colors = palette(el)
-  const base = { colors, disableForReducedMotion: true, zIndex: 60 }
+  // High enough to clear the game overlay and the nav without guessing
+  const base = { colors, disableForReducedMotion: true, zIndex: 9999 }
 
   confetti({ ...base, particleCount: 70, spread: 55, angle: 60, origin: { x: 0, y: 0.75 }, startVelocity: 48 })
   confetti({ ...base, particleCount: 70, spread: 55, angle: 120, origin: { x: 1, y: 0.75 }, startVelocity: 48 })
