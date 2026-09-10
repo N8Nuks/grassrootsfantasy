@@ -10,35 +10,43 @@ import { fitCanvas, headingFont } from '@/lib/gamekit'
    degrees of travel — and releases back at 210, level with the hip. One
    revolution only; two is illegal.
 
-   Five pitches to a set. Take four or more and you move up a level. Reach
-   Black Sox and five clean steals in a row promotes you to Black Diamond. */
+   Five levels, each arm a quarter quicker than the last. Four steals from five
+   moves you up. Black Diamond is the exception: eight pitches, and every one
+   of them has to be a steal. */
 
 const SET_SIZE = 5
-const PROMOTE_AT = 4          // steals needed in a set to move up
+const PROMOTE_AT = 4
+const BD_SET_SIZE = 8         // Black Diamond deals eight
+const BD_NEED = 8             // and wants all of them
+
 const SAFE = 120              // ms after release for a clean steal
-// SAFE is fixed; the late window now comes from the level's `close`
 
 /* Angles: 0 at 12 o'clock, increasing clockwise. */
 const deg = (d: number) => ((d - 90) * Math.PI) / 180
 const REST = deg(210)
 const ROCK = deg(170)
 const RELEASE = ROCK + (400 * Math.PI) / 180
-const ROCK_MS = 420
+
+/* The rock back scales with the delivery — a 460ms arm can't spend 420ms
+   loading, or the wind-up reads longer than the pitch. */
+const rockFor = (spin: number) => spin * 0.29
 
 const BALL_YELLOW = '#E8FF3D'
 
-/* `close` is the outer edge of the yellow — late, but still under the tag.
-   The band halves each level and is gone by Black Sox, where an international
+/* `ms` is one revolution of the arm; each level is a quarter quicker.
+   `close` is the outer edge of the yellow — late, but still under the tag.
+   That band halves each level and is gone by Black Sox, where an international
    catcher throws you out for being marginally late. Green never moves. */
 const LEVELS = [
   { name: 'Reserve',       ms: 1450, close: 260 },   // 140ms of yellow
-  { name: 'Premier',       ms: 1230, close: 190 },   //  70
-  { name: 'Rep',           ms: 1040, close: 155 },   //  35
-  { name: 'Black Sox',     ms: 880,  close: 120 },   //   0
-  { name: 'Black Diamond', ms: 720,  close: 120 },   //   0
+  { name: 'Premier',       ms: 1090, close: 190 },   //  70
+  { name: 'Rep',           ms: 820,  close: 155 },   //  35
+  { name: 'Black Sox',     ms: 615,  close: 120 },   //   0
+  { name: 'Black Diamond', ms: 460,  close: 120 },   //   0
 ]
-const BLACK_SOX = 3
 const BLACK_DIAMOND = 4
+const setSizeFor = (lv: number) => (lv === BLACK_DIAMOND ? BD_SET_SIZE : SET_SIZE)
+const needFor = (lv: number) => (lv === BLACK_DIAMOND ? BD_NEED : PROMOTE_AT)
 
 type Outcome = 'clean' | 'close' | 'thrown' | 'picked'
 const OUT: Record<Outcome, { label: string; sub: string; colour: string }> = {
@@ -50,11 +58,10 @@ const OUT: Record<Outcome, { label: string; sub: string; colour: string }> = {
 const isSteal = (o: Outcome) => o === 'clean' || o === 'close'
 
 export default function ReleaseClient() {
-  const [phase, setPhase] = useState<'ready' | 'wind' | 'judged' | 'setEnd' | 'done'>('ready')
+  const [phase, setPhase] = useState<'ready' | 'wind' | 'judged' | 'setEnd'>('ready')
   const [level, setLevel] = useState(0)
   const [pitch, setPitch] = useState(0)              // within the set
   const [setResults, setSetResults] = useState<Outcome[]>([])
-  const [cleanRun, setCleanRun] = useState(0)        // consecutive steals at Black Sox
   const [last, setLast] = useState<{ outcome: Outcome; ms: number } | null>(null)
   const [outcome, setOutcome] = useState<'up' | 'stay' | 'crowned' | null>(null)
 
@@ -63,22 +70,36 @@ export default function ReleaseClient() {
   const rockAt = useRef(0)
   const startAt = useRef(0)
   const releaseAt = useRef(0)
-  const spin = useRef(1450)
+  const spin = useRef(LEVELS[0].ms)
+  const rockMs = useRef(rockFor(LEVELS[0].ms))
   const judged = useRef(false)
   const goneAt = useRef(0)
   const meterAt = useRef(0)          // where the needle stopped, in ms off release
+
+  /* Frame timing. The two sine waves below — the loading pulse and the runner's
+     stride — need a clock that advances at the same rate on a 60Hz laptop and a
+     120Hz phone, so they run off accumulated delta rather than raw rAF time. */
   const lastFrame = useRef(0)
-  const animT = useRef(0)          // seconds elapsed, for stride and pulse
+  const animT = useRef(0)
+
+  /* Anything scheduled has to be cancellable, or a pitch in flight fires its
+     callback after the player has navigated away. */
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+  const after = (ms: number, fn: () => void) => { timers.current.push(setTimeout(fn, ms)) }
+  const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = [] }
+  useEffect(() => clearTimers, [])
+
   const beginPitch = useCallback((lv: number) => {
     judged.current = false
     goneAt.current = 0
     meterAt.current = 0
     setLast(null)
     spin.current = LEVELS[lv].ms
+    rockMs.current = rockFor(LEVELS[lv].ms)
     const pause = 900 + Math.random() * 1500
     setPhase('wind')
     rockAt.current = performance.now() + pause
-    startAt.current = rockAt.current + ROCK_MS
+    startAt.current = rockAt.current + rockMs.current
     releaseAt.current = startAt.current + spin.current
   }, [])
 
@@ -95,49 +116,59 @@ export default function ReleaseClient() {
     setLast({ outcome: result, ms })
     const nextResults = [...setResults, result]
     setSetResults(nextResults)
-
-    // A run of clean steals at Black Sox is the only way to Black Diamond
-    const nextRun = level === BLACK_SOX && isSteal(result) ? cleanRun + 1 : 0
-    setCleanRun(nextRun)
     setPhase('judged')
 
-    setTimeout(() => {
-      if (nextRun >= 5) { setOutcome('crowned'); setPhase('setEnd'); return }
+    after(1800, () => {
+      const size = setSizeFor(level)
+      const need = needFor(level)
       const nextPitch = pitch + 1
-      if (nextPitch >= SET_SIZE) {
-        const stolen = nextResults.filter(isSteal).length
-        const canRise = stolen >= PROMOTE_AT && level < BLACK_SOX
-        setOutcome(canRise ? 'up' : 'stay')
+      const stolen = nextResults.filter(isSteal).length
+
+      // Set over, one way or the other
+      if (nextPitch >= size) {
+        setOutcome(stolen >= need ? (level === BLACK_DIAMOND ? 'crowned' : 'up') : 'stay')
         setPhase('setEnd')
         return
       }
+
+      /* No point pitching out a set that can no longer be passed — at Black
+         Diamond one miss settles it on the spot. */
+      if (stolen + (size - nextPitch) < need) {
+        setOutcome('stay')
+        setPhase('setEnd')
+        return
+      }
+
       setPitch(nextPitch)
       beginPitch(level)
-    }, 1800)
-  }, [phase, setResults, pitch, level, cleanRun, beginPitch])
+    })
+  }, [phase, setResults, pitch, level, beginPitch])
 
   function nextSet() {
+    clearTimers()
     const rise = outcome === 'up'
     const lv = rise ? level + 1 : level
     setLevel(lv); setPitch(0); setSetResults([]); setOutcome(null); setLast(null)
-    if (!rise) setCleanRun(0)
     beginPitch(lv)
   }
 
   function startOver() {
-    setLevel(0); setPitch(0); setSetResults([]); setCleanRun(0); setOutcome(null); setLast(null)
+    clearTimers()
+    setLevel(0); setPitch(0); setSetResults([]); setOutcome(null); setLast(null)
     beginPitch(0)
   }
 
-  const draw = useCallback((now: number) => {
-    const dt = lastFrame.current ? Math.min(now - lastFrame.current, 48) : 16
-    lastFrame.current = now
-    animT.current += dt
+  const draw = useCallback((raw: number) => {
     const cv = canvasRef.current
     if (!cv) return
     const ctx = cv.getContext('2d')
     if (!ctx) return
     const { W, H } = fitCanvas(cv, 640 / 440)
+
+    const dt = lastFrame.current ? Math.min(raw - lastFrame.current, 48) : 16
+    lastFrame.current = raw
+    animT.current += dt
+    const now = raw
 
     // ── The park ──
     const sky = ctx.createLinearGradient(0, 0, 0, H)
@@ -155,7 +186,7 @@ export default function ReleaseClient() {
       ctx.save(); ctx.translate(bx, baseY); ctx.rotate(Math.PI / 4)
       ctx.fillRect(-10, -10, 20, 20); ctx.restore()
       ctx.fillStyle = '#ffffff30'
-            ctx.font = headingFont(H * 0.024, 800)
+      ctx.font = headingFont(H * 0.024, 800)
       ctx.textAlign = 'center'
       ctx.fillText(label, bx, baseY + H * 0.065)
     }
@@ -181,7 +212,7 @@ export default function ReleaseClient() {
         angle = ROCK + (RELEASE - ROCK) * p
         released = tSpin >= spin.current
       } else if (tRock > 0) {
-        angle = REST + (ROCK - REST) * Math.min(tRock / ROCK_MS, 1)
+        angle = REST + (ROCK - REST) * Math.min(tRock / rockMs.current, 1)
         loading = true
       } else if (tRock > -340) {
         loading = true
@@ -254,7 +285,8 @@ export default function ReleaseClient() {
 
     // ── The timing meter ──
     // Red before the release, green in the steal window, yellow while the throw
-    // is still beatable, red again once it isn't. The needle rides it live.
+    // is still beatable, red again once it isn't. The yellow narrows each level
+    // and is gone from Black Sox up. The needle rides it live.
     const mW = W * 0.62, mH = H * 0.036
     const mX = (W - mW) / 2, mY = H * 0.075
     const span = 700                                  // ms shown across the bar
@@ -266,16 +298,16 @@ export default function ReleaseClient() {
       const b = mX + mW * ((to + 300) / span)
       ctx.fillStyle = colour; ctx.fillRect(a, mY, b - a, mH)
     }
+    const close = LEVELS[level].close
     seg(-300, 0, '#FF4D4D')          // too early — you're out
     seg(0, SAFE, '#39FF9E')          // gone on the release
-    const close = LEVELS[level].close
     seg(SAFE, close, '#FFB800')      // late but safe — narrows each level
     seg(close, 400, '#FF4D4D')       // thrown out
 
     ctx.strokeStyle = '#F5F1E8'; ctx.lineWidth = 2
     ctx.beginPath(); ctx.moveTo(zeroX, mY - 5); ctx.lineTo(zeroX, mY + mH + 5); ctx.stroke()
     ctx.fillStyle = '#F5F1E8'
-        ctx.font = headingFont(H * 0.019, 800)
+    ctx.font = headingFont(H * 0.019, 800)
     ctx.textAlign = 'center'
     ctx.fillText('RELEASE', zeroX, mY - 9)
 
@@ -345,6 +377,8 @@ export default function ReleaseClient() {
   }, [go])
 
   const stolen = setResults.filter(isSteal).length
+  const size = setSizeFor(level)
+  const won = outcome === 'crowned'
 
   return (
     <>
@@ -375,7 +409,7 @@ export default function ReleaseClient() {
           background: #05060AE8; padding: 24px;
         }
         .rl-key { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #3E4A58; text-align: center; margin-top: 14px; }
-        .rl-tape { display: flex; gap: 6px; margin-top: 18px; justify-content: center; }
+        .rl-tape { display: flex; gap: 6px; margin-top: 18px; justify-content: center; flex-wrap: wrap; }
         .rl-dot { width: 40px; height: 6px; background: #ffffff10; }
         .rl-ladder { display: flex; flex-direction: column; gap: 6px; margin-top: 22px; }
         .rl-rung {
@@ -389,19 +423,19 @@ export default function ReleaseClient() {
 
       <p className="rl-lede">
         You&apos;re on first, home off to your left. The hand rocks back, comes round once, and the ball
-        goes at 7 o&apos;clock. Watch the meter: leave in the green and second is yours. Five pitches to a
-        set — take four and you move up.
+        goes at 7 o&apos;clock. Watch the meter: leave in the green and second is yours. Four steals from
+        five moves you up, and every arm is a quarter quicker than the last.
       </p>
 
       <div className="rl-hud">
         <span className="rl-stat"><span>Level</span><b style={{ color: 'var(--neon)', fontSize: '13px' }}>{LEVELS[level].name}</b></span>
-        <span className="rl-stat"><span>Pitch</span><b>{Math.min(pitch + (phase === 'wind' || phase === 'judged' ? 1 : 0), SET_SIZE)}/{SET_SIZE}</b></span>
+        <span className="rl-stat"><span>Pitch</span><b>{Math.min(pitch + (phase === 'wind' || phase === 'judged' ? 1 : 0), size)}/{size}</b></span>
         <span className="rl-stat"><span>Stolen</span><b>{stolen}</b></span>
-        {level === BLACK_SOX && <span className="rl-stat"><span>In a row</span><b style={{ color: cleanRun >= 3 ? '#FFD700' : undefined }}>{cleanRun}/5</b></span>}
+        <span className="rl-stat"><span>To pass</span><b>{needFor(level)}</b></span>
       </div>
 
       <div className="rl-stage">
-                <canvas ref={canvasRef} className="rl-canvas" onClick={go} />
+        <canvas ref={canvasRef} className="rl-canvas" onClick={go} />
 
         {last && phase === 'judged' && (
           <div className="rl-flash">
@@ -421,24 +455,24 @@ export default function ReleaseClient() {
               <>
                 <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.34em', textTransform: 'uppercase',
                             color: outcome === 'stay' ? '#FF4D4D' : outcome === 'crowned' ? '#FFD700' : '#39FF9E' }}>
-                  {outcome === 'crowned' ? 'Black Diamond' : outcome === 'up' ? 'Moving up' : 'Set over'}
+                  {outcome === 'crowned' ? 'Black Diamond taken' : outcome === 'up' ? 'Moving up' : 'Set over'}
                 </p>
                 <p className="ar-num" style={{ fontSize: '46px', color: '#F5F1E8', textShadow: 'none', margin: '10px 0 2px' }}>
-                  {outcome === 'crowned' ? '5 in a row' : `${stolen}/${SET_SIZE}`}
+                  {stolen}/{size}
                 </p>
                 <p style={{ fontSize: '12px', color: '#7D8B9C', maxWidth: '30ch', lineHeight: 1.6 }}>
                   {outcome === 'crowned'
-                    ? 'Five clean off Black Sox. Nothing left to prove.'
+                    ? 'Eight pitches at 460 milliseconds and not one of them beat you.'
                     : outcome === 'up'
                       ? `Four or better — you're up to ${LEVELS[level + 1].name}.`
-                      : level === BLACK_SOX
-                        ? 'Five clean in a row is the only way past Black Sox.'
+                      : level === BLACK_DIAMOND
+                        ? 'Black Diamond wants all eight. Go again.'
                         : `Four steals moves you up. Run the ${LEVELS[level].name} set again.`}
                 </p>
                 {outcome === 'crowned' ? (
                   <>
                     <div style={{ marginTop: '18px' }}>
-                      <ArcadeShare lines={['Release Point — Black Diamond', 'Five clean steals off Black Sox']} />
+                      <ArcadeShare lines={['Release Point — Black Diamond', 'Eight from eight off a 460ms arm']} />
                     </div>
                     <button className="ar-btn" onClick={startOver} style={{ marginTop: '10px' }}><span>Start again</span></button>
                   </>
@@ -463,7 +497,7 @@ export default function ReleaseClient() {
       <p className="rl-key">Press space, or tap the field</p>
 
       <div className="rl-tape">
-        {Array.from({ length: SET_SIZE }).map((_, i) => (
+        {Array.from({ length: size }).map((_, i) => (
           <span key={i} className="rl-dot"
             style={setResults[i] ? { background: OUT[setResults[i]].colour } : undefined} />
         ))}
@@ -471,11 +505,13 @@ export default function ReleaseClient() {
 
       <div className="rl-ladder">
         {LEVELS.map((lv, i) => (
-          <span key={lv.name} className="rl-rung" data-on={i === level} data-done={i < level}>
+          <span key={lv.name} className="rl-rung"
+            data-on={i === level && !won}
+            data-done={won || i < level}>
             <span className="rl-n">{i + 1}</span>
             {lv.name}
             <span style={{ marginLeft: 'auto', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-              {i === BLACK_DIAMOND ? '5 clean in a row' : i < level ? 'Passed' : i === level ? '4 of 5 to pass' : ''}
+              {won || i < level ? 'Passed' : `${needFor(i)} of ${setSizeFor(i)}`}
             </span>
           </span>
         ))}
