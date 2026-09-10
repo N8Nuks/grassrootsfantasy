@@ -19,7 +19,12 @@ const PROMOTE_AT = 4
 const BD_SET_SIZE = 8         // Black Diamond deals eight
 const BD_NEED = 8             // and wants all of them
 
-const SAFE = 120              // ms after release for a clean steal
+/* A runner doesn't react to the release, she goes on it — the body is already
+   moving as the arm comes down through the bottom of the circle. EARLY is how
+   far back into that downswing you can commit and still be gone legally.
+   Beyond it the umpire has you leaving before the ball. */
+const EARLY = 90              // ms before release, still a legal jump
+const SAFE = 80               // ms after release for a clean steal
 
 /* Angles: 0 at 12 o'clock, increasing clockwise. */
 const deg = (d: number) => ((d - 90) * Math.PI) / 180
@@ -112,7 +117,7 @@ export default function ReleaseClient() {
     meterAt.current = ms
 
     const close = LEVELS[level].close
-    const result: Outcome = ms < 0 ? 'picked' : ms <= SAFE ? 'clean' : ms <= close ? 'close' : 'thrown'
+    const result: Outcome = ms < -EARLY ? 'picked' : ms <= SAFE ? 'clean' : ms <= close ? 'close' : 'thrown'
     setLast({ outcome: result, ms })
     const nextResults = [...setResults, result]
     setSetResults(nextResults)
@@ -299,8 +304,8 @@ export default function ReleaseClient() {
       ctx.fillStyle = colour; ctx.fillRect(a, mY, b - a, mH)
     }
     const close = LEVELS[level].close
-    seg(-300, 0, '#FF4D4D')          // too early — you're out
-    seg(0, SAFE, '#39FF9E')          // gone on the release
+    seg(-300, -EARLY, '#FF4D4D')     // gone before the ball — dead ball
+    seg(-EARLY, SAFE, '#39FF9E')     // on the release, or reading into it
     seg(SAFE, close, '#FFB800')      // late but safe — narrows each level
     seg(close, 400, '#FF4D4D')       // thrown out
 
