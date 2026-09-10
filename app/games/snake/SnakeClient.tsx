@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import ArcadeShare from '@/components/ArcadeShare'
+import { fitCanvas } from '@/lib/gamekit'
 
 export type ClubOption = { id: string; name: string; crest: string; colours: [string, string] }
 
@@ -81,18 +82,21 @@ export default function SnakeClient({ clubs, initialClub }: {
     if (!cv) return
     const ctx = cv.getContext('2d')
     if (!ctx) return
-    const cell = cv.width / COLS
+    /* The board is square. Everything below works in CSS pixels — fitCanvas
+       has already scaled the context to the device. */
+    const { W, H } = fitCanvas(cv, 1)
+    const cell = W / COLS
     // The tail runs in the club's kit — BDL amber when nobody's picked
     const [c1, c2] = club?.colours ?? BDL
 
     // Field
     ctx.fillStyle = '#07080D'
-    ctx.fillRect(0, 0, cv.width, cv.height)
+    ctx.fillRect(0, 0, W, H)
     ctx.strokeStyle = '#ffffff08'
     ctx.lineWidth = 1
     for (let i = 1; i < COLS; i++) {
-      ctx.beginPath(); ctx.moveTo(i * cell, 0); ctx.lineTo(i * cell, cv.height); ctx.stroke()
-      ctx.beginPath(); ctx.moveTo(0, i * cell); ctx.lineTo(cv.width, i * cell); ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(i * cell, 0); ctx.lineTo(i * cell, H); ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(0, i * cell); ctx.lineTo(W, i * cell); ctx.stroke()
     }
 
     // Treat
@@ -406,7 +410,7 @@ export default function SnakeClient({ clubs, initialClub }: {
       </p>
 
       <div className="sn-stage">
-        <canvas ref={canvasRef} className="sn-canvas" width={600} height={600} />
+        <canvas ref={canvasRef} className="sn-canvas" />
         {count !== null && (
           <div className="sn-over" style={{ background: '#05060AF2', zIndex: 5 }}>
             <p key={count} className="sn-count">{count}</p>
