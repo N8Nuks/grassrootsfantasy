@@ -24,8 +24,8 @@ const BD_NEED = 8             // and wants all of them
    moving as the arm comes down through the bottom of the circle. EARLY is how
    far back into that downswing you can commit and still be gone legally.
    Beyond it the umpire has you leaving before the ball. */
-const EARLY = 90              // ms before release, still a legal jump
-const SAFE = 80               // ms after release for a clean steal
+const EARLY = 70              // ms before release, still a legal jump
+const SAFE = 70               // ms after release for a clean steal
 
 /* Angles: 0 at 12 o'clock, increasing clockwise. */
 const deg = (d: number) => ((d - 90) * Math.PI) / 180
@@ -448,7 +448,8 @@ export default function ReleaseClient() {
       </div>
 
       <div className="rl-stage" ref={stageRef}>
-        <canvas ref={canvasRef} className="rl-canvas" onClick={go} />
+        <canvas ref={canvasRef} className="rl-canvas"
+          onPointerDown={e => { e.preventDefault(); go() }} />
 
         {last && phase === 'judged' && (
           <div className="rl-flash">
