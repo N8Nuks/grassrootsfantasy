@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import ArcadeShare from '@/components/ArcadeShare'
+import { fitCanvas, headingFont } from '@/lib/gamekit'
 
 /* Three lanes, and everything in them is coming at you. You move between the
    lanes and throw; the throw takes time to get there, so you have to start on
@@ -251,7 +252,7 @@ export default function FieldingClient() {
     if (!cv) return
     const ctx = cv.getContext('2d')
     if (!ctx) return
-    const W = cv.width, H = cv.height
+    const { W, H } = fitCanvas(cv, 600 / 480)
     const HORIZON = H * 0.29
 
     const persp = (z: number) => Math.pow(Math.max(0, z), 2.0)
@@ -333,7 +334,7 @@ export default function FieldingClient() {
       const k = 1 - p.life / 800
       ctx.save()
       ctx.globalAlpha = Math.max(0, 1 - k * k)
-      ctx.font = `900 ${Math.round(H * 0.250)}px var(--font-heading), sans-serif`
+      ctx.font = headingFont(H * 0.09, 800)
       ctx.textAlign = 'center'
       ctx.fillStyle = p.colour
       ctx.shadowColor = p.colour; ctx.shadowBlur = 40
@@ -633,7 +634,7 @@ export default function FieldingClient() {
       </div>
 
       <div className="fd-stage">
-        <canvas ref={canvasRef} className="fd-canvas" width={600} height={480} />
+                <canvas ref={canvasRef} className="fd-canvas" />
 
         {flash && (
           <div className="fd-flash">
