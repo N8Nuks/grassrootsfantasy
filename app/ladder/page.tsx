@@ -5,6 +5,7 @@ import { theme, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
 import PageGuide from '@/components/PageGuide'
 import FactsTicker from '@/components/FactsTicker'
+import PresentedBy from '@/components/PresentedBy'
 
 export default async function Ladder({ searchParams }: { searchParams: Promise<{ grade?: string; view?: string }> }) {
   const params = await searchParams
@@ -206,6 +207,16 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
                 ))}
               </div>
             </div>
+            {view === 'points' && (
+              <div className="flex justify-center">
+                <PresentedBy partnerKey="iathletic" award="Season Ladder Champion" />
+              </div>
+            )}
+            {view === 'h2h' && (
+              <div className="flex justify-center">
+                <PresentedBy partnerKey="fieldhouse" award="Head-to-Head Champion" />
+              </div>
+            )}
           </div>
                     {/* The all-time record, sitting above the week's champion */}
           {view === 'weekly' && hi && (
