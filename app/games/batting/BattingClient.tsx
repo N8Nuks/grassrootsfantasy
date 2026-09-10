@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { splitName } from '@/lib/names'
 import ArcadeShare from '@/components/ArcadeShare'
+import { fitCanvas, headingFont } from '@/lib/gamekit'
 
 export type Legend = { name: string; titles: number; grade: string; lefty: boolean }
 
@@ -595,7 +596,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     if (!cv) return
     const ctx = cv.getContext('2d')
     if (!ctx) return
-    const W = cv.width, H = cv.height
+    const { W, H } = fitCanvas(cv, 620 / 520)
     const now = clock(raw)
 
     // ── Night sky and floodlight haze ──
@@ -651,7 +652,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     for (let x = W; x >= 0; x -= 8) ctx.lineTo(x, wallTop(x) + fh)
     ctx.closePath()
     ctx.clip()
-    ctx.font = `900 ${Math.round(fh * 0.42)}px var(--font-heading), sans-serif`
+    ctx.font = headingFont(fh * 0.42, 800)
     ctx.textBaseline = 'middle'
     const word = 'GRASSROOTS FANTASY   ·   '
     const wordW = ctx.measureText(word).width
@@ -1044,7 +1045,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       </div>
 
       <div className="bt-stage">
-        <canvas ref={canvasRef} className="bt-canvas" width={620} height={520} onClick={swing} />
+        <canvas ref={canvasRef} className="bt-canvas" onClick={swing} />
 
         {phase === 'live' && !paused && (
           <button className="bt-hit" onPointerDown={e => { e.preventDefault(); swing() }} aria-label="Swing" />
