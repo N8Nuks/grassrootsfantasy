@@ -304,7 +304,7 @@ export default function ReleaseClient() {
       ctx.fillStyle = colour; ctx.fillRect(a, mY, b - a, mH)
     }
     const close = LEVELS[level].close
-    seg(-300, -EARLY, '#FF4D4D')     // gone before the ball — dead ball
+    seg(-300, -EARLY, '#FF4D4D')     // gone before the pitch - Dead ball
     seg(-EARLY, SAFE, '#39FF9E')     // on the release, or reading into it
     seg(SAFE, close, '#FFB800')      // late but safe — narrows each level
     seg(close, 400, '#FF4D4D')       // thrown out
