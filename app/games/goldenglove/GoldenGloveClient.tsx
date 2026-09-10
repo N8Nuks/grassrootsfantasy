@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import ArcadeShare from '@/components/ArcadeShare'
+import { fitCanvas, headingFont } from '@/lib/gamekit'
  
 /* A reaction drill. You're behind the plate looking out at the shortstop; balls
    fire from below the frame and go to his backhand, his fronthand, straight at
@@ -218,7 +219,7 @@ export default function GoldenGloveClient() {
     if (!cv) return
     const ctx = cv.getContext('2d')
     if (!ctx) return
-    const W = cv.width, H = cv.height
+        const { W, H } = fitCanvas(cv, 620 / 480)
  
     /* ── The park ──
        Seen from behind the plate on a long lens, so everything behind him
@@ -377,7 +378,7 @@ export default function GoldenGloveClient() {
       const k = 1 - miss.current / 700
       ctx.save()
       ctx.globalAlpha = Math.max(0, 1 - k * k)
-      ctx.font = `900 ${Math.round(H * 0.30)}px var(--font-heading), sans-serif`
+      ctx.font = headingFont(H * 0.30, 800)
       ctx.textAlign = 'center'
       ctx.fillStyle = '#FF4D4D'
       ctx.shadowColor = '#FF4D4D'; ctx.shadowBlur = 40
@@ -534,7 +535,7 @@ export default function GoldenGloveClient() {
       </div>
  
       <div className="gg-stage">
-        <canvas ref={canvasRef} className="gg-canvas" width={620} height={480} />
+        <canvas ref={canvasRef} className="gg-canvas" />
  
         {flash && (
           <p className="gg-call" style={{
