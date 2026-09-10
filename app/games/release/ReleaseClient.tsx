@@ -16,7 +16,7 @@ import { fitCanvas, headingFont } from '@/lib/gamekit'
 const SET_SIZE = 5
 const PROMOTE_AT = 4          // steals needed in a set to move up
 const SAFE = 120              // ms after release for a clean steal
-const CLOSE = 260             // ms after release and still under the tag
+// SAFE is fixed; the late window now comes from the level's `close`
 
 /* Angles: 0 at 12 o'clock, increasing clockwise. */
 const deg = (d: number) => ((d - 90) * Math.PI) / 180
@@ -27,12 +27,15 @@ const ROCK_MS = 420
 
 const BALL_YELLOW = '#E8FF3D'
 
+/* `close` is the outer edge of the yellow — late, but still under the tag.
+   The band halves each level and is gone by Black Sox, where an international
+   catcher throws you out for being marginally late. Green never moves. */
 const LEVELS = [
-  { name: 'Reserve',       ms: 1450 },
-  { name: 'Premier',       ms: 1230 },
-  { name: 'Rep',           ms: 1040 },
-  { name: 'Black Sox',     ms: 880  },
-  { name: 'Black Diamond', ms: 720  },
+  { name: 'Reserve',       ms: 1450, close: 260 },   // 140ms of yellow
+  { name: 'Premier',       ms: 1230, close: 190 },   //  70
+  { name: 'Rep',           ms: 1040, close: 155 },   //  35
+  { name: 'Black Sox',     ms: 880,  close: 120 },   //   0
+  { name: 'Black Diamond', ms: 720,  close: 120 },   //   0
 ]
 const BLACK_SOX = 3
 const BLACK_DIAMOND = 4
@@ -87,7 +90,8 @@ export default function ReleaseClient() {
     const ms = now - releaseAt.current
     meterAt.current = ms
 
-    const result: Outcome = ms < 0 ? 'picked' : ms <= SAFE ? 'clean' : ms <= CLOSE ? 'close' : 'thrown'
+    const close = LEVELS[level].close
+    const result: Outcome = ms < 0 ? 'picked' : ms <= SAFE ? 'clean' : ms <= close ? 'close' : 'thrown'
     setLast({ outcome: result, ms })
     const nextResults = [...setResults, result]
     setSetResults(nextResults)
@@ -264,8 +268,9 @@ export default function ReleaseClient() {
     }
     seg(-300, 0, '#FF4D4D')          // too early — you're out
     seg(0, SAFE, '#39FF9E')          // gone on the release
-    seg(SAFE, CLOSE, '#FFB800')      // late but safe
-    seg(CLOSE, 400, '#FF4D4D')       // thrown out
+    const close = LEVELS[level].close
+    seg(SAFE, close, '#FFB800')      // late but safe — narrows each level
+    seg(close, 400, '#FF4D4D')       // thrown out
 
     ctx.strokeStyle = '#F5F1E8'; ctx.lineWidth = 2
     ctx.beginPath(); ctx.moveTo(zeroX, mY - 5); ctx.lineTo(zeroX, mY + mH + 5); ctx.stroke()
@@ -323,7 +328,7 @@ export default function ReleaseClient() {
     }
 
     raf.current = requestAnimationFrame(draw)
-  }, [phase])
+  }, [phase, level])
 
   useEffect(() => {
     raf.current = requestAnimationFrame(draw)
