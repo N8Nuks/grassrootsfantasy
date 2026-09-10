@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import ArcadeShare from '@/components/ArcadeShare'
+import { fitCanvas, headingFont } from '@/lib/gamekit'
 
 /* You are the runner at first, watching side on. Home is off to the left.
 
@@ -128,7 +129,7 @@ export default function ReleaseClient() {
     if (!cv) return
     const ctx = cv.getContext('2d')
     if (!ctx) return
-    const W = cv.width, H = cv.height
+    const { W, H } = fitCanvas(cv, 640 / 440)
 
     // ── The park ──
     const sky = ctx.createLinearGradient(0, 0, 0, H)
@@ -146,7 +147,7 @@ export default function ReleaseClient() {
       ctx.save(); ctx.translate(bx, baseY); ctx.rotate(Math.PI / 4)
       ctx.fillRect(-10, -10, 20, 20); ctx.restore()
       ctx.fillStyle = '#ffffff30'
-      ctx.font = `900 ${Math.round(H * 0.024)}px var(--font-heading), sans-serif`
+            ctx.font = headingFont(H * 0.024, 800)
       ctx.textAlign = 'center'
       ctx.fillText(label, bx, baseY + H * 0.065)
     }
@@ -265,7 +266,7 @@ export default function ReleaseClient() {
     ctx.strokeStyle = '#F5F1E8'; ctx.lineWidth = 2
     ctx.beginPath(); ctx.moveTo(zeroX, mY - 5); ctx.lineTo(zeroX, mY + mH + 5); ctx.stroke()
     ctx.fillStyle = '#F5F1E8'
-    ctx.font = `900 ${Math.round(H * 0.019)}px var(--font-heading), sans-serif`
+        ctx.font = headingFont(H * 0.019, 800)
     ctx.textAlign = 'center'
     ctx.fillText('RELEASE', zeroX, mY - 9)
 
@@ -391,7 +392,7 @@ export default function ReleaseClient() {
       </div>
 
       <div className="rl-stage">
-        <canvas ref={canvasRef} className="rl-canvas" width={640} height={440} onClick={go} />
+                <canvas ref={canvasRef} className="rl-canvas" onClick={go} />
 
         {last && phase === 'judged' && (
           <div className="rl-flash">
