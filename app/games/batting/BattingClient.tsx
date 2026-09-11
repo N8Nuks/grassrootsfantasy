@@ -91,6 +91,13 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
      so on a 120Hz phone a home run landed in half the time it should. */
   const lastFrame = useRef(0)
 
+  /* The park doesn't move. Sky, crowd, wall boards and the diamond get drawn
+     once to an offscreen canvas and blitted each frame — the crowd alone is
+     644 arcs, which is most of the frame budget for something that never
+     changes. Re-cut only when the canvas size changes. */
+  const park = useRef<HTMLCanvasElement | null>(null)
+  const parkAt = useRef('')
+
   // Clock that stops when paused, so nothing advances behind the overlay
   const pauseOffset = useRef(0)
   const pausedAt = useRef(0)
@@ -593,18 +600,14 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
 
     ctx.restore()
   }
-
-  const draw = useCallback((raw: number) => {
-    const cv = canvasRef.current
-    if (!cv) return
+  /* Everything static, cut once. The scrolling wall text and the strike zone
+     stay out of it — they change every frame. */
+  const buildPark = useCallback((W: number, H: number) => {
+    const cv = document.createElement('canvas')
+    cv.width = W; cv.height = H
     const ctx = cv.getContext('2d')
-    if (!ctx) return
-    const { W, H } = fitCanvas(cv, 620 / 520)
-    const now = clock(raw)
-    const dt = lastFrame.current ? Math.min(now - lastFrame.current, 48) : 16
-    lastFrame.current = now
+    if (!ctx) return cv
 
-    // ── Night sky and floodlight haze ──
     const sky = ctx.createLinearGradient(0, 0, 0, H)
     sky.addColorStop(0, '#080A14'); sky.addColorStop(0.28, '#0E1626')
     sky.addColorStop(0.44, '#12301C'); sky.addColorStop(1, '#0A1A10')
@@ -613,8 +616,6 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     pool.addColorStop(0, '#B47CFF22'); pool.addColorStop(1, 'transparent')
     ctx.fillStyle = pool; ctx.fillRect(0, 0, W, H)
 
-    // ── The crowd, banked above the wall ──
-    ctx.save()
     ctx.fillStyle = '#0A0E18'
     ctx.fillRect(0, 0, W + 2, H * (FENCE_Y - 0.005))
     for (const c of crowd.current) {
@@ -626,14 +627,10 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     const dim = ctx.createLinearGradient(0, 0, 0, H * FENCE_Y)
     dim.addColorStop(0, '#050810CC'); dim.addColorStop(1, '#0508101A')
     ctx.fillStyle = dim; ctx.fillRect(0, 0, W, H * FENCE_Y)
-    ctx.restore()
 
-    // ── The wall, with the name running along it ──
-    /* The wall arcs away from us, deepest through centre — so it dips lower at
-       the foul poles and rides higher in the middle of the frame. */
     const fh = H * 0.055
     const fy = H * FENCE_Y
-    const bow = H * 0.045                 // how far the corners drop
+    const bow = H * 0.045
     const wallTop = (x: number) => fy + bow * Math.pow((x / W - 0.5) * 2, 2)
 
     ctx.beginPath()
@@ -649,29 +646,6 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     for (let x = 0; x <= W; x += 8) ctx.lineTo(x, wallTop(x))
     ctx.stroke()
 
-    ctx.save()
-    ctx.beginPath()
-    ctx.moveTo(0, wallTop(0))
-    for (let x = 0; x <= W; x += 8) ctx.lineTo(x, wallTop(x))
-    ctx.lineTo(W, wallTop(W) + fh)
-    for (let x = W; x >= 0; x -= 8) ctx.lineTo(x, wallTop(x) + fh)
-    ctx.closePath()
-    ctx.clip()
-    ctx.font = headingFont(fh * 0.42, 800)
-    ctx.textBaseline = 'middle'
-    const word = 'GRASSROOTS FANTASY   ·   '
-    const wordW = ctx.measureText(word).width
-    const scroll = (now / 26) % wordW
-    ctx.fillStyle = '#B47CFF30'
-    for (let x = -wordW - scroll; x < W + wordW; x += wordW) {
-      ctx.fillText(word, x, wallTop(Math.max(0, Math.min(W, x + wordW / 2))) + fh * 0.5)
-    }
-    ctx.restore()
-
-    /* ── The diamond, seen from behind the plate ── */
-    /* The pitcher stays where she is so there's time to read the ball, but the
-       bases sit further back and wider — closer to a real diamond, where the
-       circle is barely a third of the way to second. */
     const homeX = W * 0.5, homeY = H * 0.90
     const secX = W * 0.5,  secY = H * 0.435
     const firstX = W * 0.885, firstY = H * 0.605
@@ -717,19 +691,63 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     drawBase(secX, secY, W * 0.015)
     drawBase(thirdX, thirdY, W * 0.016)
 
-    // The eight-foot circle is chalk on the dirt, with the rubber set back in it
     ctx.strokeStyle = '#ffffff40'; ctx.lineWidth = 2
     ctx.beginPath(); ctx.ellipse(W / 2, H * MOUND_Y, W * 0.105, H * 0.030, 0, 0, Math.PI * 2); ctx.stroke()
     ctx.fillStyle = '#F5F1E8'
     ctx.fillRect(W / 2 - W * 0.026, H * (MOUND_Y - 0.012), W * 0.052, 3.5)
 
-    // Plate, drawn to the same width as the zone above it
     const pw = W * ZONE.w
     ctx.fillStyle = '#F5F1E8'
     ctx.beginPath()
     ctx.moveTo(W / 2 - pw / 2, H * 0.905); ctx.lineTo(W / 2 + pw / 2, H * 0.905)
     ctx.lineTo(W / 2 + pw / 2, H * 0.925); ctx.lineTo(W / 2, H * 0.944)
     ctx.lineTo(W / 2 - pw / 2, H * 0.925); ctx.closePath(); ctx.fill()
+
+    return cv
+  }, [])
+  const draw = useCallback((raw: number) => {
+    const cv = canvasRef.current
+    if (!cv) return
+    const ctx = cv.getContext('2d')
+    if (!ctx) return
+    const { W, H } = fitCanvas(cv, 620 / 520)
+    const now = clock(raw)
+    const dt = lastFrame.current ? Math.min(now - lastFrame.current, 48) : 16
+    lastFrame.current = now
+
+    // ── The park, cut once and blitted ──
+    const key = `${W}x${H}`
+    if (!park.current || parkAt.current !== key) {
+      park.current = buildPark(W, H)
+      parkAt.current = key
+    }
+    ctx.drawImage(park.current, 0, 0, W, H)
+
+    /* The wall geometry is still needed live — the name scrolling along it
+       can't be baked into the cache. */
+    const fh = H * 0.055
+    const fy = H * FENCE_Y
+    const bow = H * 0.045
+    const wallTop = (x: number) => fy + bow * Math.pow((x / W - 0.5) * 2, 2)
+
+    ctx.save()
+    ctx.beginPath()
+    ctx.moveTo(0, wallTop(0))
+    for (let x = 0; x <= W; x += 8) ctx.lineTo(x, wallTop(x))
+    ctx.lineTo(W, wallTop(W) + fh)
+    for (let x = W; x >= 0; x -= 8) ctx.lineTo(x, wallTop(x) + fh)
+    ctx.closePath()
+    ctx.clip()
+    ctx.font = headingFont(fh * 0.42, 800)
+    ctx.textBaseline = 'middle'
+    const word = 'GRASSROOTS FANTASY   ·   '
+    const wordW = ctx.measureText(word).width
+    const scroll = (now / 26) % wordW
+    ctx.fillStyle = '#B47CFF30'
+    for (let x = -wordW - scroll; x < W + wordW; x += wordW) {
+      ctx.fillText(word, x, wallTop(Math.max(0, Math.min(W, x + wordW / 2))) + fh * 0.5)
+    }
+    ctx.restore()
 
     // ── The nine-cell zone ──
     const zx = W * (ZONE.x - ZONE.w / 2), zy = H * (ZONE.y - ZONE.h / 2)
