@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { splitName } from '@/lib/names'
 import ArcadeShare from '@/components/ArcadeShare'
+import { celebrate } from '@/lib/celebrate'
 
 export type Group = { label: string; names: string[] }
 
