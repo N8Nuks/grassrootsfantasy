@@ -138,39 +138,82 @@ function describe(lv: number, code: Code): string {
   return `${where}\nLocation followed it.\n\n${pitches}\n${locs}`
 }
 
-/* ── The hand, fingers down ── */
-function Hand({ shape, size = 1 }: { shape: Shape | null; size?: number }) {
+/* ── The hand, fingers down, seen from behind the catcher ──
+   Silhouette does the work: at 44px on a dark field the shapes have to be
+   tellable apart before any detail matters. Four is held together, Open is
+   splayed with the thumb out — under the old drawing those two were the same
+   picture, which made a real pitch signal unreadable.
+   No gradients: several of these render at once and duplicate gradient ids
+   across SVGs are a rendering coin-flip. Flat tones and an explicit shade
+   shape instead. */
+function Hand({ shape }: { shape: Shape | null; size?: number }) {
   const SKIN = '#E8C9A0'
-  const EDGE = '#B08D5E'
+  const SHADE = '#CBA87C'
+  const EDGE = '#9E7B4F'
+
   if (!shape) return <svg viewBox="0 0 120 160" style={{ width: '100%', height: '100%', opacity: 0.12 }} />
-  const f = (x: number, len: number, w = 16) => (
-    <rect key={x} x={x} y={78} width={w} height={len} rx={w / 2} fill={SKIN} stroke={EDGE} strokeWidth="2" />
+
+  /* A finger is a rounded column with a darker inner edge, so two side by side
+     read as two rather than one wide one. */
+  const finger = (x: number, len: number, w = 15) => (
+    <g key={`f${x}`}>
+      <rect x={x} y={76} width={w} height={len} rx={w / 2} fill={SKIN} stroke={EDGE} strokeWidth="2" />
+      <rect x={x + w - 4.5} y={80} width={3} height={len - 9} rx={1.5} fill={SHADE} opacity="0.55" />
+    </g>
   )
+
   const fingers: React.ReactNode[] = []
-  if (shape === 'one') fingers.push(f(34, 50))
-  if (shape === 'two') { fingers.push(f(26, 46), f(50, 54)) }
-  if (shape === 'three') { fingers.push(f(20, 42), f(44, 54), f(68, 46)) }
-  if (shape === 'four' || shape === 'five') {
-    fingers.push(f(16, 40), f(36, 52), f(56, 52), f(76, 38))
+  let thumb = false
+  let splay = false
+
+  switch (shape) {
+    case 'one':
+      fingers.push(finger(38, 50))
+      break
+    case 'two':
+      fingers.push(finger(28, 46), finger(52, 54))
+      break
+    case 'three':
+      fingers.push(finger(22, 42), finger(44, 54), finger(66, 46))
+      break
+    case 'four':
+      // Held together — a block of four
+      fingers.push(finger(24, 40), finger(42, 52), finger(60, 52), finger(78, 38))
+      break
+    case 'five':
+      // Open: splayed wide, thumb out. Must not read as Four.
+      splay = true
+      thumb = true
+      fingers.push(finger(10, 38), finger(34, 50), finger(58, 50), finger(82, 36))
+      break
+    case 'thumb':
+      thumb = true
+      break
+    case 'pinky':
+      fingers.push(finger(80, 36))
+      break
   }
-  if (shape === 'pinky') fingers.push(f(76, 36))
-  const thumb = shape === 'thumb' || shape === 'five'
 
   return (
     <svg viewBox="0 0 120 160" style={{ width: '100%', height: '100%' }}>
-    <g transform="translate(120,0) scale(-1,1)">
-      <rect x="34" y="0" width="52" height="38" rx="16" fill={SKIN} stroke={EDGE} strokeWidth="2" />
-      <rect x="12" y="30" width="96" height="54" rx="18" fill={SKIN} stroke={EDGE} strokeWidth="2.5" />
-      {fingers}
-      {thumb && (
-        <rect x="-4" y="48" width="19" height="42" rx="9.5" fill={SKIN} stroke={EDGE} strokeWidth="2"
-          transform={`rotate(${size ? 26 : 26} 6 68)`} />
-      )}
-    </g>
+      <g transform="translate(120,0) scale(-1,1)">
+        {/* wrist */}
+        <rect x="36" y="0" width="48" height="36" rx="15" fill={SHADE} stroke={EDGE} strokeWidth="2" />
+        {/* back of the hand */}
+        <rect x={splay ? 8 : 14} y="28" width={splay ? 104 : 92} height="54" rx="17"
+          fill={SKIN} stroke={EDGE} strokeWidth="2.5" />
+        {/* knuckle line — stops the palm reading as a paddle */}
+        <path d={`M${splay ? 18 : 24} 70 Q60 78 ${splay ? 102 : 96} 70`}
+          stroke={SHADE} strokeWidth="3" fill="none" opacity="0.6" strokeLinecap="round" />
+        {fingers}
+        {thumb && (
+          <rect x="-6" y="46" width="20" height="44" rx="10"
+            fill={SKIN} stroke={EDGE} strokeWidth="2" transform="rotate(24 6 68)" />
+        )}
+      </g>
     </svg>
   )
 }
-
 type Phase = 'idle' | 'signals' | 'pick' | 'pitching' | 'result' | 'strikeout' | 'failed' | 'demoted' | 'passed'
 
 export default function PickClient() {
