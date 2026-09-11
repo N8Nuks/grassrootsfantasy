@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import ArcadeShare from '@/components/ArcadeShare'
+import { celebrate } from '@/lib/celebrate'
 import { fitCanvas, headingFont } from '@/lib/gamekit'
 
 /* Three lanes, and everything in them is coming at you. You move between the
@@ -561,6 +562,11 @@ export default function FieldingClient() {
       try { localStorage.setItem(HIGH_KEY, String(final)) } catch { /* blocked */ }
     }
   }
+
+  /* Twelve levels, nothing past the line. */
+  useEffect(() => {
+    if (phase === 'won') celebrate(canvasRef.current)
+  }, [phase])
 
   const cfg = levelCfg(level)
   const stage = cfg.species === 'fielder' ? 'Fielders only'
