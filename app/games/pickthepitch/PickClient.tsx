@@ -195,10 +195,21 @@ function Hand({ shape }: { shape: Shape | null; size?: number }) {
       break
   }
 
-  return (
+   return (
     <svg viewBox="0 0 150 150" style={{ width: '100%', height: '100%' }}>
       {/* Mirrored, so local +x runs left on screen and the thumb lands right */}
       <g transform="translate(124,0) scale(-1,1)">
+        {/* Thumb first, so the palm draws over the joint and it reads as
+            attached rather than floating. Near 80° off the fingers — not far
+            from horizontal, canted slightly down, which is how it sits when
+            the hand is hung between the knees. */}
+        {thumb && (
+          <g transform="rotate(-8 24 68)">
+            <rect x="-18" y="57" width="58" height="21" rx="10.5"
+              fill={SKIN} stroke={EDGE} strokeWidth="2" />
+            <rect x="-13" y="61.5" width="26" height="3" rx="1.5" fill={SHADE} opacity="0.5" />
+          </g>
+        )}
         {/* wrist */}
         <rect x="36" y="0" width="48" height="36" rx="15" fill={SHADE} stroke={EDGE} strokeWidth="2" />
         {/* back of the hand */}
@@ -208,14 +219,6 @@ function Hand({ shape }: { shape: Shape | null; size?: number }) {
         <path d={`M${splay ? 18 : 24} 70 Q60 78 ${splay ? 102 : 96} 70`}
           stroke={SHADE} strokeWidth="3" fill="none" opacity="0.6" strokeLinecap="round" />
         {fingers}
-        {/* Thumb, out to the side and slightly down — near 90° off the fingers */}
-        {thumb && (
-          <g transform="rotate(9 10 66)">
-            <rect x="-26" y="56" width="38" height="21" rx="10.5"
-              fill={SKIN} stroke={EDGE} strokeWidth="2" />
-            <rect x="-22" y="60.5" width="30" height="3" rx="1.5" fill={SHADE} opacity="0.5" />
-          </g>
-        )}
       </g>
     </svg>
   )
