@@ -1,6 +1,7 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { splitName } from '@/lib/names'
+import { celebrate } from '@/lib/celebrate'
 
 export type SeasonCard = {
   season: string
@@ -33,6 +34,14 @@ export default function SeasonClient({ cards }: { cards: SeasonCard[] }) {
   const [best, setBest] = useState(0)
 
   const correct = picked === null ? null : picked === round.answer
+
+  /* Endless, so there's no win screen. A first-clue solve is the hard version
+     of this game — one award line and the year. That's what earns it. */
+  const afterRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (correct && shown === 1) celebrate(afterRef.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [picked])
   // Fewer clues used, more it's worth
   const value = [30, 20, 12, 6][shown - 1] ?? 6
 
@@ -140,7 +149,7 @@ export default function SeasonClient({ cards }: { cards: SeasonCard[] }) {
       </div>
 
       {picked && (
-        <div className="gs-after">
+        <div className="gs-after" ref={afterRef}>
           <p className="gs-verdict" style={{ color: correct ? WIN : LOSE }}>
             {correct ? `Right · ${value} points` : `It was ${round.answer}`}
           </p>
