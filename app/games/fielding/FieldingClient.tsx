@@ -71,6 +71,9 @@ export default function FieldingClient() {
   const [endless, setEndless] = useState(false)
   const [unlocked, setUnlocked] = useState(false)
   const [endlessBest, setEndlessBest] = useState(0)
+  /* step() is memoised, so a state read inside bankEndless would be frozen at
+     its first value and every run would beat a best of zero. */
+  const bestRef = useRef(0)
   const endlessRef = useRef(false)
   const [score, setScore] = useState(0)
   const [best, setBest] = useState(0)
@@ -98,7 +101,7 @@ export default function FieldingClient() {
     try {
       if (localStorage.getItem(UNLOCK_KEY) === '1') setUnlocked(true)
       const h = parseInt(localStorage.getItem(HIGH_KEY) ?? '0', 10)
-      if (h > 0) setEndlessBest(h)
+      if (h > 0) { setEndlessBest(h); bestRef.current = h }
     } catch { /* storage blocked */ }
   }, [])
   const reset = useCallback((lv: number) => {
@@ -557,7 +560,8 @@ export default function FieldingClient() {
   }
 
   function bankEndless(final: number) {
-    if (final > endlessBest) {
+    if (final > bestRef.current) {
+      bestRef.current = final
       setEndlessBest(final)
       try { localStorage.setItem(HIGH_KEY, String(final)) } catch { /* blocked */ }
     }
