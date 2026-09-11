@@ -32,8 +32,8 @@ export default function SandboxBanner() {
   const copy = {
     closing: {
       eyebrow: 'Sandbox closing',
-      /* The label sits under the number, so it has to say what the number
-         counts down to — it changes with the phase. */
+      /* The label sits under the number, so it has to say what the number is
+         counting down to — it changes with the phase. */
       unit: (d: number) => d === 1 ? 'Day until close' : 'Days until close',
       head: 'Everyone needs to register again.',
       body: 'Every team, squad and account is being cleared so we can load the real 2026/27 rosters. Nothing carries over — you\u2019ll need to sign up again and claim your team name.',
@@ -54,12 +54,12 @@ export default function SandboxBanner() {
 
   return (
     <div className="sb-banner">
-      {/* Spray and streaks are drawn rather than loaded — sharp at any size, no
-          image to licence, and nothing extra to download. They sit low enough
-          in opacity that the copy stays readable, which the reference art
-          would not have allowed. */}
-      <span className="sb-spray" aria-hidden="true" />
+      {/* The artwork carries the spray; the streaks stay in CSS so they can
+          glow and drift, which a flat image can't. Both sit under a scrim —
+          the art is busy enough that copy over it raw would be unreadable. */}
+      <span className="sb-art" aria-hidden="true" />
       <span className="sb-streaks" aria-hidden="true" />
+      <span className="sb-scrim" aria-hidden="true" />
 
       <div className="sb-inner flex items-center justify-center gap-5 sm:gap-8 flex-wrap">
 
@@ -99,39 +99,30 @@ export default function SandboxBanner() {
           overflow: hidden;
           background: #0A0B12;
           border-bottom: 2px solid #E8983A70;
-          padding: 18px 20px;
+          padding: 20px;
           margin-top: 64px;
           isolation: isolate;
         }
 
-        /* Spray: soft radial blooms, screened over the dark base so they read
-           as light on a wall rather than paint on paper. */
-        .sb-spray {
-          position: absolute; inset: -20%;
+        .sb-art {
+          position: absolute; inset: 0;
           pointer-events: none; z-index: 0;
-          mix-blend-mode: screen; opacity: 0.5;
-          background:
-            radial-gradient(19% 46% at 8% 22%,  #FF2D9555 0%, transparent 70%),
-            radial-gradient(16% 40% at 26% 78%, #39FF9E45 0%, transparent 72%),
-            radial-gradient(22% 52% at 52% 12%, #00F0FF3D 0%, transparent 72%),
-            radial-gradient(18% 44% at 74% 84%, #B47CFF4A 0%, transparent 72%),
-            radial-gradient(20% 48% at 93% 30%, #E8983A55 0%, transparent 70%),
-            radial-gradient(14% 34% at 38% 50%, #C6FF0030 0%, transparent 74%);
-          filter: blur(2px);
+          background: url('/banner-neon.webp') center / cover no-repeat;
+          opacity: 0.42;
         }
 
-        /* Streaks: thin bright cores with a bloom either side, raked across the
-           banner. The drift is slow enough to notice only if you look. */
+        /* Thin bright cores with a bloom either side, raked across. The drift is
+           slow enough that you only notice it if you look. */
         .sb-streaks {
           position: absolute; inset: -40% -10%;
           pointer-events: none; z-index: 1;
-          mix-blend-mode: screen; opacity: 0.55;
+          mix-blend-mode: screen; opacity: 0.5;
           background:
             linear-gradient(101deg, transparent 27.4%, #C6FF0000 27.6%, #C6FF00 27.9%, #C6FF0000 28.2%, transparent 28.4%),
             linear-gradient(101deg, transparent 51.4%, #FF2D9500 51.6%, #FF2D95 51.9%, #FF2D9500 52.2%, transparent 52.4%),
             linear-gradient(101deg, transparent 68.4%, #00F0FF00 68.6%, #00F0FF 68.9%, #00F0FF00 69.2%, transparent 69.4%),
             linear-gradient(101deg, transparent 84.4%, #39FF9E00 84.6%, #39FF9E 84.9%, #39FF9E00 85.2%, transparent 85.4%);
-          filter: blur(0.6px) drop-shadow(0 0 6px currentColor);
+          filter: blur(0.6px);
           animation: sb-drift 26s linear infinite alternate;
         }
         @keyframes sb-drift {
@@ -142,15 +133,22 @@ export default function SandboxBanner() {
           .sb-streaks { animation: none; }
         }
 
-        /* Everything above the artwork, with a dark scrim so the copy holds up
-           wherever a bloom happens to land. */
-        .sb-inner {
-          position: relative; z-index: 2;
-          max-width: 760px; margin-left: auto; margin-right: auto;
-          text-shadow: 0 2px 14px #0A0B12;
+        /* Darkest through the middle where the copy sits, lighter at the edges
+           so the artwork still shows. */
+        .sb-scrim {
+          position: absolute; inset: 0;
+          pointer-events: none; z-index: 2;
+          background:
+            linear-gradient(90deg, #0A0B1266 0%, #0A0B12D9 22%, #0A0B12E6 50%, #0A0B12D9 78%, #0A0B1266 100%);
         }
 
-        .sb-num { filter: drop-shadow(0 0 18px #E8983A70); }
+        .sb-inner {
+          position: relative; z-index: 3;
+          max-width: 760px; margin-left: auto; margin-right: auto;
+          text-shadow: 0 2px 16px #0A0B12, 0 0 30px #0A0B12;
+        }
+
+        .sb-num { filter: drop-shadow(0 0 18px #E8983A80); }
 
         .sb-unit {
           color: #FFC46B; font-size: 9px; margin-top: 4px;
