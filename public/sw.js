@@ -76,7 +76,7 @@ self.addEventListener('fetch', event => {
     event.respondWith(networkFirst(request))
     return
   }
-})
+}) 
 
 async function cacheFirst(request, cacheName) {
   const cached = await caches.match(request)
