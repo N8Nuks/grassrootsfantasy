@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { splitName } from '@/lib/names'
 import ArcadeShare from '@/components/ArcadeShare'
+import { celebrate } from '@/lib/celebrate'
 
 export type MemoryPlayer = {
   id: string; name: string; club: string; tier: string
@@ -52,10 +53,19 @@ export default function MemoryClient({ pool }: { pool: MemoryPlayer[] }) {
     return () => clearInterval(id)
   }, [started, done])
 
+  const doneRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     if (!done || started === null) return
     const secs = Math.floor((Date.now() - started) / 1000)
-    setBest(b => ({ ...b, [level.key]: b[level.key] ? Math.min(b[level.key], secs) : secs }))
+    /* Clearing is the only outcome here, so a board cleared isn't by itself
+       worth a celebration. Twelve pairs is, and so is beating your own time. */
+    setBest(b => {
+      const prev = b[level.key]
+      const earned = level.key === 'hard' || (prev != null && secs < prev)
+      if (earned) celebrate(doneRef.current)
+      return { ...b, [level.key]: prev ? Math.min(prev, secs) : secs }
+    })
   }, [done, started, level.key])
 
   function flip(key: number) {
@@ -204,7 +214,7 @@ export default function MemoryClient({ pool }: { pool: MemoryPlayer[] }) {
       </div>
 
       {done && (
-        <div className="ar-panel mm-done">
+        <div className="ar-panel mm-done" ref={doneRef}>
           <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.34em', textTransform: 'uppercase', color: 'var(--neon)' }}>Board cleared</p>
           <p className="ar-num" style={{ fontSize: '50px', color: '#F5F1E8', textShadow: 'none', margin: '12px 0 4px' }}>{mm(elapsed)}</p>
           <p style={{ fontSize: '11px', color: '#7D8B9C' }}>{moves} moves · {level.pairs} pairs</p>
