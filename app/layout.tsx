@@ -3,6 +3,7 @@ import { Oxanium, Rajdhani, Archivo, Nunito, Graduate } from 'next/font/google'
 import './globals.css'
 import { Analytics } from '@vercel/analytics/next'
 import InstallPrompt from '@/components/InstallPrompt'
+import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
 
 const heading = Oxanium({ subsets: ['latin'], weight: ['600', '700', '800'], variable: '--font-heading' })
 const label = Rajdhani({ subsets: ['latin'], weight: ['500', '600', '700'], variable: '--font-label' })
@@ -65,6 +66,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body style={{ fontFamily: 'var(--font-body)' }}>
         {children}
         <InstallPrompt />
+        <ServiceWorkerRegister />
         <Analytics />
       </body>
     </html>
