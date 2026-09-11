@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import ArcadeShare from '@/components/ArcadeShare'
+import { celebrate } from '@/lib/celebrate'
 
 /* You are the runner on second, and the catcher's hand is in plain sight
    between his knees. Nobody tells you the code.
@@ -379,6 +380,13 @@ export default function PickClient() {
     border: '1px solid #00000040',
   })
   const finished = phase === 'passed' && level >= LEVELS.length - 1 && reveal
+
+  /* Cracking a level takes three straight correct calls with one wrong ending
+     the run, so every pass earns it — the last one most of all. */
+  const fieldRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (phase === 'passed') celebrate(fieldRef.current)
+  }, [phase])
   const live = phase === 'signals' || phase === 'pick' || phase === 'pitching' || phase === 'result' || phase === 'strikeout'
 
   return (
@@ -514,7 +522,7 @@ export default function PickClient() {
       </div>
 
       <div className="pk-stage">
-      <div className="pk-field">
+      <div className="pk-field" ref={fieldRef}>
         <span className="pk-dirt" />
         {/* Home plate and the box, painted on the dirt behind both figures */}
         <svg className="pk-plate" viewBox="0 0 200 60" aria-hidden="true">
