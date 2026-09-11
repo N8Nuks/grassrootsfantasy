@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import ArcadeShare from '@/components/ArcadeShare'
+import { celebrate } from '@/lib/celebrate'
 import { fitCanvas, headingFont } from '@/lib/gamekit'
  
 /* A reaction drill. You're behind the plate looking out at the shortstop; balls
@@ -105,6 +106,11 @@ export default function GoldenGloveClient() {
   const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = [] }
  
   const L = LEVELS[level]
+
+  /* Both wins earn it — the Golden Glove and the Black Diamond. */
+  useEffect(() => {
+    if (phase === 'conquered' || phase === 'bdWon') celebrate(canvasRef.current)
+  }, [phase])
  
   useEffect(() => {
     ;(Object.keys(ART) as Pose[]).forEach(k => {
@@ -446,16 +452,23 @@ export default function GoldenGloveClient() {
  
   const passed = clean / L.balls >= L.need
   const isTop = level === LEVELS.length - 1
+
+  /* Counting perfect runs at the top level. Two takes the glove, and anything
+     short of perfect resets the count — they have to be consecutive. */
+  useEffect(() => {
+    if (phase !== 'levelEnd' || !isTop) return
+    if (!passed) { setPerfectRuns(0); return }
+    const runs = perfectRuns + 1
+    setPerfectRuns(runs)
+    if (runs >= CLEARED_RUNS) setPhase('conquered')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, isTop, passed])
  
+  /* The run is counted the moment the level ends, not when the player presses
+     Go again — otherwise the glove is held back behind a button that reads as
+     starting another run. */
   function next() {
-    if (passed && isTop) {
-      const runs = perfectRuns + 1
-      setPerfectRuns(runs)
-      if (runs >= CLEARED_RUNS) { setPhase('conquered'); return }
-      beginLevel(level)
-      return
-    }
-    if (passed) { beginLevel(level + 1); return }
+    if (passed && !isTop) { beginLevel(level + 1); return }
     beginLevel(level)      // same level again
   }
  
@@ -570,7 +583,7 @@ export default function GoldenGloveClient() {
           <div className="gg-overlay">
             <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '.32em', textTransform: 'uppercase',
                         color: passed ? '#5CFF6B' : '#FF4D4D' }}>
-              {passed ? (isTop ? `Perfect run ${perfectRuns + 1} of ${CLEARED_RUNS}` : 'Level cleared') : 'Not this time'}
+              {passed ? (isTop ? `Perfect run ${Math.max(perfectRuns, 1)} of ${CLEARED_RUNS}` : 'Level cleared') : 'Not this time'}
             </p>
             <p className="ar-num" style={{ fontSize: '46px', color: '#F5F1E8', textShadow: 'none', margin: '10px 0 2px' }}>
               {clean}/{L.balls}
