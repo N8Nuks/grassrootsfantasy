@@ -14,7 +14,7 @@ type Props = {
 
 export default function ArcadeShare({ lines, teamName, label = 'Share', className = '' }: Props) {
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle')
-  
+
   const [fetchedName, setFetchedName] = useState<string | null>(null)
 
   useEffect(() => {
@@ -65,21 +65,67 @@ export default function ArcadeShare({ lines, teamName, label = 'Share', classNam
     }
   }
 
-  const text = state === 'copied' ? 'Copied' : state === 'failed' ? 'Copy failed' : label
+  const text = state === 'copied' ? 'Copied' : state === 'failed' ? "Couldn't copy" : label
 
   return (
-    <button
-      type="button"
-      onClick={handleShare}
-      aria-live="polite"
-      className={
-        'inline-flex items-center justify-center gap-2 rounded-lg border border-white/25 ' +
-        'px-4 py-2 text-sm font-medium text-white transition ' +
-        'hover:border-white/50 hover:bg-white/10 active:scale-[0.98] ' +
-        className
-      }
-    >
-      {text}
-    </button>
+    <>
+      {/* The arcade's own button language — skewed, Oxanium, neon outline.
+          Deliberately the ghost variant rather than the filled one: it sits
+          alongside "Start again" and shouldn't compete with it. */}
+      <style>{`
+        .ash {
+          display: inline-flex; align-items: center; gap: 9px;
+          border: 1px solid var(--neon, #F5F1E8);
+          background: transparent;
+          color: var(--neon, #F5F1E8);
+          font-family: var(--font-heading); font-weight: 800;
+          font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase;
+          padding: 13px 26px; cursor: pointer;
+          transform: skewX(-7deg);
+          transition: background 140ms ease, box-shadow 140ms ease, color 140ms ease;
+        }
+        .ash > span { transform: skewX(7deg); display: inline-flex; align-items: center; gap: 9px; }
+        .ash:hover {
+          background: color-mix(in srgb, var(--neon, #F5F1E8) 14%, transparent);
+          box-shadow: 0 0 20px color-mix(in srgb, var(--neon, #F5F1E8) 40%, transparent);
+        }
+        .ash:active { transform: skewX(-7deg) translate(2px, 2px) scale(0.98); }
+        .ash svg { width: 14px; height: 14px; flex: none; }
+
+        /* Confirmation reads as a state change, not a label swap */
+        .ash[data-state="copied"] {
+          background: #39FF9E; border-color: #39FF9E; color: #05060A;
+          box-shadow: 0 0 24px #39FF9E55;
+        }
+        .ash[data-state="failed"] {
+          border-color: #FF4D4D; color: #FF4D4D; background: transparent;
+        }
+      `}</style>
+
+      <button
+        type="button"
+        onClick={handleShare}
+        aria-live="polite"
+        data-state={state}
+        className={`ash ${className}`}
+      >
+        <span>
+          {state === 'copied' ? (
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M3 8.5L6.2 12L13 4.5" stroke="currentColor" strokeWidth="2.2"
+                strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M8 11V2M8 2L4.8 5.2M8 2l3.2 3.2" stroke="currentColor" strokeWidth="1.8"
+                strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M2.8 9.5v3.2a1.3 1.3 0 0 0 1.3 1.3h7.8a1.3 1.3 0 0 0 1.3-1.3V9.5"
+                stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          )}
+          {text}
+        </span>
+      </button>
+    </>
   )
 }
