@@ -1,7 +1,8 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { splitName } from '@/lib/names'
 import ArcadeShare from '@/components/ArcadeShare'
+import { celebrate } from '@/lib/celebrate'
 
 export type DailyPlayer = {
   name: string
@@ -30,6 +31,12 @@ export default function DailyClient({ answer, pool }: { answer: DailyPlayer; poo
 
   const won = guesses.some(g => g.toLowerCase() === answer.name.toLowerCase())
   const done = won || guesses.length >= MAX_GUESSES
+
+  /* Only a correct answer — running out of guesses reaches `done` too. */
+  const resultRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (won) celebrate(resultRef.current)
+  }, [won])
 
   // A clue unlocks with each wrong guess — the first is free
   const clues: { label: string; value: string }[] = [
@@ -243,7 +250,7 @@ export default function DailyClient({ answer, pool }: { answer: DailyPlayer; poo
       )}
 
       {done && (
-        <div className="ar-panel dl-result" style={{ borderColor: won ? WIN : LOSE }}>
+        <div className="ar-panel dl-result" ref={resultRef} style={{ borderColor: won ? WIN : LOSE }}>
           <p className="dl-verdict" style={{ color: won ? WIN : LOSE }}>
             {won ? `Got it in ${guesses.length}` : 'Out of guesses'}
           </p>
