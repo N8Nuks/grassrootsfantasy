@@ -1,7 +1,8 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { splitName } from '@/lib/names'
 import ArcadeShare from '@/components/ArcadeShare'
+import { celebrate } from '@/lib/celebrate'
 
 export type PuzzleCard = {
   id: string
@@ -85,6 +86,13 @@ export default function LineupClient({ cards, roundNumber, grade, nextDealHref }
     ? SLOTS.reduce((sum, s) => sum + (best[s] ? (cardById.get(best[s])!.worth[s] ?? 0) : 0), 0)
     : 0
   const pct = bestScore > 0 ? Math.round((yourScore / bestScore) * 100) : 0
+
+  /* Every card scores, so there's no win state — 98% is where the copy already
+     calls it just about perfect, and that's the bar worth marking. */
+  const resultRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (done && pct >= 98) celebrate(resultRef.current)
+  }, [done, pct])
 
   function place(slot: string, cardId: string) {
     setAssign(prev => {
@@ -237,7 +245,7 @@ export default function LineupClient({ cards, roundNumber, grade, nextDealHref }
           </button>
         </div>
       ) : (
-        <div className="ar-panel lp-result">
+        <div className="ar-panel lp-result" ref={resultRef}>
           <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.34em', textTransform: 'uppercase', color: 'var(--neon)' }}>Your card</p>
           <p className="lp-big" style={{ marginTop: '14px' }}>{fmt(yourScore)}</p>
           <p style={{ fontSize: '12px', color: '#7D8B9C', marginTop: '14px' }}>

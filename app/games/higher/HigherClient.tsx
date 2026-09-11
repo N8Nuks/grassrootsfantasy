@@ -1,7 +1,8 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { splitName } from '@/lib/names'
 import ArcadeShare from '@/components/ArcadeShare'
+import { celebrate } from '@/lib/celebrate'
 
 export type GamePlayer = {
   id: string
@@ -50,6 +51,14 @@ export default function HigherClient({ pool }: { pool: GamePlayer[] }) {
   const [streak, setStreak] = useState(0)
   const [best, setBest] = useState(0)
   const [over, setOver] = useState(false)
+  /* No win state here — the run always ends in a miss. The thing worth marking
+     is beating your own best, so that's what earns it. */
+  const [beatBest, setBeatBest] = useState(false)
+  const overRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (over && beatBest && streak >= 5) celebrate(overRef.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [over])
 
   if (!round) {
     return <p style={{ color: '#8FA0B4', fontSize: '13px' }}>
@@ -70,7 +79,7 @@ export default function HigherClient({ pool }: { pool: GamePlayer[] }) {
     if (right) {
       const next = streak + 1
       setStreak(next)
-      if (next > best) setBest(next)
+      if (next > best) { setBest(next); setBeatBest(true) }
       setTimeout(() => { setPicked(null); setRound(draw()) }, 1500)
     } else {
       setTimeout(() => setOver(true), 1500)
@@ -78,7 +87,7 @@ export default function HigherClient({ pool }: { pool: GamePlayer[] }) {
   }
 
   function restart() {
-    setStreak(0); setPicked(null); setOver(false); setRound(draw())
+    setStreak(0); setPicked(null); setOver(false); setBeatBest(false); setRound(draw())
   }
 
   const caps = (n: string) => {
@@ -175,7 +184,7 @@ export default function HigherClient({ pool }: { pool: GamePlayer[] }) {
       </div>
 
       {over ? (
-        <div className="ar-panel hl-over" style={{ borderColor: LOSE }}>
+        <div className="ar-panel hl-over" ref={overRef} style={{ borderColor: LOSE }}>
           <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.34em', textTransform: 'uppercase', color: LOSE }}>Run over</p>
           <p className="ar-num" style={{ fontSize: '64px', color: '#F5F1E8', margin: '16px 0 6px', textShadow: 'none' }}>{streak}</p>
           <p style={{ fontSize: '10px', letterSpacing: '0.26em', textTransform: 'uppercase', color: '#5C6878' }}>in a row</p>
