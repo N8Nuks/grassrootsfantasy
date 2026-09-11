@@ -87,6 +87,9 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const raf = useRef(0)
+  /* Ball flight and the two impact effects were counted in whole 60Hz frames,
+     so on a 120Hz phone a home run landed in half the time it should. */
+  const lastFrame = useRef(0)
 
   // Clock that stops when paused, so nothing advances behind the overlay
   const pauseOffset = useRef(0)
@@ -598,6 +601,8 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     if (!ctx) return
     const { W, H } = fitCanvas(cv, 620 / 520)
     const now = clock(raw)
+    const dt = lastFrame.current ? Math.min(now - lastFrame.current, 48) : 16
+    lastFrame.current = now
 
     // ── Night sky and floodlight haze ──
     const sky = ctx.createLinearGradient(0, 0, 0, H)
@@ -751,7 +756,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       // ── The struck ball ──
       const b = ball.current
       if (b) {
-        if (!paused) b.t = Math.min(1, b.t + 16 / b.dur)
+        if (!paused) b.t = Math.min(1, b.t + dt / b.dur)
         const k = b.t
         let x: number, y: number
         if (b.hop) {
@@ -786,7 +791,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
 
       // A triple thumping into the boards
       if (wallHit.current) {
-        if (!paused) wallHit.current.life -= 16
+        if (!paused) wallHit.current.life -= dt
         const k = 1 - wallHit.current.life / 600
         const cx = wallHit.current.x * W, cy = wallHit.current.y * H
         ctx.save()
@@ -806,7 +811,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
 
       // Crowd erupting where the ball landed
       if (pop.current) {
-        if (!paused) pop.current.life -= 16
+        if (!paused) pop.current.life -= dt
         const k = 1 - pop.current.life / 700
         const cx = pop.current.x * W, cy = pop.current.y * H
         ctx.save()
