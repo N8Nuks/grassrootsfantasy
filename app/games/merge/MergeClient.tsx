@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import ArcadeShare from '@/components/ArcadeShare'
+import { celebrate } from '@/lib/celebrate'
 
 /* The tier ladder. The first four are the real card tiers; past a 2WP A the
    game keeps going into ranks that don't exist in the competition, which is
@@ -165,6 +166,11 @@ export default function MergeClient() {
     el.addEventListener('touchend', end, { passive: true })
     return () => { el.removeEventListener('touchstart', start); el.removeEventListener('touchend', end) }
   }, [move])
+
+  /* Immortal only — a jammed board reaches the same overlay and isn't a win. */
+  useEffect(() => {
+    if (won) celebrate(boardRef.current)
+  }, [won])
 
   const peakMeta = meta(peak)
 
