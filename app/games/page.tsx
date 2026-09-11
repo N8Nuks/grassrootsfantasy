@@ -1,5 +1,6 @@
 import Footer from '@/components/Footer'
 import ViewTicker from '@/components/ViewTicker'
+import { isClosedGame } from '@/lib/construction'
 
 const GAMES = [
   { href: '/games/daily', n: '01', title: 'Player of the Day', blurb: 'One player. Six guesses. A clue for every miss.', tag: 'Daily', neon: '#FF2D95' },
@@ -202,6 +203,25 @@ export default function Games() {
           to   { transform: translateX(100px); }
         }
 
+        /* Closed for the changeover — desaturated, unlit and inert. The tag and
+           number stay, so the tile reads as a machine that's coming back rather
+           than one that's been taken away. */
+        .gm-tile[data-closed="true"] {
+          filter: grayscale(1);
+          opacity: 0.42;
+          cursor: default;
+          border-style: dashed;
+          transform: rotate(0deg);
+        }
+        .gm-tile[data-closed="true"]:hover {
+          transform: rotate(0deg);
+          border-color: color-mix(in srgb, var(--neon) 40%, transparent);
+          box-shadow: 0 0 0 1px #ffffff08 inset, 0 18px 40px #00000090;
+        }
+        .gm-tile[data-closed="true"]:hover::after { opacity: 0; }
+        .gm-tile[data-closed="true"]:hover .gm-name { color: #F5F1E8; text-shadow: none; }
+        .gm-tile[data-closed="true"]:hover .gm-go span { transform: none; }
+
         @media (prefers-reduced-motion: reduce) {
           .gm-flood, .gm-title::before, .gm-title::after { animation: none; }
           .gm-tile { transition: none; }
@@ -222,44 +242,53 @@ export default function Games() {
           <p className="gm-eyebrow" style={{ marginTop: '30px' }}>Grassroots Fantasy Arcade</p>
           <h1 className="gm-title">PLAY</h1>
           <p className="gm-sub">
-            It's Game-Time! Play Games built using real NFS numbers and other popular games styled for the NFS Premier League. Nothing here touches your season — no points, no packs,
+            It&apos;s Game-Time! Play Games built using real NFS numbers and other popular games styled for the NFS Premier League. Nothing here touches your season — no points, no packs,
             no ladder - just fun. Pick a game, have a crack, try another. Check for what game we add next...
           </p>
 
           <div className="gm-grid">
-            {GAMES.map(g => (
-              <a key={g.href} href={g.href} className="gm-tile"
-                data-featured={'featured' in g ? 'true' : undefined}
-                data-gold={'gold' in g ? 'true' : undefined}
-                style={{ ['--neon' as string]: g.neon }}>
-                <span className="gm-n" data-n={g.n}>{g.n}</span>
-                {'featured' in g && (
-                  <svg className="gm-frame" preserveAspectRatio="none" aria-hidden="true">
-                    <rect x="2" y="2" width="calc(100% - 4px)" height="calc(100% - 4px)" />
-                  </svg>
-                )}
-                {'featured' in g && (
-                  <svg className="gm-nsvg" viewBox="0 0 96 76" aria-hidden="true">
-                    <defs>
-                      <linearGradient id="gm-wave-grad" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#FFD400" />
-                        <stop offset="25%" stopColor="#FF2D95" />
-                        <stop offset="50%" stopColor="#FFD400" />
-                        <stop offset="75%" stopColor="#00F0FF" />
-                        <stop offset="100%" stopColor="#FFD400" />
-                        <animate attributeName="x1" values="-1;1" dur="3.2s" repeatCount="indefinite" />
-                        <animate attributeName="x2" values="0;2" dur="3.2s" repeatCount="indefinite" />
-                      </linearGradient>
-                    </defs>
-                    <text x="93" y="60" textAnchor="end">{g.n}</text>
-                  </svg>
-                )}
-                <span className="gm-tag">{g.tag}</span>
-                <h2 className="gm-name">{g.title}</h2>
-                <p className="gm-blurb">{g.blurb}</p>
-                <p className="gm-go">Play <span>→</span></p>
-              </a>
-            ))}
+            {GAMES.map(g => {
+              /* The five that read from the database. Dropping href leaves the
+                 tile in place but dead — it still reads as part of the arcade
+                 rather than vanishing, which would look like games were lost. */
+              const closed = isClosedGame(g.href)
+              return (
+                <a key={g.href} href={closed ? undefined : g.href} className="gm-tile"
+                  data-closed={closed ? 'true' : undefined}
+                  data-featured={!closed && 'featured' in g ? 'true' : undefined}
+                  data-gold={!closed && 'gold' in g ? 'true' : undefined}
+                  style={{ ['--neon' as string]: closed ? '#5C6878' : g.neon }}>
+                  <span className="gm-n" data-n={g.n}>{g.n}</span>
+                  {!closed && 'featured' in g && (
+                    <svg className="gm-frame" preserveAspectRatio="none" aria-hidden="true">
+                      <rect x="2" y="2" width="calc(100% - 4px)" height="calc(100% - 4px)" />
+                    </svg>
+                  )}
+                  {!closed && 'featured' in g && (
+                    <svg className="gm-nsvg" viewBox="0 0 96 76" aria-hidden="true">
+                      <defs>
+                        <linearGradient id="gm-wave-grad" x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%" stopColor="#FFD400" />
+                          <stop offset="25%" stopColor="#FF2D95" />
+                          <stop offset="50%" stopColor="#FFD400" />
+                          <stop offset="75%" stopColor="#00F0FF" />
+                          <stop offset="100%" stopColor="#FFD400" />
+                          <animate attributeName="x1" values="-1;1" dur="3.2s" repeatCount="indefinite" />
+                          <animate attributeName="x2" values="0;2" dur="3.2s" repeatCount="indefinite" />
+                        </linearGradient>
+                      </defs>
+                      <text x="93" y="60" textAnchor="end">{g.n}</text>
+                    </svg>
+                  )}
+                  <span className="gm-tag">{g.tag}</span>
+                  <h2 className="gm-name">{g.title}</h2>
+                  <p className="gm-blurb">{g.blurb}</p>
+                  <p className="gm-go">
+                    {closed ? 'Under construction' : <>Play <span>→</span></>}
+                  </p>
+                </a>
+              )
+            })}
           </div>
 
           <p className="gm-foot">

@@ -1,7 +1,21 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { isClosed, isLocked, isClosedGame } from '@/lib/construction'
 
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  /* Closed pages are settled before any Supabase work — there's no point
+     refreshing a session for a page nobody can reach. Rewrite rather than
+     redirect, so the URL stays as typed and bookmarks still work when these
+     open again on the 18th. */
+  if (isClosed(pathname) || isClosedGame(pathname)) {
+    return NextResponse.rewrite(new URL('/closed', request.url))
+  }
+  if (isLocked(pathname)) {
+    return NextResponse.rewrite(new URL('/locked', request.url))
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
