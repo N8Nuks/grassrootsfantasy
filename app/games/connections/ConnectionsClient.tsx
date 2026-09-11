@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { splitName } from '@/lib/names'
 import ArcadeShare from '@/components/ArcadeShare'
 
@@ -18,6 +18,14 @@ export default function ConnectionsClient({ groups }: { groups: Group[] }) {
   const [note, setNote] = useState('')
 
   const done = solved.length === 4 || wrong >= MISTAKES
+  const beatIt = done && wrong < MISTAKES
+
+  /* Only a genuine solve earns it — giveUp() fills `solved` on a loss too, so
+     mistakes is the only honest test of who won. */
+  const endRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (beatIt) celebrate(endRef.current)
+  }, [beatIt])
 
   function tap(name: string) {
     if (done) return
@@ -175,7 +183,7 @@ export default function ConnectionsClient({ groups }: { groups: Group[] }) {
       </details>
 
       {done && (
-        <div className="ar-panel cn-end">
+        <div className="ar-panel cn-end" ref={endRef}>
           <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.34em', textTransform: 'uppercase',
                       color: wrong < MISTAKES ? '#39FF9E' : '#FF4D4D' }}>
             {wrong < MISTAKES ? `Solved with ${MISTAKES - wrong} to spare` : 'Board opened'}
