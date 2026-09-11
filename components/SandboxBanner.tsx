@@ -61,7 +61,14 @@ export default function SandboxBanner() {
       <span className="sb-streaks" aria-hidden="true" />
       <span className="sb-scrim" aria-hidden="true" />
 
-      <div className="sb-inner flex items-center justify-center gap-5 sm:gap-8 flex-wrap">
+      <div className="sb-inner">
+        {/* Out of the flex row so it heads the whole banner — inside it, the
+            countdown jumped above the eyebrow whenever the row wrapped. */}
+        <p className="sb-eyebrow sb-eyebrow-top font-black uppercase tracking-[0.28em]">
+          {copy.eyebrow}
+        </p>
+
+        <div className="flex items-center justify-center gap-5 sm:gap-8 flex-wrap">
 
         {n !== null && n >= 1 && n <= 10 && (
           <div className="shrink-0 flex flex-col items-center">
@@ -75,9 +82,6 @@ export default function SandboxBanner() {
         )}
 
         <div className="text-center sm:text-left" style={{ maxWidth: '460px' }}>
-          <p className="sb-eyebrow font-black uppercase tracking-[0.28em]">
-            {copy.eyebrow}
-          </p>
           <p className="font-black leading-tight"
             style={{ fontFamily: 'var(--font-heading)', color: '#F5F1E8', fontSize: '19px', marginBottom: '8px' }}>
             {copy.head}
@@ -90,6 +94,7 @@ export default function SandboxBanner() {
             first round <b style={{ color: '#FFFFFF' }}>26 Sept</b> ·
             first scores <b style={{ color: '#FFFFFF' }}>29 Sept</b>
           </p>
+        </div>
         </div>
       </div>
 
@@ -158,6 +163,7 @@ export default function SandboxBanner() {
           color: #FFC46B; font-size: 10px; margin-bottom: 7px;
           text-shadow: 0 0 14px #E8983A90;
         }
+        .sb-eyebrow-top { text-align: center; margin-bottom: 14px; }
       `}</style>
     </div>
   )
