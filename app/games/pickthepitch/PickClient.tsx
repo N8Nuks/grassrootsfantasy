@@ -141,17 +141,18 @@ function describe(lv: number, code: Code): string {
 /* ── The hand, fingers down, seen from behind the catcher ──
    Silhouette does the work: at 44px on a dark field the shapes have to be
    tellable apart before any detail matters. Four is held together, Open is
-   splayed with the thumb out — under the old drawing those two were the same
-   picture, which made a real pitch signal unreadable.
-   No gradients: several of these render at once and duplicate gradient ids
-   across SVGs are a rendering coin-flip. Flat tones and an explicit shade
-   shape instead. */
+   splayed — under the original drawing those two were the same picture, which
+   made a real pitch signal unreadable.
+
+   The frame is wider than it is tall because the thumb goes out sideways, which
+   is how it actually reads from second base. No gradients: several of these
+   render at once and duplicate gradient ids across SVGs are a coin-flip. */
 function Hand({ shape }: { shape: Shape | null; size?: number }) {
   const SKIN = '#E8C9A0'
   const SHADE = '#CBA87C'
   const EDGE = '#9E7B4F'
 
-  if (!shape) return <svg viewBox="0 0 120 160" style={{ width: '100%', height: '100%', opacity: 0.12 }} />
+  if (!shape) return <svg viewBox="0 0 150 150" style={{ width: '100%', height: '100%', opacity: 0.12 }} />
 
   /* A finger is a rounded column with a darker inner edge, so two side by side
      read as two rather than one wide one. */
@@ -181,7 +182,7 @@ function Hand({ shape }: { shape: Shape | null; size?: number }) {
       fingers.push(finger(24, 40), finger(42, 52), finger(60, 52), finger(78, 38))
       break
     case 'five':
-      // Open: splayed wide, thumb out. Must not read as Four.
+      // Open: splayed wide with the thumb out. Must not read as Four.
       splay = true
       thumb = true
       fingers.push(finger(10, 38), finger(34, 50), finger(58, 50), finger(82, 36))
@@ -195,8 +196,9 @@ function Hand({ shape }: { shape: Shape | null; size?: number }) {
   }
 
   return (
-    <svg viewBox="0 0 120 160" style={{ width: '100%', height: '100%' }}>
-      <g transform="translate(120,0) scale(-1,1)">
+    <svg viewBox="0 0 150 150" style={{ width: '100%', height: '100%' }}>
+      {/* Mirrored, so local +x runs left on screen and the thumb lands right */}
+      <g transform="translate(124,0) scale(-1,1)">
         {/* wrist */}
         <rect x="36" y="0" width="48" height="36" rx="15" fill={SHADE} stroke={EDGE} strokeWidth="2" />
         {/* back of the hand */}
@@ -206,14 +208,19 @@ function Hand({ shape }: { shape: Shape | null; size?: number }) {
         <path d={`M${splay ? 18 : 24} 70 Q60 78 ${splay ? 102 : 96} 70`}
           stroke={SHADE} strokeWidth="3" fill="none" opacity="0.6" strokeLinecap="round" />
         {fingers}
+        {/* Thumb, out to the side and slightly down — near 90° off the fingers */}
         {thumb && (
-          <rect x="-6" y="46" width="20" height="44" rx="10"
-            fill={SKIN} stroke={EDGE} strokeWidth="2" transform="rotate(24 6 68)" />
+          <g transform="rotate(9 10 66)">
+            <rect x="-26" y="56" width="38" height="21" rx="10.5"
+              fill={SKIN} stroke={EDGE} strokeWidth="2" />
+            <rect x="-22" y="60.5" width="30" height="3" rx="1.5" fill={SHADE} opacity="0.5" />
+          </g>
         )}
       </g>
     </svg>
   )
 }
+
 type Phase = 'idle' | 'signals' | 'pick' | 'pitching' | 'result' | 'strikeout' | 'failed' | 'demoted' | 'passed'
 
 export default function PickClient() {
