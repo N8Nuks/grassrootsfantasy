@@ -25,7 +25,13 @@ const ENDLESS_LEVEL = 10           // Endless runs at level 10 forever
 const UNLOCK_KEY = 'ked-endless-unlocked'
 const HIGH_KEY = 'ked-endless-best'
 const THROW_MS = 620               // horizon to the line
-const COOLDOWN_MS = 240
+/* The arm quickens with the ladder. At the top end a rare takes three throws
+   and the gap between spawns is down to half a second, so a fixed 240ms
+   cooldown made the last levels arithmetically impossible rather than hard. */
+const COOLDOWN_BASE = 240
+const COOLDOWN_MIN = 110
+const cooldownFor = (lv: number) =>
+  Math.max(COOLDOWN_MIN, COOLDOWN_BASE - (lv - 1) * 14)
 const HIT_WINDOW = 0.055
 
 type Species = 'fielder' | 'runner'
@@ -118,7 +124,7 @@ export default function FieldingClient() {
 
   const fire = useCallback(() => {
     if (cooldown.current > 0) return
-    cooldown.current = COOLDOWN_MS
+    cooldown.current = cooldownFor(levelRef.current)
     arm.current = 180
     throws.current.push({ id: nextId++, lane: lane.current, z: 1 })
   }, [])
