@@ -294,7 +294,7 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
               <img src={bm.img} alt={bm.label} title={bm.label}
                 className="absolute left-3"
                 style={{
-                  bottom: '10px', height: '52px', width: 'auto',
+                  bottom: '10px', height: '76px', width: 'auto',
                   filter: owned
                     ? 'drop-shadow(0 2px 8px #000000A0)'
                     : 'grayscale(1) brightness(0.55)',
