@@ -32,10 +32,22 @@ export default function Locked() {
           background: url('/banner-neon.webp') center / cover no-repeat;
           opacity: 0.5;
         }
+        .cl-art { opacity: 0.72; }
+
+        /* On a phone the viewport is narrow enough that a wide ellipse covers
+           the whole screen, so the scrim is pulled in tight around the copy
+           and the artwork is let through everywhere else. */
         .cl-scrim {
           position: absolute; inset: 0; z-index: 1; pointer-events: none;
           background:
-            radial-gradient(ellipse 70% 60% at 50% 50%, #05060AF2 0%, #05060ACC 55%, #05060A80 100%);
+            radial-gradient(ellipse 62% 34% at 50% 50%, #05060AEE 0%, #05060AB3 60%, #05060A40 100%);
+        }
+        @media (min-width: 720px) {
+          .cl-art { opacity: 0.5; }
+          .cl-scrim {
+            background:
+              radial-gradient(ellipse 70% 60% at 50% 50%, #05060AF2 0%, #05060ACC 55%, #05060A80 100%);
+          }
         }
         .cl-box { position: relative; z-index: 2; max-width: 38ch; }
 
