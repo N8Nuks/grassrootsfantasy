@@ -184,11 +184,11 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
      wall and land in the crowd, a triple has to die against it. */
   function launch(kind: string, pull: number, colour: string) {
     contact.current = true
-    /* Weighted by what the hit was — a home run moves the world, a grounder
-       barely registers. */
-    shake(shakeState.current,
-      kind === 'over' ? 14 : kind === 'wall' ? 10 : kind === 'bounce' ? 8
-      : kind === 'through' ? 6 : kind === 'back' ? 3 : 4)
+    /* Only a hit that went somewhere moves the world. A foul, a grounder or a
+       pop-out get nothing — shaking on a weak contact tells the player
+       something happened when it didn't. */
+    const SHAKE: Record<string, number> = { over: 14, wall: 10, bounce: 8, through: 6 }
+    if (SHAKE[kind]) shake(shakeState.current, SHAKE[kind])
     const spread = pull * 0.34
     const base = { kind, colour, t: 0, landed: false, x0: ZONE.x, y0: ZONE.y }
     if (kind === 'over') {
