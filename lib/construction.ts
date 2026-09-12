@@ -9,6 +9,7 @@ export const UNDER_CONSTRUCTION = [
   '/matchups',
   '/ladder',
   '/hall',
+  '/leaders',
 
   /* Reachable only through My Team in the nav, so it's covered for anyone
      clicking through — but a bookmark or browser history still lands on it.
