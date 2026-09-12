@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { splitName } from '@/lib/names'
 import ArcadeShare from '@/components/ArcadeShare'
-import { fitCanvas, headingFont } from '@/lib/gamekit'
+import { fitCanvas, headingFont, newShake, shake, applyShake } from '@/lib/gamekit'
 
 export type Legend = { name: string; titles: number; grade: string; lefty: boolean }
 
@@ -90,6 +90,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
   /* Ball flight and the two impact effects were counted in whole 60Hz frames,
      so on a 120Hz phone a home run landed in half the time it should. */
   const lastFrame = useRef(0)
+  const shakeState = useRef(newShake())
 
   /* The park doesn't move. Sky, crowd, wall boards and the diamond get drawn
      once to an offscreen canvas and blitted each frame — the crowd alone is
@@ -183,6 +184,11 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
      wall and land in the crowd, a triple has to die against it. */
   function launch(kind: string, pull: number, colour: string) {
     contact.current = true
+    /* Weighted by what the hit was — a home run moves the world, a grounder
+       barely registers. */
+    shake(shakeState.current,
+      kind === 'over' ? 14 : kind === 'wall' ? 10 : kind === 'bounce' ? 8
+      : kind === 'through' ? 6 : kind === 'back' ? 3 : 4)
     const spread = pull * 0.34
     const base = { kind, colour, t: 0, landed: false, x0: ZONE.x, y0: ZONE.y }
     if (kind === 'over') {
@@ -721,6 +727,9 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       park.current = buildPark(W, H)
       parkAt.current = key
     }
+    /* Shake wraps the whole scene, including the park — a camera that moves is
+       what sells the impact. Pushed before the blit so nothing escapes it. */
+    const shaking = applyShake(ctx, shakeState.current, dt)
     ctx.drawImage(park.current, 0, 0, W, H)
 
     /* The wall geometry is still needed live — the name scrolling along it
@@ -894,6 +903,8 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     }
 
     drawBatter(ctx, W, H, now)
+    if (shaking) ctx.restore()
+
     raf.current = requestAnimationFrame(draw)
   }, [phase, paused, finish])
 

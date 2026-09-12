@@ -69,3 +69,36 @@ export const P = {
 
   shadow: '#00000070',
 } as const
+/* ── Screen shake ──
+   A hit that doesn't move the world reads as a picture changing rather than
+   something happening. This is the cheapest way to make contact feel physical.
+
+   Usage: call shake(state, strength) at the moment of impact, then wrap the
+   frame's drawing in applyShake(ctx, state, dt) / ctx.restore().
+
+   Strength is in CSS pixels of initial displacement. 6 is a solid contact,
+   14 is a home run, 3 is a tap. It decays on its own. */
+export type Shake = { power: number; x: number; y: number }
+
+export const newShake = (): Shake => ({ power: 0, x: 0, y: 0 })
+
+export function shake(s: Shake, strength: number) {
+  // Never reduce an ongoing shake — a second hit while the first decays should
+  // read as harder, not as a reset to something softer.
+  s.power = Math.max(s.power, strength)
+}
+
+/* Wrap drawing in this. Returns true if it pushed a transform, so the caller
+   knows whether to restore. Decay is time-based, so it feels identical on a
+   60Hz laptop and a 120Hz phone. */
+export function applyShake(ctx: CanvasRenderingContext2D, s: Shake, dt: number) {
+  if (s.power <= 0.15) { s.power = 0; return false }
+  // Random direction each frame, magnitude falling away — reads as an impact
+  // rather than a wobble
+  s.x = (Math.random() * 2 - 1) * s.power
+  s.y = (Math.random() * 2 - 1) * s.power
+  s.power *= Math.pow(0.0035, dt / 1000)   // ~94% gone in 350ms
+  ctx.save()
+  ctx.translate(s.x, s.y)
+  return true
+}
