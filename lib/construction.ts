@@ -48,3 +48,13 @@ export const CLOSED_GAMES = [
 
 export const isClosedGame = (path: string) =>
   CLOSED_GAMES.some(p => path === p || path.startsWith(p + '/'))
+
+/* A way past the locked pages for admin setup during the changeover. Visit
+   any locked page with ?key=<the value below> and the proxy drops a cookie
+   that lets you through from then on.
+
+   Not real security — it's a soft gate so one person can register while
+   everyone else sees the closed notice. Change the value, and delete this
+   whole block on the 18th when the pages reopen. */
+export const BYPASS_KEY = 'Fantasy1'
+export const BYPASS_COOKIE = 'gf_changeover'

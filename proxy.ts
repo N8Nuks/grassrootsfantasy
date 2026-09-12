@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { isClosed, isLocked, isClosedGame } from '@/lib/construction'
+import { isClosed, isLocked, isClosedGame, BYPASS_KEY, BYPASS_COOKIE } from '@/lib/construction'
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -13,7 +13,20 @@ export async function proxy(request: NextRequest) {
     return NextResponse.rewrite(new URL('/closed', request.url))
   }
   if (isLocked(pathname)) {
-    return NextResponse.rewrite(new URL('/locked', request.url))
+    /* The key in the URL grants a pass and is remembered, so the redirects
+       inside registration and login don't kick you back out. */
+    if (request.nextUrl.searchParams.get('key') === BYPASS_KEY) {
+      const url = request.nextUrl.clone()
+      url.searchParams.delete('key')
+      const pass = NextResponse.redirect(url)
+      pass.cookies.set(BYPASS_COOKIE, BYPASS_KEY, {
+        httpOnly: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 10,
+      })
+      return pass
+    }
+    if (request.cookies.get(BYPASS_COOKIE)?.value !== BYPASS_KEY) {
+      return NextResponse.rewrite(new URL('/locked', request.url))
+    }
   }
 
   let supabaseResponse = NextResponse.next({ request })
