@@ -139,14 +139,10 @@ export default function Register() {
       }
     }
 
-    // In-season registrants: Pre-Season Pack deals immediately after (release-gated)
-    for (const grade of grades) {
-      const t2 = await fetch('/api/deal-t2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grade }) })
-      const t2Data = await t2.json().catch(() => null)
-      if (t2.ok && t2Data?.cards?.length) {
-        queue.push({ grade, cards: t2Data.cards, packName: 'Pre-Season Pack' })
-      }
-    }
+    /* The Pre-Season Pack is deliberately not dealt here. It waits on the team
+       page, one per grade, so registration isn't four reveals deep and there's
+       something to come back for. TeamClient already handles it — t2Available
+       and openT2(). */
 
     if (queue.length) {
       setPackQueue(queue)
