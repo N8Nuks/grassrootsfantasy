@@ -44,6 +44,7 @@ export type TeamCard = {
   stats: Record<string, number>
   photoUrl?: string | null
   playingNumber?: number | null
+  badges?: string[]
 }
 
 export type ArmbandNotice = {
@@ -994,7 +995,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               const slot = slotByCard.get(c.id)
               return (
                 <PlayerCard key={c.id}
-                  player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats, photoUrl: c.photoUrl, playingNumber: c.playingNumber }}
+                  player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats, photoUrl: c.photoUrl, badges: c.badges ?? [], playingNumber: c.playingNumber }}
                   grade={grade}
                   owned={true}
                   siteTheme={siteTheme}

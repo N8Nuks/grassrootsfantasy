@@ -1,7 +1,7 @@
 'use client'
 import { theme, type Grade } from '@/lib/clubhouse'
 import { splitName } from '@/lib/names'
-
+ 
 export const TIER_META: Record<string, { label: string; accent: string }> = {
   rare_2wp_a: { label: '2WP A', accent: '#FFD700' },
   rare_2wp_b: { label: '2WP B', accent: '#E8C15A' },
@@ -10,10 +10,10 @@ export const TIER_META: Record<string, { label: string; accent: string }> = {
 }
 const SLOT_LABELS: Record<string, string> = { B1: '1B', B2: '2B', B3: '3B', PB: 'P(B)' }
 const posLabel = (p: string) => SLOT_LABELS[p] ?? p
-
+ 
 // Achievement double — the card is lit for the round the bonus applies to
 export const DOUBLE_ACCENT = '#FF8C42'
-
+ 
 const CLUB_TINTS: Record<string, string> = {
   'Bandits': '#5B2D8E', 'Howick': '#8A1E41', 'Marist': '#2456E6',
   'Otahuhu': '#2B5C9E', 'Patriots': '#B49759', 'Pukekohe': '#2D9E4E',
@@ -21,7 +21,22 @@ const CLUB_TINTS: Record<string, string> = {
   'United-Marist': '#C8102E', 'Waitakere': '#FFB81C',
 }
 const clubSlug = (name: string) => name.toLowerCase().replace(/\s+/g, '-')
-
+ 
+// Mini card shows the longevity badge only — same rule as the full card's front.
+// Rep / superstar / speed badges live on the career face; speed already has its ★ below.
+// File names in public/badges/ use hyphens (06-club-legend.png), not the underscore keys.
+const LONGEVITY_BADGE: Record<string, string> = {
+  newcomer: '01-newcomer',
+  rookie: '02-rookie',
+  prospect: '03-prospect',
+  established: '04-established',
+  veteran: '05-veteran',
+  club_legend: '06-club-legend',
+  icon: '07-icon',
+}
+const longevityBadge = (badges?: string[]) =>
+  badges?.map((b) => LONGEVITY_BADGE[b]).find(Boolean) ?? null
+ 
 export type PlayerCardData = {
   id: string
   name: string
@@ -32,8 +47,9 @@ export type PlayerCardData = {
   stats?: Record<string, number>
   photoUrl?: string | null
   playingNumber?: number | null
+  badges?: string[]         // from players.badges — longevity key first, extras appended
 }
-
+ 
 export default function PlayerCard({ player, grade, owned, chip, onClick, siteTheme, cardStyle = 'premium', doubled = false }: {
   player: PlayerCardData
   grade: Grade
@@ -48,7 +64,8 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
   const meta = TIER_META[player.tier] ?? TIER_META.common
   const tint = player.club ? (CLUB_TINTS[player.club] ?? '#E8D5A3') : '#E8D5A3'
   const st = player.stats ?? {}
-
+  const badge = longevityBadge(player.badges)
+ 
   return (
     <button onClick={onClick}
       className={"rounded-xl text-left transition-all hover:scale-[1.03] flex flex-col" + (doubled ? ' gf-rim' : '')}
@@ -67,7 +84,7 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
       {/* Inner card */}
       <div className="flex-1 rounded-lg overflow-hidden flex flex-col min-h-0 w-full"
         style={{ background: T.surface, border: '1px solid #F5F1E820' }}>
-
+ 
         {/* Mini banner — crest + name */}
         <div className="flex items-center gap-2 pinstripe-fine"
           style={{ background: T.headerBg, borderBottom: `1px solid ${(doubled ? DOUBLE_ACCENT : meta.accent)}35`, padding: '7px 10px' }}>
@@ -94,7 +111,7 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
             {splitName(player.name).first} <span className="uppercase">{splitName(player.name).last}</span>
           </p>
         </div>
-
+ 
         {/* Photo area — energy slashes backdrop, cut-out standing on base */}
         <div className="relative flex items-end justify-center overflow-hidden" style={{ height: '110px' }}>
           {cardStyle === 'premium' && owned ? (
@@ -139,6 +156,20 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
             style={{ color: meta.accent, textShadow: `0 0 6px ${meta.accent}80` }}>
             {meta.label}
           </span>
+          {/* Longevity badge — bottom-left, mark only at this size (word reads on the full card) */}
+          {badge && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={`/badges/${badge}.png`} alt="" aria-hidden
+              className="absolute pointer-events-none"
+              style={{
+                left: '6px',
+                bottom: '6px',
+                width: '40px',
+                height: '40px',
+                objectFit: 'contain',
+                filter: owned ? 'drop-shadow(0 2px 6px #00000080)' : 'grayscale(1) brightness(0.5)',
+              }} />
+          )}
           {!owned && (
             <span className="absolute top-1.5 right-2 text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full"
               style={{ color: T.textDim, background: '#00000060' }}>
@@ -159,7 +190,7 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
             </span>
           )}
         </div>
-
+ 
         {/* Mini stat band */}
         <div style={{ background: T.headerBg, borderTop: `1px solid ${(doubled ? DOUBLE_ACCENT : meta.accent)}35`, padding: '7px 10px 9px' }}>
           <p className="text-[9px] truncate" style={{ color: T.textDim, marginBottom: '3px' }}>
@@ -180,3 +211,4 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
     </button>
   )
 }
+ 
