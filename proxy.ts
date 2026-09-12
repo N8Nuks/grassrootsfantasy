@@ -9,7 +9,12 @@ export async function proxy(request: NextRequest) {
      refreshing a session for a page nobody can reach. Rewrite rather than
      redirect, so the URL stays as typed and bookmarks still work when these
      open again on the 18th. */
-  if (isClosed(pathname) || isClosedGame(pathname)) {
+  /* One key opens everything. Set it on any locked page with ?key=… and the
+     cookie carries you through the closed pages too, so the real /team and
+     /ladder can be worked on while everyone else sees the notice. */
+  const hasPass = request.cookies.get(BYPASS_COOKIE)?.value === BYPASS_KEY
+
+  if ((isClosed(pathname) || isClosedGame(pathname)) && !hasPass) {
     return NextResponse.rewrite(new URL('/closed', request.url))
   }
   if (isLocked(pathname)) {
@@ -24,7 +29,7 @@ export async function proxy(request: NextRequest) {
       })
       return pass
     }
-    if (request.cookies.get(BYPASS_COOKIE)?.value !== BYPASS_KEY) {
+    if (!hasPass) {
       return NextResponse.rewrite(new URL('/locked', request.url))
     }
   }
