@@ -5,7 +5,12 @@ import { Analytics } from '@vercel/analytics/next'
 import InstallPrompt from '@/components/InstallPrompt'
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
 
-const heading = Oxanium({ subsets: ['latin'], weight: ['600', '700', '800'], variable: '--font-heading' })
+/* 900 is requested throughout the site; without it loaded the browser fakes the
+   weight by smearing 800, which reads as slightly muddy at large sizes. */
+/* Variable rather than fixed weights: 900 is requested throughout the site and
+   Oxanium only goes to 800, so a fixed-weight load left the browser faking it.
+   The variable font clamps to the real maximum instead. */
+const heading = Oxanium({ subsets: ['latin'], weight: 'variable', variable: '--font-heading' })
 const label = Rajdhani({ subsets: ['latin'], weight: ['500', '600', '700'], variable: '--font-label' })
 const wordmark = Archivo({ subsets: ['latin'], weight: 'variable', axes: ['wdth'], variable: '--font-wordmark' })
 const body = Nunito({ subsets: ['latin'], variable: '--font-body' })
