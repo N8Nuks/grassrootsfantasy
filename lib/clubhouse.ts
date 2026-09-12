@@ -153,13 +153,30 @@ export const THEMES: Record<string, Palette> = {
     swatch: ['#3FBF63', '#FFD84D'],
     seam: '#141210',
   },
+  neon: {
+    label: 'Neon',
+    accent: '#F2C230',
+    accentSoft: '#F2C23020',
+    button: '#F2C230',
+    buttonText: '#141210',
+    field: '#0C0B12',
+    surface: '#15131C',
+    surfaceRaised: '#1E1B27',
+    headerBg: 'linear-gradient(180deg, #141210CC 0%, #141210B0 55%, #141210D8 100%), url(/banner-neon.webp) center / cover no-repeat',
+    text: '#F5F1E8',
+    textDim: '#F5F1E870',
+    electric: '#39FF6A',
+    glow: '0 0 18px #F2C23050, 0 0 36px #FF2E9725',
+    swatch: ['#FF2E97', '#39FF6A'],
+    seam: '#F5F1E8',
+  },
 }
 
 export type ThemeKey = keyof typeof THEMES
 export type SiteTheme = ThemeKey | 'grade'
 
 // Switcher order — every theme selectable in both grades
-export const THEME_ORDER: string[] = ['padres', 'chevron', 'rwb', 'blackgold', 'cardinal', 'purple', 'greenyellow']
+export const THEME_ORDER: string[] = ['padres', 'chevron', 'rwb', 'blackgold', 'cardinal', 'purple', 'greenyellow', 'neon']
 
 // Back-compat: existing grade-keyed lookups
 export const CLUBHOUSE = {
