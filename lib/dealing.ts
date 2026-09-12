@@ -7,6 +7,8 @@ type Player = {
   positions: string[]
   stats?: Record<string, number>
   photo_url?: string | null
+  badges?: string[] | null
+  speed_star?: boolean | null
   playing_number?: number | null
   reveal_pos?: string | null
   clubs?: { name: string } | null
@@ -108,7 +110,7 @@ export async function dealAndPersistT1(admin: SupabaseClient, userId: string, gr
 
   // Under-18 players never enter the pool, whatever `active` says.
   const { data: pool, error: poolError } = await admin.from('players')
-    .select('id, full_name, tier, positions, stats, photo_url, playing_number, reveal_pos, clubs(name)')
+    .select('id, full_name, tier, positions, stats, photo_url, playing_number, badges, speed_star, reveal_pos, clubs(name)')
     .eq('grade', grade).eq('active', true).or('is_under18.eq.false,has_consent.eq.true')
   if (poolError || !pool || pool.length === 0) {
     // roll back the claim so the user can try again
@@ -164,6 +166,8 @@ export async function dealAndPersistT1(admin: SupabaseClient, userId: string, gr
       club: p.clubs?.name ?? '',
       stats: p.stats ?? {},
       photoUrl: p.photo_url ?? null,
+      badges: p.badges ?? [],
+      speedStar: p.speed_star ?? false,
       playingNumber: p.playing_number ?? null,
       revealPos: p.reveal_pos ?? null,
     })),

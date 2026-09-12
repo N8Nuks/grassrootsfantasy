@@ -12,6 +12,8 @@ export type RevealCard = {
   stats?: Record<string, number>
   photoUrl?: string | null
   playingNumber?: number | null
+  badges?: string[]
+  speedStar?: boolean
   revealPos?: string | null
 }
 
@@ -312,6 +314,8 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
       stats: c.stats ?? {},
       photoUrl: c.photoUrl ?? null,
       playingNumber: c.playingNumber ?? null,
+      badges: c.badges ?? [],
+      speedStar: c.speedStar ?? false,
     }
   }
 

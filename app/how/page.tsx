@@ -168,7 +168,7 @@ const groups = [
       },
       {
         q: 'I\u2019m joining mid-season. Is it too late?',
-        a: 'No. Head-to-head records start fresh from your first round, weekly prizes reset every week, and finals competitions start everyone level. The season ladder rewards the long haul, but plenty doesn\u2019t.',
+        a: 'No. Head-to-head records start fresh from your first round, weekly prizes reset every week, and finals competitions start everyone level. The one thing to know: the head-to-head ladder only ranks teams once they\u2019ve won four matchups or played six, so the earlier you\u2019re in, the sooner you count. The season ladder rewards the long haul, but plenty doesn\u2019t.',
       },
     ],
   },

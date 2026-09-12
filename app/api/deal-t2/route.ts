@@ -9,6 +9,8 @@ type Player = {
   positions: string[]
   stats?: Record<string, number>
   photo_url?: string | null
+  badges?: string[] | null
+  speed_star?: boolean | null
   playing_number?: number | null
   reveal_pos?: string | null
   clubs?: { name: string } | null
@@ -68,7 +70,7 @@ export async function POST(request: Request) {
   const ownedIds = new Set((owned ?? []).map(c => c.player_id))
 
   const { data: pool, error } = await admin.from('players')
-    .select('id, full_name, tier, positions, stats, photo_url, playing_number, reveal_pos, clubs(name)')
+    .select('id, full_name, tier, positions, stats, photo_url, playing_number, badges, speed_star, reveal_pos, clubs(name)')
     .eq('grade', grade).eq('active', true).or('is_under18.eq.false,has_consent.eq.true')
   if (error || !pool) return NextResponse.json({ error: 'Player pool unavailable' }, { status: 500 })
 
@@ -114,6 +116,8 @@ export async function POST(request: Request) {
       club: p.clubs?.name ?? '',
       stats: p.stats ?? {},
       photoUrl: p.photo_url ?? null,
+      badges: p.badges ?? [],
+      speedStar: p.speed_star ?? false,
       playingNumber: p.playing_number ?? null,
       revealPos: p.reveal_pos ?? null,
     })),
