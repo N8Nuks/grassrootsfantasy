@@ -220,7 +220,11 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     // The moment judged perfect — under 1 rewards a slightly earlier swing,
     // which lines the sweet spot up with where the ball looks rather than where
     // the clock says it is
-    const off = t.current - 0.96
+    /* The moment judged perfect. Under 1 rewards a slightly earlier swing,
+       lining the sweet spot up with where the ball looks rather than where the
+       clock says it is. Pulled back from 0.96 — contact was landing late
+       against what the eye expects, by roughly 35ms at a mid-speed pitch. */
+    const off = t.current - 0.91
     const abs = Math.abs(off)
     // A swing is always a swing — miss it early or miss it late, the bat still goes
     if (t.current < 0.5 || t.current > 1.14) {
