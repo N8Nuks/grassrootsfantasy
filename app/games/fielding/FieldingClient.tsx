@@ -101,6 +101,12 @@ export default function FieldingClient() {
   const cooldown = useRef(0)
   const arm = useRef(0)
   const levelRef = useRef(1)
+   /* The park doesn't move. Sky, towers, fence, grass bands, lane chalk and the
+     line get cut once to an offscreen canvas and blitted — rebuilding them
+     sixty times a second is most of the frame budget for something that never
+     changes. Re-cut only when the canvas size changes. */
+  const park = useRef<HTMLCanvasElement | null>(null)
+  const parkAt = useRef('')
   /* The unlock and the endless record live on the device — it's a game unlock,
      not a record worth protecting, and it works for signed-out visitors. */
   useEffect(() => {
@@ -256,7 +262,29 @@ export default function FieldingClient() {
   }, [spawn])
 
   /* ── Drawing ── */
+  /* Everything static, cut once. Perspective helpers are recomputed here rather
+     than shared, so the cache doesn't depend on draw() having run first. */
+  const buildPark = useCallback((W: number, H: number) => {
+    const cv = document.createElement('canvas')
+    cv.width = W; cv.height = H
+    const ctx = cv.getContext('2d')
+    if (!ctx) return cv
 
+    const HORIZON = H * 0.29
+    const persp = (z: number) => Math.pow(Math.max(0, z), 2.0)
+    const yAt = (z: number) => HORIZON + (H - HORIZON) * persp(z)
+    const halfAt = (z: number) => W * (0.022 + 0.40 * persp(z))
+
+    // ── The park, cut once and blitted ──
+    const key = `${W}x${H}`
+    if (!park.current || parkAt.current !== key) {
+      park.current = buildPark(W, H)
+      parkAt.current = key
+    }
+    ctx.drawImage(park.current, 0, 0, W, H)
+
+    return cv
+  }, [])
   const draw = useCallback(() => {
     const cv = canvasRef.current
     if (!cv) return
