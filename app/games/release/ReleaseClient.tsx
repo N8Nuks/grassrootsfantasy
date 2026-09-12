@@ -297,7 +297,10 @@ export default function ReleaseClient() {
     const mW = W * 0.62, mH = H * 0.036
     const mX = (W - mW) / 2, mY = H * 0.075
     const span = 700                                  // ms shown across the bar
-    const zeroX = mX + mW * (300 / span)              // where the release sits
+    /* The mark sits where green begins — the earliest legal jump, not the
+       instant the ball leaves the hand. That edge is the one a runner plays
+       off, so it's the one worth drawing. */
+    const releaseX = mX + mW * ((300 - EARLY) / span)
 
     ctx.fillStyle = '#00000060'; ctx.fillRect(mX - 2, mY - 2, mW + 4, mH + 4)
     const seg = (from: number, to: number, colour: string) => {
@@ -311,12 +314,13 @@ export default function ReleaseClient() {
     seg(SAFE, close, '#FFB800')      // late but safe — narrows each level
     seg(close, 400, '#FF4D4D')       // thrown out
 
-    ctx.strokeStyle = '#F5F1E8'; ctx.lineWidth = 2
-    ctx.beginPath(); ctx.moveTo(zeroX, mY - 5); ctx.lineTo(zeroX, mY + mH + 5); ctx.stroke()
+    /* Filled rather than stroked, so the full 2px sits on the green side of the
+       boundary instead of straddling it. */
     ctx.fillStyle = '#F5F1E8'
+    ctx.fillRect(releaseX, mY - 5, 2, mH + 10)
     ctx.font = headingFont(H * 0.019, 800)
     ctx.textAlign = 'center'
-    ctx.fillText('RELEASE', zeroX, mY - 9)
+    ctx.fillText('RELEASE', releaseX, mY - 9)
 
     // Needle: live while the arm turns, frozen where you went
     let needleMs: number | null = null
