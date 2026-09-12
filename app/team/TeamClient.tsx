@@ -713,7 +713,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
 
       {/* Jersey nameplate header */}
       <div className="rounded-2xl overflow-hidden pinstripe-fine text-center mb-6"
-        style={{ background: `linear-gradient(180deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`, border: `3px solid ${T.button}` }}>
+        style={{ background: siteTheme === 'neon' ? T.headerBg : `linear-gradient(180deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`, border: `3px solid ${T.button}` }}>
         <div style={{ padding: '36px 28px 32px' }}>
           <p className={"text-xs font-black uppercase tracking-[0.3em] mb-3" + (T.shimmer ? ' gf-shimmer-text' : '')}
             style={T.shimmer ? undefined : { color: T.accent }}>My Team</p>
@@ -829,7 +829,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
             </div>
             {/* Armband status — inside the card, under the masthead */}
             <div className="flex items-center justify-center gap-6 flex-wrap text-sm"
-              style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a', padding: '14px 20px' }}>
+              style={{ background: T.surfaceRaised, borderBottom: '1px solid #ffffff0a', padding: '14px 20px' }}>
               <span style={{ color: T.textDim }}>
                 <b style={{ color: CAPTAIN_GOLD }}>Captain</b>{' '}
                 {captainCard ? <span style={{ color: T.text }}>{splitName(captainCard.name).first} <span className="uppercase">{splitName(captainCard.name).last}</span></span> : <span style={{ opacity: 0.6 }}>not set</span>}
