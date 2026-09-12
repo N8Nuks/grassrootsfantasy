@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import ArcadeShare from '@/components/ArcadeShare'
 import { fitCanvas, headingFont } from '@/lib/gamekit'
 import { celebrate } from '@/lib/celebrate'
+import { GameHud, GameOverlay, GameLadder } from '@/components/GameHud'
 
 /* You are the runner at first, watching side on. Home is off to the left.
 
@@ -401,10 +402,6 @@ export default function ReleaseClient() {
     <>
       <style>{`
         .rl-lede { font-size: 13px; line-height: 1.7; color: #8FA0B4; max-width: 42ch; margin-bottom: 20px; }
-        .rl-hud { display: flex; align-items: stretch; gap: 1px; margin-bottom: 12px; background: #ffffff10; border: 1px solid #ffffff12; }
-        .rl-stat { flex: 1; background: #07080D; padding: 11px 6px; text-align: center; }
-        .rl-stat span { display: block; font-size: 8px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; color: #4E5A6A; }
-        .rl-stat b { display: block; font-family: var(--font-heading); font-size: 17px; color: #F5F1E8; margin-top: 3px; }
         .rl-stage { position: relative; }
         .rl-canvas {
           width: 100%; height: auto; display: block; cursor: pointer; touch-action: manipulation;
@@ -420,22 +417,9 @@ export default function ReleaseClient() {
         @keyframes rl-slam { from { transform: skewX(-7deg) scale(2); opacity: 0; } }
         .rl-sub { font-size: 11px; font-weight: 900; letter-spacing: 0.24em; text-transform: uppercase; color: #F5F1E8; margin-top: 10px; }
         .rl-ms { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #7D8B9C; margin-top: 6px; }
-        .rl-overlay {
-          position: absolute; inset: 0; display: flex; flex-direction: column;
-          align-items: center; justify-content: center; gap: 8px; text-align: center;
-          background: #05060AE8; padding: 24px;
-        }
         .rl-key { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #3E4A58; text-align: center; margin-top: 14px; }
         .rl-tape { display: flex; gap: 6px; margin-top: 18px; justify-content: center; flex-wrap: wrap; }
         .rl-dot { width: 40px; height: 6px; background: #ffffff10; }
-        .rl-ladder { display: flex; flex-direction: column; gap: 6px; margin-top: 22px; }
-        .rl-rung {
-          display: flex; align-items: center; gap: 11px; padding: 10px 13px;
-          border: 1px solid #ffffff12; background: #ffffff05; font-size: 11px; color: #7D8B9C;
-        }
-        .rl-rung[data-on="true"] { border-color: var(--neon); color: #F5F1E8; background: color-mix(in srgb, var(--neon) 10%, transparent); }
-        .rl-rung[data-done="true"] { color: #39FF9E; }
-        .rl-n { font-family: var(--font-heading); font-weight: 900; color: #3E4A58; width: 16px; }
       `}</style>
 
       <p className="rl-lede">
@@ -444,12 +428,12 @@ export default function ReleaseClient() {
         five moves you up, and every arm is a quarter quicker than the last.
       </p>
 
-      <div className="rl-hud">
-        <span className="rl-stat"><span>Level</span><b style={{ color: 'var(--neon)', fontSize: '13px' }}>{LEVELS[level].name}</b></span>
-        <span className="rl-stat"><span>Pitch</span><b>{Math.min(pitch + (phase === 'wind' || phase === 'judged' ? 1 : 0), size)}/{size}</b></span>
-        <span className="rl-stat"><span>Stolen</span><b>{stolen}</b></span>
-        <span className="rl-stat"><span>To pass</span><b>{needFor(level)}</b></span>
-      </div>
+      <GameHud stats={[
+        { label: 'Level', value: LEVELS[level].name, colour: 'var(--neon)', small: true },
+        { label: 'Pitch', value: `${Math.min(pitch + (phase === 'wind' || phase === 'judged' ? 1 : 0), size)}/${size}` },
+        { label: 'Stolen', value: stolen },
+        { label: 'To pass', value: needFor(level) },
+      ]} />
 
       <div className="rl-stage" ref={stageRef}>
         <canvas ref={canvasRef} className="rl-canvas"
@@ -468,7 +452,7 @@ export default function ReleaseClient() {
         )}
 
         {(phase === 'ready' || phase === 'setEnd') && (
-          <div className="rl-overlay">
+          <GameOverlay>
             {phase === 'setEnd' ? (
               <>
                 <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.34em', textTransform: 'uppercase',
@@ -508,7 +492,7 @@ export default function ReleaseClient() {
                 <button className="ar-btn" onClick={startOver} style={{ marginTop: '14px' }}><span>Take the Base</span></button>
               </>
             )}
-          </div>
+          </GameOverlay>
         )}
       </div>
 
@@ -521,19 +505,14 @@ export default function ReleaseClient() {
         ))}
       </div>
 
-      <div className="rl-ladder">
-        {LEVELS.map((lv, i) => (
-          <span key={lv.name} className="rl-rung"
-            data-on={i === level && !won}
-            data-done={won || i < level}>
-            <span className="rl-n">{i + 1}</span>
-            {lv.name}
-            <span style={{ marginLeft: 'auto', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-              {won || i < level ? 'Passed' : `${needFor(i)} of ${setSizeFor(i)}`}
-            </span>
-          </span>
-        ))}
-      </div>
+      <GameLadder
+        current={level}
+        done={won}
+        rungs={LEVELS.map((lv, i) => ({
+          name: lv.name,
+          note: won || i < level ? 'Passed' : `${needFor(i)} of ${setSizeFor(i)}`,
+        }))}
+      />
     </>
   )
 }
