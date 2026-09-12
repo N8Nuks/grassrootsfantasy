@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import ArcadeShare from '@/components/ArcadeShare'
 import { fitCanvas } from '@/lib/gamekit'
+import { GameOverlay } from '@/components/GameHud'
 
 export type ClubOption = { id: string; name: string; crest: string; colours: [string, string] }
 
@@ -350,11 +351,7 @@ export default function SnakeClient({ clubs, initialClub }: {
           border: 1px solid color-mix(in srgb, var(--neon) 34%, transparent);
           box-shadow: 0 0 0 1px #ffffff08 inset, 0 18px 40px #00000090;
         }
-        .sn-over {
-          position: absolute; inset: 0; display: flex; flex-direction: column;
-          align-items: center; justify-content: center; gap: 6px;
-          background: #05060AE8; text-align: center; padding: 20px;
-        }
+
         .sn-eaten { font-size: 10px; font-weight: 900; letter-spacing: 0.24em; text-transform: uppercase; color: var(--neon); min-height: 14px; margin-bottom: 14px; }
         .sn-count {
           font-family: var(--font-heading); font-weight: 900; line-height: 1;
@@ -412,26 +409,26 @@ export default function SnakeClient({ clubs, initialClub }: {
       <div className="sn-stage">
         <canvas ref={canvasRef} className="sn-canvas" />
         {count !== null && (
-          <div className="sn-over" style={{ background: '#05060AF2', zIndex: 5 }}>
+          <GameOverlay>
             <p key={count} className="sn-count">{count}</p>
             <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.3em',
                         textTransform: 'uppercase', color: '#5C6878', marginTop: '10px' }}>
               Get ready
             </p>
-          </div>
+          </GameOverlay>
         )}
         {state === 'playing' && paused && (
-          <div className="sn-over">
+          <GameOverlay>
             <p style={{ fontFamily: 'var(--font-heading)', fontWeight: 900, fontSize: 'clamp(30px, 9vw, 52px)',
                         textTransform: 'uppercase', color: 'var(--neon)', transform: 'skewX(-7deg)',
                         textShadow: '0 0 30px #FFB80090' }}>PAUSED</p>
             <button className="ar-btn" onClick={() => setPaused(false)} style={{ marginTop: '18px' }}>
               <span>Resume</span>
             </button>
-          </div>
+          </GameOverlay>
         )}
         {state !== 'playing' && count === null && (
-          <div className="sn-over">
+          <GameOverlay>
             {state === 'over' && (
               <>
                 <p style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.34em', textTransform: 'uppercase', color: '#FF4D4D' }}>Run over</p>
@@ -449,7 +446,7 @@ export default function SnakeClient({ clubs, initialClub }: {
                 ]} />
               </div>
             )}
-          </div>
+          </GameOverlay>
         )}
       </div>
 
