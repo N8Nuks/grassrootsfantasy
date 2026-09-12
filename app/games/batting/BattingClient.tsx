@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { splitName } from '@/lib/names'
 import ArcadeShare from '@/components/ArcadeShare'
-import { fitCanvas, headingFont, newShake, shake, applyShake } from '@/lib/gamekit'
+import { fitCanvas, headingFont, newShake, shake, applyShake, newHitStop, freeze, frozen } from '@/lib/gamekit'
 
 export type Legend = { name: string; titles: number; grade: string; lefty: boolean }
 
@@ -91,6 +91,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
      so on a 120Hz phone a home run landed in half the time it should. */
   const lastFrame = useRef(0)
   const shakeState = useRef(newShake())
+  const hitStop = useRef(newHitStop())
 
   /* The park doesn't move. Sky, crowd, wall boards and the diamond get drawn
      once to an offscreen canvas and blitted each frame — the crowd alone is
@@ -188,7 +189,11 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
        pop-out get nothing — shaking on a weak contact tells the player
        something happened when it didn't. */
     const SHAKE: Record<string, number> = { over: 14, wall: 10, bounce: 8, through: 6 }
-    if (SHAKE[kind]) shake(shakeState.current, SHAKE[kind])
+    if (SHAKE[kind]) {
+      shake(shakeState.current, SHAKE[kind])
+      // The harder the hit, the longer the world holds its breath
+      freeze(hitStop.current, kind === 'over' ? 90 : kind === 'wall' ? 70 : 55)
+    }
     const spread = pull * 0.34
     const base = { kind, colour, t: 0, landed: false, x0: ZONE.x, y0: ZONE.y }
     if (kind === 'over') {
@@ -729,6 +734,9 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
     }
     /* Shake wraps the whole scene, including the park — a camera that moves is
        what sells the impact. Pushed before the blit so nothing escapes it. */
+    /* Frozen time — the ball and the impact effects hold, but drawing carries
+       on so the shake still reads. */
+    const held = frozen(hitStop.current, dt)
     const shaking = applyShake(ctx, shakeState.current, dt)
     ctx.drawImage(park.current, 0, 0, W, H)
 
@@ -783,7 +791,7 @@ export default function LegendsClient({ batters, pitchers }: { batters: Legend[]
       // ── The struck ball ──
       const b = ball.current
       if (b) {
-        if (!paused) b.t = Math.min(1, b.t + dt / b.dur)
+        if (!paused && !held) b.t = Math.min(1, b.t + dt / b.dur)
         const k = b.t
         let x: number, y: number
         if (b.hop) {

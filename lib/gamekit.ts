@@ -102,3 +102,21 @@ export function applyShake(ctx: CanvasRenderingContext2D, s: Shake, dt: number) 
   ctx.translate(s.x, s.y)
   return true
 }
+/* ── Hit-stop ──
+   A few frames of frozen time at the moment of impact. The eye reads the pause
+   as the two objects resisting each other, which is most of what makes a hit
+   feel like it landed. Very short — 50 to 90ms. Longer and it reads as lag.
+
+   Usage: call freeze(state, ms) on impact, then check frozen(state, dt) each
+   frame and skip your simulation while it returns true. Drawing continues. */
+export type HitStop = { left: number }
+
+export const newHitStop = (): HitStop => ({ left: 0 })
+
+export const freeze = (h: HitStop, ms: number) => { h.left = Math.max(h.left, ms) }
+
+export function frozen(h: HitStop, dt: number) {
+  if (h.left <= 0) return false
+  h.left -= dt
+  return true
+}
