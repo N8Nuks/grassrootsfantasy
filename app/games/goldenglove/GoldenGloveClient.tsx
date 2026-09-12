@@ -97,6 +97,10 @@ export default function GoldenGloveClient() {
  
   const pose = useRef<Pose>('ready')
   const poseUntil = useRef(0)
+  /* When the current pose started, so it can be eased in rather than cut to.
+     A hard swap between two stills reads as a slideshow; a quick overshoot and
+     settle reads as a body arriving. */
+  const poseAt = useRef(0)
   const light = useRef<{ colour: string; until: number } | null>(null)
   const ball = useRef<LiveBall | null>(null)
   const miss = useRef(0)
@@ -207,6 +211,7 @@ export default function GoldenGloveClient() {
   const answer = useCallback((p: Pose) => {
     if (phase !== 'live') return
     pose.current = p
+    poseAt.current = performance.now()
     poseUntil.current = performance.now() + POSE_HOLD
  
     const b = ball.current
@@ -338,14 +343,35 @@ export default function GoldenGloveClient() {
     }
  
     // ── The fielder ──
-    if (now > poseUntil.current) pose.current = 'ready'
+    if (now > poseUntil.current && pose.current !== 'ready') {
+      pose.current = 'ready'
+      poseAt.current = now
+    }
     const art = imgs.current[pose.current]
     if (art) {
       const fh = H * 0.30
       const fw = fh * (art.width / art.height)
+
+      /* A shadow on the dirt rather than a glow around the sprite. shadowBlur
+         on drawImage haloes the whole figure, which is what made him read as
+         pasted on rather than standing on the field. */
+      ctx.fillStyle = '#00000055'
+      ctx.beginPath()
+      ctx.ellipse(W / 2, H * FIELD_Y, fw * 0.30, fh * 0.045, 0, 0, Math.PI * 2)
+      ctx.fill()
+
+      /* 140ms of overshoot and settle. He comes in a touch large and low, which
+         reads as weight arriving rather than a frame being swapped. Scaled from
+         the feet, so the shadow stays put. */
+      const k = Math.min(1, (now - poseAt.current) / 140)
+      const ease = 1 - Math.pow(1 - k, 3)
+      const pop = 1 + 0.09 * Math.sin(ease * Math.PI)
+      const drop = (1 - ease) * fh * 0.03
+
       ctx.save()
-      ctx.shadowColor = '#00000090'; ctx.shadowBlur = 18
-      ctx.drawImage(art, W / 2 - fw / 2, H * FIELD_Y - fh * 0.86, fw, fh)
+      ctx.translate(W / 2, H * FIELD_Y)
+      ctx.scale(pop, pop)
+      ctx.drawImage(art, -fw / 2, -fh * 0.86 + drop, fw, fh)
       ctx.restore()
     }
  
