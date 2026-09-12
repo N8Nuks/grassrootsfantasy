@@ -7,10 +7,22 @@ import PackReveal, { RevealCard } from '@/components/PackReveal'
 import SandboxBanner from '@/components/SandboxBanner'
 
 type PackQueueItem = { grade: 'mens' | 'womens'; cards: RevealCard[]; packName?: string }
+type Club = { id: string; code: string; name: string }
 
 /* Closed between the sandbox ending and the real season loading. Set to false on
    18 September once the rosters are in and the packs are ready to deal. */
 const REGISTRATION_CLOSED = true
+
+/* The proxy already gates this page; this is the page's own closed state, which
+   predates it. The same key lets an admin through to register during the
+   changeover. Delete this block and set REGISTRATION_CLOSED to false on the 18th. */
+const BYPASS = 'Fantasy1'
+
+/* Everyone should land in their own club, so the picker lists the real clubs and
+   the generic option sits behind a link. Nobody is locked out — it's one tap
+   away — but the club path is the one in front of you. */
+const GENERIC_CODE = 'GFNFS26'
+
 export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -23,6 +35,13 @@ export default function Register() {
   const [busy, setBusy] = useState(false)
   const [packQueue, setPackQueue] = useState<PackQueueItem[]>([])
   const [cardStyle, setCardStyle] = useState<'standard' | 'premium'>('standard')
+  const [clubs, setClubs] = useState<Club[]>([])
+  const [showGeneric, setShowGeneric] = useState(false)
+  const [bypass, setBypass] = useState(false)
+
+  useEffect(() => {
+    setBypass(new URLSearchParams(window.location.search).get('admin') === BYPASS)
+  }, [])
 
   // Already signed in (e.g. refreshed mid-reveal)? Go to the team — cards are safe.
   useEffect(() => {
@@ -35,6 +54,10 @@ export default function Register() {
       .then(({ data }) => {
         if (data?.value === 'premium' || data?.value === 'standard') setCardStyle(data.value)
       })
+    /* Read from the table rather than hardcoding, so a club added or a code
+       changed never leaves this list wrong. */
+    supabase.from('clubs').select('id, code, name').order('name')
+      .then(({ data }) => { if (data) setClubs(data as Club[]) })
   }, [])
 
   function toggleGrade(g: 'mens' | 'womens') {
@@ -50,7 +73,7 @@ export default function Register() {
   async function handleRegister() {
     setError('')
     if (!email || !password || !teamName || !clubCode) {
-      setError('Email, password, team name, and club code are required.')
+      setError('Email, password, team name, and club are required.')
       return
     }
     setBusy(true)
@@ -149,7 +172,10 @@ export default function Register() {
   const fieldStyle = { background: '#181510', border: '1px solid #ffffff15' }
   const label = "block text-xs font-bold uppercase tracking-wider text-[#F5F1E8]/50 mb-1.5"
 
-  if (REGISTRATION_CLOSED) {
+  // The real clubs, generic held back
+  const realClubs = clubs.filter(c => c.code !== GENERIC_CODE)
+
+  if (REGISTRATION_CLOSED && !bypass) {
     return (
       <main className="min-h-screen flex flex-col" style={{ background: '#141210' }}>
         <Nav /><SandboxBanner />
@@ -167,7 +193,7 @@ export default function Register() {
               {' '}<b style={{ color: '#F5F1E8' }}>26 September</b>, and the first scores
               lock in on <b style={{ color: '#F5F1E8' }}>29 September</b>.
             </p>
-            <a href="/arcade"
+            <a href="/games"
               className="inline-block text-base font-bold tracking-wide transition-all hover:scale-[1.02] rounded-full"
               style={{ color: '#B47CFF', border: '1px solid #B47CFF', background: 'transparent', padding: '16px 40px', textShadow: '0 0 12px #B47CFF80', boxShadow: '0 0 16px #B47CFF30, inset 0 0 16px #B47CFF15' }}>
               Play the Arcade
@@ -208,13 +234,33 @@ export default function Register() {
               <label className={label}>Team name *</label>
               <input className={field} style={fieldStyle} type="text" autoComplete="off" placeholder="The name on the ladder" value={teamName} onChange={e => setTeamName(e.target.value)} />
             </div>
+
             <div>
-              <label className={label}>Club code *</label>
-              <input className={field} style={fieldStyle} type="text" autoComplete="off" placeholder="From your Team Manager or Club" value={clubCode} onChange={e => setClubCode(e.target.value)} />
-              <p className="text-[11px] text-[#F5F1E8]/50 mt-1.5">
-                No club code? Use <b style={{ color: '#E8C15A' }}>GFNFS26</b> to join as a general supporter.
-              </p>
+              <label className={label}>Your club *</label>
+              <select className={field} style={fieldStyle}
+                value={clubCode} onChange={e => setClubCode(e.target.value)}>
+                <option value="">Choose your club</option>
+                {realClubs.map(c => (
+                  <option key={c.id} value={c.code}>{c.name}</option>
+                ))}
+                {showGeneric && <option value={GENERIC_CODE}>General supporter</option>}
+              </select>
+              {!showGeneric ? (
+                <p className="text-[11px] text-[#F5F1E8]/50 mt-1.5">
+                  Not with a club?{' '}
+                  <button type="button"
+                    onClick={() => { setShowGeneric(true); setClubCode(GENERIC_CODE) }}
+                    className="underline" style={{ color: '#E8C15A' }}>
+                    Join as a general supporter
+                  </button>
+                </p>
+              ) : (
+                <p className="text-[11px] text-[#F5F1E8]/50 mt-1.5">
+                  Playing for a club? Pick it above — you&apos;ll show on their board.
+                </p>
+              )}
             </div>
+
             <div>
               <label className={label}>Your name (optional)</label>
               <input className={field} style={fieldStyle} type="text" autoComplete="name" placeholder="First and last" value={fullName} onChange={e => setFullName(e.target.value)} />
