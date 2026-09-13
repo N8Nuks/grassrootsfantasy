@@ -1,0 +1,164 @@
+import Nav from '@/components/Nav'
+import Footer from '@/components/Footer'
+import { createClient } from '@/lib/supabase/server'
+
+const COBALT = '#2456E6'
+const GOLD = '#E8C15A'
+const SILVER = '#7FC4FF'
+
+type Fixture = {
+  id: string
+  grade: 'mens' | 'womens'
+  round_number: number
+  played_on: string
+  start_time: string | null
+  team_a: string
+  team_b: string
+  club_a: string | null
+  club_b: string | null
+  location: string | null
+  venue: string | null
+  section: string | null
+}
+type Round = { round_number: number; lock_at: string | null; status: string }
+
+const DAY = new Intl.DateTimeFormat('en-NZ', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Pacific/Auckland' })
+const LOCK = new Intl.DateTimeFormat('en-NZ', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Pacific/Auckland' })
+
+const fmtDate = (iso: string) => DAY.format(new Date(iso + 'T12:00:00+12:00'))
+const fmtTime = (t: string | null) => {
+  if (!t || t === '23:59') return null
+  const [h, m] = t.split(':').map(Number)
+  const ampm = h >= 12 ? 'pm' : 'am'
+  return `${h % 12 || 12}${m ? ':' + String(m).padStart(2, '0') : ''}${ampm}`
+}
+
+// Placeholder teams (A1–A7) are playoff seeds not yet drawn; BYE is a bye.
+const isPlaceholder = (t: string) => /^[A-Z]\d$/.test(t)
+const label = (team: string, club: string | null) =>
+  team === 'BYE' ? 'Bye' : isPlaceholder(team) ? `Seed ${team.slice(1)}` : (club ?? team)
+
+export default async function Fixtures({ searchParams }: { searchParams: Promise<{ grade?: string }> }) {
+  const sp = await searchParams
+  const grade: 'mens' | 'womens' = sp.grade === 'womens' ? 'womens' : 'mens'
+
+  const supabase = await createClient()
+  const [{ data: fixtures }, { data: rounds }] = await Promise.all([
+    supabase.from('fixtures')
+      .select('id, grade, round_number, played_on, start_time, team_a, team_b, club_a, club_b, location, venue, section')
+      .eq('grade', grade)
+      .order('round_number').order('played_on').order('start_time'),
+    supabase.from('rounds').select('round_number, lock_at, status').eq('grade', grade),
+  ])
+
+  const lockOf = new Map(((rounds ?? []) as Round[]).map(r => [r.round_number, r]))
+  const byRound = new Map<number, Fixture[]>()
+  for (const f of (fixtures ?? []) as Fixture[]) {
+    byRound.set(f.round_number, [...(byRound.get(f.round_number) ?? []), f])
+  }
+  const roundNumbers = [...byRound.keys()].sort((a, b) => a - b)
+
+  const seg = (active: boolean) => ({
+    color: active ? '#0D0D0F' : '#F5F1E870',
+    background: active ? (grade === 'mens' ? GOLD : SILVER) : 'transparent',
+    padding: '14px 32px',
+  })
+
+  return (
+    <main className="min-h-screen flex flex-col" style={{ background: '#0D0D0F' }}>
+      <Nav />
+
+      {/* Hero */}
+      <section className="relative px-6 sm:px-12 overflow-hidden" style={{ paddingTop: '70px', paddingBottom: '40px' }}>
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 75% 55% at 50% 0%, #10214D 0%, #0D0D0F 70%)' }} />
+        <div className="relative z-10 text-center" style={{ maxWidth: '740px', marginLeft: 'auto', marginRight: 'auto' }}>
+          <a href="/nfs" className="inline-block text-xs font-black uppercase tracking-[0.2em]"
+            style={{ color: SILVER, opacity: 0.75, marginBottom: '18px' }}>
+            ← Back to the NFSPL
+          </a>
+          <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>2026/27 Season</p>
+          <div className="mx-auto mb-6 h-px w-24" style={{ background: COBALT }} />
+          <h1 className="text-4xl sm:text-5xl font-black text-white mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
+            Fixtures
+          </h1>
+          <p className="text-sm text-white/70 leading-relaxed" style={{ maxWidth: '540px', marginLeft: 'auto', marginRight: 'auto', marginBottom: '28px' }}>
+            Every round of the NFS Premier League. Lineups lock before the first game of each round —
+            the lock time is shown where it&apos;s set.
+          </p>
+          <div className="inline-flex rounded-full overflow-hidden" style={{ border: '1px solid #ffffff25' }}>
+            <a href="/nfs/fixtures?grade=mens" className="text-xs font-black uppercase tracking-widest" style={seg(grade === 'mens')}>Men&apos;s</a>
+            <a href="/nfs/fixtures?grade=womens" className="text-xs font-black uppercase tracking-widest" style={{ ...seg(grade === 'womens'), borderLeft: '1px solid #ffffff15' }}>Women&apos;s</a>
+          </div>
+        </div>
+      </section>
+
+      {/* Rounds */}
+      <section className="px-6 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: '36px', paddingBottom: '48px' }}>
+        <div style={{ maxWidth: '760px', marginLeft: 'auto', marginRight: 'auto' }}>
+          {roundNumbers.length === 0 && (
+            <p className="text-sm text-center text-white/55">No fixtures loaded for this grade yet.</p>
+          )}
+          {roundNumbers.map(n => {
+            const games = byRound.get(n)!
+            const dates = [...new Set(games.map(g => g.played_on))]
+            const lock = lockOf.get(n)
+            const accent = grade === 'mens' ? GOLD : SILVER
+            return (
+              <div key={n} className="rounded-xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${accent}30`, marginBottom: '20px' }}>
+                <div className="flex items-baseline justify-between gap-4 flex-wrap" style={{ padding: '14px 20px', borderBottom: '1px solid #ffffff0a' }}>
+                  <span className="text-sm font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+                    Round {n} <span className="text-white/45">· {dates.map(fmtDate).join(' · ')}</span>
+                  </span>
+                  {lock?.lock_at && (
+                    <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: accent }}>
+                      Lineups lock {LOCK.format(new Date(lock.lock_at))}
+                    </span>
+                  )}
+                </div>
+                {games.map(g => {
+                  const bye = g.team_a === 'BYE' || g.team_b === 'BYE'
+                  const time = fmtTime(g.start_time)
+                  const where = [g.location, g.venue].filter(v => v && v !== 'Unallocated').join(' · ')
+                  return (
+                    <div key={g.id} className="flex items-center gap-4"
+                      style={{ borderBottom: '1px solid #ffffff06', padding: '12px 20px', opacity: bye ? 0.55 : 1 }}>
+                      <span className="w-16 shrink-0 text-[11px] font-black" style={{ color: accent }}>
+                        {dates.length > 1 ? fmtDate(g.played_on).split(' ')[0] + ' ' : ''}{time ?? (bye ? '' : 'TBC')}
+                      </span>
+                      <span className="flex-1 min-w-0 text-sm font-bold text-white/90">
+                        {label(g.team_a, g.club_a)} <span className="text-white/35">v</span> {label(g.team_b, g.club_b)}
+                        {g.section && g.section !== 'Section A' && (
+                          <span className="text-[9px] uppercase tracking-widest ml-2" style={{ color: '#ffffff40' }}>{g.section}</span>
+                        )}
+                      </span>
+                      <span className="hidden sm:block shrink-0 text-[11px] text-white/45 text-right">{where}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })}
+          <p className="text-[11px] text-center text-white/40" style={{ marginTop: '8px' }}>
+            Seeds are playoff places not yet decided. Fixtures are as published by Auckland Softball and may change.
+          </p>
+        </div>
+      </section>
+
+      {/* CTA back */}
+      <section className="px-6 sm:px-12 text-center" style={{ background: '#0D0D0F', borderTop: `1px solid ${COBALT}40`, paddingTop: '44px', paddingBottom: '52px' }}>
+        <div className="flex items-center justify-center gap-4 flex-wrap">
+          <a href="/team" className="inline-block text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03]"
+            style={{ color: '#0D0D0F', background: GOLD, padding: '16px 34px', boxShadow: `0 0 22px ${GOLD}40` }}>
+            Set your lineup
+          </a>
+          <a href="/nfs" className="inline-block text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03]"
+            style={{ color: 'white', border: '1px solid #ffffff35', padding: '16px 34px' }}>
+            Back to the NFSPL
+          </a>
+        </div>
+      </section>
+
+      <Footer />
+    </main>
+  )
+}
