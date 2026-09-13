@@ -1,6 +1,7 @@
-const COLUMNS: { title: string; links: { label: string; href: string; external?: boolean }[] }[] = [
+const COLUMNS: { title: string; accent: string; links: { label: string; href: string; external?: boolean }[] }[] = [
   {
     title: 'Play',
+    accent: '#3FBF63',
     links: [
       { label: 'My Team', href: '/team' },
       { label: 'Matchups', href: '/matchups' },
@@ -12,6 +13,7 @@ const COLUMNS: { title: string; links: { label: string; href: string; external?:
   },
   {
     title: 'NFS Premier League',
+    accent: '#2456E6',
     links: [
       { label: 'League home', href: '/nfs' },
       { label: 'Fixtures', href: '/nfs/fixtures' },
@@ -23,6 +25,7 @@ const COLUMNS: { title: string; links: { label: string; href: string; external?:
   },
   {
     title: 'Learn',
+    accent: '#E8983A',
     links: [
       { label: 'How it works', href: '/how' },
       { label: 'FAQ', href: '/faq' },
@@ -33,6 +36,7 @@ const COLUMNS: { title: string; links: { label: string; href: string; external?:
   },
   {
     title: 'Grassroots Fantasy',
+    accent: '#7FC4FF',
     links: [
       { label: 'Leagues', href: '/leagues' },
       { label: 'Join', href: '/join' },
@@ -69,8 +73,10 @@ export default function Footer() {
         <nav aria-label="Site directory" className="grid grid-cols-2 lg:grid-cols-4" style={{ columnGap: '32px', rowGap: '36px' }}>
           {COLUMNS.map(col => (
             <div key={col.title}>
-              <p className="text-[10px] font-black uppercase tracking-[0.28em]" style={{ color: '#3FBF63', marginBottom: '12px' }}>
-                {col.title}
+              <p className="text-[10px] font-black uppercase tracking-[0.28em]" style={{ color: col.accent, marginBottom: '12px' }}>
+                {col.title === 'Grassroots Fantasy'
+                  ? <><span style={{ color: '#3FBF63' }}>Grassroots</span> Fantasy</>
+                  : col.title}
               </p>
               <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                 {col.links.map(l => (
