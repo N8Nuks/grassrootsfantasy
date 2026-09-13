@@ -719,36 +719,37 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           <p className={"text-xs font-black uppercase tracking-[0.3em] mb-3" + (T.shimmer ? ' gf-shimmer-text' : '')}
             style={T.shimmer ? undefined : { color: T.accent }}>My Team</p>
           <h1 className="text-4xl sm:text-5xl font-black mb-2" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{teamName}</h1>
-          <p className="text-sm mb-5" style={{ color: T.textDim }}>{clubName} · {cards.length} cards{roundNumber != null ? ` · Round ${roundNumber}` : ''}</p>
-          <GradeSwitch grade={grade} mensHref="/team?grade=mens" womensHref="/team?grade=womens" palette={siteTheme !== 'grade' ? T : undefined} />
+          <p className="text-sm mb-5" style={{ color: textured ? T.text : T.textDim, textShadow: textured ? '0 1px 3px #000000, 0 0 12px #000000C0' : 'none' }}>{clubName} · {cards.length} cards{roundNumber != null ? ` · Round ${roundNumber}` : ''}</p>
+          <GradeSwitch grade={grade} mensHref="/team?grade=mens" womensHref="/team?grade=womens" palette={siteTheme !== 'grade' ? T : undefined} onImage={textured} />
 
           {/* Site theme switcher — softballs */}
           <div className="flex items-center justify-center gap-3 flex-wrap" style={{ marginTop: '18px', opacity: themeSaving ? 0.5 : 1 }}>
-            <button onClick={() => setSiteTheme('grade')} title="Classic — colours follow the grade"
-              className="text-[9px] font-black uppercase tracking-widest px-3 rounded-full transition-all hover:scale-105"
-              style={{
-                height: '26px',
-                color: siteTheme === 'grade' ? T.buttonText : T.text,
-                background: siteTheme === 'grade' ? T.button : '#14121099',
-                boxShadow: siteTheme === 'grade' ? 'none' : 'inset 0 0 0 1px #ffffff55',
-              }}>
-              Classic
-            </button>
-            <button onClick={() => {
-                const base = siteTheme.replace(/_tx$/, '')
-                if (!TEXTURED_KEYS.includes(base)) { setTextured(t => !t); return }
-                setSiteTheme(siteTheme.endsWith('_tx') ? base : `${base}_tx`)
-              }}
-              title="Textured — banner image behind the headers"
-              className="text-[9px] font-black uppercase tracking-widest px-3 rounded-full transition-all hover:scale-105"
-              style={{
-                height: '26px',
-                color: textured ? T.buttonText : T.text,
-                background: textured ? T.button : '#14121099',
-                boxShadow: textured ? 'none' : 'inset 0 0 0 1px #ffffff55',
-              }}>
-              Textured
-            </button>
+                        <div className="inline-flex rounded-full overflow-hidden" style={{ border: '1px solid #ffffff40', background: '#141210E6', marginRight: '6px' }}>
+              <button onClick={() => setSiteTheme('grade')} title="Classic — colours follow the grade"
+                className="text-[10px] font-black uppercase tracking-widest transition-all"
+                style={{
+                  padding: '0 16px', height: '32px',
+                  color: siteTheme === 'grade' ? T.buttonText : T.text,
+                  background: siteTheme === 'grade' ? T.button : 'transparent',
+                }}>
+                Classic
+              </button>
+              <button onClick={() => {
+                  const base = siteTheme.replace(/_tx$/, '')
+                  if (!TEXTURED_KEYS.includes(base)) { setTextured(t => !t); return }
+                  setSiteTheme(siteTheme.endsWith('_tx') ? base : `${base}_tx`)
+                }}
+                title="Textured — banner image behind the headers"
+                className="text-[10px] font-black uppercase tracking-widest transition-all"
+                style={{
+                  padding: '0 16px', height: '32px',
+                  color: textured ? T.buttonText : T.text,
+                  background: textured ? T.button : 'transparent',
+                  borderLeft: '1px solid #ffffff25',
+                }}>
+                Textured
+              </button>
+            </div>
             {THEME_ORDER.map(k => {
               const base = siteTheme.replace(/_tx$/, '')
               const on = base === k
