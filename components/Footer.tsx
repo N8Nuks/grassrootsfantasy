@@ -1,6 +1,51 @@
+const COLUMNS: { title: string; links: { label: string; href: string; external?: boolean }[] }[] = [
+  {
+    title: 'Play',
+    links: [
+      { label: 'My Team', href: '/team' },
+      { label: 'Matchups', href: '/matchups' },
+      { label: 'Ladder', href: '/ladder' },
+      { label: 'Leaders', href: '/leaders' },
+      { label: 'Manager Report', href: '/analytics' },
+      { label: 'Arcade', href: '/arcade' },
+    ],
+  },
+  {
+    title: 'NFS Premier League',
+    links: [
+      { label: 'League home', href: '/nfs' },
+      { label: 'Fixtures', href: '/nfs/fixtures' },
+      { label: 'Scoring', href: '/nfs/scoring' },
+      { label: 'Honours Board', href: '/nfs/honours' },
+      { label: 'Officials Wing', href: '/nfs/officials' },
+      { label: 'Sponsors', href: '/nfs/sponsors' },
+    ],
+  },
+  {
+    title: 'Learn',
+    links: [
+      { label: 'How it works', href: '/how' },
+      { label: 'FAQ', href: '/faq' },
+      { label: 'The Cards', href: '/cards' },
+      { label: 'Athlete Hall', href: '/hall' },
+      { label: 'Player Policy', href: '/policy' },
+    ],
+  },
+  {
+    title: 'Grassroots Fantasy',
+    links: [
+      { label: 'Leagues', href: '/leagues' },
+      { label: 'Join', href: '/join' },
+      { label: 'Log in', href: '/login' },
+      { label: 'Contact', href: 'mailto:info@grassrootsfantasy.co.nz' },
+      { label: 'Black Diamond Labs', href: 'https://blackdiamondlabs.co.nz', external: true },
+    ],
+  },
+]
+
 export default function Footer() {
   return (
-    <footer className="px-6 sm:px-12 py-10" style={{ borderTop: '1px solid #ffffff0a', background: '#100E0C' }}>
+    <footer style={{ borderTop: '1px solid #ffffff0a', background: '#100E0C' }}>
       <style>{`
         @keyframes bdl-shimmer {
           0% { background-position: -200% center; }
@@ -14,14 +59,40 @@ export default function Footer() {
           color: transparent;
           animation: bdl-shimmer 4s linear infinite;
         }
+        .gf-foot-link { color: #F5F1E8A6; font-size: 13px; line-height: 1.2; display: inline-block; padding: 6px 0; transition: color 150ms ease; }
+        .gf-foot-link:hover { color: #F5F1E8; }
+        .gf-foot-link:focus-visible { outline: 2px solid #3FBF63; outline-offset: 3px; border-radius: 3px; }
       `}</style>
-      <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-5">
-        <a href="https://blackdiamondlabs.co.nz" className="bdl-shimmer text-xs font-semibold hover:opacity-80 transition-opacity">
-          Platform delivered by Black Diamond Labs Ltd
-        </a>
-        <div className="flex items-center gap-5">
-          <a href="/policy" className="text-xs text-[#F5F1E8]/40 hover:text-[#F5F1E8]/70 transition-colors">
-            Player Policy
+
+      {/* Directory */}
+      <div style={{ maxWidth: '1100px', marginLeft: 'auto', marginRight: 'auto', padding: '48px 24px 36px' }}>
+        <nav aria-label="Site directory" className="grid grid-cols-2 lg:grid-cols-4" style={{ columnGap: '32px', rowGap: '36px' }}>
+          {COLUMNS.map(col => (
+            <div key={col.title}>
+              <p className="text-[10px] font-black uppercase tracking-[0.28em]" style={{ color: '#3FBF63', marginBottom: '12px' }}>
+                {col.title}
+              </p>
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                {col.links.map(l => (
+                  <li key={l.href}>
+                    <a href={l.href} className="gf-foot-link"
+                      {...(l.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+                      {l.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
+      </div>
+
+      {/* Baseline */}
+      <div style={{ borderTop: '1px solid #ffffff0a' }}>
+        <div className="flex flex-col sm:flex-row items-center justify-between text-center sm:text-left"
+          style={{ maxWidth: '1100px', marginLeft: 'auto', marginRight: 'auto', padding: '22px 24px', gap: '14px' }}>
+          <a href="https://blackdiamondlabs.co.nz" className="bdl-shimmer text-xs font-semibold hover:opacity-80 transition-opacity">
+            Platform delivered by Black Diamond Labs Ltd
           </a>
           <a href="https://instagram.com/grassrootsfantasy" target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-xs text-[#F5F1E8]/40 hover:text-[#F5F1E8]/70 transition-colors">
@@ -33,10 +104,10 @@ export default function Footer() {
             </svg>
             @grassrootsfantasy
           </a>
+          <a href="mailto:info@grassrootsfantasy.co.nz" className="text-xs text-[#F5F1E8]/40 hover:text-[#F5F1E8]/70 transition-colors">
+            info@grassrootsfantasy.co.nz
+          </a>
         </div>
-        <a href="mailto:info@grassrootsfantasy.co.nz" className="text-xs text-[#F5F1E8]/40 hover:text-[#F5F1E8]/70 transition-colors">
-          info@grassrootsfantasy.co.nz
-        </a>
       </div>
     </footer>
   )
