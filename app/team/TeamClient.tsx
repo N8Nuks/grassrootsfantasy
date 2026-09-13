@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { theme, THEMES, THEME_ORDER, type Grade } from '@/lib/clubhouse'
+import { theme, THEMES, THEME_ORDER, TEXTURED_KEYS, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
 import PlayerCard from '@/components/PlayerCard'
 import PlayerCardFull from '@/components/PlayerCardFull'
@@ -200,7 +200,8 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   const [t4Code, setT4Code] = useState('')
   const [reveal, setReveal] = useState<{ packName: string; cards: RevealCard[] } | null>(null)
   const [packBusy, setPackBusy] = useState(false)
-  const [themeSaving, setThemeSaving] = useState(false)
+    const [themeSaving, setThemeSaving] = useState(false)
+    const [textured, setTextured] = useState(siteTheme.endsWith('_tx'))
   // ── Lineup self-repair ──
   // A scoring slot can become empty (e.g. a player removed from the competition).
   // On load: promote the first eligible bench player into any empty scoring slot,
@@ -733,18 +734,38 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               }}>
               Classic
             </button>
-            {THEME_ORDER.map(k => (
-              <button key={k} onClick={() => setSiteTheme(k)} title={THEMES[k].label}
-                className="transition-all hover:scale-110"
-                style={{ filter: siteTheme === k ? `drop-shadow(0 0 6px ${THEMES[k].accent})` : 'none' }}>
-                <SoftballSwatch
-                  colors={THEMES[k].swatch}
-                  seam={THEMES[k].seam}
-                  selected={siteTheme === k}
-                  ringColor={T.text}
-                />
-              </button>
-            ))}
+            {THEME_ORDER.map(k => {
+              const base = siteTheme.replace(/_tx$/, '')
+              const on = base === k
+              const target = textured && TEXTURED_KEYS.includes(k) ? `${k}_tx` : k
+              return (
+                <button key={k} onClick={() => setSiteTheme(target)} title={THEMES[target].label}
+                  className="transition-all hover:scale-110"
+                  style={{ filter: on ? `drop-shadow(0 0 6px ${THEMES[k].accent})` : 'none' }}>
+                  <SoftballSwatch
+                    colors={THEMES[k].swatch}
+                    seam={THEMES[k].seam}
+                    selected={on}
+                    ringColor={T.text}
+                  />
+                </button>
+              )
+            })}
+            <button onClick={() => {
+                const base = siteTheme.replace(/_tx$/, '')
+                if (!TEXTURED_KEYS.includes(base)) { setTextured(t => !t); return }
+                setSiteTheme(siteTheme.endsWith('_tx') ? base : `${base}_tx`)
+              }}
+              title="Textured — banner image behind the headers"
+              className="text-[9px] font-black uppercase tracking-widest px-3 rounded-full transition-all hover:scale-105"
+              style={{
+                height: '26px',
+                color: textured ? T.buttonText : T.textDim,
+                background: textured ? T.button : 'transparent',
+                border: `1px solid ${textured ? T.button : '#ffffff30'}`,
+              }}>
+              Textured
+            </button>
           </div>
         </div>
       </div>

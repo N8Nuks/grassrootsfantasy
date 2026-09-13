@@ -172,6 +172,18 @@ export const THEMES: Record<string, Palette> = {
   },
 }
 
+// Textured variants — same palette, banner image behind the headers.
+// Key is `${base}_tx`; the image is /banner-${base}.webp
+export const TEXTURED_KEYS = ['padres', 'blackgold', 'purple', 'greenyellow']
+const OVERLAY = 'linear-gradient(180deg, #141210CC 0%, #141210B0 55%, #141210D8 100%)'
+for (const k of TEXTURED_KEYS) {
+  THEMES[`${k}_tx`] = {
+    ...THEMES[k],
+    label: `${THEMES[k].label} · Textured`,
+    headerBg: `${OVERLAY}, url(/banner-${k}.webp) center / cover no-repeat`,
+  }
+}
+
 export type ThemeKey = keyof typeof THEMES
 export type SiteTheme = ThemeKey | 'grade'
 
