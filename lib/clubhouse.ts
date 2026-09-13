@@ -184,7 +184,7 @@ for (const k of TEXTURED_KEYS) {
   }
 }
 // Neon textured = the image at full brightness, no scrim
-THEMES.neon_tx.headerBg = 'url(/banner-neon.webp) center / cover no-repeat'
+THEMES.neon_tx.headerBg = 'linear-gradient(#0000001A, #0000001A), url(/banner-neon.webp) center / cover no-repeat'
 
 export type ThemeKey = keyof typeof THEMES
 export type SiteTheme = ThemeKey | 'grade'
@@ -203,7 +203,14 @@ export const JOIN_GOLD = '#E8C15A'      // Join GF retains marketing gold
 
 // theme(grade) still works everywhere; pass the user's saved site_theme as the
 // second argument to override. 'grade' (or missing/unknown) = classic per-grade look.
+// Classic textured — the per-grade look with its own banner image
+const CLASSIC_TX: Record<Grade, Palette> = {
+  mens: { ...CLUBHOUSE.mens, headerBg: `${OVERLAY}, url(/banner-classic-mens.webp) center / cover no-repeat` },
+  womens: { ...CLUBHOUSE.womens, headerBg: `${OVERLAY}, url(/banner-classic-womens.webp) center / cover no-repeat` },
+}
+
 export function theme(grade: Grade, siteTheme?: string | null): Palette {
+  if (siteTheme === 'grade_tx') return CLASSIC_TX[grade]
   if (siteTheme && siteTheme !== 'grade' && siteTheme in THEMES) {
     return THEMES[siteTheme]
   }

@@ -725,18 +725,18 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           {/* Site theme switcher — softballs */}
           <div className="flex items-center justify-center gap-3 flex-wrap" style={{ marginTop: '18px', opacity: themeSaving ? 0.5 : 1 }}>
                         <div className="inline-flex rounded-full overflow-hidden" style={{ border: '1px solid #ffffff40', background: '#141210E6', marginRight: '6px' }}>
-              <button onClick={() => setSiteTheme('grade')} title="Classic — colours follow the grade"
+              <button onClick={() => setSiteTheme(textured ? 'grade_tx' : 'grade')} title="Classic — colours follow the grade"
                 className="text-[10px] font-black uppercase tracking-widest transition-all"
                 style={{
                   padding: '0 16px', height: '32px',
-                  color: siteTheme === 'grade' ? T.buttonText : T.text,
-                  background: siteTheme === 'grade' ? T.button : 'transparent',
+                  color: siteTheme.replace(/_tx$/, '') === 'grade' ? T.buttonText : T.text,
+                  background: siteTheme.replace(/_tx$/, '') === 'grade' ? T.button : 'transparent',
                 }}>
                 Classic
               </button>
               <button onClick={() => {
                   const base = siteTheme.replace(/_tx$/, '')
-                  if (!TEXTURED_KEYS.includes(base)) { setTextured(t => !t); return }
+                  if (base !== 'grade' && !TEXTURED_KEYS.includes(base)) { setTextured(t => !t); return }
                   setSiteTheme(siteTheme.endsWith('_tx') ? base : `${base}_tx`)
                 }}
                 title="Textured — banner image behind the headers"
