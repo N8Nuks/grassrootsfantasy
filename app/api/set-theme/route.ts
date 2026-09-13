@@ -9,7 +9,8 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => null)
   const siteTheme = body?.siteTheme
-  const valid = siteTheme === 'grade' || (typeof siteTheme === 'string' && siteTheme in THEMES)
+  // 'grade' and 'grade_tx' are the per-grade classic looks; everything else must be a THEMES key
+  const valid = siteTheme === 'grade' || siteTheme === 'grade_tx' || (typeof siteTheme === 'string' && siteTheme in THEMES)
   if (!valid) return NextResponse.json({ error: 'Unknown theme' }, { status: 400 })
 
   const { error } = await supabase.from('profiles').update({ site_theme: siteTheme }).eq('id', user.id)
