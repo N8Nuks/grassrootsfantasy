@@ -30,19 +30,13 @@ const matches = (list: string[], path: string) =>
 export const isClosed = (path: string) => matches(UNDER_CONSTRUCTION, path)
 export const isLocked = (path: string) => matches(LOCKED, path)
 
-/* Arcade games that read from the database. The wipe empties players and
-   rounds, so these five would render their "not enough players yet" fallback
-   until the real roster lands on the 18th — which reads as broken rather than
-   deliberate.
+/* Arcade games that need scored rounds before they make sense. The roster is
+   loaded now, so the games that read players, clubs, or career stats are open
+   again — Player of the Day, Higher or Lower, Card Sharp, Connections.
 
-   The other eight are safe: Legends Cage and Guess the Season build from the
-   static honours file, Diamond Snake only needs clubs (kept), and the rest
-   need no data at all. */
+   Perfect Card stays shut until the first round is scored; it has nothing to
+   build from until then. */
 export const CLOSED_GAMES = [
-  '/games/connections',
-  '/games/daily',
-  '/games/higher',
-  '/games/memory',
   '/games/lineup',
 ]
 
