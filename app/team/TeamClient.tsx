@@ -714,7 +714,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
 
       {/* Jersey nameplate header */}
       <div className="rounded-2xl overflow-hidden pinstripe-fine text-center mb-6"
-        style={{ background: siteTheme === 'neon' ? T.headerBg : `linear-gradient(180deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`, border: `3px solid ${T.button}` }}>
+        style={{ background: (siteTheme === 'neon' || siteTheme.endsWith('_tx')) ? T.headerBg : `linear-gradient(180deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`, border: `3px solid ${T.button}` }}>
         <div style={{ padding: '36px 28px 32px' }}>
           <p className={"text-xs font-black uppercase tracking-[0.3em] mb-3" + (T.shimmer ? ' gf-shimmer-text' : '')}
             style={T.shimmer ? undefined : { color: T.accent }}>My Team</p>
