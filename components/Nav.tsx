@@ -36,15 +36,22 @@ export default function Nav() {
     ...(isActive(href) ? { background: `${color}18` } : {}),
   })
 
-  // Right-side page links
+  /* The nav carries the weekly loop only. Leaders, the NFS pages, Cards, FAQ
+     and Policy live in the footer directory. Join GF disappears once you're in. */
+  const boxes = [
+    ...(!loggedIn ? [{ label: 'Join GF', href: '/join', color: JOIN_GOLD }] : []),
+    { label: 'Leagues', href: '/leagues', color: '#39FF6A' },
+    { label: 'Arcade', href: '/arcade', color: '#B47CFF', match: '/games' },
+    ...(isAdmin ? [{ label: 'Admin', href: '/admin', color: ADMIN_RED }] : []),
+  ]
+
   const links = [
     ...(!loggedIn ? [{ label: 'How it works', href: '/how' }] : []),
     ...(loggedIn ? [
-      { label: 'My Team', href: '/team', color: '#4DA6FF', glow: '0 0 8px #4DA6FF, 0 0 18px #4DA6FF90, 0 0 30px #4DA6FF50', lightning: true },
+      { label: 'My Team', href: '/team', color: '#4DA6FF', glow: '0 0 8px #4DA6FF, 0 0 18px #4DA6FF90, 0 0 30px #4DA6FF50' },
       { label: 'Matchups', href: '/matchups', color: '#F5F1E8' },
       { label: 'Ladder', href: '/ladder', color: '#F5F1E8' },
       { label: 'Athlete Hall', href: '/hall', color: '#3FBF63', glow: '0 0 10px #3FBF6390, 0 0 22px #3FBF6340' },
-      { label: 'Leaders', href: '/leaders', color: '#FFD700' },
     ] : []),
   ]
 
@@ -57,7 +64,7 @@ export default function Nav() {
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 sm:px-12 bg-[#141210]/40 backdrop-blur-md border-b border-white/5"
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 14px)', paddingBottom: '14px' }}>
-        {/* Left: logo + Join GF + Leagues */}
+        {/* Left: logo + boxed links */}
         <div className="flex items-center gap-6">
           <a href="/" className="flex items-center gap-2.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -69,28 +76,13 @@ export default function Nav() {
           </a>
 
           <div className="hidden md:flex items-center gap-3">
-            <a href="/join"
-              className="text-xs font-bold uppercase tracking-widest px-4 py-2 transition-all hover:scale-[1.03]"
-              style={boxLink('/join', JOIN_GOLD)}>
-              Join GF
-            </a>
-            <a href="/leagues"
-              className="text-xs font-bold uppercase tracking-widest px-4 py-2 transition-all hover:scale-[1.03]"
-              style={boxLink('/leagues', '#39FF6A')}>
-              Leagues
-            </a>
-            <a href="/arcade"
-              className="text-xs font-bold uppercase tracking-widest px-4 py-2 transition-all hover:scale-[1.03]"
-              style={boxLink('/games', '#B47CFF')}>
-              Arcade
-            </a>
-            {isAdmin && (
-              <a href="/admin"
+            {boxes.map(b => (
+              <a key={b.href} href={b.href}
                 className="text-xs font-bold uppercase tracking-widest px-4 py-2 transition-all hover:scale-[1.03]"
-                style={boxLink('/admin', ADMIN_RED)}>
-                Admin
+                style={boxLink(b.match ?? b.href, b.color)}>
+                {b.label}
               </a>
-            )}
+            ))}
           </div>
         </div>
 
@@ -125,39 +117,22 @@ export default function Nav() {
 
       {/* Mobile menu */}
       {open && (
-        <div className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 md:hidden overflow-y-auto"
+        <div className="fixed inset-0 z-40 flex flex-col items-center justify-center md:hidden overflow-y-auto"
           style={{
             background: '#141210F5',
+            gap: '26px',
             paddingTop: 'calc(env(safe-area-inset-top, 0px) + 96px)',
             paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 40px)',
           }}
           onClick={() => setOpen(false)}>
-          <a href="/join"
-            className="text-2xl font-black uppercase tracking-widest"
-            style={{ fontFamily: 'var(--font-label)', color: JOIN_GOLD }}
-            onClick={() => setOpen(false)}>
-            Join GF
-          </a>
-          <a href="/leagues"
-            className="text-2xl font-black uppercase tracking-widest"
-            style={{ fontFamily: 'var(--font-label)', color: '#39FF6A' }}
-            onClick={() => setOpen(false)}>
-            Leagues
-          </a>
-          <a href="/arcade"
-            className="text-2xl font-black uppercase tracking-widest"
-            style={{ fontFamily: 'var(--font-label)', color: '#B47CFF' }}
-            onClick={() => setOpen(false)}>
-            Arcade
-          </a>
-          {isAdmin && (
-            <a href="/admin"
+          {boxes.map(b => (
+            <a key={b.href} href={b.href}
               className="text-2xl font-black uppercase tracking-widest"
-              style={{ fontFamily: 'var(--font-label)', color: ADMIN_RED }}
+              style={{ fontFamily: 'var(--font-label)', color: b.color }}
               onClick={() => setOpen(false)}>
-              Admin
+              {b.label}
             </a>
-          )}
+          ))}
           {links.map(l => (
             <a key={l.label} href={l.href}
               className="text-2xl font-black uppercase tracking-widest"
