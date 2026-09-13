@@ -88,7 +88,9 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
   const aggByPlayer = new Map<string, Record<string, number>>()
   for (const s of allStats ?? []) {
     const line = s.raw as StatLine
-    const a = aggByPlayer.get(s.player_id) ?? { ab: 0, hits: 0, hr: 0, rbi: 0, sb: 0, wins: 0, k_pit: 0, ip: 0, runs: 0 }
+    const a = aggByPlayer.get(s.player_id) ?? { ab: 0, hits: 0, hr: 0, rbi: 0, sb: 0, wins: 0, k_pit: 0, ip: 0, runs: 0, gp: 0 }
+    // A row is an appearance. gp overrides when the scorer gives it (2 for a double-header).
+    a.gp += line.gp != null ? (Number(line.gp) || 0) : 1
     a.ab += Number(line.ab) || 0
     a.hits += (Number(line.singles) || 0) + (Number(line.doubles) || 0) + (Number(line.triples) || 0) + (Number(line.hr) || 0)
     a.hr += Number(line.hr) || 0
@@ -114,10 +116,15 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
       season_k_pit: a.k_pit,
       season_ip: a.ip,
       season_points: pointsByPlayer.get(playerId) ?? 0,
+      season_games: a.gp,
     }
     if (a.ab > 0) seasonStats.season_ba = a.hits / a.ab
     else delete seasonStats.season_ba
-    await admin.from('players').update({ stats: seasonStats }).eq('id', playerId)
+    const { data: base } = await admin.from('players').select('career_games_base').eq('id', playerId).single()
+    await admin.from('players').update({
+      stats: seasonStats,
+      career_games: (base?.career_games_base ?? 0) + a.gp,
+    }).eq('id', playerId)
   }
 
   // 3. Team scores with carry-forward + full substitution cascade
