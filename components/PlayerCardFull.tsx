@@ -3,11 +3,11 @@ import { useState } from 'react'
 import { theme, type Grade } from '@/lib/clubhouse'
 import { splitName } from '@/lib/names'
 
-const TIER_META: Record<string, { label: string; accent: string }> = {
-  rare_2wp_a: { label: '2WP A', accent: '#FFD700' },
-  rare_2wp_b: { label: '2WP B', accent: '#E8C15A' },
-  elite: { label: 'ELITE', accent: '#1D3FBE' },
-  common: { label: 'COMMON', accent: '#2D9E4E' },
+const TIER_META: Record<string, { label: string; accent: string; ink: string }> = {
+  rare_2wp_a: { label: '2WP A', accent: '#FFD700', ink: '#FFD700' },
+  rare_2wp_b: { label: '2WP B', accent: '#E8C15A', ink: '#E8C15A' },
+  elite: { label: 'ELITE', accent: '#1D3FBE', ink: '#5B8CFF' },
+  common: { label: 'COMMON', accent: '#2D9E4E', ink: '#3FBF63' },
 }
 const SLOT_LABELS: Record<string, string> = { B1: '1B', B2: '2B', B3: '3B', PB: 'P(B)' }
 const posLabel = (p: string) => SLOT_LABELS[p] ?? p
@@ -100,6 +100,8 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
   const meta = TIER_META[player.tier] ?? TIER_META.common
   const tint = CLUB_TINTS[player.club] ?? '#E8D5A3'
   const st = player.stats ?? {}
+  const textured = siteTheme === 'neon' || !!siteTheme?.endsWith('_tx')
+  const bandBg = textured ? `linear-gradient(#14121099, #14121099), ${T.headerBg}` : T.headerBg
   const isPitcher = (st.season_ip ?? 0) > 0 || (st.career_ip ?? 0) > 0
 
   /* Three faces on two physical sides. Rotation only ever increases, so the
@@ -204,7 +206,7 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
       <div className="flex-1 rounded-xl overflow-hidden flex flex-col min-h-0"
         style={{ background: T.surface, border: '1px solid #F5F1E825' }}>
         {/* Banner — crest / club + name / gem */}
-        <div className="flex items-center gap-3 pinstripe-fine" style={{ flex: '0 0 19%', background: T.headerBg, borderBottom: `1px solid ${meta.accent}40`, padding: '0 14px' }}>
+        <div className="flex items-center gap-3 pinstripe-fine" style={{ flex: '0 0 19%', background: bandBg, borderBottom: `1px solid ${meta.accent}40`, padding: '0 14px' }}>
           <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0"
             style={{ width: '44px', height: '44px', background: '#141210', border: `1.5px solid ${tint}70` }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -235,8 +237,8 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
               padding: '2.5px',
             }}>
             <span className="w-full h-full flex items-center justify-center"
-              style={{ background: T.headerBg, clipPath: 'polygon(50% 0%, 100% 28%, 100% 72%, 50% 100%, 0% 72%, 0% 28%)' }}>
-              <span className="text-2xl font-black" style={{ fontFamily: 'var(--font-number, var(--font-heading))', color: meta.accent, textShadow: `0 0 8px ${meta.accent}60` }}>{player.playingNumber ?? 26}</span>
+              style={{ background: bandBg, clipPath: 'polygon(50% 0%, 100% 28%, 100% 72%, 50% 100%, 0% 72%, 0% 28%)' }}>
+              <span className="text-2xl font-black" style={{ fontFamily: 'var(--font-number, var(--font-heading))', color: meta.ink, textShadow: `0 0 8px ${meta.accent}60` }}>{player.playingNumber ?? 26}</span>
             </span>
           </div>
         </div>
@@ -272,7 +274,7 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
             </svg>
           )}
           <span className="absolute top-3 left-3.5 text-[10px] font-black tracking-widest"
-            style={{ color: meta.accent, textShadow: `0 0 8px ${meta.accent}90, 0 0 16px ${meta.accent}50` }}>{meta.label}</span>
+            style={{ color: meta.ink, textShadow: `0 0 8px ${meta.accent}90, 0 0 16px ${meta.accent}50` }}>{meta.label}</span>
           {doubled && (
             <span className="absolute top-3 right-3.5 text-[10px] font-black uppercase tracking-widest rounded-full gf-pulse"
               style={{ color: '#141210', background: DOUBLE, padding: '3px 10px', boxShadow: `0 0 14px ${DOUBLE}` }}>
@@ -307,16 +309,16 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
           )}
         </div>
         {/* Positions row */}
-        <div className="text-center" style={{ flex: '0 0 auto', background: T.headerBg, borderTop: `1px solid ${meta.accent}40`, padding: '8px 14px 6px' }}>
-          <p className="text-[11px] font-black tracking-[0.2em]" style={{ color: meta.accent, textShadow: `0 0 8px ${meta.accent}70` }}>
+        <div className="text-center" style={{ flex: '0 0 auto', background: bandBg, borderTop: `1px solid ${meta.accent}40`, padding: '8px 14px 6px' }}>
+          <p className="text-[11px] font-black tracking-[0.2em]" style={{ color: meta.ink, textShadow: `0 0 8px ${meta.accent}70` }}>
             {player.positions.map(posLabel).join(' · ')}{player.speedStar ? ' · ★' : ''}
           </p>
         </div>
         {/* Stat table — points column + divided grid */}
-        <div className="flex items-stretch" style={{ flex: '0 0 auto', background: T.headerBg, padding: '6px 14px 14px', gap: '12px' }}>
+        <div className="flex items-stretch" style={{ flex: '0 0 auto', background: bandBg, padding: '6px 14px 14px', gap: '12px' }}>
           <div className="shrink-0 flex flex-col justify-center text-center" style={{ borderRight: `1px solid ${meta.accent}30`, paddingRight: '12px' }}>
-            <p className="text-[8px] font-black uppercase tracking-[0.2em]" style={{ color: meta.accent }}>Season Points</p>
-            <p className="text-3xl font-black leading-none" style={{ fontFamily: 'var(--font-heading)', color: meta.accent, textShadow: `0 0 14px ${meta.accent}60`, margin: '4px 0' }}>
+            <p className="text-[8px] font-black uppercase tracking-[0.2em]" style={{ color: meta.ink }}>Season Points</p>
+            <p className="text-3xl font-black leading-none" style={{ fontFamily: 'var(--font-heading)', color: meta.ink, textShadow: `0 0 14px ${meta.accent}60`, margin: '4px 0' }}>
               {st.season_points ?? 0}
             </p>
             <p className="text-[8px] font-bold uppercase tracking-widest" style={{ color: T.textDim }}>2026/27</p>
@@ -328,7 +330,7 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
               </div>
               {cols.some(c => c.pitching) && (
                 <div className="text-center" style={{ flex: cols.filter(c => c.pitching).length, borderLeft: `1px solid ${meta.accent}50` }}>
-                  <p className="text-[7px] font-black uppercase tracking-[0.25em]" style={{ color: meta.accent }}>Pitching</p>
+                  <p className="text-[7px] font-black uppercase tracking-[0.25em]" style={{ color: meta.ink }}>Pitching</p>
                 </div>
               )}
             </div>
@@ -338,7 +340,7 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
                 return (
                   <div key={c.label} className="flex-1 text-center relative"
                     style={{ borderLeft: startPitch ? `1px solid ${meta.accent}50` : i > 0 ? '1px solid #ffffff12' : 'none' }}>
-                    <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: c.pitching ? meta.accent : T.textDim }}>{c.label}</p>
+                    <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: c.pitching ? meta.ink : T.textDim }}>{c.label}</p>
                     <p className="text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{c.season}</p>
                   </div>
                 )
@@ -372,11 +374,11 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
     return (
       <div className="flex-1 rounded-xl overflow-hidden flex flex-col min-h-0"
         style={{ background: T.surface, border: '1px solid #F5F1E825' }}>
-        <div className="text-center pinstripe-fine" style={{ background: T.headerBg, borderBottom: `1px solid ${meta.accent}40`, padding: '14px 16px 12px' }}>
+        <div className="text-center pinstripe-fine" style={{ background: bandBg, borderBottom: `1px solid ${meta.accent}40`, padding: '14px 16px 12px' }}>
           <p className="text-base font-black leading-tight" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
             {splitName(player.name).first} <span className="uppercase">{splitName(player.name).last}</span>
           </p>
-          <p className="text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: meta.accent, marginTop: '3px' }}>Career &amp; Honours</p>
+          <p className="text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: meta.ink, marginTop: '3px' }}>Career &amp; Honours</p>
         </div>
 
         <div className="flex-1 overflow-y-auto gf-noscroll" style={{ padding: '14px 16px' }}>
@@ -423,13 +425,13 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
           {/* Career pitching */}
           {careerPitch.length > 0 && (
             <>
-              <p className="text-[8px] font-black uppercase tracking-[0.3em]" style={{ color: meta.accent, marginBottom: '6px' }}>Career Pitching</p>
+              <p className="text-[8px] font-black uppercase tracking-[0.3em]" style={{ color: meta.ink, marginBottom: '6px' }}>Career Pitching</p>
               <div>
                 {careerPitch.map(([label, value]) => (
                   <div key={label} className="flex items-baseline justify-between"
                     style={{ borderBottom: '1px solid #ffffff0a', padding: '7px 2px' }}>
                     <span className="text-[11px] font-bold" style={{ color: T.textDim }}>{label}</span>
-                    <span className="text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: value === '—' ? T.textDim : meta.accent }}>{value}</span>
+                    <span className="text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: value === '—' ? T.textDim : meta.ink }}>{value}</span>
                   </div>
                 ))}
               </div>
@@ -437,7 +439,7 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
           )}
         </div>
 
-        <div className="flex items-center justify-between" style={{ background: T.headerBg, borderTop: `1px solid ${meta.accent}40`, padding: '10px 16px' }}>
+        <div className="flex items-center justify-between" style={{ background: bandBg, borderTop: `1px solid ${meta.accent}40`, padding: '10px 16px' }}>
           <Dots active="career" />
           <p className="text-[9px] font-bold uppercase tracking-[0.25em]" style={{ color: T.textDim }}>Tap for rounds</p>
         </div>
@@ -450,11 +452,11 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
     return (
       <div className="flex-1 rounded-xl overflow-hidden flex flex-col min-h-0"
         style={{ background: T.surface, border: '1px solid #F5F1E825' }}>
-        <div className="text-center pinstripe-fine" style={{ background: T.headerBg, borderBottom: `1px solid ${meta.accent}40`, padding: '14px 16px 12px' }}>
+        <div className="text-center pinstripe-fine" style={{ background: bandBg, borderBottom: `1px solid ${meta.accent}40`, padding: '14px 16px 12px' }}>
           <p className="text-base font-black leading-tight" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
             {splitName(player.name).first} <span className="uppercase">{splitName(player.name).last}</span>
           </p>
-          <p className="text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: meta.accent, marginTop: '3px' }}>Round by Round</p>
+          <p className="text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: meta.ink, marginTop: '3px' }}>Round by Round</p>
         </div>
         <div className="flex-1 overflow-y-auto gf-noscroll" style={{ padding: '6px 0' }}>
           {log === null && !logError && (
@@ -470,13 +472,13 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
             <div key={r.round} className="flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff08', padding: '9px 16px' }}>
               <span className="w-9 shrink-0 text-[10px] font-black uppercase" style={{ color: T.textDim }}>Rd {r.round}</span>
               <span className="flex-1 min-w-0 text-[11px] font-bold" style={{ color: T.text }}>{lineFor(r.raw)}</span>
-              <span className="w-11 shrink-0 text-right text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: meta.accent }}>
+              <span className="w-11 shrink-0 text-right text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: meta.ink }}>
                 {r.points != null ? r.points : '—'}
               </span>
             </div>
           ))}
         </div>
-        <div className="flex items-center justify-between" style={{ background: T.headerBg, borderTop: `1px solid ${meta.accent}40`, padding: '10px 16px' }}>
+        <div className="flex items-center justify-between" style={{ background: bandBg, borderTop: `1px solid ${meta.accent}40`, padding: '10px 16px' }}>
           <Dots active="rounds" />
           <p className="text-[9px] font-bold uppercase tracking-[0.25em]" style={{ color: T.textDim }}>Tap for the card</p>
         </div>

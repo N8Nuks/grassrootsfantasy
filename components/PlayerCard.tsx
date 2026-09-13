@@ -2,11 +2,12 @@
 import { theme, type Grade } from '@/lib/clubhouse'
 import { splitName } from '@/lib/names'
  
-export const TIER_META: Record<string, { label: string; accent: string }> = {
-  rare_2wp_a: { label: '2WP A', accent: '#FFD700' },
-  rare_2wp_b: { label: '2WP B', accent: '#E8C15A' },
-  elite: { label: 'ELITE', accent: '#1D3FBE' },
-  common: { label: 'COMMON', accent: '#2D9E4E' },
+// accent = frame and gradients; ink = the same tier as text, kept legible on busy banners
+export const TIER_META: Record<string, { label: string; accent: string; ink: string }> = {
+  rare_2wp_a: { label: '2WP A', accent: '#FFD700', ink: '#FFD700' },
+  rare_2wp_b: { label: '2WP B', accent: '#E8C15A', ink: '#E8C15A' },
+  elite: { label: 'ELITE', accent: '#1D3FBE', ink: '#5B8CFF' },
+  common: { label: 'COMMON', accent: '#2D9E4E', ink: '#3FBF63' },
 }
 const SLOT_LABELS: Record<string, string> = { B1: '1B', B2: '2B', B3: '3B', PB: 'P(B)' }
 const posLabel = (p: string) => SLOT_LABELS[p] ?? p
@@ -64,6 +65,8 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
   const meta = TIER_META[player.tier] ?? TIER_META.common
   const tint = player.club ? (CLUB_TINTS[player.club] ?? '#E8D5A3') : '#E8D5A3'
   const st = player.stats ?? {}
+  const textured = siteTheme === 'neon' || !!siteTheme?.endsWith('_tx')
+  const bandBg = textured ? `linear-gradient(#14121099, #14121099), ${T.headerBg}` : T.headerBg
   const badge = longevityBadge(player.badges)
  
   return (
@@ -87,7 +90,7 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
  
         {/* Mini banner — crest + name */}
         <div className="flex items-center gap-2 pinstripe-fine"
-          style={{ background: T.headerBg, borderBottom: `1px solid ${(doubled ? DOUBLE_ACCENT : meta.accent)}35`, padding: '7px 10px' }}>
+          style={{ background: bandBg, borderBottom: `1px solid ${(doubled ? DOUBLE_ACCENT : meta.accent)}35`, padding: '7px 10px' }}>
           <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0"
             style={{ width: '24px', height: '24px', background: '#141210', border: `1px solid ${tint}70` }}>
             {player.club ? (
@@ -153,7 +156,7 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
             </svg>
           )}
           <span className="absolute top-1.5 left-2 text-[8px] font-black tracking-widest"
-            style={{ color: meta.accent, textShadow: `0 0 6px ${meta.accent}80` }}>
+            style={{ color: meta.ink, textShadow: `0 0 6px #000000C0, 0 0 6px ${meta.ink}60` }}>
             {meta.label}
           </span>
           {/* Longevity badge — bottom-left, mark only at this size (word reads on the full card) */}
@@ -192,11 +195,11 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
         </div>
  
         {/* Mini stat band */}
-        <div style={{ background: T.headerBg, borderTop: `1px solid ${(doubled ? DOUBLE_ACCENT : meta.accent)}35`, padding: '7px 10px 9px' }}>
+        <div style={{ background: bandBg, borderTop: `1px solid ${(doubled ? DOUBLE_ACCENT : meta.accent)}35`, padding: '7px 10px 9px' }}>
           <p className="text-[9px] truncate" style={{ color: T.textDim, marginBottom: '3px' }}>
             {player.positions.map(posLabel).join(' ')}{player.speedStar ? ' · ★' : ''}
           </p>
-          <p className="text-xs font-black" style={{ color: doubled ? DOUBLE_ACCENT : meta.accent, marginBottom: '3px' }}>
+          <p className="text-xs font-black" style={{ color: doubled ? DOUBLE_ACCENT : meta.ink, marginBottom: '3px' }}>
             {st.season_points ?? 0} pts
           </p>
           <div className="flex justify-between text-[10px] items-center" style={{ color: T.textDim }}>

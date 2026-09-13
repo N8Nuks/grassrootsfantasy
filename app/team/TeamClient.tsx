@@ -728,11 +728,26 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
               className="text-[9px] font-black uppercase tracking-widest px-3 rounded-full transition-all hover:scale-105"
               style={{
                 height: '26px',
-                color: siteTheme === 'grade' ? T.buttonText : T.textDim,
-                background: siteTheme === 'grade' ? T.button : 'transparent',
-                border: `1px solid ${siteTheme === 'grade' ? T.button : '#ffffff30'}`,
+                color: siteTheme === 'grade' ? T.buttonText : T.text,
+                background: siteTheme === 'grade' ? T.button : '#14121099',
+                boxShadow: siteTheme === 'grade' ? 'none' : 'inset 0 0 0 1px #ffffff55',
               }}>
               Classic
+            </button>
+            <button onClick={() => {
+                const base = siteTheme.replace(/_tx$/, '')
+                if (!TEXTURED_KEYS.includes(base)) { setTextured(t => !t); return }
+                setSiteTheme(siteTheme.endsWith('_tx') ? base : `${base}_tx`)
+              }}
+              title="Textured — banner image behind the headers"
+              className="text-[9px] font-black uppercase tracking-widest px-3 rounded-full transition-all hover:scale-105"
+              style={{
+                height: '26px',
+                color: textured ? T.buttonText : T.text,
+                background: textured ? T.button : '#14121099',
+                boxShadow: textured ? 'none' : 'inset 0 0 0 1px #ffffff55',
+              }}>
+              Textured
             </button>
             {THEME_ORDER.map(k => {
               const base = siteTheme.replace(/_tx$/, '')
@@ -751,21 +766,7 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
                 </button>
               )
             })}
-            <button onClick={() => {
-                const base = siteTheme.replace(/_tx$/, '')
-                if (!TEXTURED_KEYS.includes(base)) { setTextured(t => !t); return }
-                setSiteTheme(siteTheme.endsWith('_tx') ? base : `${base}_tx`)
-              }}
-              title="Textured — banner image behind the headers"
-              className="text-[9px] font-black uppercase tracking-widest px-3 rounded-full transition-all hover:scale-105"
-              style={{
-                height: '26px',
-                color: textured ? T.buttonText : T.textDim,
-                background: textured ? T.button : 'transparent',
-                border: `1px solid ${textured ? T.button : '#ffffff30'}`,
-              }}>
-              Textured
-            </button>
+
           </div>
         </div>
       </div>
