@@ -16,6 +16,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
   // Batch 1 — independent queries fired together
   const [
     { data: profile },
+    { data: clubRows },
     { data: styleRow },
     { data: cards },
     { data: lineup },
@@ -23,7 +24,11 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
     { data: t2Config },
     { count: t2Count },
   ] = await Promise.all([
-    supabase.from('profiles').select('team_name, site_theme, clubs(name)').eq('id', user!.id).single(),
+    // Two foreign keys to clubs now (own club, avatar club) — the hints keep the joins unambiguous
+    supabase.from('profiles')
+      .select('team_name, site_theme, club_id, avatar_club_id, avatar_frame, club:clubs!club_id(name), avatar_club:clubs!avatar_club_id(name)')
+      .eq('id', user!.id).single(),
+    supabase.from('clubs').select('id, name').order('name'),
     supabase.from('site_settings').select('value').eq('key', 'card_style').maybeSingle(),
     supabase.from('cards')
       .select('id, players(id, full_name, tier, positions, stats, photo_url, playing_number, badges, speed_star, clubs(name))')
@@ -39,7 +44,12 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
       .eq('owner_id', user!.id).eq('grade', grade).eq('source', 't2'),
   ])
 
-  const siteTheme = (profile as unknown as { site_theme?: string })?.site_theme ?? 'grade'
+  const prof = profile as unknown as {
+    team_name: string; site_theme?: string; club_id: string | null
+    avatar_club_id: string | null; avatar_frame: string | null
+    club: { name: string } | null; avatar_club: { name: string } | null
+  } | null
+  const siteTheme = prof?.site_theme ?? 'grade'
   const cardStyle = (styleRow?.value ?? 'premium') as 'standard' | 'premium'
   const T = theme(grade, siteTheme)
 
@@ -151,8 +161,15 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
       <Nav /><SandboxBanner />
       <section className="flex-1 px-4 sm:px-6" style={{ paddingTop: "70px", paddingBottom: "100px" }}>
         <TeamClient
-          teamName={profile?.team_name ?? 'Your team'}
-          clubName={(profile as unknown as { clubs: { name: string } | null })?.clubs?.name ?? ''}
+          teamName={prof?.team_name ?? 'Your team'}
+          clubName={prof?.club?.name ?? ''}
+          avatar={{
+            clubId: prof?.avatar_club_id ?? prof?.club_id ?? null,
+            clubName: prof?.avatar_club?.name ?? prof?.club?.name ?? '',
+            frame: prof?.avatar_frame ?? 'gold',
+            ownClubId: prof?.club_id ?? null,
+          }}
+          clubs={(clubRows ?? []) as { id: string; name: string }[]}
           cards={teamCards}
           initialSlots={slots}
           grade={grade}

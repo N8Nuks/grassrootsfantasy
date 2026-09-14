@@ -10,6 +10,7 @@ import PackReveal, { RevealCard } from '@/components/PackReveal'
 import PageGuide, { GuideStep } from '@/components/PageGuide'
 import SandboxBanner from '@/components/SandboxBanner'
 import { splitName } from '@/lib/names'
+import ClubAvatar, { AVATAR_FRAMES } from '@/components/ClubAvatar'
 
 const TEAM_GUIDE: GuideStep[] = [
   {
@@ -153,9 +154,11 @@ function SoftballSwatch({ colors, seam, selected, ringColor }: {
   )
 }
 
-export default function TeamClient({ teamName, clubName, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen, thisRoundPoints, lastRoundPoints, thisRoundLabel, lastRoundLabel, cardStyle, doubledIds = [], initialCaptainId = null, initialViceCaptainId = null, notices = [], earned = {}, earnedLabel = null }: {
+export default function TeamClient({ teamName, clubName, avatar, clubs, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen, thisRoundPoints, lastRoundPoints, thisRoundLabel, lastRoundLabel, cardStyle, doubledIds = [], initialCaptainId = null, initialViceCaptainId = null, notices = [], earned = {}, earnedLabel = null }: {
   teamName: string
   clubName: string
+  avatar: { clubId: string | null; clubName: string; frame: string; ownClubId: string | null }
+  clubs: { id: string; name: string }[]
   cards: TeamCard[]
   initialSlots: SlotState[]
   grade: Grade
@@ -200,8 +203,13 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
   const [t4Code, setT4Code] = useState('')
   const [reveal, setReveal] = useState<{ packName: string; cards: RevealCard[] } | null>(null)
   const [packBusy, setPackBusy] = useState(false)
-    const [themeSaving, setThemeSaving] = useState(false)
-    const [textured, setTextured] = useState(siteTheme.endsWith('_tx'))
+  const [themeSaving, setThemeSaving] = useState(false)
+  const [textured, setTextured] = useState(siteTheme.endsWith('_tx'))
+  const [avatarOpen, setAvatarOpen] = useState(false)
+  const [avatarSaving, setAvatarSaving] = useState(false)
+  const [avClubId, setAvClubId] = useState<string | null>(avatar.clubId)
+  const [avFrame, setAvFrame] = useState(avatar.frame)
+  const avClubName = clubs.find(c => c.id === avClubId)?.name ?? avatar.clubName
   // ── Lineup self-repair ──
   // A scoring slot can become empty (e.g. a player removed from the competition).
   // On load: promote the first eligible bench player into any empty scoring slot,
@@ -286,6 +294,17 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
     if (r.ok) { window.location.reload(); return }
     setThemeSaving(false)
     alert('Could not save theme')
+  }
+
+  async function saveAvatar() {
+    if (avatarSaving) return
+    setAvatarSaving(true)
+    // Own club is stored as null so a future club change follows the profile
+    const clubId = avClubId === avatar.ownClubId ? null : avClubId
+    const r = await fetch('/api/set-avatar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clubId, frame: avFrame }) })
+    setAvatarSaving(false)
+    if (r.ok) { setAvatarOpen(false); router.refresh(); return }
+    alert('Could not save avatar')
   }
 
   const cardById = new Map(cards.map(c => [c.id, c]))
@@ -718,7 +737,12 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
         <div style={{ padding: '36px 28px 32px' }}>
           <p className={"text-xs font-black uppercase tracking-[0.3em] mb-3" + (T.shimmer ? ' gf-shimmer-text' : '')}
             style={T.shimmer ? undefined : { color: T.accent }}>My Team</p>
-          <h1 className="text-4xl sm:text-5xl font-black mb-2" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{teamName}</h1>
+          <div className="flex items-center justify-center" style={{ gap: '16px', marginBottom: '8px' }}>
+            <button onClick={() => setAvatarOpen(true)} title="Change avatar" className="transition-transform hover:scale-105 shrink-0">
+              <ClubAvatar club={avClubName} frame={avFrame} size={56} />
+            </button>
+            <h1 className="text-4xl sm:text-5xl font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text, textShadow: textured ? '0 2px 6px #000000A0' : 'none' }}>{teamName}</h1>
+          </div>
           <p className="text-sm mb-5" style={{ color: textured ? T.text : T.textDim, textShadow: textured ? '0 1px 3px #000000, 0 0 12px #000000C0' : 'none' }}>{clubName} · {cards.length} cards{roundNumber != null ? ` · Round ${roundNumber}` : ''}</p>
           <GradeSwitch grade={grade} mensHref="/team?grade=mens" womensHref="/team?grade=womens" palette={siteTheme !== 'grade' ? T : undefined} onImage={textured} />
 
@@ -1115,6 +1139,54 @@ export default function TeamClient({ teamName, clubName, cards, initialSlots, gr
           </div>
         )
       })()}
+            {avatarOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: '#000000B3' }} onClick={() => setAvatarOpen(false)}>
+          <div className="w-full rounded-2xl overflow-hidden" style={{ maxWidth: '440px', background: T.surface, border: '1px solid #ffffff20' }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a', padding: '16px 22px' }}>
+              <span className="text-sm font-black" style={{ color: T.text }}>Your avatar</span>
+              <button onClick={() => setAvatarOpen(false)} className="text-xl font-black" style={{ color: T.textDim }}>×</button>
+            </div>
+            <div style={{ padding: '22px' }}>
+              <div className="flex justify-center" style={{ marginBottom: '22px' }}>
+                <ClubAvatar club={avClubName} frame={avFrame} size={112} />
+              </div>
+
+              <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim, marginBottom: '10px' }}>Frame</p>
+              <div className="flex" style={{ gap: '10px', marginBottom: '22px' }}>
+                {AVATAR_FRAMES.map(f => (
+                  <button key={f.key} onClick={() => setAvFrame(f.key)}
+                    className="flex-1 rounded-xl flex flex-col items-center transition-all"
+                    style={{ padding: '10px 6px', gap: '8px', border: `1px solid ${avFrame === f.key ? T.button : '#ffffff20'}`, background: avFrame === f.key ? `${T.button}18` : 'transparent' }}>
+                    <ClubAvatar club={avClubName} frame={f.key} size={40} />
+                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: avFrame === f.key ? T.text : T.textDim }}>{f.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim, marginBottom: '10px' }}>Crest</p>
+              <div className="grid grid-cols-4" style={{ gap: '8px', marginBottom: '22px' }}>
+                {clubs.map(c => (
+                  <button key={c.id} onClick={() => setAvClubId(c.id)} title={c.name}
+                    className="rounded-xl flex flex-col items-center transition-all"
+                    style={{ padding: '8px 4px', gap: '6px', border: `1px solid ${avClubId === c.id ? T.button : '#ffffff14'}`, background: avClubId === c.id ? `${T.button}18` : 'transparent' }}>
+                    <ClubAvatar club={c.name} frame={avFrame} size={36} />
+                    <span className="text-[8px] font-bold uppercase tracking-wider truncate w-full text-center" style={{ color: avClubId === c.id ? T.text : T.textDim }}>
+                      {c.name}{c.id === avatar.ownClubId ? ' ★' : ''}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <button onClick={saveAvatar} disabled={avatarSaving}
+                className={"w-full text-sm font-black uppercase tracking-widest rounded-full transition-all disabled:opacity-50" + shimmer}
+                style={{ color: T.buttonText, background: T.button, padding: '14px', boxShadow: T.glow }}>
+                {avatarSaving ? 'Saving…' : 'Save avatar'}
+              </button>
+              <p className="text-[10px] text-center" style={{ color: T.textDim, marginTop: '10px' }}>★ is your registered club</p>
+            </div>
+          </div>
+        </div>
+      )}
       {view === 'lineup' && <PageGuide pageKey="team" steps={TEAM_GUIDE} accent={T.accent} textColor={T.text} />}
       {view === 'collection' && (
         <PageGuide pageKey="team-collection" accent={T.accent} textColor={T.text} steps={[
