@@ -154,6 +154,21 @@ function SoftballSwatch({ colors, seam, selected, ringColor }: {
   )
 }
 
+/* Three wisps behind the Textured label — grey at rest, neon when the
+   textured variant is on. Purely decorative; the label carries the meaning. */
+function Wisps({ on }: { on: boolean }) {
+  const c = on ? ['#FF2E97', '#39FF6A', '#00F0FF'] : ['#ffffff45', '#ffffff35', '#ffffff45']
+  return (
+    <svg viewBox="0 0 140 40" preserveAspectRatio="none" aria-hidden="true"
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      style={{ filter: on ? 'drop-shadow(0 0 3px #ffffff80)' : 'none', opacity: on ? 1 : 0.7 }}>
+      <path d="M-5 30 C 30 8, 60 34, 145 10" fill="none" stroke={c[0]} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M-5 20 C 40 38, 80 2, 145 24" fill="none" stroke={c[1]} strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M-5 9 C 35 26, 90 14, 145 34" fill="none" stroke={c[2]} strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export default function TeamClient({ teamName, clubName, avatar, clubs, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen, thisRoundPoints, lastRoundPoints, thisRoundLabel, lastRoundLabel, cardStyle, doubledIds = [], initialCaptainId = null, initialViceCaptainId = null, notices = [], earned = {}, earnedLabel = null }: {
   teamName: string
   clubName: string
@@ -746,15 +761,36 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
           <p className="text-sm mb-5" style={{ color: textured ? T.text : T.textDim, textShadow: textured ? '0 1px 3px #000000, 0 0 12px #000000C0' : 'none' }}>{clubName} · {cards.length} cards{roundNumber != null ? ` · Round ${roundNumber}` : ''}</p>
           <GradeSwitch grade={grade} mensHref="/team?grade=mens" womensHref="/team?grade=womens" palette={siteTheme !== 'grade' ? T : undefined} onImage={textured} />
 
-          {/* Site theme switcher — softballs */}
-          <div className="flex items-center justify-center gap-3 flex-wrap" style={{ marginTop: '18px', opacity: themeSaving ? 0.5 : 1 }}>
-                        <div className="inline-flex rounded-full overflow-hidden" style={{ border: '1px solid #ffffff40', background: '#141210E6', marginRight: '6px' }}>
+                    {/* Site theme switcher — balls in one row, mode buttons beneath */}
+          <div style={{ marginTop: '22px', opacity: themeSaving ? 0.5 : 1 }}>
+            <div className="flex items-center justify-center" style={{ gap: '14px' }}>
+              {THEME_ORDER.map(k => {
+                const base = siteTheme.replace(/_tx$/, '')
+                const on = base === k
+                const target = textured && TEXTURED_KEYS.includes(k) ? `${k}_tx` : k
+                return (
+                  <button key={k} onClick={() => setSiteTheme(target)} title={THEMES[target].label}
+                    className="transition-all hover:scale-110 shrink-0"
+                    style={{ padding: '4px', filter: on ? `drop-shadow(0 0 6px ${THEMES[k].accent})` : 'none' }}>
+                    <SoftballSwatch
+                      colors={THEMES[k].swatch}
+                      seam={THEMES[k].seam}
+                      selected={on}
+                      ringColor={T.text}
+                    />
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="flex items-center justify-center" style={{ gap: '14px', marginTop: '18px' }}>
               <button onClick={() => setSiteTheme(textured ? 'grade_tx' : 'grade')} title="Classic — colours follow the grade"
-                className="text-[10px] font-black uppercase tracking-widest transition-all"
+                className="text-[11px] font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03]"
                 style={{
-                  padding: '0 16px', height: '32px',
+                  padding: '0 26px', height: '42px', minWidth: '132px',
                   color: siteTheme.replace(/_tx$/, '') === 'grade' ? T.buttonText : T.text,
-                  background: siteTheme.replace(/_tx$/, '') === 'grade' ? T.button : 'transparent',
+                  background: siteTheme.replace(/_tx$/, '') === 'grade' ? T.button : '#141210E6',
+                  boxShadow: siteTheme.replace(/_tx$/, '') === 'grade' ? T.glow : 'inset 0 0 0 1px #ffffff40',
                 }}>
                 Classic
               </button>
@@ -764,34 +800,18 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
                   setSiteTheme(siteTheme.endsWith('_tx') ? base : `${base}_tx`)
                 }}
                 title="Textured — banner image behind the headers"
-                className="text-[10px] font-black uppercase tracking-widest transition-all"
+                className="relative overflow-hidden text-[11px] font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03]"
                 style={{
-                  padding: '0 16px', height: '32px',
-                  color: textured ? T.buttonText : T.text,
-                  background: textured ? T.button : 'transparent',
-                  borderLeft: '1px solid #ffffff25',
+                  padding: '0 26px', height: '42px', minWidth: '132px',
+                  color: T.text,
+                  background: '#141210E6',
+                  boxShadow: textured ? `inset 0 0 0 1px #ffffff70, 0 0 18px #FF2E9740, 0 0 18px #00F0FF30` : 'inset 0 0 0 1px #ffffff40',
+                  textShadow: textured ? '0 1px 3px #000000' : 'none',
                 }}>
-                Textured
+                <Wisps on={textured} />
+                <span className="relative">Textured</span>
               </button>
             </div>
-            {THEME_ORDER.map(k => {
-              const base = siteTheme.replace(/_tx$/, '')
-              const on = base === k
-              const target = textured && TEXTURED_KEYS.includes(k) ? `${k}_tx` : k
-              return (
-                <button key={k} onClick={() => setSiteTheme(target)} title={THEMES[target].label}
-                  className="transition-all hover:scale-110"
-                  style={{ filter: on ? `drop-shadow(0 0 6px ${THEMES[k].accent})` : 'none' }}>
-                  <SoftballSwatch
-                    colors={THEMES[k].swatch}
-                    seam={THEMES[k].seam}
-                    selected={on}
-                    ringColor={T.text}
-                  />
-                </button>
-              )
-            })}
-
           </div>
         </div>
       </div>

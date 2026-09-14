@@ -29,7 +29,8 @@ const clubSlug = (name: string) => name.toLowerCase().replace(/\s+/g, '-')
 
 /* Club crest inside one of three frames. Same crest image and crop as the
    card banner, so a club looks the same everywhere. size is the outer
-   diameter; the frame ring scales with it. */
+   diameter; the frame ring scales with it. A club with no crest file
+   (e.g. Generic) shows the GF mark instead of an empty disc. */
 export default function ClubAvatar({ club, frame = 'gold', size = 44 }: {
   club: string
   frame?: AvatarFrame | string
@@ -44,7 +45,7 @@ export default function ClubAvatar({ club, frame = 'gold', size = 44 }: {
       <span className="block w-full h-full rounded-full overflow-hidden" style={{ background: '#141210' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={`/clubs/${clubSlug(club)}.jpg`} alt={club} className="w-full h-full object-cover"
-          onError={e => { e.currentTarget.style.display = 'none' }} />
+          onError={e => { e.currentTarget.src = '/gf-mark.png'; e.currentTarget.onerror = null }} />
       </span>
     </span>
   )
