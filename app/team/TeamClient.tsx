@@ -215,7 +215,6 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [sortBy, setSortBy] = useState<'tier' | 'ba' | 'points'>('tier')
-  const [t4Code, setT4Code] = useState('')
   const [reveal, setReveal] = useState<{ packName: string; cards: RevealCard[] } | null>(null)
   const [packBusy, setPackBusy] = useState(false)
   const [themeSaving, setThemeSaving] = useState(false)
@@ -306,7 +305,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
     if (themeSaving || next === siteTheme) return
     setThemeSaving(true)
     const r = await fetch('/api/set-theme', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ siteTheme: next }) })
-    if (r.ok) { window.location.reload(); return }
+    if (r.ok) { window.scrollTo({ top: 0 }); router.refresh(); setThemeSaving(false); return }
     setThemeSaving(false)
     alert('Could not save theme')
   }
@@ -456,16 +455,6 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
       // so a stale button doesn't sit there after being told it's already open.
       router.refresh()
     }
-  }
-  async function redeemT4() {
-    if (packBusy) return
-    setPackBusy(true)
-    const r = await fetch('/api/redeem-t4', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: t4Code }) })
-    const data = await r.json()
-    setPackBusy(false)
-    if (r.ok) {
-      setReveal({ packName: 'Bonus Pack', cards: data.cards ?? data.players.map((p: { name: string; tier: string }) => ({ name: p.name, tier: p.tier })) })
-    } else alert(data.error)
   }
   async function claimT3() {
     if (packBusy) return
@@ -816,30 +805,15 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
         </div>
       </div>
 
-      {/* Claimed state + bonus code */}
-      <div className="flex items-center justify-center gap-4 flex-wrap" style={{ margin: '32px 0' }}>
-        {cards.length >= 21 && t3Claimed && (
+      {/* Claimed state */}
+      {cards.length >= 21 && t3Claimed && (
+        <div className="flex justify-center" style={{ margin: '32px 0' }}>
           <span className="text-xs font-black uppercase tracking-widest rounded-full flex items-center"
             style={{ padding: '14px 32px', minHeight: '48px', color: T.textDim, border: '1px solid #ffffff25' }}>
             Weekly Pack Claimed ✓
           </span>
-        )}
-        <div className="inline-flex rounded-full overflow-hidden" style={{ border: '1px solid #ffffff25', minHeight: '48px' }}>
-          <input
-            value={t4Code}
-            onChange={e => setT4Code(e.target.value)}
-            placeholder="Bonus pack code"
-            className="font-bold uppercase tracking-widest outline-none w-44"
-            autoFocus={false}
-            style={{ background: 'transparent', caretColor: T.text, color: T.text, padding: '14px 24px', fontFamily: 'var(--font-label)', fontSize: '16px' }}
-          />
-          <button onClick={redeemT4} disabled={!t4Code.trim()}
-            className={"text-xs font-black uppercase tracking-widest transition-all disabled:opacity-40" + shimmer}
-            style={{ color: T.buttonText, background: T.button, padding: '14px 28px', borderLeft: '1px solid #ffffff15' }}>
-            Redeem
-          </button>
         </div>
-      </div>
+      )}
 
       {!roundOpen && view === 'lineup' && (
         <div className="rounded-xl px-5 py-5 mb-6 text-base font-bold text-center" style={{ background: '#FF6B6B18', border: '2px solid #FF6B6B', color: '#FF9B9B' }}>
