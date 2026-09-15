@@ -1,5 +1,6 @@
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
+import ClubAvatar from '@/components/ClubAvatar'
 import { createClient } from '@/lib/supabase/server'
 
 const COBALT = '#2456E6'
@@ -22,6 +23,25 @@ type Fixture = {
 }
 type Round = { round_number: number; lock_at: string | null; status: string }
 
+/* Who hosts at each ground. Matched on a keyword in the location name so
+   "Simson Reserve" and "Simson Reserve D1" both resolve. */
+const HOSTS: { match: string; club: string; label: string }[] = [
+  { match: 'simson',        club: 'Marist',    label: 'Marist' },
+  { match: 'fowlds',        club: 'United',    label: 'Auckland United' },
+  { match: 'warren freer',  club: 'Ramblers',  label: 'Mt Albert Ramblers' },
+  { match: 'prince edward', club: 'Patriots',  label: 'Papakura Patriots' },
+  { match: 'mana',          club: 'Patriots',  label: 'Papakura Patriots' },
+  { match: 'starling',      club: 'Waitakere', label: 'Waitākere Bears' },
+  { match: 'rosedale',      club: 'NHSA',      label: 'North Harbour Softball' },
+  { match: 'sturges',       club: 'Otahuhu',   label: 'Ōtāhuhu' },
+  { match: 'meadowlands',   club: 'Howick',    label: 'Howick' },
+  { match: 'colin law',     club: 'Pukekohe',  label: 'Pukekohe' },
+]
+const hostOf = (location: string | null) => {
+  const l = (location ?? '').toLowerCase()
+  return HOSTS.find(h => l.includes(h.match)) ?? null
+}
+
 const DAY = new Intl.DateTimeFormat('en-NZ', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Pacific/Auckland' })
 const LOCK = new Intl.DateTimeFormat('en-NZ', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Pacific/Auckland' })
 
@@ -41,6 +61,7 @@ const label = (team: string, club: string | null) =>
 export default async function Fixtures({ searchParams }: { searchParams: Promise<{ grade?: string }> }) {
   const sp = await searchParams
   const grade: 'mens' | 'womens' = sp.grade === 'womens' ? 'womens' : 'mens'
+  const accent = grade === 'mens' ? GOLD : SILVER
 
   const supabase = await createClient()
   const [{ data: fixtures, error: fxError }, { data: rounds }] = await Promise.all([
@@ -59,35 +80,38 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
   const roundNumbers = [...byRound.keys()].sort((a, b) => a - b)
 
   const seg = (active: boolean) => ({
-    color: active ? '#0D0D0F' : '#F5F1E870',
-    background: active ? (grade === 'mens' ? GOLD : SILVER) : 'transparent',
+    color: active ? '#0D0D0F' : '#F5F1E8',
+    background: active ? accent : 'transparent',
     padding: '14px 32px',
+    textShadow: active ? 'none' : '0 1px 3px #000000',
   })
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#0D0D0F' }}>
       <Nav />
 
-      {/* Hero */}
-      <section className="relative px-6 sm:px-12 overflow-hidden" style={{ paddingTop: '70px', paddingBottom: '40px' }}>
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 75% 55% at 50% 0%, #10214D 0%, #0D0D0F 70%)' }} />
+      {/* Hero — the grade's Classic banner behind it */}
+      <section className="relative px-6 sm:px-12 overflow-hidden" style={{ paddingTop: '70px', paddingBottom: '44px' }}>
+        <div className="absolute inset-0" style={{
+          background: `linear-gradient(180deg, #0D0D0FB0 0%, #0D0D0F80 50%, #0D0D0FE6 100%), url(/banner-classic-${grade}.webp) center / cover no-repeat`,
+        }} />
         <div className="relative z-10 text-center" style={{ maxWidth: '740px', marginLeft: 'auto', marginRight: 'auto' }}>
           <a href="/nfs" className="inline-block text-xs font-black uppercase tracking-[0.2em]"
-            style={{ color: SILVER, opacity: 0.75, marginBottom: '18px' }}>
+            style={{ color: SILVER, textShadow: '0 1px 3px #000000', marginBottom: '18px' }}>
             ← Back to the NFSPL
           </a>
-          <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>2026/27 Season</p>
+          <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD, textShadow: '0 1px 3px #000000' }}>2026/27 Season</p>
           <div style={{ background: COBALT, height: '1px', width: '96px', margin: '0 auto 24px' }} />
-          <h1 className="text-4xl sm:text-5xl font-black text-white mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
+          <h1 className="text-4xl sm:text-5xl font-black text-white mb-6" style={{ fontFamily: 'var(--font-heading)', textShadow: '0 2px 8px #000000' }}>
             Fixtures
           </h1>
-          <p className="text-sm text-white/70 leading-relaxed" style={{ maxWidth: '540px', marginLeft: 'auto', marginRight: 'auto', marginBottom: '28px' }}>
+          <p className="text-sm text-white/85 leading-relaxed" style={{ maxWidth: '540px', marginLeft: 'auto', marginRight: 'auto', marginBottom: '28px', textShadow: '0 1px 3px #000000' }}>
             Every round of the NFS Premier League. Lineups lock before the first game of each round —
             the lock time is shown where it&apos;s set.
           </p>
-          <div className="inline-flex rounded-full overflow-hidden" style={{ border: '1px solid #ffffff25' }}>
+          <div className="inline-flex rounded-full overflow-hidden" style={{ border: '1px solid #ffffff40', background: '#0D0D0FCC' }}>
             <a href="/nfs/fixtures?grade=mens" className="text-xs font-black uppercase tracking-widest" style={seg(grade === 'mens')}>Men&apos;s</a>
-            <a href="/nfs/fixtures?grade=womens" className="text-xs font-black uppercase tracking-widest" style={{ ...seg(grade === 'womens'), borderLeft: '1px solid #ffffff15' }}>Women&apos;s</a>
+            <a href="/nfs/fixtures?grade=womens" className="text-xs font-black uppercase tracking-widest" style={{ ...seg(grade === 'womens'), borderLeft: '1px solid #ffffff20' }}>Women&apos;s</a>
           </div>
         </div>
       </section>
@@ -102,15 +126,34 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
             const games = byRound.get(n)!
             const dates = [...new Set(games.map(g => g.played_on))]
             const lock = lockOf.get(n)
-            const accent = grade === 'mens' ? GOLD : SILVER
+            // Host = the ground with the most games this round
+            const tally = new Map<string, number>()
+            for (const g of games) if (g.location) tally.set(g.location, (tally.get(g.location) ?? 0) + 1)
+            const mainGround = [...tally.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+            const host = hostOf(mainGround)
             return (
               <div key={n} className="rounded-xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${accent}30`, marginBottom: '20px' }}>
-                <div className="flex items-baseline justify-between gap-4 flex-wrap" style={{ padding: '14px 20px', borderBottom: '1px solid #ffffff0a' }}>
-                  <span className="text-sm font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>
-                    Round {n} <span className="text-white/45">· {dates.map(fmtDate).join(' · ')}</span>
-                  </span>
+                <div className="flex items-center justify-between gap-4 flex-wrap"
+                  style={{ padding: '12px 20px', borderBottom: '1px solid #ffffff0a', background: `linear-gradient(90deg, ${accent}14 0%, transparent 60%)` }}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    {host && (
+                      host.club === 'NHSA'
+                        ? <ClubAvatar club="Generic" frame="diamond" size={36} />
+                        : <ClubAvatar club={host.club} frame="gold" size={36} />
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+                        Round {n} <span className="text-white/45">· {dates.map(fmtDate).join(' · ')}</span>
+                      </p>
+                      {host && (
+                        <p className="text-[10px] font-black uppercase tracking-[0.22em]" style={{ color: accent, marginTop: '2px' }}>
+                          Hosted by {host.label}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                   {lock?.lock_at && (
-                    <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: accent }}>
+                    <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: accent }}>
                       Lineups lock {LOCK.format(new Date(lock.lock_at))}
                     </span>
                   )}
