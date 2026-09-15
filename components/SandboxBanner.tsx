@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
    so it moves on its own and nobody has to remember to change it. */
 
 const CLOSE = new Date(2026, 8, 12)     // 12 September — sandbox ends
-const LAUNCH = new Date(2026, 8, 18)    // 18 September — registration reopens
+const LAUNCH = new Date(2026, 8, 18)    // 20 September — registration reopens
 const FIRST_PITCH = new Date(2026, 8, 26) // 26 September — round one
 
 const daysBetween = (from: Date, to: Date) =>
@@ -41,8 +41,8 @@ export default function SandboxBanner() {
     waiting: {
       eyebrow: 'Sandbox season closed',
       unit: (d: number) => d === 1 ? 'Day until relaunch' : 'Days until relaunch',
-      head: 'The real season is here. 18 September.',
-      body: 'Real 2026/27 rosters, player photos and full career details. Registration opens on the 18th — everyone starts fresh.',
+      head: 'The real season is here. 20 September.',
+      body: 'Real 2026/27 rosters, player photos provided to date and full career details. Registration opens on the 18th — everyone starts fresh.',
     },
     preseason: {
       eyebrow: 'Registration open',
@@ -90,7 +90,7 @@ export default function SandboxBanner() {
             {copy.body}
           </p>
           <p className="leading-relaxed" style={{ color: '#F5E6C8', fontSize: '12px', marginTop: '9px' }}>
-            Registration <b style={{ color: '#FFFFFF' }}>18 Sept</b> ·
+            Registration <b style={{ color: '#FFFFFF' }}>20 Sept</b> ·
             first round <b style={{ color: '#FFFFFF' }}>26 Sept</b> ·
             first scores <b style={{ color: '#FFFFFF' }}>29 Sept</b>
           </p>

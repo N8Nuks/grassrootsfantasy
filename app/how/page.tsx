@@ -187,6 +187,10 @@ const groups = [
         q: 'How do I get my competition on Grassroots Fantasy?',
         a: 'Get in touch — every edition starts with a conversation with the competition it covers. Email info@grassrootsfantasy.co.nz.',
       },
+      {
+        q: 'Why doesn\u2019t every card have a photo?',
+        a: 'Player choice. Some athletes have opted not to have a photo on their card — it scores exactly the same either way. Other photos will be added through the season as players and clubs send them in. So a card without one today may have one tomorrow.',
+      },
     ],
   },
   {

@@ -13,7 +13,7 @@ export default function Locked() {
           carries over — everyone signs up again and claims their team name fresh.
         </p>
         <p className="cl-body">
-          Registration reopens <b>18 September</b>.
+          Registration reopens <b>20 September</b>.
         </p>
         <a className="cl-btn" href="/games">
           <span>The arcade is still open</span>

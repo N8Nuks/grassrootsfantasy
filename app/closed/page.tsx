@@ -15,7 +15,7 @@ export default function Closed() {
           player photos and career records.
         </p>
         <p className="cl-body">
-          Registration reopens <b>18 September</b>, first round <b>26 September</b>.
+          Registration reopens <b>20 September</b>, first round <b>26 September</b>.
         </p>
         <a className="cl-btn" href="/games">
           <span>The arcade is still open</span>

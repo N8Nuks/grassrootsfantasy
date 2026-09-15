@@ -10,7 +10,7 @@ type PackQueueItem = { grade: 'mens' | 'womens'; cards: RevealCard[]; packName?:
 type Club = { id: string; code: string; name: string }
 
 /* Closed between the sandbox ending and the real season loading. Set to false on
-   18 September once the rosters are in and the packs are ready to deal. */
+   20 September once the rosters are in and the packs are ready to deal. */
 const REGISTRATION_CLOSED = true
 
 /* The proxy already gates this page; this is the page's own closed state, which
@@ -180,12 +180,12 @@ export default function Register() {
           <div className="relative z-10 text-center" style={{ maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>
             <p className="text-xs font-black uppercase tracking-[0.3em] mb-4" style={{ color: '#E8983A' }}>Closed for the changeover</p>
             <h1 className="text-3xl sm:text-4xl font-black text-[#F5F1E8]" style={{ fontFamily: 'var(--font-heading)', marginBottom: '18px' }}>
-              Back on 18 September.
+              Back on 20 September.
             </h1>
             <p className="text-sm leading-relaxed text-[#F5F1E8]/60" style={{ marginBottom: '26px' }}>
               The sandbox season has closed and we&apos;re loading the real 2026/27
               rosters, with player photos and full career details. Registration reopens
-              on <b style={{ color: '#F5F1E8' }}>18 September</b>, first round is
+              on <b style={{ color: '#F5F1E8' }}>20 September</b>, first round is
               {' '}<b style={{ color: '#F5F1E8' }}>26 September</b>, and the first scores
               lock in on <b style={{ color: '#F5F1E8' }}>29 September</b>.
             </p>
