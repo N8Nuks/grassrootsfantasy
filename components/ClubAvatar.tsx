@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 
 export type AvatarFrame = 'gold' | 'crystal' | 'diamond'
 
@@ -30,7 +31,7 @@ const clubSlug = (name: string) => name.toLowerCase().replace(/\s+/g, '-')
 /* Club crest inside one of three frames. Same crest image and crop as the
    card banner, so a club looks the same everywhere. size is the outer
    diameter; the frame ring scales with it. A club with no crest file
-   (e.g. Generic) shows the GF mark instead of an empty disc. */
+   (e.g. Generic) shows the GF mark on a dark field instead. */
 export default function ClubAvatar({ club, frame = 'gold', size = 44 }: {
   club: string
   frame?: AvatarFrame | string
@@ -38,14 +39,23 @@ export default function ClubAvatar({ club, frame = 'gold', size = 44 }: {
 }) {
   const f = FRAMES[(frame as AvatarFrame)] ?? FRAMES.gold
   const pad = Math.max(2, Math.round(size * 0.07))
+  // Remember which club's crest failed, so switching clubs in the picker retries
+  const [failedFor, setFailedFor] = useState<string | null>(null)
+  const noCrest = failedFor === club
+
   return (
     <span className="relative inline-block shrink-0 rounded-full"
       style={{ width: size, height: size, padding: pad, background: f.bg, boxShadow: f.ring, boxSizing: 'border-box' }}>
       <span className="absolute inset-0 rounded-full pointer-events-none" style={{ boxShadow: f.shine }} />
-      <span className="block w-full h-full rounded-full overflow-hidden" style={{ background: '#141210' }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`/clubs/${clubSlug(club)}.jpg`} alt={club} className="w-full h-full object-cover"
-          onError={e => { e.currentTarget.src = '/gf-mark.png'; e.currentTarget.onerror = null }} />
+      <span className="flex items-center justify-center w-full h-full rounded-full overflow-hidden" style={{ background: '#141210' }}>
+        {noCrest ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src="/gf-mark.png" alt="Grassroots Fantasy" style={{ width: '62%', height: '62%', objectFit: 'contain' }} />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={club} src={`/clubs/${clubSlug(club)}.jpg`} alt={club} className="w-full h-full object-cover"
+            onError={() => setFailedFor(club)} />
+        )}
       </span>
     </span>
   )

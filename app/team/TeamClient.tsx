@@ -794,8 +794,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
                   padding: '0 26px', height: '42px', minWidth: '132px',
                   color: T.text,
                   background: '#141210E6',
-                  boxShadow: textured ? 'inset 0 0 0 1.5px #E8C15A, 0 0 14px #E8C15A90, 0 0 30px #E8C15A40' : 'inset 0 0 0 1px #ffffff40',
-                  textShadow: textured ? '0 1px 3px #000000' : 'none',
+                  boxShadow: textured ? 'inset 0 0 0 1.5px #E8C15A' : 'inset 0 0 0 1px #ffffff40',
                 }}>
                 <Wisps on={textured} />
                 <span className="relative">Textured</span>
