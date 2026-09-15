@@ -220,6 +220,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
   const [packBusy, setPackBusy] = useState(false)
   const [themeSaving, setThemeSaving] = useState(false)
   const [textured, setTextured] = useState(siteTheme.endsWith('_tx'))
+    useEffect(() => { setTextured(siteTheme.endsWith('_tx')) }, [siteTheme])
   const [avatarOpen, setAvatarOpen] = useState(false)
   const [avatarSaving, setAvatarSaving] = useState(false)
   const [avClubId, setAvClubId] = useState<string | null>(avatar.clubId)
