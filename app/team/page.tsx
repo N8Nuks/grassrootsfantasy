@@ -26,7 +26,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
   ] = await Promise.all([
     // Two foreign keys to clubs now (own club, avatar club) — the hints keep the joins unambiguous
     supabase.from('profiles')
-      .select('team_name, site_theme, club_id, avatar_club_id, avatar_frame, club:clubs!club_id(name), avatar_club:clubs!avatar_club_id(name)')
+      .select('team_name, site_theme, club_id, avatar_club_id, avatar_image, avatar_frame, club:clubs!club_id(name), avatar_club:clubs!avatar_club_id(name)')
       .eq('id', user!.id).single(),
     supabase.from('clubs').select('id, name').order('name'),
     supabase.from('site_settings').select('value').eq('key', 'card_style').maybeSingle(),
@@ -46,7 +46,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
 
   const prof = profile as unknown as {
     team_name: string; site_theme?: string; club_id: string | null
-    avatar_club_id: string | null; avatar_frame: string | null
+    avatar_club_id: string | null; avatar_frame: string | null; avatar_image: string | null
     club: { name: string } | null; avatar_club: { name: string } | null
   } | null
   const siteTheme = prof?.site_theme ?? 'grade'
@@ -167,6 +167,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
             clubId: prof?.avatar_club_id ?? prof?.club_id ?? null,
             clubName: prof?.avatar_club?.name ?? prof?.club?.name ?? '',
             frame: prof?.avatar_frame ?? 'gold',
+            image: prof?.avatar_image ?? null,
             ownClubId: prof?.club_id ?? null,
           }}
           clubs={(clubRows ?? []) as { id: string; name: string }[]}

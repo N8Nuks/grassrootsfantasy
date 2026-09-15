@@ -11,6 +11,7 @@ import PageGuide, { GuideStep } from '@/components/PageGuide'
 import SandboxBanner from '@/components/SandboxBanner'
 import { splitName } from '@/lib/names'
 import ClubAvatar, { AVATAR_FRAMES } from '@/components/ClubAvatar'
+import { AVATAR_IMAGES, avatarLabel } from '@/lib/avatars'
 
 const TEAM_GUIDE: GuideStep[] = [
   {
@@ -172,7 +173,7 @@ function Wisps({ on }: { on: boolean }) {
 export default function TeamClient({ teamName, clubName, avatar, clubs, cards, initialSlots, grade, siteTheme, unavailableIds, roundNumber, t3Claimed, t2Available, roundOpen, thisRoundPoints, lastRoundPoints, thisRoundLabel, lastRoundLabel, cardStyle, doubledIds = [], initialCaptainId = null, initialViceCaptainId = null, notices = [], earned = {}, earnedLabel = null }: {
   teamName: string
   clubName: string
-  avatar: { clubId: string | null; clubName: string; frame: string; ownClubId: string | null }
+  avatar: { clubId: string | null; clubName: string; frame: string; image: string | null;ownClubId: string | null }
   clubs: { id: string; name: string }[]
   cards: TeamCard[]
   initialSlots: SlotState[]
@@ -223,6 +224,8 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
   const [avatarSaving, setAvatarSaving] = useState(false)
   const [avClubId, setAvClubId] = useState<string | null>(avatar.clubId)
   const [avFrame, setAvFrame] = useState(avatar.frame)
+  const [avImage, setAvImage] = useState<string | null>(avatar.image)
+  const [avTab, setAvTab] = useState<'crest' | 'figure'>(avatar.image ? 'figure' : 'crest')
   const avClubName = clubs.find(c => c.id === avClubId)?.name ?? avatar.clubName
   // ── Lineup self-repair ──
   // A scoring slot can become empty (e.g. a player removed from the competition).
@@ -315,7 +318,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
     setAvatarSaving(true)
     // Own club is stored as null so a future club change follows the profile
     const clubId = avClubId === avatar.ownClubId ? null : avClubId
-    const r = await fetch('/api/set-avatar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clubId, frame: avFrame }) })
+        const r = await fetch('/api/set-avatar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clubId, frame: avFrame, image: avTab === 'figure' ? avImage : null }) })
     setAvatarSaving(false)
     if (r.ok) { setAvatarOpen(false); router.refresh(); return }
     alert('Could not save avatar')
@@ -743,7 +746,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
             style={T.shimmer ? undefined : { color: T.accent }}>My Team</p>
           <div className="flex items-center justify-center" style={{ gap: '16px', marginBottom: '8px' }}>
             <button onClick={() => setAvatarOpen(true)} title="Change avatar" className="transition-transform hover:scale-105 shrink-0">
-              <ClubAvatar club={avClubName} frame={avFrame} size={56} />
+              <ClubAvatar club={avClubName} image={avTab === 'figure' ? avImage : null} frame={avFrame} size={56} />
             </button>
             <h1 className="text-4xl sm:text-5xl font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text, textShadow: textured ? '0 2px 6px #000000A0' : 'none' }}>{teamName}</h1>
           </div>
@@ -1141,7 +1144,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
             </div>
             <div style={{ padding: '22px' }}>
               <div className="flex justify-center" style={{ marginBottom: '22px' }}>
-                <ClubAvatar club={avClubName} frame={avFrame} size={112} />
+                <ClubAvatar club={avClubName} image={avTab === 'figure' ? avImage : null} frame={avFrame} size={112} />
               </div>
 
               <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim, marginBottom: '10px' }}>Frame</p>
@@ -1150,32 +1153,55 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
                   <button key={f.key} onClick={() => setAvFrame(f.key)}
                     className="flex-1 rounded-xl flex flex-col items-center transition-all"
                     style={{ padding: '10px 6px', gap: '8px', border: `1px solid ${avFrame === f.key ? T.button : '#ffffff20'}`, background: avFrame === f.key ? `${T.button}18` : 'transparent' }}>
-                    <ClubAvatar club={avClubName} frame={f.key} size={40} />
+                    <ClubAvatar club={avClubName} image={avTab === 'figure' ? avImage : null} frame={f.key} size={40} />
                     <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: avFrame === f.key ? T.text : T.textDim }}>{f.label}</span>
                   </button>
                 ))}
               </div>
 
-              <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim, marginBottom: '10px' }}>Crest</p>
-              <div className="grid grid-cols-4" style={{ gap: '8px', marginBottom: '22px' }}>
-                {clubs.map(c => (
-                  <button key={c.id} onClick={() => setAvClubId(c.id)} title={c.name}
-                    className="rounded-xl flex flex-col items-center transition-all"
-                    style={{ padding: '8px 4px', gap: '6px', border: `1px solid ${avClubId === c.id ? T.button : '#ffffff14'}`, background: avClubId === c.id ? `${T.button}18` : 'transparent' }}>
-                    <ClubAvatar club={c.name} frame={avFrame} size={36} />
-                    <span className="text-[8px] font-bold uppercase tracking-wider truncate w-full text-center" style={{ color: avClubId === c.id ? T.text : T.textDim }}>
-                      {c.name}{c.id === avatar.ownClubId ? ' ★' : ''}
-                    </span>
+                           <div className="inline-flex rounded-full overflow-hidden" style={{ border: '1px solid #ffffff25', marginBottom: '12px' }}>
+                {(['crest', 'figure'] as const).map((t, i) => (
+                  <button key={t} onClick={() => setAvTab(t)}
+                    className="text-[10px] font-black uppercase tracking-widest transition-all"
+                    style={{ padding: '10px 22px', color: avTab === t ? T.buttonText : T.textDim, background: avTab === t ? T.button : 'transparent', ...(i > 0 ? { borderLeft: '1px solid #ffffff15' } : {}) }}>
+                    {t === 'crest' ? 'Club crest' : 'Figure'}
                   </button>
                 ))}
               </div>
+
+              {avTab === 'crest' ? (
+                <div className="grid grid-cols-4" style={{ gap: '8px', marginBottom: '22px' }}>
+                  {clubs.map(c => (
+                    <button key={c.id} onClick={() => setAvClubId(c.id)} title={c.name}
+                      className="rounded-xl flex flex-col items-center transition-all"
+                      style={{ padding: '8px 4px', gap: '6px', border: `1px solid ${avClubId === c.id ? T.button : '#ffffff14'}`, background: avClubId === c.id ? `${T.button}18` : 'transparent' }}>
+                      <ClubAvatar club={c.name} frame={avFrame} size={36} />
+                      <span className="text-[8px] font-bold uppercase tracking-wider truncate w-full text-center" style={{ color: avClubId === c.id ? T.text : T.textDim }}>
+                        {c.name}{c.id === avatar.ownClubId ? ' ★' : ''}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 overflow-y-auto gf-noscroll" style={{ gap: '8px', marginBottom: '22px', maxHeight: '260px' }}>
+                  {AVATAR_IMAGES.map(img => (
+                    <button key={img} onClick={() => setAvImage(img)} title={avatarLabel(img)}
+                      className="rounded-xl flex items-center justify-center transition-all"
+                      style={{ padding: '8px 4px', border: `1px solid ${avImage === img ? T.button : '#ffffff14'}`, background: avImage === img ? `${T.button}18` : 'transparent' }}>
+                      <ClubAvatar club="" image={img} frame={avFrame} size={44} />
+                    </button>
+                  ))}
+                </div>
+              )}
 
               <button onClick={saveAvatar} disabled={avatarSaving}
                 className={"w-full text-sm font-black uppercase tracking-widest rounded-full transition-all disabled:opacity-50" + shimmer}
                 style={{ color: T.buttonText, background: T.button, padding: '14px', boxShadow: T.glow }}>
                 {avatarSaving ? 'Saving…' : 'Save avatar'}
               </button>
-              <p className="text-[10px] text-center" style={{ color: T.textDim, marginTop: '10px' }}>★ is your registered club</p>
+              <p className="text-[10px] text-center" style={{ color: T.textDim, marginTop: '10px' }}>
+                {avTab === 'crest' ? '★ is your registered club' : 'Pick a figure — your club crest stays on your cards'}
+              </p>
             </div>
           </div>
         </div>
