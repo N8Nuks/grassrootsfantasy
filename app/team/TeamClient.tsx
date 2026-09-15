@@ -751,7 +751,11 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
             </button>
             <h1 className="text-4xl sm:text-5xl font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text, textShadow: textured ? '0 2px 6px #000000A0' : 'none' }}>{teamName}</h1>
           </div>
-          <p className="text-sm mb-5" style={{ color: textured ? T.text : T.textDim, textShadow: textured ? '0 1px 3px #000000, 0 0 12px #000000C0' : 'none' }}>{clubName} · {cards.length} cards{roundNumber != null ? ` · Round ${roundNumber}` : ''}</p>
+          <p className="text-sm mb-5" style={{ color: textured ? T.text : T.textDim, textShadow: textured ? '0 1px 3px #000000, 0 0 12px #000000C0' : 'none' }}>
+            {clubName} · {cards.length} cards{roundNumber != null ? ` · Round ${roundNumber}` : ''}
+            {' · '}
+            <a href="/nfs/fixtures" className="underline underline-offset-2 hover:opacity-80" style={{ color: T.accent }}>Fixtures</a>
+          </p>
           <GradeSwitch grade={grade} mensHref="/team?grade=mens" womensHref="/team?grade=womens" palette={siteTheme !== 'grade' ? T : undefined} onImage={textured} />
 
                     {/* Site theme switcher — balls in one row, mode buttons beneath */}

@@ -77,7 +77,7 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
             ← Back to the NFSPL
           </a>
           <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>2026/27 Season</p>
-          <div className="mx-auto mb-6 h-px w-24" style={{ background: COBALT }} />
+          <div style={{ background: COBALT, height: '1px', width: '96px', margin: '0 auto 24px' }} />
           <h1 className="text-4xl sm:text-5xl font-black text-white mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
             Fixtures
           </h1>
