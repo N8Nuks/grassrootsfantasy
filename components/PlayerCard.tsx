@@ -3,11 +3,11 @@ import { theme, type Grade } from '@/lib/clubhouse'
 import { splitName } from '@/lib/names'
  
 // accent = frame and gradients; ink = the same tier as text, kept legible on busy banners
-export const TIER_META: Record<string, { label: string; accent: string; ink: string }> = {
-  rare_2wp_a: { label: '2WP A', accent: '#FFD700', ink: '#FFD700' },
-  rare_2wp_b: { label: '2WP B', accent: '#E8C15A', ink: '#E8C15A' },
-  elite: { label: 'ELITE', accent: '#1D3FBE', ink: '#5B8CFF' },
-  common: { label: 'COMMON', accent: '#2D9E4E', ink: '#3FBF63' },
+export const TIER_META: Record<string, { label: string; accent: string; ink: string; ghost: string }> = {
+  rare_2wp_a: { label: '2WP A', accent: '#FFD700', ink: '#FFD700', ghost: 'grayscale(1) sepia(1) saturate(4) brightness(1.15)' },
+  rare_2wp_b: { label: '2WP B', accent: '#E8C15A', ink: '#E8C15A', ghost: 'grayscale(1) sepia(1) saturate(3) brightness(1.1)' },
+  elite: { label: 'ELITE', accent: '#1D3FBE', ink: '#5B8CFF', ghost: 'grayscale(1) sepia(1) hue-rotate(190deg) saturate(4) brightness(1.1)' },
+  common: { label: 'COMMON', accent: '#2D9E4E', ink: '#3FBF63', ghost: 'grayscale(1) sepia(1) hue-rotate(80deg) saturate(3) brightness(1.1)' },
 }
 const SLOT_LABELS: Record<string, string> = { B1: '1B', B2: '2B', B3: '3B', PB: 'P(B)' }
 const posLabel = (p: string) => SLOT_LABELS[p] ?? p
@@ -66,7 +66,7 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
   const tint = player.club ? (CLUB_TINTS[player.club] ?? '#E8D5A3') : '#E8D5A3'
   const st = player.stats ?? {}
   const textured = siteTheme === 'neon' || !!siteTheme?.endsWith('_tx')
-  const bandBg = textured ? `linear-gradient(#14121080, #14121080), ${T.headerBg}` : T.headerBg
+  const bandBg = textured ? `linear-gradient(#14121059, #14121059), ${T.headerBg}` : T.headerBg
   const badge = longevityBadge(player.badges)
  
   return (
@@ -137,6 +137,16 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
                 : `linear-gradient(180deg, #ffffff06 0%, ${T.surface} 88%)`,
             }} />
           )}
+          {player.photoUrl && owned && (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={player.photoUrl} alt="" aria-hidden className="absolute pointer-events-none"
+                style={{ bottom: 0, left: '50%', height: '96%', width: 'auto', maxWidth: '92%', objectFit: 'contain', objectPosition: 'bottom', transform: 'translateX(-50%) translateX(-16px)', opacity: 0.16, filter: `${meta.ghost} blur(1px)` }} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={player.photoUrl} alt="" aria-hidden className="absolute pointer-events-none"
+                style={{ bottom: 0, left: '50%', height: '96%', width: 'auto', maxWidth: '92%', objectFit: 'contain', objectPosition: 'bottom', transform: 'translateX(-50%) translateX(-8px)', opacity: 0.32, filter: `${meta.ghost} blur(0.5px)` }} />
+            </>
+          )}
           {player.photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={player.photoUrl} alt={player.name} className="relative"
@@ -144,9 +154,11 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
                 height: '96%',
                 width: 'auto',
                 maxWidth: '92%',
-                objectFit: 'contain',
+               objectFit: 'contain',
                 objectPosition: 'bottom',
-                filter: owned ? 'drop-shadow(0 3px 10px #00000060)' : 'grayscale(1) brightness(0.5)',
+                filter: owned
+                  ? `drop-shadow(0 0 4px ${meta.ink}) drop-shadow(0 0 14px ${meta.ink}66) drop-shadow(1px -1px 0 #FFFFFFA0) drop-shadow(-1px 1px 0 #00000080)`
+                  : 'grayscale(1) brightness(0.5)',
               }} />
           ) : (
             <svg width="54" height="74" viewBox="0 0 60 80" fill="none" className="relative"

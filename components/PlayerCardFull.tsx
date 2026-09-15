@@ -3,11 +3,11 @@ import { useState } from 'react'
 import { theme, type Grade } from '@/lib/clubhouse'
 import { splitName } from '@/lib/names'
 
-const TIER_META: Record<string, { label: string; accent: string; ink: string }> = {
-  rare_2wp_a: { label: '2WP A', accent: '#FFD700', ink: '#FFD700' },
-  rare_2wp_b: { label: '2WP B', accent: '#E8C15A', ink: '#E8C15A' },
-  elite: { label: 'ELITE', accent: '#1D3FBE', ink: '#5B8CFF' },
-  common: { label: 'COMMON', accent: '#2D9E4E', ink: '#3FBF63' },
+const TIER_META: Record<string, { label: string; accent: string; ink: string; ghost: string }> = {
+  rare_2wp_a: { label: '2WP A', accent: '#FFD700', ink: '#FFD700', ghost: 'grayscale(1) sepia(1) saturate(4) brightness(1.15)' },
+  rare_2wp_b: { label: '2WP B', accent: '#E8C15A', ink: '#E8C15A', ghost: 'grayscale(1) sepia(1) saturate(3) brightness(1.1)' },
+  elite: { label: 'ELITE', accent: '#1D3FBE', ink: '#5B8CFF', ghost: 'grayscale(1) sepia(1) hue-rotate(190deg) saturate(4) brightness(1.1)' },
+  common: { label: 'COMMON', accent: '#2D9E4E', ink: '#3FBF63', ghost: 'grayscale(1) sepia(1) hue-rotate(80deg) saturate(3) brightness(1.1)' },
 }
 const SLOT_LABELS: Record<string, string> = { B1: '1B', B2: '2B', B3: '3B', PB: 'P(B)' }
 const posLabel = (p: string) => SLOT_LABELS[p] ?? p
@@ -101,7 +101,7 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
   const tint = CLUB_TINTS[player.club] ?? '#E8D5A3'
   const st = player.stats ?? {}
   const textured = siteTheme === 'neon' || !!siteTheme?.endsWith('_tx')
-  const bandBg = textured ? `linear-gradient(#14121080, #14121080), ${T.headerBg}` : T.headerBg
+  const bandBg = textured ? `linear-gradient(#14121059, #14121059), ${T.headerBg}` : T.headerBg
   const isPitcher = (st.season_ip ?? 0) > 0 || (st.career_ip ?? 0) > 0
 
   /* Three faces on two physical sides. Rotation only ever increases, so the
@@ -258,13 +258,25 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
                 : `linear-gradient(180deg, #ffffff08 0%, ${T.surface} 85%)`,
             }} />
           )}
+          {player.photoUrl && owned && (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={player.photoUrl} alt="" aria-hidden className="absolute pointer-events-none"
+                style={{ bottom: 0, left: '50%', height: '92%', width: 'auto', maxWidth: '94%', objectFit: 'contain', objectPosition: 'bottom', transform: 'translateX(-50%) translateX(-28px)', opacity: 0.16, filter: `${meta.ghost} blur(1.2px)` }} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={player.photoUrl} alt="" aria-hidden className="absolute pointer-events-none"
+                style={{ bottom: 0, left: '50%', height: '92%', width: 'auto', maxWidth: '94%', objectFit: 'contain', objectPosition: 'bottom', transform: 'translateX(-50%) translateX(-14px)', opacity: 0.32, filter: `${meta.ghost} blur(0.6px)` }} />
+            </>
+          )}
           {player.photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={player.photoUrl} alt={player.name} className="relative"
               style={{
                 height: '92%', width: 'auto', maxWidth: '94%',
                 objectFit: 'contain', objectPosition: 'bottom',
-                filter: owned ? 'drop-shadow(0 6px 18px #00000070)' : 'grayscale(1) brightness(0.5)',
+                filter: owned
+                  ? `drop-shadow(0 0 6px ${meta.ink}) drop-shadow(0 0 22px ${meta.ink}66) drop-shadow(1px -1px 0 #FFFFFFB0) drop-shadow(-1px 1px 0 #00000080)`
+                  : 'grayscale(1) brightness(0.5)',
               }} />
           ) : (
             <svg width="46%" viewBox="0 0 60 80" fill="none" className="relative"
