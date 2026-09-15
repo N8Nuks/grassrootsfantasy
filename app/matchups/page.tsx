@@ -7,6 +7,7 @@ import PageGuide from '@/components/PageGuide'
 import FactsTicker from '@/components/FactsTicker'
 import { doubledInRound } from '@/lib/achievements'
 import { splitName } from '@/lib/names'
+import ClubAvatar from '@/components/ClubAvatar'
 
 const SLOT_ORDER = ['P', 'C', 'B1', 'B2', 'B3', 'SS', 'LF', 'CF', 'RF', 'DP', 'PB', 'DR',
   'BENCH1', 'BENCH2', 'BENCH3', 'BENCH4']
@@ -119,7 +120,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
     supabase.from('rounds').select('id, round_number, lock_at')
       .eq('grade', grade).lte('lock_at', new Date().toISOString())
       .order('round_number', { ascending: false }).limit(1).maybeSingle(),
-    supabase.from('public_teams').select('id, team_name'),
+        supabase.from('public_teams').select('id, team_name, avatar_image, avatar_frame, club:clubs!club_id(name), avatar_club:clubs!avatar_club_id(name)'),
     // The live round, locked or not — used to explain why an open round isn't shown yet
     supabase.from('rounds').select('round_number, status')
       .eq('grade', grade).order('round_number', { ascending: false }).limit(1).maybeSingle(),
@@ -214,8 +215,13 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
     }
   }
 
-  const nameOf = (id: string) =>
-    (teams ?? []).find(t => t.id === id)?.team_name ?? 'Unknown team'
+  type TeamRow = { id: string; team_name: string; avatar_image: string | null; avatar_frame: string | null; club: { name: string } | null; avatar_club: { name: string } | null }
+  const teamRows = (teams ?? []) as unknown as TeamRow[]
+  const nameOf = (id: string) => teamRows.find(t => t.id === id)?.team_name ?? 'Unknown team'
+  const avatarOf = (id: string) => {
+    const t = teamRows.find(t => t.id === id)
+    return { club: t?.avatar_club?.name ?? t?.club?.name ?? '', image: t?.avatar_image ?? null, frame: t?.avatar_frame ?? 'gold' }
+  }
   const scored = myMatchup?.score_a != null && myMatchup?.score_b != null
   const aWins = scored && Number(myMatchup!.score_a) > Number(myMatchup!.score_b)
   const bWins = scored && Number(myMatchup!.score_b) > Number(myMatchup!.score_a)
@@ -267,6 +273,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
                 style={{ background: `linear-gradient(180deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`, border: `3px solid ${T.button}` }}>
                 <div className="relative z-10 flex flex-col gap-3 sm:grid sm:grid-cols-3 items-center" style={{ padding: '32px 24px' }}>
                   <div className="text-center" style={{ opacity: scored && !aWins ? 0.55 : 1 }}>
+                    <div className="flex justify-center" style={{ marginBottom: '10px' }}><ClubAvatar {...avatarOf(myMatchup.user_a)} size={56} /></div>
                     <p className="text-lg sm:text-2xl font-black truncate px-2" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{nameOf(myMatchup.user_a)}</p>
                     <p className="text-[10px] uppercase tracking-widest mt-1" style={{ color: T.textDim }}>Season: {seasonTotals.get(myMatchup.user_a) ?? 0} pts</p>
                     {aWins && <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-1" style={{ color: '#3FBF63' }}>Winner</p>}
@@ -279,6 +286,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
                     {!scored && <p className="text-[10px] uppercase tracking-[0.3em] mt-1" style={{ color: T.textDim }}>locks in — good luck</p>}
                   </div>
                   <div className="text-center" style={{ opacity: scored && !bWins ? 0.55 : 1 }}>
+                    <div className="flex justify-center" style={{ marginBottom: '10px' }}><ClubAvatar {...avatarOf(myMatchup.user_b)} size={56} /></div>
                     <p className="text-lg sm:text-2xl font-black truncate px-2" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{nameOf(myMatchup.user_b)}</p>
                     <p className="text-[10px] uppercase tracking-widest mt-1" style={{ color: T.textDim }}>Season: {seasonTotals.get(myMatchup.user_b) ?? 0} pts</p>
                     {bWins && <p className="text-[10px] font-black uppercase tracking-[0.3em] mt-1" style={{ color: '#3FBF63' }}>Winner</p>}

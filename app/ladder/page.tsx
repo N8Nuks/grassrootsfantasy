@@ -6,6 +6,7 @@ import GradeSwitch from '@/components/GradeSwitch'
 import PageGuide from '@/components/PageGuide'
 import FactsTicker from '@/components/FactsTicker'
 import PresentedBy from '@/components/PresentedBy'
+import ClubAvatar from '@/components/ClubAvatar'
 
 export default async function Ladder({ searchParams }: { searchParams: Promise<{ grade?: string; view?: string }> }) {
   const params = await searchParams
@@ -20,7 +21,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
     user
       ? supabase.from('profiles').select('site_theme').eq('id', user.id).single()
       : Promise.resolve({ data: null }),
-    supabase.from('public_teams').select('id, team_name, is_house, clubs(name)'),
+    supabase.from('public_teams').select('id, team_name, is_house, avatar_image, avatar_frame, club:clubs!club_id(name), avatar_club:clubs!avatar_club_id(name)'),
     view === 'h2h'
       ? supabase.from('matchups').select('user_a, user_b, points_a, points_b, score_a, score_b')
           .eq('grade', grade).not('points_a', 'is', null)
@@ -44,11 +45,20 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
     : { data: null }
   const hi = (hiRows as { points: number; team_name: string; round_number: number; is_new: boolean }[] | null)?.[0] ?? null
 
-  type TeamRow = { id: string; team_name: string; is_house: boolean | null; clubs: { name: string } | null }
+  type TeamRow = {
+    id: string; team_name: string; is_house: boolean | null
+    avatar_image: string | null; avatar_frame: string | null
+    club: { name: string } | null; avatar_club: { name: string } | null
+  }
   const teamRows = (teams ?? []) as unknown as TeamRow[]
   const teamById = new Map(teamRows.map(t => [t.id, t]))
   const nameOf = (id: string) => teamById.get(id)?.team_name ?? 'Unknown team'
-  const clubOf = (id: string) => teamById.get(id)?.clubs?.name ?? ''
+  const clubOf = (id: string) => teamById.get(id)?.club?.name ?? ''
+  // Avatar as the manager set it: figure if chosen, else the avatar club's crest, else their own club's
+  const avatarOf = (id: string) => {
+    const t = teamById.get(id)
+    return { club: t?.avatar_club?.name ?? t?.club?.name ?? '', image: t?.avatar_image ?? null, frame: t?.avatar_frame ?? 'gold' }
+  }
   // GF House fills odd matchup slots — it plays, but it never ranks
   const isHouse = (id: string) => teamById.get(id)?.is_house === true
 
@@ -124,7 +134,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
     const clubs = new Map<string, ClubAgg>()
     for (const t of teamRows) {
       if (t.is_house === true) continue
-      const club = t.clubs?.name
+      const club = t.club?.name
       if (!club) continue
       const agg = clubs.get(club) ?? { users: 0, total: 0 }
       agg.users += 1
@@ -315,6 +325,9 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
                     }}>
                     <span className={"w-9 text-sm font-black shrink-0" + (T.shimmer && !row.unranked && rankNum <= 3 ? ' gf-shimmer-text' : '')}
                       style={T.shimmer && !row.unranked && rankNum <= 3 ? undefined : { color: !row.unranked && rankNum <= 3 ? T.accent : T.textDim }}>{rankLabel}</span>
+                    {view === 'clubs'
+                      ? <ClubAvatar club={row.team} frame="gold" size={32} />
+                      : <ClubAvatar {...avatarOf(row.id)} size={32} />}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-black truncate" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{row.team}</p>
                       <p className="text-[10px]" style={{ color: T.textDim }}>{row.club}{row.unranked ? ' · needs 5 to rank' : ''}</p>
@@ -334,6 +347,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
                   <div className="flex items-center gap-4"
                     style={{ background: T.accentSoft, borderTop: `1px solid ${T.accent}30`, padding: '16px 28px' }}>
                     <span className="w-9 text-sm font-black shrink-0" style={{ color: T.accent }}>{pinned.rank}</span>
+                    <ClubAvatar {...avatarOf(pinned.row.id)} size={32} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-black truncate" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{pinned.row.team}</p>
                       <p className="text-[10px]" style={{ color: T.accent }}>Your team</p>
