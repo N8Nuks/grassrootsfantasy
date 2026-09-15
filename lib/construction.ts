@@ -2,7 +2,7 @@
 
    One list rather than a flag per page — closing five areas by editing five
    files is how one gets missed. Delete a path from here and that page opens
-   again; nothing else to change. On the 18th, empty both arrays. */
+   again; nothing else to change. On the 20th, empty both arrays. */
 
 export const UNDER_CONSTRUCTION = [
   '/team',
@@ -49,6 +49,6 @@ export const isClosedGame = (path: string) =>
 
    Not real security — it's a soft gate so one person can register while
    everyone else sees the closed notice. Change the value, and delete this
-   whole block on the 18th when the pages reopen. */
+   whole block on the 20th when the pages reopen. */
 export const BYPASS_KEY = 'Fantasy1'
 export const BYPASS_COOKIE = 'gf_changeover'
