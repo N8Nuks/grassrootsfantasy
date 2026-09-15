@@ -66,7 +66,7 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
   const tint = player.club ? (CLUB_TINTS[player.club] ?? '#E8D5A3') : '#E8D5A3'
   const st = player.stats ?? {}
   const textured = siteTheme === 'neon' || !!siteTheme?.endsWith('_tx')
-  const bandBg = textured ? `linear-gradient(#14121099, #14121099), ${T.headerBg}` : T.headerBg
+  const bandBg = textured ? `linear-gradient(#14121080, #14121080), ${T.headerBg}` : T.headerBg
   const badge = longevityBadge(player.badges)
  
   return (

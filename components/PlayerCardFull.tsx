@@ -101,7 +101,7 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
   const tint = CLUB_TINTS[player.club] ?? '#E8D5A3'
   const st = player.stats ?? {}
   const textured = siteTheme === 'neon' || !!siteTheme?.endsWith('_tx')
-  const bandBg = textured ? `linear-gradient(#14121099, #14121099), ${T.headerBg}` : T.headerBg
+  const bandBg = textured ? `linear-gradient(#14121080, #14121080), ${T.headerBg}` : T.headerBg
   const isPitcher = (st.season_ip ?? 0) > 0 || (st.career_ip ?? 0) > 0
 
   /* Three faces on two physical sides. Rotation only ever increases, so the
