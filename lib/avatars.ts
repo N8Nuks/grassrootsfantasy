@@ -12,6 +12,8 @@ export const AVATAR_IMAGES = [
   'fielder-red-grass.png', 'fielder-blue-sunset.png', 'fielder-maroon-dirt.png', 'fielder-sand-lights.png', 'fielder-slate-chalk.png',
   'fielder-male-charcoal-chalk.png', 'fielder-male-crimson-bands.png', 'fielder-male-navy-dirt.png', 'fielder-male-teal-sunset.png',
   'slide-red-lights.png', 'slide-blue-halo.png', 'slide-green-dirt.png', 'slide-gold-chalk.png',
+  'slide-12-magenta-lightning.png', 'slide-12-purple-gold-spark.png', 'slide-12-red-lights.png', 'slide-12-sunset-gradient.png',
+  'slide-12-blue-halo.png', 'slide-12-gold-chalk.png', 'slide-12-green.png', 'slide-12-lime-sunburst.png',
 ] as const
 
 export const isAvatarImage = (s: unknown): s is string =>
