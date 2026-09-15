@@ -43,7 +43,7 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
   const grade: 'mens' | 'womens' = sp.grade === 'womens' ? 'womens' : 'mens'
 
   const supabase = await createClient()
-  const [{ data: fixtures }, { data: rounds }] = await Promise.all([
+  const [{ data: fixtures, error: fxError }, { data: rounds }] = await Promise.all([
     supabase.from('fixtures')
       .select('id, grade, round_number, played_on, start_time, team_a, team_b, club_a, club_b, location, venue, section')
       .eq('grade', grade)
@@ -96,7 +96,7 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
       <section className="px-6 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: '36px', paddingBottom: '48px' }}>
         <div style={{ maxWidth: '760px', marginLeft: 'auto', marginRight: 'auto' }}>
           {roundNumbers.length === 0 && (
-            <p className="text-sm text-center text-white/55">No fixtures loaded for this grade yet.</p>
+            <p className="text-sm text-center text-white/55">No fixtures loaded for this grade yet.{fxError ? ` (${fxError.message})` : ''}</p>
           )}
           {roundNumbers.map(n => {
             const games = byRound.get(n)!
