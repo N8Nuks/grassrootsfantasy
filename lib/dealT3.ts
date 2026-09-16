@@ -82,7 +82,7 @@ export function toDealtCards(picks: Player[]): DealtCard[] {
 export async function loadPoolAndCirculation(admin: SupabaseClient, grade: 'mens' | 'womens') {
   const [{ data: pool, error }, { data: allCards }] = await Promise.all([
     admin.from('players')
-      .select('id, full_name, tier, positions, stats, photo_url, playing_number, badges, speed_star, reveal_pos, clubs(name)')
+      .select('id, full_name, tier, positions, stats, photo_url, playing_number, badges, speed_star, reveal_pos, deal_weight, clubs(name)')
       .eq('grade', grade).eq('active', true).or('is_under18.eq.false,has_consent.eq.true'),
     admin.from('cards').select('player_id').eq('grade', grade),
   ])

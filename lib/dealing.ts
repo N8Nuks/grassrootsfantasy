@@ -11,6 +11,7 @@ type Player = {
   speed_star?: boolean | null
   playing_number?: number | null
   reveal_pos?: string | null
+  deal_weight?: number | null
   clubs?: { name: string } | null
 }
 type Grade = 'mens' | 'womens'
@@ -53,11 +54,19 @@ export function assignLineup(cards: Player[]): Map<string, Player> | null {
   return assigned
 }
 
-function sample<T>(arr: T[], n: number): T[] {
+// Weighted draw without replacement. deal_weight 1 = normal; 0.3 = a fringe
+// player three times less likely per draw; 0 = never. Missing = 1.
+function sample<T extends { deal_weight?: number | null }>(arr: T[], n: number): T[] {
   const copy = [...arr]
   const out: T[] = []
   while (out.length < n && copy.length > 0) {
-    out.push(copy.splice(Math.floor(Math.random() * copy.length), 1)[0])
+    const weights = copy.map(p => Math.max(0, Number(p.deal_weight ?? 1)))
+    const total = weights.reduce((a, b) => a + b, 0)
+    if (total <= 0) break
+    let r = Math.random() * total
+    let i = 0
+    for (; i < copy.length; i++) { r -= weights[i]; if (r <= 0) break }
+    out.push(copy.splice(Math.min(i, copy.length - 1), 1)[0])
   }
   return out
 }
@@ -110,7 +119,7 @@ export async function dealAndPersistT1(admin: SupabaseClient, userId: string, gr
 
   // Under-18 players never enter the pool, whatever `active` says.
   const { data: pool, error: poolError } = await admin.from('players')
-    .select('id, full_name, tier, positions, stats, photo_url, playing_number, badges, speed_star, reveal_pos, clubs(name)')
+    .select('id, full_name, tier, positions, stats, photo_url, playing_number, badges, speed_star, reveal_pos, deal_weight, clubs(name)')
     .eq('grade', grade).eq('active', true).or('is_under18.eq.false,has_consent.eq.true')
   if (poolError || !pool || pool.length === 0) {
     // roll back the claim so the user can try again

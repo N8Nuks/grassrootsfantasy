@@ -54,7 +54,7 @@ export async function POST(request: Request) {
   const ownedIds = new Set((owned ?? []).map(c => c.player_id))
 
   const { data: pool, error } = await admin.from('players')
-    .select('id, full_name, tier, positions, stats, photo_url, playing_number, badges, speed_star, clubs(name)')
+    .select('id, full_name, tier, positions, stats, photo_url, playing_number, badges, speed_star, reveal_pos, deal_weight, clubs(name)')
     .eq('grade', grade).eq('active', true).or('is_under18.eq.false,has_consent.eq.true')
   if (error || !pool) return NextResponse.json({ error: 'Player pool unavailable' }, { status: 500 })
 
