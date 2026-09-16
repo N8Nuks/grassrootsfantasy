@@ -368,7 +368,7 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
             <div className="flex items-center justify-between gap-2" style={{ marginTop: '3px' }}>
               <Dots active="front" />
               <div className="flex items-center gap-2">
-                <p className="text-[7px] font-bold uppercase tracking-widest" style={{ color: T.textDim, opacity: 0.7 }}>2023-26 BA &amp; Period Totals</p>
+                <p className="text-[7px] font-bold uppercase tracking-widest" style={{ color: T.textDim, opacity: 0.7 }}>Career · 2004–26</p>
                 {cardStyle === 'premium' && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src="/gf-mark.png" alt="GF" style={{ height: '14px', width: 'auto', opacity: 0.45 }} />
