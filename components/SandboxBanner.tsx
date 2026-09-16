@@ -42,7 +42,7 @@ export default function SandboxBanner() {
       eyebrow: 'Sandbox season closed',
       unit: (d: number) => d === 1 ? 'Day until relaunch' : 'Days until relaunch',
       head: 'The real season is here. 20 September.',
-      body: 'Real 2026/27 rosters, player photos provided to date and full career details. Registration opens on the 18th — everyone starts fresh.',
+      body: 'Real 2026/27 rosters, player photos provided to date and full career details. Registration opens on the 20th — everyone starts fresh.',
     },
     preseason: {
       eyebrow: 'Registration open',
