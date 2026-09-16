@@ -16,6 +16,9 @@ type Player = {
 }
 type Grade = 'mens' | 'womens'
 
+/* The one 2WP A in every starter pack comes from these five per grade.
+   Check against the confirmed Premier lists before each season's deal —
+   a name here that isn't playing makes that pack rarer than intended. */
 const TOP_2WPA: Record<Grade, string[]> = {
   mens: ['Thomas Enoka','Jack Besgrove','Floyd Nola','Traye Wildbore','Liam Twigden'],
   womens: ['Alexia Lacatena','Lauren Heijnsdijk','Kamryn Coleman','Shyah Hale','Tyneesha Houkamau'],
@@ -54,9 +57,10 @@ export function assignLineup(cards: Player[]): Map<string, Player> | null {
   return assigned
 }
 
-// Weighted draw without replacement. deal_weight 1 = normal; 0.3 = a fringe
-// player three times less likely per draw; 0 = never. Missing = 1.
-function sample<T extends { deal_weight?: number | null }>(arr: T[], n: number): T[] {
+/* Weighted draw without replacement. deal_weight 1 = a normal chance;
+   0.3 = a fringe player three times less likely per draw; 0 = never drawn.
+   Missing weight counts as 1, so nothing changes for players never set. */
+export function sample<T extends { deal_weight?: number | null }>(arr: T[], n: number): T[] {
   const copy = [...arr]
   const out: T[] = []
   while (out.length < n && copy.length > 0) {
@@ -65,7 +69,10 @@ function sample<T extends { deal_weight?: number | null }>(arr: T[], n: number):
     if (total <= 0) break
     let r = Math.random() * total
     let i = 0
-    for (; i < copy.length; i++) { r -= weights[i]; if (r <= 0) break }
+    for (; i < copy.length; i++) {
+      r -= weights[i]
+      if (r <= 0) break
+    }
     out.push(copy.splice(Math.min(i, copy.length - 1), 1)[0])
   }
   return out
