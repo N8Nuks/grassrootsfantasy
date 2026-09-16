@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sample } from '@/lib/dealing'
 
 type Player = {
   id: string
@@ -9,20 +10,12 @@ type Player = {
   positions: string[]
   stats?: Record<string, number>
   photo_url?: string | null
+  deal_weight?: number | null
   badges?: string[] | null
   speed_star?: boolean | null
   playing_number?: number | null
   reveal_pos?: string | null
   clubs?: { name: string } | null
-}
-
-function sample<T>(arr: T[], n: number): T[] {
-  const copy = [...arr]
-  const out: T[] = []
-  while (out.length < n && copy.length > 0) {
-    out.push(copy.splice(Math.floor(Math.random() * copy.length), 1)[0])
-  }
-  return out
 }
 
 function dealT2(pool: Player[], ownedPlayerIds: Set<string>): Player[] {

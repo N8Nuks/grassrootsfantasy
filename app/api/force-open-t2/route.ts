@@ -1,16 +1,15 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sample } from '@/lib/dealing'
 
-type Player = { id: string; full_name: string; tier: string; positions: string[]; stats?: Record<string, number> }
-
-function sample<T>(arr: T[], n: number): T[] {
-  const copy = [...arr]
-  const out: T[] = []
-  while (out.length < n && copy.length > 0) {
-    out.push(copy.splice(Math.floor(Math.random() * copy.length), 1)[0])
-  }
-  return out
+type Player = {
+  id: string
+  full_name: string
+  tier: string
+  positions: string[]
+  stats?: Record<string, number>
+  deal_weight?: number | null
 }
 
 function dealT2(pool: Player[], ownedPlayerIds: Set<string>): Player[] {
@@ -54,7 +53,7 @@ export async function POST(request: Request) {
 
   // Under-18 players never enter the pool unless consent is on record
   const { data: pool, error } = await admin.from('players')
-    .select('id, full_name, tier, positions, stats')
+    .select('id, full_name, tier, positions, stats, deal_weight')
     .eq('grade', grade).eq('active', true).or('is_under18.eq.false,has_consent.eq.true')
   if (error || !pool) return NextResponse.json({ error: 'Player pool unavailable' }, { status: 500 })
 

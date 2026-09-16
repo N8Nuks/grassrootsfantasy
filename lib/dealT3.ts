@@ -11,6 +11,7 @@ export type Player = {
   speed_star?: boolean | null
   playing_number?: number | null
   reveal_pos?: string | null
+  deal_weight?: number | null
   clubs?: { name: string } | null
 }
 
@@ -31,8 +32,10 @@ export function weightedPick(pool: Player[], circulation: Map<string, number>, n
   const candidates = [...pool]
   for (let i = 0; i < n && candidates.length > 0; i++) {
     const maxCirc = Math.max(...candidates.map(p => circulation.get(p.id) ?? 0), 1)
-    // weight = (maxCirc + 1) - own circulation  ->  under-dispersed players weigh more
-    const weights = candidates.map(p => (maxCirc + 1) - (circulation.get(p.id) ?? 0))
+    // weight = (maxCirc + 1) - own circulation  ->  under-dispersed players weigh more,
+    // scaled by deal_weight so a fringe player stays rare however few copies are out
+    const weights = candidates.map(p =>
+      ((maxCirc + 1) - (circulation.get(p.id) ?? 0)) * Math.max(0, Number(p.deal_weight ?? 1)))
     const total = weights.reduce((a, b) => a + b, 0)
     let roll = Math.random() * total
     let idx = 0

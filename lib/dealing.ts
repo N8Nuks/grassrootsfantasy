@@ -21,7 +21,7 @@ type Grade = 'mens' | 'womens'
    a name here that isn't playing makes that pack rarer than intended. */
 const TOP_2WPA: Record<Grade, string[]> = {
   mens: ['Thomas Enoka','Jack Besgrove','Floyd Nola','Traye Wildbore','Liam Twigden'],
-  womens: ['Alexia Lacatena','Lauren Heijnsdijk','Kamryn Coleman','Shyah Hale','Tyneesha Houkamau'],
+  womens: ['Cassady Knudsen','Stephanie Texeira','Kamryn Coleman','Shyah Hale','Tyneesha Houkamau'],
 }
 
 const STARTER_SLOTS = ['C','P','PB','SS','B2','B3','B1','LF','CF','RF','DP','DR']

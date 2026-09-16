@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sample as weightedSample } from '@/lib/dealing'
 
 type Player = {
   id: string
@@ -9,15 +10,15 @@ type Player = {
   positions: string[]
   stats?: Record<string, number>
   photo_url?: string | null
+  deal_weight?: number | null
   badges?: string[] | null
   speed_star?: boolean | null
   playing_number?: number | null
   clubs?: { name: string } | null
 }
 
-function sample<T>(arr: T[]): T | null {
-  if (arr.length === 0) return null
-  return arr[Math.floor(Math.random() * arr.length)]
+function sample<T extends { deal_weight?: number | null }>(arr: T[]): T | null {
+  return weightedSample(arr, 1)[0] ?? null
 }
 
 export async function POST(request: Request) {
