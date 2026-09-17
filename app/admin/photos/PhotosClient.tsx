@@ -26,6 +26,24 @@ async function trimTransparent(blob: Blob): Promise<Blob> {
   ctx.drawImage(bitmap, 0, 0)
   const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height)
 
+  /* Shrink an oversized photo before any cut-out work. The AI model runs in the
+   browser and its cost scales with pixels, so a 6000px camera file can take
+   minutes; the card never shows more than ~700px. 1600 on the long edge is
+   well past what the card needs and seconds rather than minutes to process. */
+async function downscale(file: Blob, maxEdge = 1600): Promise<Blob> {
+  const bitmap = await createImageBitmap(blob)
+  const longest = Math.max(bitmap.width, bitmap.height)
+  if (longest <= maxEdge) return file
+  const scale = maxEdge / longest
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.round(bitmap.width * scale)
+  canvas.height = Math.round(bitmap.height * scale)
+  const ctx = canvas.getContext('2d')!
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+  return new Promise(resolve => canvas.toBlob(b => resolve(b!), 'image/png'))
+}
+
   let top = height, bottom = 0, left = width, right = 0
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -47,6 +65,24 @@ async function trimTransparent(blob: Blob): Promise<Blob> {
   out.height = h
   out.getContext('2d')!.drawImage(canvas, left, top, w, h, 0, 0, w, h)
   return new Promise(resolve => out.toBlob(b => resolve(b!), 'image/png'))
+}
+
+/* Shrink an oversized photo before any cut-out work. The AI model runs in the
+   browser and its cost scales with pixels, so a 6000px camera file can take
+   minutes; the card never shows more than ~700px. 1600 on the long edge is
+   well past what the card needs and seconds rather than minutes to process. */
+async function downscale(file: Blob, maxEdge = 1600): Promise<Blob> {
+  const bitmap = await createImageBitmap(file)
+  const longest = Math.max(bitmap.width, bitmap.height)
+  if (longest <= maxEdge) return file
+  const scale = maxEdge / longest
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.round(bitmap.width * scale)
+  canvas.height = Math.round(bitmap.height * scale)
+  const ctx = canvas.getContext('2d')!
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+  return new Promise(resolve => canvas.toBlob(b => resolve(b!), 'image/png'))
 }
 
 // Green-screen keying: near-green pixels go transparent, soft edges at the boundary
@@ -155,17 +191,19 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
     setCutout(null)
     setPreview(null)
     try {
+      setStatus('Preparing the photo…')
+      const source = await downscale(file)
       let removed: Blob
       if (mode === 'green') {
         setStatus('Keying out green…')
-        removed = await chromaKeyGreen(file)
+        removed = await chromaKeyGreen(source)
       } else if (mode === 'dark') {
         setStatus('Keying out the dark background…')
-        removed = await lumaKeyDark(file)
+        removed = await lumaKeyDark(source)
       } else {
         setStatus('Cutting out background… (first run downloads the tool, can take a minute)')
         const { removeBackground } = await import('@imgly/background-removal')
-        removed = await removeBackground(file)
+        removed = await removeBackground(source)
       }
       setStatus('Trimming to fit…')
       const trimmed = await trimTransparent(removed)
