@@ -17,6 +17,7 @@ export async function POST(req: Request) {
   const playerId = form.get('player_id') as string | null
   const playingNumberRaw = (form.get('playing_number') as string | null) ?? ''
   const isUnder18 = (form.get('is_under18') as string | null) === 'true'
+  const revealPosRaw = (form.get('reveal_pos') as string | null) ?? ''
 
   if (!playerId) {
     return NextResponse.json({ error: 'Missing player_id' }, { status: 400 })
@@ -32,6 +33,7 @@ export async function POST(req: Request) {
   const updates: Record<string, unknown> = {
     playing_number: playingNumberRaw === '' ? null : Number(playingNumberRaw),
     is_under18: isUnder18,
+    reveal_pos: revealPosRaw === '' ? null : revealPosRaw,
   }
 
   let photoUpdated = false

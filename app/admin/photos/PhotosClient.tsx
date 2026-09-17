@@ -69,6 +69,34 @@ async function chromaKeyGreen(file: Blob): Promise<Blob> {
   return new Promise(resolve => canvas.toBlob(b => resolve(b!), 'image/png'))
 }
 
+/* Dark-background keying: near-black pixels go transparent, soft edge above it.
+   Use for shots taken on black — it keeps bats, gloves and anything held away
+   from the body, which the AI cut-out drops as "not part of the person". */
+async function lumaKeyDark(file: Blob): Promise<Blob> {
+  const bitmap = await createImageBitmap(file)
+  const canvas = document.createElement('canvas')
+  canvas.width = bitmap.width
+  canvas.height = bitmap.height
+  const ctx = canvas.getContext('2d')!
+  ctx.drawImage(bitmap, 0, 0)
+  const img = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  const d = img.data
+  for (let i = 0; i < d.length; i += 4) {
+    const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]
+    if (lum < 26) d[i + 3] = 0
+    else if (lum < 54) d[i + 3] = Math.round(d[i + 3] * (lum - 26) / 28)
+  }
+  ctx.putImageData(img, 0, 0)
+  return new Promise(resolve => canvas.toBlob(b => resolve(b!), 'image/png'))
+}
+
+const MODES = [
+  ['ai', 'AI cut-out'],
+  ['dark', 'Black background'],
+  ['green', 'Green screen'],
+] as const
+type Mode = typeof MODES[number][0]
+
 export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
   const [grade, setGrade] = useState<'mens' | 'womens'>('mens')
   const [playerId, setPlayerId] = useState('')
@@ -76,7 +104,7 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
   const [cutout, setCutout] = useState<Blob | null>(null)
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
-  const [preCut, setPreCut] = useState(false)
+  const [mode, setMode] = useState<Mode>('ai')
   const [playingNumber, setPlayingNumber] = useState('')
   const [revealPos, setRevealPos] = useState('')
   const [under18, setUnder18] = useState(false)
@@ -128,9 +156,12 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
     setPreview(null)
     try {
       let removed: Blob
-      if (preCut) {
+      if (mode === 'green') {
         setStatus('Keying out green…')
         removed = await chromaKeyGreen(file)
+      } else if (mode === 'dark') {
+        setStatus('Keying out the dark background…')
+        removed = await lumaKeyDark(file)
       } else {
         setStatus('Cutting out background… (first run downloads the tool, can take a minute)')
         const { removeBackground } = await import('@imgly/background-removal')
@@ -264,12 +295,24 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
               {/* Photo panel */}
               <div className="rounded-2xl" style={{ background: P.panel, border: `1px solid ${P.panelEdge}`, padding: '28px', marginBottom: '24px', boxShadow: `0 0 40px ${P.orange}0E` }}>
                 <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: P.orange, marginBottom: '16px' }}>3 · Photo (optional)</p>
-                <label className="flex items-center gap-3 text-xs font-bold cursor-pointer select-none"
-                  style={{ color: P.dim, marginBottom: '16px' }}>
-                  <input type="checkbox" checked={preCut} onChange={e => setPreCut(e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: P.blue }} />
-                  Background already removed (green-screen or transparent image)
-                </label>
+                <p className="text-xs" style={{ color: P.dim, marginBottom: '12px' }}>
+                  AI cut-out reads the person and drops anything held clear of the body — a bat, a glove at full stretch.
+                  Shot on black or green, key the background instead and the whole frame survives.
+                </p>
+                <div className="flex gap-3 flex-wrap" style={{ marginBottom: '18px' }}>
+                  {MODES.map(([k, label]) => (
+                    <button key={k} onClick={() => setMode(k)} disabled={busy}
+                      className="text-[11px] font-black uppercase tracking-widest rounded-full transition-all disabled:opacity-40"
+                      style={{
+                        padding: '11px 22px',
+                        color: mode === k ? P.ink : P.text,
+                        background: mode === k ? P.blue : 'transparent',
+                        border: `1px solid ${mode === k ? P.blue : P.purple + '40'}`,
+                      }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
                 <input type="file" accept="image/*" disabled={busy}
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
                   className="w-full rounded-xl px-4 py-3.5 text-sm disabled:opacity-40" style={field} />
@@ -302,7 +345,7 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
               </div>
             </>
           )}
-          
+
           {/* Bulk numbers — September team confirmations */}
           <div className="rounded-2xl" style={{ background: P.panel, border: `1px solid ${P.panelEdge}`, padding: '28px', marginTop: '48px', boxShadow: `0 0 40px ${P.purple}12` }}>
             <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: P.purple, marginBottom: '8px' }}>Bulk numbers · {grade === 'mens' ? "Men's" : "Women's"}</p>
