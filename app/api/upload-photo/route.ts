@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+const REVEAL_POS = ['P', 'C', 'IF', 'OF']
+
 export async function POST(req: Request) {
   // Admin guard — same pattern as every other admin route
   const supabase = await createClient()
@@ -16,11 +18,14 @@ export async function POST(req: Request) {
   const file = form.get('file') as File | null
   const playerId = form.get('player_id') as string | null
   const playingNumberRaw = (form.get('playing_number') as string | null) ?? ''
-  const isUnder18 = (form.get('is_under18') as string | null) === 'true'
   const revealPosRaw = (form.get('reveal_pos') as string | null) ?? ''
+  const isUnder18 = (form.get('is_under18') as string | null) === 'true'
 
   if (!playerId) {
     return NextResponse.json({ error: 'Missing player_id' }, { status: 400 })
+  }
+  if (revealPosRaw !== '' && !REVEAL_POS.includes(revealPosRaw)) {
+    return NextResponse.json({ error: 'Unknown reveal position' }, { status: 400 })
   }
 
   const admin = createAdminClient()
@@ -32,8 +37,9 @@ export async function POST(req: Request) {
 
   const updates: Record<string, unknown> = {
     playing_number: playingNumberRaw === '' ? null : Number(playingNumberRaw),
-    is_under18: isUnder18,
+    // Empty means "auto" — the reveal works it out from the positions array
     reveal_pos: revealPosRaw === '' ? null : revealPosRaw,
+    is_under18: isUnder18,
   }
 
   let photoUpdated = false
