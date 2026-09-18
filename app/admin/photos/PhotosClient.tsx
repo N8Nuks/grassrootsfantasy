@@ -108,27 +108,10 @@ async function chromaKeyGreen(file: Blob): Promise<Blob> {
 /* Dark-background keying: near-black pixels go transparent, soft edge above it.
    Use for shots taken on black — it keeps bats, gloves and anything held away
    from the body, which the AI cut-out drops as "not part of the person". */
-async function lumaKeyDark(file: Blob): Promise<Blob> {
-  const bitmap = await createImageBitmap(file)
-  const canvas = document.createElement('canvas')
-  canvas.width = bitmap.width
-  canvas.height = bitmap.height
-  const ctx = canvas.getContext('2d')!
-  ctx.drawImage(bitmap, 0, 0)
-  const img = ctx.getImageData(0, 0, canvas.width, canvas.height)
-  const d = img.data
-  for (let i = 0; i < d.length; i += 4) {
-    const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]
-    if (lum < 26) d[i + 3] = 0
-    else if (lum < 54) d[i + 3] = Math.round(d[i + 3] * (lum - 26) / 28)
-  }
-  ctx.putImageData(img, 0, 0)
-  return new Promise(resolve => canvas.toBlob(b => resolve(b!), 'image/png'))
-}
 
 const MODES = [
   ['ai', 'AI cut-out'],
-  ['dark', 'Black background'],
+  ['none', 'Already cut out'],
   ['green', 'Green screen'],
 ] as const
 type Mode = typeof MODES[number][0]
@@ -197,9 +180,9 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
       if (mode === 'green') {
         setStatus('Keying out green…')
         removed = await chromaKeyGreen(source)
-      } else if (mode === 'dark') {
-        setStatus('Keying out the dark background…')
-        removed = await lumaKeyDark(source)
+            } else if (mode === 'none') {
+        setStatus('Using the supplied cut-out as is…')
+        removed = source
       } else {
         setStatus('Cutting out background… (first run downloads the tool, can take a minute)')
         const { removeBackground } = await import('@imgly/background-removal')
