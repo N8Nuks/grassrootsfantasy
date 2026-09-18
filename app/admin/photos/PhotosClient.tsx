@@ -79,7 +79,7 @@ async function lumaKeyDark(file: Blob): Promise<Blob> {
   const img = ctx.getImageData(0, 0, canvas.width, canvas.height)
   const d = img.data
   const W = canvas.width, H = canvas.height
-  const isDark = (i: number) => (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) < 22
+  const isDark = (i: number) => (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) < 14
 
   const seen = new Uint8Array(W * H)
   const stack: number[] = []
@@ -97,6 +97,24 @@ async function lumaKeyDark(file: Blob): Promise<Blob> {
     if (y < H - 1) stack.push(p + W)
   }
   for (let p = 0; p < W * H; p++) if (seen[p]) d[p * 4 + 3] = 0
+  /* A low threshold leaves a dark halo where the black met the subject. Any
+     kept pixel that still touches a removed one is faded in proportion to how
+     dark it is, which softens the edge without biting into the player. */
+  const alpha = new Uint8ClampedArray(W * H)
+  for (let p = 0; p < W * H; p++) alpha[p] = d[p * 4 + 3]
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const p = y * W + x
+      if (!alpha[p]) continue
+      const edge =
+        (x > 0 && seen[p - 1]) || (x < W - 1 && seen[p + 1]) ||
+        (y > 0 && seen[p - W]) || (y < H - 1 && seen[p + W])
+      if (!edge) continue
+      const i = p * 4
+      const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]
+      if (lum < 60) d[i + 3] = Math.round(alpha[p] * (lum / 60))
+    }
+  }
   ctx.putImageData(img, 0, 0)
   return new Promise(resolve => canvas.toBlob(b => resolve(b!), 'image/png'))
 }
