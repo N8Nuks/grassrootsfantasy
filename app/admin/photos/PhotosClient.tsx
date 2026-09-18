@@ -26,24 +26,6 @@ async function trimTransparent(blob: Blob): Promise<Blob> {
   ctx.drawImage(bitmap, 0, 0)
   const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height)
 
-  /* Shrink an oversized photo before any cut-out work. The AI model runs in the
-   browser and its cost scales with pixels, so a 6000px camera file can take
-   minutes; the card never shows more than ~700px. 1600 on the long edge is
-   well past what the card needs and seconds rather than minutes to process. */
-async function downscale(file: Blob, maxEdge = 1600): Promise<Blob> {
-  const bitmap = await createImageBitmap(blob)
-  const longest = Math.max(bitmap.width, bitmap.height)
-  if (longest <= maxEdge) return file
-  const scale = maxEdge / longest
-  const canvas = document.createElement('canvas')
-  canvas.width = Math.round(bitmap.width * scale)
-  canvas.height = Math.round(bitmap.height * scale)
-  const ctx = canvas.getContext('2d')!
-  ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
-  return new Promise(resolve => canvas.toBlob(b => resolve(b!), 'image/png'))
-}
-
   let top = height, bottom = 0, left = width, right = 0
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -69,8 +51,7 @@ async function downscale(file: Blob, maxEdge = 1600): Promise<Blob> {
 
 /* Shrink an oversized photo before any cut-out work. The AI model runs in the
    browser and its cost scales with pixels, so a 6000px camera file can take
-   minutes; the card never shows more than ~700px. 1600 on the long edge is
-   well past what the card needs and seconds rather than minutes to process. */
+   minutes; the card never shows more than ~700px. */
 async function downscale(file: Blob, maxEdge = 1600): Promise<Blob> {
   const bitmap = await createImageBitmap(file)
   const longest = Math.max(bitmap.width, bitmap.height)
@@ -82,6 +63,41 @@ async function downscale(file: Blob, maxEdge = 1600): Promise<Blob> {
   const ctx = canvas.getContext('2d')!
   ctx.imageSmoothingQuality = 'high'
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+  return new Promise(resolve => canvas.toBlob(b => resolve(b!), 'image/png'))
+}
+
+/* Black-background keying: for a cut-out that was saved onto black rather than
+   onto transparency. Floods in from the frame edges, so only background-connected
+   black is removed — a black helmet, glove or shadow inside the subject survives. */
+async function lumaKeyDark(file: Blob): Promise<Blob> {
+  const bitmap = await createImageBitmap(file)
+  const canvas = document.createElement('canvas')
+  canvas.width = bitmap.width
+  canvas.height = bitmap.height
+  const ctx = canvas.getContext('2d')!
+  ctx.drawImage(bitmap, 0, 0)
+  const img = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  const d = img.data
+  const W = canvas.width, H = canvas.height
+  const isDark = (i: number) => (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) < 40
+
+  const seen = new Uint8Array(W * H)
+  const stack: number[] = []
+  for (let x = 0; x < W; x++) { stack.push(x, (H - 1) * W + x) }
+  for (let y = 0; y < H; y++) { stack.push(y * W, y * W + W - 1) }
+  while (stack.length) {
+    const p = stack.pop()!
+    if (seen[p]) continue
+    if (!isDark(p * 4)) continue
+    seen[p] = 1
+    const x = p % W, y = (p / W) | 0
+    if (x > 0) stack.push(p - 1)
+    if (x < W - 1) stack.push(p + 1)
+    if (y > 0) stack.push(p - W)
+    if (y < H - 1) stack.push(p + W)
+  }
+  for (let p = 0; p < W * H; p++) if (seen[p]) d[p * 4 + 3] = 0
+  ctx.putImageData(img, 0, 0)
   return new Promise(resolve => canvas.toBlob(b => resolve(b!), 'image/png'))
 }
 
@@ -105,13 +121,10 @@ async function chromaKeyGreen(file: Blob): Promise<Blob> {
   return new Promise(resolve => canvas.toBlob(b => resolve(b!), 'image/png'))
 }
 
-/* Dark-background keying: near-black pixels go transparent, soft edge above it.
-   Use for shots taken on black — it keeps bats, gloves and anything held away
-   from the body, which the AI cut-out drops as "not part of the person". */
-
 const MODES = [
   ['ai', 'AI cut-out'],
   ['none', 'Already cut out'],
+  ['dark', 'On black'],
   ['green', 'Green screen'],
 ] as const
 type Mode = typeof MODES[number][0]
@@ -180,7 +193,10 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
       if (mode === 'green') {
         setStatus('Keying out green…')
         removed = await chromaKeyGreen(source)
-            } else if (mode === 'none') {
+      } else if (mode === 'dark') {
+        setStatus('Removing the black background…')
+        removed = await lumaKeyDark(source)
+      } else if (mode === 'none') {
         setStatus('Using the supplied cut-out as is…')
         removed = source
       } else {
@@ -215,6 +231,16 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
     setStatus(`✓ Saved for ${data.name}${data.photo ? ' (photo updated)' : ''}`)
     setBusy(false)
   }
+
+  const statusPanel = status ? (
+    <pre className="rounded-xl text-xs leading-relaxed whitespace-pre-wrap" style={{
+      marginTop: '30px', padding: '20px 24px',
+      background: P.ink, border: `1px solid ${status.startsWith('ERROR') ? '#FF6B6B50' : P.blue + '30'}`,
+      color: status.startsWith('ERROR') ? '#FF6B6B' : P.blue,
+    }}>
+      {status}
+    </pre>
+  ) : null
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: P.ink }}>
@@ -316,9 +342,11 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
               {/* Photo panel */}
               <div className="rounded-2xl" style={{ background: P.panel, border: `1px solid ${P.panelEdge}`, padding: '28px', marginBottom: '24px', boxShadow: `0 0 40px ${P.orange}0E` }}>
                 <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: P.orange, marginBottom: '16px' }}>3 · Photo (optional)</p>
-                <p className="text-xs" style={{ color: P.dim, marginBottom: '12px' }}>
-                  AI cut-out reads the person and drops anything held clear of the body — a bat, a glove at full stretch.
-                  Shot on black or green, key the background instead and the whole frame survives.
+                <p className="text-xs leading-relaxed" style={{ color: P.dim, marginBottom: '14px' }}>
+                  <b style={{ color: P.text }}>AI cut-out</b> for an ordinary match photo — it reads the person, and can drop a bat or glove held clear of the body.
+                  <br /><b style={{ color: P.text }}>Already cut out</b> when the file has real transparency — nothing is removed, it just trims to the edges.
+                  <br /><b style={{ color: P.text }}>On black</b> when the cut-out was saved onto black. Dark kit and helmets survive.
+                  <br /><b style={{ color: P.text }}>Green screen</b> for a studio shoot on green.
                 </p>
                 <div className="flex gap-3 flex-wrap" style={{ marginBottom: '18px' }}>
                   {MODES.map(([k, label]) => (
@@ -367,6 +395,9 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
             </>
           )}
 
+          {/* Status — sits with the work it reports on, above the bulk tool */}
+          {statusPanel}
+
           {/* Bulk numbers — September team confirmations */}
           <div className="rounded-2xl" style={{ background: P.panel, border: `1px solid ${P.panelEdge}`, padding: '28px', marginTop: '48px', boxShadow: `0 0 40px ${P.purple}12` }}>
             <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: P.purple, marginBottom: '8px' }}>Bulk numbers · {grade === 'mens' ? "Men's" : "Women's"}</p>
@@ -408,15 +439,6 @@ export default function PhotosClient({ players }: { players: PhotoPlayer[] }) {
               </div>
             )}
           </div>
-          {status && (
-            <pre className="rounded-xl text-xs leading-relaxed whitespace-pre-wrap" style={{
-              marginTop: '30px', padding: '20px 24px',
-              background: P.ink, border: `1px solid ${status.startsWith('ERROR') ? '#FF6B6B50' : P.blue + '30'}`,
-              color: status.startsWith('ERROR') ? '#FF6B6B' : P.blue,
-            }}>
-              {status}
-            </pre>
-          )}
         </div>
       </section>
       <Footer />
