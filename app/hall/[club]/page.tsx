@@ -41,10 +41,10 @@ export default async function ClubHall({ params, searchParams }: {
     )
   }
 
-  // United and Marist doors also include the combined United-Marist Women's roster
+  // United and Marist doors also include the combined Marist United Women's roster
   const clubIds = [club.id]
   if (club.name === 'United' || club.name === 'Marist') {
-    const um = (clubs ?? []).find(c => c.name === 'United-Marist')
+    const um = (clubs ?? []).find(c => c.name === 'Marist United')
     if (um) clubIds.push(um.id)
   }
 

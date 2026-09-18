@@ -22,7 +22,7 @@ const CLUB_COLOURS: Record<string, [string, string]> = {
   Ramblers: ['#C41E3A', '#F5A6B4'],
   Roosters: ['#C8102E', '#F7A9B5'],
   United: ['#E03A3E', '#FFB3B5'],
-  'United-Marist': ['#C8102E', '#2456E6'],
+  'MaristUnited': ['#C8102E', '#2456E6'],
   Waitakere: ['#FFB81C', '#FFE7A8'],
 }
 
