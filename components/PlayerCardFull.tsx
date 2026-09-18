@@ -261,16 +261,16 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
           {player.photoUrl && owned && (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={player.photoUrl} alt="" aria-hidden className="absolute pointer-events-none"
+              <img src={player.photoUrl} alt="" aria-hidden className="absolute pointer-events-none gf-nosave"
                 style={{ bottom: 0, left: '50%', height: '92%', width: 'auto', maxWidth: '94%', objectFit: 'contain', objectPosition: 'bottom', transform: 'translateX(-50%) translateX(-28px)', opacity: 0.16, filter: `${meta.ghost} blur(1.2px)` }} />
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={player.photoUrl} alt="" aria-hidden className="absolute pointer-events-none"
+              <img src={player.photoUrl} alt="" aria-hidden className="absolute pointer-events-none gf-nosave"
                 style={{ bottom: 0, left: '50%', height: '92%', width: 'auto', maxWidth: '94%', objectFit: 'contain', objectPosition: 'bottom', transform: 'translateX(-50%) translateX(-14px)', opacity: 0.32, filter: `${meta.ghost} blur(0.6px)` }} />
             </>
           )}
           {player.photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={player.photoUrl} alt={player.name} className="relative"
+            <img src={player.photoUrl} alt={player.name} className="relative gf-nosave"
               style={{
                 height: '92%', width: 'auto', maxWidth: '94%',
                 objectFit: 'contain', objectPosition: 'bottom',

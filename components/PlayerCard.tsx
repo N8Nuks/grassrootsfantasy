@@ -140,16 +140,16 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
           {player.photoUrl && owned && (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={player.photoUrl} alt="" aria-hidden className="absolute pointer-events-none"
+              <img src={player.photoUrl} alt="" aria-hidden className="absolute pointer-events-none gf-nosave"
                 style={{ bottom: 0, left: '50%', height: '96%', width: 'auto', maxWidth: '92%', objectFit: 'contain', objectPosition: 'bottom', transform: 'translateX(-50%) translateX(-16px)', opacity: 0.16, filter: `${meta.ghost} blur(1px)` }} />
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={player.photoUrl} alt="" aria-hidden className="absolute pointer-events-none"
+              <img src={player.photoUrl} alt="" aria-hidden className="absolute pointer-events-none gf-nosave"
                 style={{ bottom: 0, left: '50%', height: '96%', width: 'auto', maxWidth: '92%', objectFit: 'contain', objectPosition: 'bottom', transform: 'translateX(-50%) translateX(-8px)', opacity: 0.32, filter: `${meta.ghost} blur(0.5px)` }} />
             </>
           )}
           {player.photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={player.photoUrl} alt={player.name} className="relative"
+            <img src={player.photoUrl} alt={player.name} className="relative gf-nosave"
               style={{
                 height: '96%',
                 width: 'auto',
@@ -175,7 +175,7 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
           {badge && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={`/badges/${badge}.png`} alt="" aria-hidden
-              className="absolute pointer-events-none"
+              className="absolute pointer-events-none gf-nosave"
               style={{
                 left: '6px',
                 bottom: '6px',

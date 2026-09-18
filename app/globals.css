@@ -382,3 +382,12 @@ main {
   color: transparent;
   filter: drop-shadow(0 0 18px #BFD4E870) drop-shadow(0 0 40px #7FA8D420);
 }
+/* Player cut-outs: no long-press save sheet, no drag-to-desktop, no right-click.
+   Casual friction only — the file still has to reach the browser to display. */
+.gf-nosave {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
