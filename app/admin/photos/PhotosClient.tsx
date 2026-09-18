@@ -79,7 +79,7 @@ async function lumaKeyDark(file: Blob): Promise<Blob> {
   const img = ctx.getImageData(0, 0, canvas.width, canvas.height)
   const d = img.data
   const W = canvas.width, H = canvas.height
-  const isDark = (i: number) => (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) < 40
+  const isDark = (i: number) => (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) < 22
 
   const seen = new Uint8Array(W * H)
   const stack: number[] = []
