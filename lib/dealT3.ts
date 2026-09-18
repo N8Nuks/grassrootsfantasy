@@ -50,17 +50,31 @@ export function weightedPick(pool: Player[], circulation: Map<string, number>, n
   return picks
 }
 
-/* Pick 2 cards for one owner: ~80% Common / ~20% Elite per slot, never a duplicate
-   of a player they already hold. Pure selection — writes nothing. */
-export function pickTwo(pool: Player[], ownedIds: Set<string>, circulation: Map<string, number>): Player[] {
+/* Three cards for one owner, never a duplicate of a player they already hold.
+   Shape per pack:
+     0.25%  — 2 common + 1 two-way A (any 2WP A in the grade, not just the
+              starter-pack five). The pull of the season.
+     ~49.9% — 2 common + 1 elite
+     ~49.9% — 3 common
+   Falls back to whatever is left if a tier runs dry. */
+export function pickThree(pool: Player[], ownedIds: Set<string>, circulation: Map<string, number>): Player[] {
   const fresh = pool.filter(p => !ownedIds.has(p.id))
   const picks: Player[] = []
-  for (let i = 0; i < 2; i++) {
-    const tier = Math.random() < 0.2 ? 'elite' : 'common'
-    const tierPool = fresh.filter(p => p.tier === tier && !picks.includes(p))
-    const fallback = fresh.filter(p => (p.tier === 'common' || p.tier === 'elite') && !picks.includes(p))
-    const source = tierPool.length > 0 ? tierPool : fallback
-    picks.push(...weightedPick(source, circulation, 1))
+  const take = (tier: string, n: number) => {
+    const from = fresh.filter(p => p.tier === tier && !picks.includes(p))
+    picks.push(...weightedPick(from, circulation, n))
+  }
+
+  const roll = Math.random()
+  const topUp = roll < 0.0025 ? 'rare_2wp_a' : roll < 0.50125 ? 'elite' : null
+
+  take('common', topUp ? 2 : 3)
+  if (topUp) take(topUp, 1)
+
+  // A tier can run dry late in the season — backfill from anything left
+  if (picks.length < 3) {
+    const rest = fresh.filter(p => !picks.includes(p) && (p.tier === 'common' || p.tier === 'elite'))
+    picks.push(...weightedPick(rest, circulation, 3 - picks.length))
   }
   return picks
 }
@@ -134,7 +148,7 @@ export async function autoDealUnclaimed(
   const claimRows: { owner_id: string; grade: string; round_id: string }[] = []
 
   for (const owner of pending) {
-    const picks = pickTwo(pool, ownedBy.get(owner) ?? new Set(), circulation)
+    const picks = pickThree(pool, ownedBy.get(owner) ?? new Set(), circulation)
     if (picks.length === 0) continue
     for (const p of picks) {
       cardRows.push({ owner_id: owner, player_id: p.id, grade, source: 't3' })

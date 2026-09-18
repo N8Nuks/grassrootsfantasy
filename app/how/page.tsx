@@ -148,7 +148,7 @@ const groups = [
       },
       {
         q: 'What if I don\u2019t open my Weekly Pack in time?',
-        a: 'You keep the cards either way. Open it yourself and you get the full reveal, card by card. If the next round starts before you get to it, those two cards are dealt straight into your collection automatically — you just miss the reveal, never the players.',
+        a: 'You keep the cards either way. Open it yourself and you get the full reveal, card by card. If the next round starts before you get to it, those three cards are dealt straight into your collection automatically — you just miss the reveal, never the players.',
       },
       {
         q: 'How does scoring work?',

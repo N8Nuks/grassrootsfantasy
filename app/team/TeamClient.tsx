@@ -20,7 +20,7 @@ const TEAM_GUIDE: GuideStep[] = [
   },
   {
     title: 'Captain and Vice Captain',
-    body: "Tap C to name your Captain — they score 2×. Tap VC for your Vice Captain, who scores 1.5×. Both apply every round, so you have two picks that matter. The multiplier applies to everything, including negatives, so pick with care. Anyone sitting in your reserves earns nothing, armband or not.",
+    body: "Tap C to name your Captain — they score 2×. Tap VC for your Vice Captain, who scores 1.5×. Both apply every round, so you have three picks that matter. The multiplier applies to everything, including negatives, so pick with care. Anyone sitting in your reserves earns nothing, armband or not.",
   },
   {
     title: 'Points and Earned',
@@ -726,7 +726,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
               <button onClick={claimT3}
                 className={"text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] flex items-center gf-pulse" + shimmer}
                 style={{ padding: '16px 34px', minHeight: '52px', color: T.buttonText, background: T.button, boxShadow: T.glow }}>
-                {packBusy ? 'Opening…' : 'Claim Weekly Pack · 2 cards'}
+                {packBusy ? 'Opening…' : 'Claim Weekly Pack · 3 cards'}
               </button>
             )}
           </div>

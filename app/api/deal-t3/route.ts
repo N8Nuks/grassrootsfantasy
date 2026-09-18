@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { pickTwo, toDealtCards, loadPoolAndCirculation } from '@/lib/dealT3'
+import { pickThree, toDealtCards, loadPoolAndCirculation } from '@/lib/dealT3'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   const loaded = await loadPoolAndCirculation(admin, grade)
   if (!loaded) return NextResponse.json({ error: 'Player pool unavailable' }, { status: 500 })
 
-  const picks = pickTwo(loaded.pool, ownedIds, loaded.circulation)
+  const picks = pickThree(loaded.pool, ownedIds, loaded.circulation)
   if (picks.length === 0) return NextResponse.json({ error: 'No cards available' }, { status: 500 })
 
   const { error: insertError } = await admin.from('cards')
