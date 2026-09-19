@@ -20,8 +20,8 @@ type Grade = 'mens' | 'womens'
    Check against the confirmed Premier lists before each season's deal —
    a name here that isn't playing makes that pack rarer than intended. */
 const TOP_2WPA: Record<Grade, string[]> = {
-  mens: ['Thomas Enoka','Jack Besgrove','Floyd Nola','Traye Wildbore','Liam Twigden'],
-  womens: ['Cassady Knudsen','Stephanie Texeira','Kamryn Coleman','Shyah Hale','Tyneesha Houkamau'],
+  mens: ['Thomas Enoka','Jack Besgrove','Floyd Nola','Traye Wildbore','Liam Twigden','Rikaiah Te Wheoro'],
+  womens: ['Cassady Knudsen','Stephanie Texeira','Kamryn Coleman','Shyah Hale','Loran Parker','Carina Hale'],
 }
 
 const STARTER_SLOTS = ['C','P','PB','SS','B2','B3','B1','LF','CF','RF','DP','DR']
