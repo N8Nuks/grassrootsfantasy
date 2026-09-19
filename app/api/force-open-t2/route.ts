@@ -9,6 +9,7 @@ type Player = {
   tier: string
   positions: string[]
   stats?: Record<string, number>
+  photo_url?: string | null
   deal_weight?: number | null
 }
 
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
 
   // Under-18 players never enter the pool unless consent is on record
   const { data: pool, error } = await admin.from('players')
-    .select('id, full_name, tier, positions, stats, deal_weight')
+    .select('id, full_name, tier, positions, stats, photo_url, deal_weight')
     .eq('grade', grade).eq('active', true).or('is_under18.eq.false,has_consent.eq.true')
   if (error || !pool) return NextResponse.json({ error: 'Player pool unavailable' }, { status: 500 })
 

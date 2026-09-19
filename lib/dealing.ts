@@ -60,11 +60,14 @@ export function assignLineup(cards: Player[]): Map<string, Player> | null {
 /* Weighted draw without replacement. deal_weight 1 = a normal chance;
    0.3 = a fringe player three times less likely per draw; 0 = never drawn.
    Missing weight counts as 1, so nothing changes for players never set. */
-export function sample<T extends { deal_weight?: number | null }>(arr: T[], n: number): T[] {
+export function sample<T extends { deal_weight?: number | null; photo_url?: string | null }>(arr: T[], n: number): T[] {
   const copy = [...arr]
   const out: T[] = []
   while (out.length < n && copy.length > 0) {
-    const weights = copy.map(p => Math.max(0, Number(p.deal_weight ?? 1)))
+    // A card with a photo is the better card to open, so it deals more often.
+    // Computed here rather than stored, so a player levels up the day their
+    // photo lands and deal_weight keeps meaning "will they actually play".
+    const weights = copy.map(p => Math.max(0, Number(p.deal_weight ?? 1)) * (p.photo_url ? 1 : 0.6))
     const total = weights.reduce((a, b) => a + b, 0)
     if (total <= 0) break
     let r = Math.random() * total
