@@ -93,8 +93,10 @@ export function dealT1(pool: Player[], grade: Grade): { cards: Player[]; lineup:
       ...sample(byTier('common'), flexTier === 'common' ? 5 : 4),
     ]
     if (picks.length !== 12) continue
-    // Rule: at least 2 catcher-eligible
-    if (picks.filter(p => p.positions.includes('C')).length < 2) continue
+    // Rule: at least 1 catcher-eligible. A second is preferred for the bench but
+    // not required — forcing two made the same dozen catchers appear in every
+    // squad, and some players would rather not be labelled catcher at all.
+    if (picks.filter(p => p.positions.includes('C')).length < 1) continue
     // Rule: max 1 pure pitcher outside the two 2WP cards
     const nonRare = picks.filter(p => p.tier === 'elite' || p.tier === 'common')
     if (nonRare.filter(isPurePitcher).length > 1) continue
