@@ -35,7 +35,9 @@ export function weightedPick(pool: Player[], circulation: Map<string, number>, n
     // weight = (maxCirc + 1) - own circulation  ->  under-dispersed players weigh more,
     // scaled by deal_weight so a fringe player stays rare however few copies are out
     const weights = candidates.map(p =>
-      ((maxCirc + 1) - (circulation.get(p.id) ?? 0)) * Math.max(0, Number(p.deal_weight ?? 1)))
+      ((maxCirc + 1) - (circulation.get(p.id) ?? 0))
+      * Math.max(0, Number(p.deal_weight ?? 1))
+      * (p.photo_url ? 1 : 0.6))
     const total = weights.reduce((a, b) => a + b, 0)
     let roll = Math.random() * total
     let idx = 0
