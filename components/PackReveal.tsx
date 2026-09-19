@@ -316,6 +316,7 @@ export default function PackReveal({ grade, packName, cards, onDone, cardStyle =
       playingNumber: c.playingNumber ?? null,
       badges: c.badges ?? [],
       speedStar: c.speedStar ?? false,
+      revealPos: c.revealPos ?? null,
     }
   }
 

@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { theme, type Grade } from '@/lib/clubhouse'
 import { splitName } from '@/lib/names'
+import { silhouetteFor } from '@/components/PlayerCard'
 
 const TIER_META: Record<string, { label: string; accent: string; ink: string; ghost: string }> = {
   rare_2wp_a: { label: '2WP A', accent: '#FFD700', ink: '#FFD700', ghost: 'grayscale(1) sepia(1) saturate(4) brightness(1.15)' },
@@ -67,6 +68,7 @@ export type FullCardPlayer = {
   badges?: string[]
   stats: Record<string, number>
   photoUrl?: string | null
+  revealPos?: string | null
 }
 
 type RoundLine = { round: number; status: string; raw: Record<string, number>; points: number | null }
@@ -158,6 +160,7 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
   ]
 
   const badges = player.badges ?? []
+  const silhouette = silhouetteFor(player.revealPos, grade)
   const num = (v: unknown) => (v == null ? '—' : String(v))
   const careerBat: [string, string][] = [
     ['Games', num(st.career_games)],
@@ -279,11 +282,14 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
                   : 'grayscale(1) brightness(0.5)',
               }} />
           ) : (
-            <svg width="46%" viewBox="0 0 60 80" fill="none" className="relative"
-              style={{ filter: owned ? 'none' : 'grayscale(1) brightness(0.5)', maxHeight: '88%' }}>
-              <circle cx="30" cy="22" r="13" fill={owned ? meta.accent + '75' : '#ffffff20'} />
-              <path d="M6 80 C6 52 54 52 54 80 Z" fill={owned ? meta.accent + '75' : '#ffffff20'} />
-            </svg>
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={silhouette} alt="" aria-hidden className="relative gf-nosave"
+              style={{
+                height: '88%', width: 'auto', maxWidth: '84%',
+                objectFit: 'contain', objectPosition: 'bottom',
+                opacity: owned ? 0.85 : 0.35,
+                filter: owned ? `drop-shadow(0 0 14px ${meta.ink}55)` : 'grayscale(1)',
+              }} />
           )}
           <span className="absolute top-3 left-3.5 text-[10px] font-black tracking-widest"
             style={{ color: meta.ink, textShadow: `0 0 8px ${meta.accent}90, 0 0 16px ${meta.accent}50` }}>{meta.label}</span>

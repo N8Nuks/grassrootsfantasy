@@ -31,7 +31,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
     supabase.from('clubs').select('id, name').order('name'),
     supabase.from('site_settings').select('value').eq('key', 'card_style').maybeSingle(),
     supabase.from('cards')
-      .select('id, players(id, full_name, tier, positions, stats, photo_url, playing_number, badges, speed_star, clubs(name))')
+      .select('id, players(id, full_name, tier, positions, stats, photo_url, playing_number, badges, speed_star, reveal_pos, clubs(name))')
       .eq('owner_id', user!.id).eq('grade', grade),
     supabase.from('lineups')
       .select('id, captain_card_id, vice_captain_card_id, lineup_slots(slot, card_id, batting_order)')
@@ -110,7 +110,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
     }
   }
 
-  type Raw = { id: string; players: { id: string; full_name: string; tier: string; positions: string[]; stats: Record<string, number>; photo_url: string | null; playing_number: number | null; badges: string[] | null; speed_star: boolean | null; clubs: { name: string } | null } | null }
+  type Raw = { id: string; players: { id: string; full_name: string; tier: string; positions: string[]; stats: Record<string, number>; photo_url: string | null; playing_number: number | null; badges: string[] | null; speed_star: boolean | null; reveal_pos: string | null; clubs: { name: string } | null } | null }
   const teamCards: TeamCard[] = ((cards ?? []) as unknown as Raw[]).map(c => ({
     id: c.id,
     playerId: c.players?.id ?? '',
@@ -123,6 +123,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
     playingNumber: c.players?.playing_number ?? null,
     badges: c.players?.badges ?? [],
     speedStar: c.players?.speed_star ?? false,
+    revealPos: c.players?.reveal_pos ?? null,
   }))
 
   const slots = (lineup?.lineup_slots ?? []) as { slot: string; card_id: string; batting_order: number | null }[]

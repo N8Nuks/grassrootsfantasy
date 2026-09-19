@@ -48,6 +48,7 @@ export type TeamCard = {
   playingNumber?: number | null
   badges?: string[]
   speedStar?: boolean
+  revealPos?: string | null
 }
 
 export type ArmbandNotice = {
@@ -1044,7 +1045,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
               const slot = slotByCard.get(c.id)
               return (
                 <PlayerCard key={c.id}
-                  player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats, photoUrl: c.photoUrl, badges: c.badges ?? [], playingNumber: c.playingNumber }}
+                  player={{ id: c.id, name: c.name, tier: c.tier, positions: c.positions, club: c.club, stats: c.stats, photoUrl: c.photoUrl, badges: c.badges ?? [], playingNumber: c.playingNumber, revealPos: c.revealPos }}
                   grade={grade}
                   owned={true}
                   siteTheme={siteTheme}
@@ -1116,7 +1117,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
                     <span className="text-[11px] font-black tracking-[0.3em] px-4 py-1.5 rounded-full" style={{ color: meta.accent, background: meta.accent + '20', textShadow: `0 0 10px ${meta.accent}60` }}>{meta.label}</span>
                   </p>
                   <PlayerCardFull
-                    player={{ id: c.playerId, name: c.name, tier: c.tier, positions: c.positions, club: c.club, speedStar: c.speedStar, badges: c.badges, stats: c.stats, photoUrl: c.photoUrl, playingNumber: c.playingNumber }}
+                    player={{ id: c.playerId, name: c.name, tier: c.tier, positions: c.positions, club: c.club, speedStar: c.speedStar, badges: c.badges, stats: c.stats, photoUrl: c.photoUrl, playingNumber: c.playingNumber, revealPos: c.revealPos }}
                     grade={grade}
                     owned={true}
                     siteTheme={siteTheme}

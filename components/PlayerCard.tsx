@@ -37,7 +37,19 @@ const LONGEVITY_BADGE: Record<string, string> = {
 }
 const longevityBadge = (badges?: string[]) =>
   badges?.map((b) => LONGEVITY_BADGE[b]).find(Boolean) ?? null
- 
+
+/* Placeholder figure for a card with no photo yet, chosen from the reveal
+   position so an outfielder never stands in as a catcher. Women's batter
+   and fielder fall back to the men's file until those two are drawn. */
+const SILHOUETTE_FILES = new Set([
+  'batter-mens','catcher-mens','pitcher-mens','field-mens','pitcher-womens','catcher-womens',
+])
+export function silhouetteFor(revealPos: string | null | undefined, grade: Grade): string {
+  const fig = revealPos === 'P' ? 'pitcher' : revealPos === 'C' ? 'catcher'
+    : revealPos === 'IF' || revealPos === 'OF' ? 'field' : 'batter'
+  const key = `${fig}-${grade}`
+  return `/silhouettes/${SILHOUETTE_FILES.has(key) ? key : `${fig}-mens`}-silhouette.png`
+}
 export type PlayerCardData = {
   id: string
   name: string
@@ -49,6 +61,7 @@ export type PlayerCardData = {
   photoUrl?: string | null
   playingNumber?: number | null
   badges?: string[]         // from players.badges — longevity key first, extras appended
+  revealPos?: string | null
 }
  
 export default function PlayerCard({ player, grade, owned, chip, onClick, siteTheme, cardStyle = 'premium', doubled = false }: {
@@ -68,7 +81,8 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
   const textured = siteTheme === 'neon' || !!siteTheme?.endsWith('_tx')
   const bandBg = textured ? `linear-gradient(#14121059, #14121059), ${T.headerBg}` : T.headerBg
   const badge = longevityBadge(player.badges)
- 
+  const silhouette = silhouetteFor(player.revealPos, grade)
+
   return (
     <button onClick={onClick}
       className={"rounded-xl text-left transition-all hover:scale-[1.03] flex flex-col" + (doubled ? ' gf-rim' : '')}
@@ -161,11 +175,14 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
                   : 'grayscale(1) brightness(0.5)',
               }} />
           ) : (
-            <svg width="54" height="74" viewBox="0 0 60 80" fill="none" className="relative"
-              style={{ filter: owned ? 'none' : 'grayscale(1) brightness(0.5)' }}>
-              <circle cx="30" cy="22" r="12" fill={owned ? meta.accent + '70' : '#ffffff20'} />
-              <path d="M8 80 C8 55 52 55 52 80 Z" fill={owned ? meta.accent + '70' : '#ffffff20'} />
-            </svg>
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={silhouette} alt="" aria-hidden className="relative gf-nosave"
+              style={{
+                height: '90%', width: 'auto', maxWidth: '80%',
+                objectFit: 'contain', objectPosition: 'bottom',
+                opacity: owned ? 0.85 : 0.35,
+                filter: owned ? `drop-shadow(0 0 10px ${meta.ink}55)` : 'grayscale(1)',
+              }} />
           )}
           <span className="absolute top-1.5 left-2 text-[8px] font-black tracking-widest"
             style={{ color: meta.ink, textShadow: `0 0 6px #000000C0, 0 0 6px ${meta.ink}60` }}>
