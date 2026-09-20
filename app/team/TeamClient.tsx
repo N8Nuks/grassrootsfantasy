@@ -754,10 +754,15 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
           </div>
           <p className="text-sm mb-5" style={{ color: textured ? T.text : T.textDim, textShadow: textured ? '0 1px 3px #000000, 0 0 12px #000000C0' : 'none' }}>
             {clubName} · {cards.length} cards{roundNumber != null ? ` · Round ${roundNumber}` : ''}
-            {' · '}
-            <a href="/nfs/fixtures" className="underline underline-offset-2 hover:opacity-80" style={{ color: T.accent }}>Fixtures</a>
           </p>
-          <GradeSwitch grade={grade} mensHref="/team?grade=mens" womensHref="/team?grade=womens" palette={siteTheme !== 'grade' ? T : undefined} onImage={textured} />
+          <div className="flex items-center justify-center flex-wrap" style={{ gap: '12px' }}>
+            <GradeSwitch grade={grade} mensHref="/team?grade=mens" womensHref="/team?grade=womens" palette={siteTheme !== 'grade' ? T : undefined} onImage={textured} />
+            <a href="/nfs/fixtures"
+              className="inline-flex items-center text-[11px] font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03]"
+              style={{ height: '48px', padding: '0 24px', color: T.text, background: '#141210E6', border: `2px solid ${T.accent}`, boxShadow: `0 0 14px ${T.accent}55` }}>
+              Fixtures →
+            </a>
+          </div>
 
                     {/* Site theme switcher — balls in one row, mode buttons beneath */}
           <div style={{ marginTop: '22px', opacity: themeSaving ? 0.5 : 1 }}>
