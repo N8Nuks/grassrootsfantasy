@@ -31,7 +31,7 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
   const { data: players } = await supabase
     .from('players')
     .select('id, full_name, tier, stats, photo_url, clubs(name)')
-    .eq('grade', grade).eq('active', true)
+    .eq('grade', grade).eq('active', true).or('is_under18.eq.false,has_consent.eq.true')
 
   type Row = { id: string; full_name: string; tier: string; stats: Record<string, number> | null; photo_url: string | null; clubs: { name: string } | null }
   const all = ((players ?? []) as unknown as Row[]).map(p => ({ ...p, stats: p.stats ?? {} }))
