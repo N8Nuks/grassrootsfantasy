@@ -282,13 +282,16 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
                   : 'grayscale(1) brightness(0.5)',
               }} />
           ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={silhouette} alt="" aria-hidden className="relative gf-nosave"
+            <div className="relative" aria-hidden
               style={{
-                height: '88%', width: 'auto', maxWidth: '84%',
-                objectFit: 'contain', objectPosition: 'bottom',
-                opacity: owned ? 0.85 : 0.35,
-                filter: owned ? `drop-shadow(0 0 14px ${meta.ink}55)` : 'grayscale(1)',
+                height: '88%', width: '84%',
+                WebkitMaskImage: `url(${silhouette})`, maskImage: `url(${silhouette})`,
+                WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
+                WebkitMaskPosition: 'bottom center', maskPosition: 'bottom center',
+                WebkitMaskSize: 'contain', maskSize: 'contain',
+                background: owned
+                  ? `linear-gradient(180deg, ${meta.ink}CC 0%, ${meta.accent}66 100%)`
+                  : '#F5F1E822',
               }} />
           )}
           <span className="absolute top-3 left-3.5 text-[10px] font-black tracking-widest"

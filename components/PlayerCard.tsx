@@ -41,14 +41,10 @@ const longevityBadge = (badges?: string[]) =>
 /* Placeholder figure for a card with no photo yet, chosen from the reveal
    position so an outfielder never stands in as a catcher. Women's batter
    and fielder fall back to the men's file until those two are drawn. */
-const SILHOUETTE_FILES = new Set([
-  'batter-mens','catcher-mens','pitcher-mens','field-mens','pitcher-womens','catcher-womens',
-])
 export function silhouetteFor(revealPos: string | null | undefined, grade: Grade): string {
   const fig = revealPos === 'P' ? 'pitcher' : revealPos === 'C' ? 'catcher'
     : revealPos === 'IF' || revealPos === 'OF' ? 'field' : 'batter'
-  const key = `${fig}-${grade}`
-  return `/silhouettes/${SILHOUETTE_FILES.has(key) ? key : `${fig}-mens`}-silhouette.png`
+  return `/silhouettes/${fig}-${grade}-silhouette.png`
 }
 export type PlayerCardData = {
   id: string
@@ -175,13 +171,16 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
                   : 'grayscale(1) brightness(0.5)',
               }} />
           ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={silhouette} alt="" aria-hidden className="relative gf-nosave"
+            <div className="relative" aria-hidden
               style={{
-                height: '90%', width: 'auto', maxWidth: '80%',
-                objectFit: 'contain', objectPosition: 'bottom',
-                opacity: owned ? 0.85 : 0.35,
-                filter: owned ? `drop-shadow(0 0 10px ${meta.ink}55)` : 'grayscale(1)',
+                height: '90%', width: '80%',
+                WebkitMaskImage: `url(${silhouette})`, maskImage: `url(${silhouette})`,
+                WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
+                WebkitMaskPosition: 'bottom center', maskPosition: 'bottom center',
+                WebkitMaskSize: 'contain', maskSize: 'contain',
+                background: owned
+                  ? `linear-gradient(180deg, ${meta.ink}CC 0%, ${meta.accent}66 100%)`
+                  : '#F5F1E822',
               }} />
           )}
           <span className="absolute top-1.5 left-2 text-[8px] font-black tracking-widest"
