@@ -8,7 +8,7 @@ import PlayerCardFull from '@/components/PlayerCardFull'
 import FieldPicker from '@/components/FieldPicker'
 import PackReveal, { RevealCard } from '@/components/PackReveal'
 import PageGuide, { GuideStep } from '@/components/PageGuide'
-import SandboxBanner from '@/components/SandboxBanner'
+
 import { splitName } from '@/lib/names'
 import ClubAvatar, { AVATAR_FRAMES } from '@/components/ClubAvatar'
 import { AVATAR_IMAGES, avatarLabel } from '@/lib/avatars'
