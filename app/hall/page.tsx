@@ -46,7 +46,7 @@ export default async function Hall() {
   const { data: { user } } = await supabase.auth.getUser()
 
   const { data: players } = await supabase
-    .from('players').select('id, club_id, clubs(name)').eq('active', true)
+    .from('players').select('id, club_id, clubs(name)').eq('active', true).or('is_under18.eq.false,has_consent.eq.true')
 
   let ownedPlayerIds = new Set<string>()
   if (user) {

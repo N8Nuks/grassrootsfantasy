@@ -51,7 +51,7 @@ export default async function ClubHall({ params, searchParams }: {
   const { data: players } = await supabase
     .from('players')
     .select('id, full_name, grade, tier, positions, badges, speed_star, career_games, stats, photo_url, playing_number')
-    .in('club_id', clubIds).eq('active', true)
+    .in('club_id', clubIds).eq('active', true).or('is_under18.eq.false,has_consent.eq.true')
 
   type Raw = {
     id: string; full_name: string; grade: string; tier: string
