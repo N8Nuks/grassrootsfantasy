@@ -29,6 +29,9 @@ export default function SandboxBanner() {
 
   if (phase === 'live') return null
 
+  // Registration is open from LAUNCH — its date goes green to say so
+  const regLive = phase === 'preseason'
+
   const copy = {
     closing: {
       eyebrow: 'Sandbox closing',
@@ -90,7 +93,7 @@ export default function SandboxBanner() {
             {copy.body}
           </p>
           <p className="leading-relaxed" style={{ color: '#F5E6C8', fontSize: '12px', marginTop: '9px' }}>
-            Registration <b style={{ color: '#FFFFFF' }}>20 Sept</b> ·
+            Registration <b className={regLive ? 'sb-live' : undefined} style={regLive ? undefined : { color: '#FFFFFF' }}>20 Sept</b> ·
             first round <b style={{ color: '#FFFFFF' }}>26 Sept</b> ·
             first scores <b style={{ color: '#FFFFFF' }}>29 Sept</b>
           </p>
@@ -164,6 +167,12 @@ export default function SandboxBanner() {
           text-shadow: 0 0 14px #E8983A90;
         }
         .sb-eyebrow-top { text-align: center; margin-bottom: 14px; }
+
+        /* Registration is open — the date reads as live */
+        .sb-live {
+          color: #39FF9E;
+          text-shadow: 0 0 10px #39FF9E90, 0 2px 16px #0A0B12;
+        }
       `}</style>
     </div>
   )
