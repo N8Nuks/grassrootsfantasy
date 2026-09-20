@@ -4,19 +4,12 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/client'
 import PackReveal, { RevealCard } from '@/components/PackReveal'
-import SandboxBanner from '@/components/SandboxBanner'
 
 type PackQueueItem = { grade: 'mens' | 'womens'; cards: RevealCard[]; packName?: string }
 type Club = { id: string; code: string; name: string }
 
-/* Closed between the sandbox ending and the real season loading. Set to false on
-   20 September once the rosters are in and the packs are ready to deal. */
-const REGISTRATION_CLOSED = true
-
-/* The proxy already gates this page; this is the page's own closed state, which
-   predates it. The same key lets an admin through to register during the
-   changeover. Delete this block and set REGISTRATION_CLOSED to false on the 18th. */
-const BYPASS = 'Fantasy1'
+/* Left in so registration can be shut in a hurry — flip to true and deploy. */
+const REGISTRATION_CLOSED = false
 
 /* Everyone should land in their own club, so the picker lists the real clubs and
    the generic option sits behind a link. Nobody is locked out — it's one tap
@@ -37,11 +30,6 @@ export default function Register() {
   const [cardStyle, setCardStyle] = useState<'standard' | 'premium'>('standard')
   const [clubs, setClubs] = useState<Club[]>([])
   const [showGeneric, setShowGeneric] = useState(false)
-  const [bypass, setBypass] = useState(false)
-
-  useEffect(() => {
-    setBypass(new URLSearchParams(window.location.search).get('admin') === BYPASS)
-  }, [])
 
   // Already signed in (e.g. refreshed mid-reveal)? Go to the team — cards are safe.
   useEffect(() => {
@@ -171,10 +159,10 @@ export default function Register() {
   // The real clubs, generic held back
   const realClubs = clubs.filter(c => c.code !== GENERIC_CODE)
 
-  if (REGISTRATION_CLOSED && !bypass) {
+  if (REGISTRATION_CLOSED) {
     return (
       <main className="min-h-screen flex flex-col" style={{ background: '#141210' }}>
-        <Nav /><SandboxBanner />
+        <Nav />
         <section className="relative flex-1 px-6 overflow-hidden flex items-center" style={{ paddingTop: '56px', paddingBottom: '80px' }}>
           <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
           <div className="relative z-10 text-center" style={{ maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>
@@ -206,7 +194,7 @@ export default function Register() {
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#141210' }}>
-      <Nav /><SandboxBanner />
+      <Nav />
       <section className="relative flex-1 px-6 overflow-hidden" style={{ paddingTop: "56px", paddingBottom: "80px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
         <div className="relative z-10" style={{ maxWidth: "440px", marginLeft: "auto", marginRight: "auto" }}>

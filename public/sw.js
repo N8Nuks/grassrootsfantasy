@@ -7,7 +7,7 @@
    worker is sticky: it keeps serving its cached copy until a new one replaces
    it, so a stale worker can outlive a deploy. The version is what forces the
    old caches out. */
-const VERSION = 'gf-v8.19.12'
+const VERSION = 'gf-v8.19.13'
 const STATIC = `${VERSION}-static`
 const IMAGES = `${VERSION}-img`
 const PAGES = `${VERSION}-pages`
