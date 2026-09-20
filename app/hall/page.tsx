@@ -122,7 +122,7 @@ export default async function Hall() {
                     </div>
                     <span className="text-xs font-black uppercase tracking-widest transition-all group-hover:tracking-[0.3em]"
                       style={{ color: c }}>
-                      Enter →
+                      Enter
                     </span>
                   </div>
                 </a>

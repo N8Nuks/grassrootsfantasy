@@ -760,7 +760,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
             <a href="/nfs/fixtures"
               className="inline-flex items-center text-[11px] font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03]"
               style={{ height: '48px', padding: '0 24px', color: T.text, background: '#141210E6', border: `2px solid ${T.accent}`, boxShadow: `0 0 14px ${T.accent}55` }}>
-              Fixtures →
+              Fixtures
             </a>
           </div>
 
