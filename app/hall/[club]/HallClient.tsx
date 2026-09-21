@@ -30,6 +30,7 @@ export type HallPlayer = {
   careerGames: number | null
   stats: Record<string, number>
   photoUrl?: string | null
+  revealPos?: string | null
   playingNumber?: number | null
 }
 
@@ -105,7 +106,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
           <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
             {sorted.map(p => (
               <PlayerCard key={p.id}
-                player={{ id: p.id, name: p.name, tier: p.tier, positions: p.positions, speedStar: p.speedStar, club: clubName, stats: p.stats, photoUrl: p.photoUrl, playingNumber: p.playingNumber }}
+                player={{ id: p.id, name: p.name, tier: p.tier, positions: p.positions, speedStar: p.speedStar, club: clubName, stats: p.stats, photoUrl: p.photoUrl, playingNumber: p.playingNumber, revealPos: p.revealPos }}
                 grade={grade}
                 owned={owned.has(p.id)}
                 siteTheme={siteTheme}
@@ -122,7 +123,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: '#000000CC' }} onClick={() => setDetail(null)}>
           <div className="w-full" style={{ maxWidth: '380px' }} onClick={e => e.stopPropagation()}>
             <PlayerCardFull
-              player={{ id: detail.id, name: detail.name, tier: detail.tier, positions: detail.positions, club: clubName, speedStar: detail.speedStar, badges: detail.badges, stats: detail.stats, photoUrl: detail.photoUrl, playingNumber: detail.playingNumber }}
+              player={{ id: detail.id, name: detail.name, tier: detail.tier, positions: detail.positions, club: clubName, speedStar: detail.speedStar, badges: detail.badges, stats: detail.stats, photoUrl: detail.photoUrl, playingNumber: detail.playingNumber, revealPos: detail.revealPos }}
               grade={grade}
               owned={owned.has(detail.id)}
               siteTheme={siteTheme}

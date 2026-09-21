@@ -10,6 +10,7 @@ type Player = {
   positions: string[]
   stats?: Record<string, number>
   photo_url?: string | null
+  reveal_pos?: string | null
   deal_weight?: number | null
   badges?: string[] | null
   speed_star?: boolean | null
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
       club: p.clubs?.name ?? '',
       stats: p.stats ?? {},
       photoUrl: p.photo_url ?? null,
+      revealPos: p.reveal_pos ?? null,
       badges: p.badges ?? [],
       speedStar: p.speed_star ?? false,
       playingNumber: p.playing_number ?? null,
