@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import sharp from 'sharp'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -44,17 +45,33 @@ export async function POST(req: Request) {
 
   let photoUpdated = false
   if (file) {
-    // Store as <player_id>.png — re-uploading the same player overwrites cleanly
-    const path = `${playerId}.png`
-    const bytes = await file.arrayBuffer()
+    const bytes = Buffer.from(await file.arrayBuffer())
 
+    // Original kept at <player_id>.png — re-uploading the same player overwrites cleanly
     const { error: upErr } = await admin.storage
       .from('player-photos')
-      .upload(path, bytes, { contentType: 'image/png', upsert: true })
+      .upload(`${playerId}.png`, bytes, { contentType: 'image/png', upsert: true })
     if (upErr) return NextResponse.json({ error: 'Upload failed: ' + upErr.message }, { status: 500 })
 
+    /* The card only ever shows a photo ~500px tall, and premium cards draw it
+       three times. Full-size uploads (1–2 MB each) made reveals crawl and some
+       cards stall blank, so the card uses a 1000px WebP with the cut-out kept. */
+    let small: Buffer
+    try {
+      small = await sharp(bytes).rotate()
+        .resize({ height: 1000, withoutEnlargement: true })
+        .webp({ quality: 82, alphaQuality: 90 }).toBuffer()
+    } catch {
+      return NextResponse.json({ error: 'Could not read that image — upload a PNG with a transparent background' }, { status: 400 })
+    }
+    const webPath = `web/${playerId}.webp`
+    const { error: webErr } = await admin.storage
+      .from('player-photos')
+      .upload(webPath, small, { contentType: 'image/webp', upsert: true })
+    if (webErr) return NextResponse.json({ error: 'Upload failed: ' + webErr.message }, { status: 500 })
+
     // Public URL, cache-busted so a replaced photo shows immediately
-    const { data: pub } = admin.storage.from('player-photos').getPublicUrl(path)
+    const { data: pub } = admin.storage.from('player-photos').getPublicUrl(webPath)
     updates.photo_url = `${pub.publicUrl}?v=${Date.now()}`
     photoUpdated = true
   }
