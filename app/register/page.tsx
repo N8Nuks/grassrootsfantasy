@@ -163,7 +163,7 @@ export default function Register() {
     return (
       <main className="min-h-screen flex flex-col" style={{ background: '#141210' }}>
         <Nav />
-        <section className="relative flex-1 px-6 overflow-hidden flex items-center" style={{ paddingTop: '56px', paddingBottom: '80px' }}>
+        <section className="relative flex-1 px-6 overflow-hidden flex items-center" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 96px)', paddingBottom: '80px' }}>
           <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
           <div className="relative z-10 text-center" style={{ maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>
             <p className="text-xs font-black uppercase tracking-[0.3em] mb-4" style={{ color: '#E8983A' }}>Closed for the changeover</p>
@@ -195,7 +195,7 @@ export default function Register() {
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#141210' }}>
       <Nav />
-      <section className="relative flex-1 px-6 overflow-hidden" style={{ paddingTop: "56px", paddingBottom: "80px" }}>
+      <section className="relative flex-1 px-6 overflow-hidden" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 96px)', paddingBottom: "80px" }}>
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, #1A2E1F 0%, #141210 65%)' }} />
         <div className="relative z-10" style={{ maxWidth: "440px", marginLeft: "auto", marginRight: "auto" }}>
           <div className="text-center mb-8">
