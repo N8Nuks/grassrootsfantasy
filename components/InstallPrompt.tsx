@@ -1,12 +1,17 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
 }
 
+/* Pages where the prompt would sit on top of someone mid-signup */
+const QUIET_PATHS = ['/register', '/login']
+
 export default function InstallPrompt() {
+  const pathname = usePathname()
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null)
   const [isIOS, setIsIOS] = useState(false)
   const [show, setShow] = useState(false)
@@ -44,10 +49,23 @@ export default function InstallPrompt() {
   }
 
   if (!show) return null
+  if (QUIET_PATHS.some(p => pathname?.startsWith(p))) return null
 
+  /* No backdrop blur: on iOS Safari a fixed, blurred layer fails to repaint
+     while the toolbar collapses on scroll, leaving a blank block. The card is
+     near-opaque anyway, and translateZ keeps it on its own layer. */
   return (
     <div className="fixed left-3 right-3 z-[60] rounded-2xl"
-      style={{ bottom: '16px', background: '#181510F5', border: '1px solid #E8C15A60', boxShadow: '0 0 30px #00000090', padding: '16px 18px', backdropFilter: 'blur(8px)', maxWidth: '460px', marginLeft: 'auto', marginRight: 'auto' }}>
+      style={{
+        bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)',
+        background: '#181510F7',
+        border: '1px solid #E8C15A60',
+        boxShadow: '0 0 30px #00000090',
+        padding: '16px 18px',
+        maxWidth: '460px', marginLeft: 'auto', marginRight: 'auto',
+        transform: 'translateZ(0)',
+        WebkitTransform: 'translateZ(0)',
+      }}>
       <div className="flex items-start gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/icon-192.png" alt="" style={{ width: '40px', height: '40px', borderRadius: '9px' }} />
