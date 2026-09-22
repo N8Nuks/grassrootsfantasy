@@ -1,9 +1,8 @@
-import { partner } from '@/lib/partners'
+import { partner, PARTNERS_LIVE } from '@/lib/partners'
 
 /* An award credit rather than an advert. Sits under a competition header and
    names who puts the prize up. Returns nothing until PARTNERS_LIVE is true, so
    this can sit in place ahead of the announcement. */
-export const PARTNERS_LIVE = false
 
 export default function PresentedBy({ partnerKey, award }: { partnerKey: string; award: string }) {
   if (!PARTNERS_LIVE) return null
