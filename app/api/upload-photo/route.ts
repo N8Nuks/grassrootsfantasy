@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
   // Confirm the player exists
   const { data: player, error: pErr } = await admin
-    .from('players').select('id, full_name').eq('id', playerId).single()
+    .from('players').select('id, full_name, deal_weight').eq('id', playerId).single()
   if (pErr || !player) return NextResponse.json({ error: 'Player not found' }, { status: 404 })
 
   const updates: Record<string, unknown> = {
@@ -73,6 +73,8 @@ export async function POST(req: Request) {
     // Public URL, cache-busted so a replaced photo shows immediately
     const { data: pub } = admin.storage.from('player-photos').getPublicUrl(webPath)
     updates.photo_url = `${pub.publicUrl}?v=${Date.now()}`
+    // A photo lifts any no-photo weighting back to normal
+    if (Number(player.deal_weight ?? 1) < 1) updates.deal_weight = 1
     photoUpdated = true
   }
 
