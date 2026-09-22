@@ -66,7 +66,7 @@ export const PARTNERS: Partner[] = [
     site: 'https://www.placemakers.co.nz',
     siteLabel: 'Find your local store',
     accent: '#4D8DFF',
-    what: 'Backing the biggest title on the calendar, in both grades.',
+    what: 'Backing the Finals Challenge in both grades.',
     awards: ['Finals Challenge prize pool \u00b7 Men\u2019s and Women\u2019s'],
   },
   {
