@@ -85,3 +85,15 @@ export const PARTNERS: Partner[] = [
 
 export const livePartners = () => PARTNERS.filter(p => p.confirmed)
 export const partner = (key: string) => PARTNERS.find(p => p.key === key && p.confirmed)
+
+/* Arcade game partners, keyed by the game's title as passed to ArcadeShell.
+   Hidden, and titles unchanged, until PARTNERS_LIVE is true. */
+const GAME_PARTNERS: Record<string, { partner: string; liveTitle?: string }> = {
+  'Golden Glove': { partner: 'fieldhouse' },
+  'Legends Cage': { partner: 'fieldhouse' },
+  'Player of the Day': { partner: 'iathletic' },
+  "Knock 'em Down": { partner: 'iathletic' },
+  'Pick the Pitch': { partner: 'placemakers', liveTitle: 'Pick the Pitch with PlaceMakers' },
+}
+export const gamePartner = (title: string) => (PARTNERS_LIVE ? GAME_PARTNERS[title] : undefined)
+export const gameTitle = (title: string) => gamePartner(title)?.liveTitle ?? title

@@ -5,7 +5,9 @@
    Each game brings its own neon, passed in as `neon`, which tints the haze,
    the headings and every control on the page. */
 import ArcadeSignIn from './ArcadeSignIn'
-import ViewTicker from './ViewTicker'   
+import ViewTicker from './ViewTicker'
+import PresentedBy from './PresentedBy'
+import { gamePartner, gameTitle } from '@/lib/partners'
 export default function ArcadeShell({ neon, eyebrow, title, page, children }: {
   neon: string
   eyebrow: string
@@ -114,7 +116,8 @@ export default function ArcadeShell({ neon, eyebrow, title, page, children }: {
         <div className="ar-inner">
           <a href="/games" className="ar-back">← Arcade</a>
           <p className="ar-eyebrow">{eyebrow}</p>
-          <h1 className="ar-title">{title}</h1>
+          <h1 className="ar-title">{gameTitle(title)}</h1>
+          {gamePartner(title) && <PresentedBy partnerKey={gamePartner(title)?.partner ?? ''} award="Arcade partner" />}
           {children}
           <ArcadeSignIn />
           {page && <ViewTicker page={page} accent={neon} />}

@@ -1,3 +1,4 @@
+import { gameTitle } from '@/lib/partners'
 import Footer from '@/components/Footer'
 import ViewTicker from '@/components/ViewTicker'
 import { isClosedGame } from '@/lib/construction'
@@ -14,7 +15,7 @@ const GAMES = [
   { href: '/games/connections', n: '09', title: 'Connections', blurb: 'Sixteen players, four hidden fours. Find them.', tag: 'Daily', neon: '#7DF9FF' },
   { href: '/games/release', n: '10', title: 'Release Point', blurb: 'The windmill comes round. Tap the instant it leaves.', tag: 'Reaction', neon: '#FF4FD8' },
   { href: '/games/fielding', n: '11', title: "Knock 'em Down", blurb: 'Three lanes coming at you. Throw early — nothing crosses the line.', tag: 'Twelve levels', neon: '#5CFF6B' },
-  { href: '/games/pickthepitch', n: '12', title: 'Pick the Pitch', blurb: "Steal the catcher's signs from second. Nobody tells you the code.", tag: 'Expert', neon: '#FFD400', featured: true },
+  { href: '/games/pickthepitch', n: '12', title: gameTitle('Pick the Pitch'), blurb: "Steal the catcher's signs from second. Nobody tells you the code.", tag: 'Expert', neon: '#FFD400', featured: true },
   { href: '/games/goldenglove', n: '13', title: 'Golden Glove', blurb: 'Sixty seconds of fungo. Read it, reach it, take it clean.', tag: 'Drill', neon: '#FFC93C', gold: true },
 ]
 
