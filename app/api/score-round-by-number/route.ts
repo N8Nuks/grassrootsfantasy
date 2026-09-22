@@ -20,3 +20,5 @@ export async function POST(request: Request) {
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
   return NextResponse.json(result)
 }
+// Scoring updates players one by one; allow it time to finish
+export const maxDuration = 300
