@@ -31,7 +31,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
     supabase.from('clubs').select('id, name').order('name'),
     supabase.from('site_settings').select('value').eq('key', 'card_style').maybeSingle(),
     supabase.from('cards')
-      .select('id, players(id, full_name, tier, positions, stats, photo_url, playing_number, badges, speed_star, reveal_pos, clubs(name))')
+      .select('id, source, players(id, full_name, tier, positions, stats, photo_url, playing_number, badges, speed_star, reveal_pos, clubs(name))')
       .eq('owner_id', user!.id).eq('grade', grade),
     supabase.from('lineups')
       .select('id, captain_card_id, vice_captain_card_id, lineup_slots(slot, card_id, batting_order)')
@@ -56,7 +56,9 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
   // A user who already holds a full squad has opened their T2, whatever a stale
   // count says. Registration deals T1 and T2 together, so the first load after
   // signup can otherwise show a button for a pack they've already revealed.
-  const t2Available = !!t2Config?.t2_released && !t2Count && (cards?.length ?? 0) < 21
+  // No starter pack in this grade means no team here, so no Pre-Season Pack either
+  const hasStarter = (cards ?? []).some(c => (c as { source?: string }).source === 't1')
+  const t2Available = !!t2Config?.t2_released && !t2Count && (cards?.length ?? 0) < 21 && hasStarter
 
   let unavailableIds: string[] = []
   let t3Claimed = false
