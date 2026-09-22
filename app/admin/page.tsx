@@ -27,26 +27,30 @@ export default async function AdminPage() {
     .select('value').eq('key', 'card_style').maybeSingle()
   const cardStyle = styleRow?.value ?? 'premium'
 
+  /* Big tables are counted in the database, not by pulling rows — a plain
+     select is capped at 1,000 rows, which froze the teams and cards figures
+     once the season passed 1,000 cards. */
+
   // Users
   const { count: users } = await admin.from('profiles').select('id', { count: 'exact', head: true })
 
-  // Teams per grade = distinct T1 holders
-  const { data: t1Cards } = await admin.from('cards').select('owner_id, grade').eq('source', 't1')
-  const teamOwners = { mens: new Set<string>(), womens: new Set<string>() }
-  for (const c of t1Cards ?? []) {
-    if (c.grade === 'mens') teamOwners.mens.add(c.owner_id)
-    if (c.grade === 'womens') teamOwners.womens.add(c.owner_id)
+  // Teams per grade = round-0 team entries (every starter pack creates exactly one)
+  const teamCount = { mens: 0, womens: 0 }
+  const { data: r0 } = await admin.from('rounds').select('id, grade').eq('round_number', 0)
+  for (const r of r0 ?? []) {
+    if (r.grade !== 'mens' && r.grade !== 'womens') continue
+    const { count } = await admin.from('lineups')
+      .select('id', { count: 'exact', head: true }).eq('round_id', r.id)
+    teamCount[r.grade as 'mens' | 'womens'] += count ?? 0
   }
 
   // Cards by source
-  const { data: allCards } = await admin.from('cards').select('source')
-  const bySource = new Map<string, number>()
-  for (const c of allCards ?? []) {
-    bySource.set(c.source, (bySource.get(c.source) ?? 0) + 1)
+  const cardsBySource: AdminStats['cardsBySource'] = []
+  for (const source of ['t1', 't2', 't3', 't4']) {
+    const { count } = await admin.from('cards')
+      .select('id', { count: 'exact', head: true }).eq('source', source)
+    if (count) cardsBySource.push({ source, count })
   }
-  const cardsBySource = [...bySource.entries()]
-    .map(([source, count]) => ({ source, count }))
-    .sort((a, b) => a.source.localeCompare(b.source))
 
   // Rounds scored (rounds marked provisional or confirmed)
   const { data: scoredRounds } = await admin.from('rounds')
@@ -75,22 +79,21 @@ export default async function AdminPage() {
     })
   }
 
-  // Weekly (T3) unclaimed for the current round per grade
+  // Weekly (T3) unclaimed for the current round per grade = teams minus claims
   const weeklyUnclaimed = { mens: 0, womens: 0 }
   for (const grade of ['mens', 'womens'] as const) {
     const { data: r } = await admin.from('rounds')
       .select('id').eq('grade', grade)
       .order('round_number', { ascending: false }).limit(1).maybeSingle()
     if (!r) continue
-    const { data: claims } = await admin.from('t3_claims')
-      .select('owner_id').eq('grade', grade).eq('round_id', r.id)
-    const claimed = new Set((claims ?? []).map(c => c.owner_id))
-    weeklyUnclaimed[grade] = [...teamOwners[grade]].filter(o => !claimed.has(o)).length
+    const { count: claimed } = await admin.from('t3_claims')
+      .select('id', { count: 'exact', head: true }).eq('grade', grade).eq('round_id', r.id)
+    weeklyUnclaimed[grade] = Math.max(0, teamCount[grade] - (claimed ?? 0))
   }
 
   const stats: AdminStats = {
     users: users ?? 0,
-    teams: { mens: teamOwners.mens.size, womens: teamOwners.womens.size },
+    teams: teamCount,
     cardsBySource,
     roundsScored: { mens: scoredByGrade.mens.size, womens: scoredByGrade.womens.size },
     latestRound,
