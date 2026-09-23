@@ -125,29 +125,65 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
           {roundNumbers.map(n => {
             const games = byRound.get(n)!
             const dates = [...new Set(games.map(g => g.played_on))]
-            const lock = lockOf.get(n)
-            // Host = the ground with the most games this round
-            const tally = new Map<string, number>()
-            for (const g of games) if (g.location) tally.set(g.location, (tally.get(g.location) ?? 0) + 1)
-            const mainGround = [...tally.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
-            const host = hostOf(mainGround)
+                        const lock = lockOf.get(n)
+            /* A round can run across more than one park. Each ground's club is
+               named in the header, and the games group under their ground. */
+            const grounds: string[] = []
+            for (const g of games) {
+              if (g.location && g.location !== 'Unallocated' && !grounds.includes(g.location)) grounds.push(g.location)
+            }
+            const split = grounds.length > 1
+            const hostLabels = grounds.map(gr => hostOf(gr)?.label).filter(Boolean) as string[]
+            const hostAvatars = grounds.map(gr => hostOf(gr)).filter(Boolean) as NonNullable<ReturnType<typeof hostOf>>[]
+            const byes = games.filter(g => !g.location || g.location === 'Unallocated')
+
+            /* Park and diamond sit under the matchup so they're readable on a
+               phone — the old right-hand column was hidden below sm. When the
+               games are already grouped by park, the line shows the diamond. */
+            const gameRow = (g: Fixture, withGround: boolean) => {
+              const bye = g.team_a === 'BYE' || g.team_b === 'BYE'
+              const time = fmtTime(g.start_time)
+              const where = [withGround ? g.location : null, g.venue].filter(v => v && v !== 'Unallocated').join(' · ')
+              return (
+                <div key={g.id} className="flex items-start gap-4"
+                  style={{ borderBottom: '1px solid #ffffff06', padding: '12px 20px', opacity: bye ? 0.55 : 1 }}>
+                  <span className="w-16 shrink-0 text-[11px] font-black" style={{ color: accent, paddingTop: '2px' }}>
+                    {dates.length > 1 ? fmtDate(g.played_on).split(' ')[0] + ' ' : ''}{time ?? (bye ? '' : 'TBC')}
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-bold text-white/90">
+                      {label(g.team_a, g.club_a)} <span className="text-white/35">v</span> {label(g.team_b, g.club_b)}
+                      {g.section && g.section !== 'Section A' && (
+                        <span className="text-[9px] uppercase tracking-widest ml-2" style={{ color: '#ffffff40' }}>{g.section}</span>
+                      )}
+                    </span>
+                    {where && (
+                      <span className="block text-[10px] text-white/45" style={{ marginTop: '3px' }}>{where}</span>
+                    )}
+                  </span>
+                </div>
+              )
+            }
+
             return (
               <div key={n} className="rounded-xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${accent}30`, marginBottom: '20px' }}>
                 <div className="flex items-center justify-between gap-4 flex-wrap"
                   style={{ padding: '12px 20px', borderBottom: '1px solid #ffffff0a', background: `linear-gradient(90deg, ${accent}14 0%, transparent 60%)` }}>
                   <div className="flex items-center gap-3 min-w-0">
-                    {host && (
-                      host.club === 'NHSA'
-                        ? <ClubAvatar club="Generic" frame="diamond" size={36} />
-                        : <ClubAvatar club={host.club} frame="gold" size={36} />
-                    )}
+                    {hostAvatars.slice(0, 3).map((h, i) => (
+                      h.club === 'NHSA'
+                        ? <ClubAvatar key={i} club="Generic" frame="diamond" size={36} />
+                        : <ClubAvatar key={i} club={h.club} frame="gold" size={36} />
+                    ))}
                     <div className="min-w-0">
                       <p className="text-sm font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>
                         Round {n} <span className="text-white/45">· {dates.map(fmtDate).join(' · ')}</span>
                       </p>
-                      {host && (
+                      {hostLabels.length > 0 && (
                         <p className="text-[10px] font-black uppercase tracking-[0.22em]" style={{ color: accent, marginTop: '2px' }}>
-                          Hosted by {host.label}
+                          Hosted by {hostLabels.length > 1
+                            ? hostLabels.slice(0, -1).join(', ') + ' & ' + hostLabels[hostLabels.length - 1]
+                            : hostLabels[0]}
                         </p>
                       )}
                     </div>
@@ -158,26 +194,28 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
                     </span>
                   )}
                 </div>
-                {games.map(g => {
-                  const bye = g.team_a === 'BYE' || g.team_b === 'BYE'
-                  const time = fmtTime(g.start_time)
-                  const where = [g.location, g.venue].filter(v => v && v !== 'Unallocated').join(' · ')
-                  return (
-                    <div key={g.id} className="flex items-center gap-4"
-                      style={{ borderBottom: '1px solid #ffffff06', padding: '12px 20px', opacity: bye ? 0.55 : 1 }}>
-                      <span className="w-16 shrink-0 text-[11px] font-black" style={{ color: accent }}>
-                        {dates.length > 1 ? fmtDate(g.played_on).split(' ')[0] + ' ' : ''}{time ?? (bye ? '' : 'TBC')}
-                      </span>
-                      <span className="flex-1 min-w-0 text-sm font-bold text-white/90">
-                        {label(g.team_a, g.club_a)} <span className="text-white/35">v</span> {label(g.team_b, g.club_b)}
-                        {g.section && g.section !== 'Section A' && (
-                          <span className="text-[9px] uppercase tracking-widest ml-2" style={{ color: '#ffffff40' }}>{g.section}</span>
-                        )}
-                      </span>
-                      <span className="hidden sm:block shrink-0 text-[11px] text-white/45 text-right">{where}</span>
-                    </div>
-                  )
-                })}
+
+                {split ? (
+                  <>
+                    {grounds.map(gr => (
+                      <div key={gr}>
+                        <div className="flex items-center gap-2"
+                          style={{ padding: '9px 20px', background: '#ffffff06', borderBottom: '1px solid #ffffff0a' }}>
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70">{gr}</span>
+                          {hostOf(gr)?.label && (
+                            <span className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: accent }}>
+                              · {hostOf(gr)!.label}
+                            </span>
+                          )}
+                        </div>
+                        {games.filter(g => g.location === gr).map(g => gameRow(g, false))}
+                      </div>
+                    ))}
+                    {byes.map(g => gameRow(g, false))}
+                  </>
+                ) : (
+                  games.map(g => gameRow(g, false))
+                )}
               </div>
             )
           })}
