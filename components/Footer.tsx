@@ -20,6 +20,7 @@ const COLUMNS: { title: string; accent: string; links: { label: string; href: st
       { label: 'Scoring', href: '/nfs/scoring' },
       { label: 'Honours Board', href: '/nfs/honours' },
       { label: 'Officials Wing', href: '/nfs/officials' },
+      { label: 'Partners', href: '/nfs/sponsors' },
     ],
   },
   {

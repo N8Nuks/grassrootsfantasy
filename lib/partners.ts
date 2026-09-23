@@ -5,7 +5,7 @@
 /* Master switch. Everything partner-facing (footer link, ladder credits,
    arcade credits) stays hidden until this is true. Flip it after the
    iAthletic announcement. */
-export const PARTNERS_LIVE = false
+export const PARTNERS_LIVE = true
 
 export type Partner = {
   key: string
