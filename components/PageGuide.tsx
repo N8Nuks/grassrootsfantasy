@@ -16,16 +16,37 @@ export default function PageGuide({ pageKey, steps, accent, textColor }: {
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState(0)
 
+  /* Two records, and a guide opens only if both say unseen. localStorage answers
+     instantly so the panel doesn't flash in for a returning manager; the profile
+     is the durable one, because local state doesn't survive a service-worker
+     bump or an iOS storage eviction. */
   useEffect(() => {
+    let cancelled = false
     try {
-      if (!localStorage.getItem(storageKey)) setOpen(true)
-    } catch { /* private browsing: just don't auto-open */ }
-  }, [storageKey])
+      if (localStorage.getItem(storageKey)) return
+    } catch { /* private browsing: fall through to the server check */ }
+    fetch('/api/guide-seen')
+      .then(r => r.json())
+      .then(({ seen }: { seen?: string[] }) => {
+        if (cancelled) return
+        if (seen?.includes(pageKey)) {
+          try { localStorage.setItem(storageKey, 'seen') } catch { /* ignore */ }
+          return
+        }
+        setOpen(true)
+      })
+      .catch(() => { if (!cancelled) setOpen(true) })
+    return () => { cancelled = true }
+  }, [storageKey, pageKey])
 
   function close() {
     setOpen(false)
     setStep(0)
     try { localStorage.setItem(storageKey, 'seen') } catch { /* ignore */ }
+    fetch('/api/guide-seen', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pageKey }),
+    }).catch(() => { /* local flag still holds for this device */ })
   }
 
   function next() {
