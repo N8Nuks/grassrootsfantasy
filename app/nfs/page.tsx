@@ -201,7 +201,7 @@ export default function NFS() {
               { t: 'Starter Pack on signup', d: '12 cards land the moment you register — including the only two-way player cards dealt all season. Your lineup auto-assigns so you can score from day one.' },
               { t: 'Weekly rhythm', d: 'Results confirm Tuesday, lineups lock Friday night, games play out on the weekend. A living league that moves with the real one.' },
               { t: 'Five ways to win', d: 'Season ladder, weekly head-to-head, Weekly High Score, Club Champion, and the Finals Challenge with its own packs and title — and one account can chase them in both grades.', href: '/nfs/scoring', link: 'See how each competition works →' },
-              { t: 'Back your club', d: 'Playing in the competition? Your access comes with your Association registration. Got a club code? Register with it and every point you score counts toward their Club Champion campaign.' },
+              { t: 'Back your club', d: 'Playing in the competition? Your access comes with your Association registration. Choose your club when you sign up and every point you score counts toward their Club Champion campaign.' },
             ].map((f) => (
               <div key={f.t} className="rounded-2xl p-6 flex flex-col gap-3 text-left" style={{ background: '#1A1A22', border: '1px solid #ffffff0a', borderLeft: `3px solid ${COBALT}` }}>
                 <h3 className="text-base font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>{f.t}</h3>

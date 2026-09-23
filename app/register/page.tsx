@@ -84,7 +84,7 @@ export default function Register() {
 
     const { data: club } = await supabase.from('clubs').select('id').eq('code', clubCode.trim().toUpperCase()).single()
     if (!club) {
-      setError('Club code not recognised. Check with your Team Manager or Club.')
+      setError('That club could not be found. Choose your club from the list and try again.')
       setBusy(false)
       return
     }
