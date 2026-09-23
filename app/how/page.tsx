@@ -61,7 +61,7 @@ const steps: { n: string; h: string; ps: string[]; shots: Shot[] }[] = [
     h: 'Register your team',
     ps: [
       'Sign up online with your email and a team name. If you play in the competition, your access comes bundled with your Association registration. Everyone else — supporters, family, mates — registers free on the spot.',
-      'Got a club code from your Team Manager or Club? Enter it at signup — it locks in your club allegiance for the Club Champion race and earns you a bonus pack.',
+      'Choose your club from the dropdown when you sign up — it locks in your club allegiance for the Club Champion race.',
     ],
     shots: [
       { src: '/how-register.png', alt: 'Registration form', caption: 'Claim your team in under a minute' },
@@ -95,7 +95,7 @@ const steps: { n: string; h: string; ps: string[]; shots: Shot[] }[] = [
     n: '04',
     h: 'New cards, all season',
     ps: [
-      'Packs keep dropping throughout the season — a free pack every week, a pre-season tranche to complete your squad, club code bonuses, a mid-season drop, and a Finals Challenge with its own packs and its own champion.',
+      'Packs keep dropping throughout the season — a free pack every week, a pre-season tranche to complete your squad, a mid-season drop, and a Finals Challenge with its own packs and its own champion.',
       "You never miss out. Open your Weekly Pack yourself for the full reveal — or if the round rolls over before you get to it, those cards are dealt straight into your collection automatically. The cards are always yours.",
     ],
     shots: [
@@ -131,11 +131,7 @@ const groups = [
       },
       {
         q: 'How do I join?',
-        a: 'Register with your email, name your team, and enter a club code. Codes come through your club or competition — and every league has a general code so supporters without a club connection can play too.',
-      },
-      {
-        q: 'What is a club code?',
-        a: 'A code your club or competition shares that connects your fantasy team to them. It gets you your starter pack and counts your points toward your club\u2019s campaign on the club leaderboards.',
+        a: 'Register with your email, name your team, and choose your club from the list. Not with a club? Join as a general supporter — you can still play every round.',
       },
     ],
   },
