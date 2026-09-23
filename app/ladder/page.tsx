@@ -145,7 +145,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
       const avg = agg.users ? agg.total / agg.users : 0
       const qualified = agg.users >= 5
       return {
-        id: club, team: club, club: `${agg.users} team${agg.users === 1 ? '' : 's'}`,
+        id: club, team: club, club: `${agg.users} manager${agg.users === 1 ? '' : 's'}`,
         main: avg.toFixed(1), sub: `${agg.total} total`,
         sortKey: avg, tieKey: agg.total, unranked: !qualified,
       }
@@ -374,7 +374,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
                   {view === 'points' && 'Every team starts level. The ladder comes alive when Round 1 is scored.'}
                   {view === 'h2h' && 'Every team starts 0–0–0. Your first head-to-head opponent is drawn when Round 1 locks.'}
                   {view === 'weekly' && 'One team tops the league every single week. The first honour board is crowned after Round 1.'}
-                  {view === 'clubs' && 'Every point your team scores counts toward your club. Five teams from a club opens their campaign.'}
+                  {view === 'clubs' && 'Every point your team scores counts toward your club. Five managers from a club opens their campaign.'}
                 </p>
               </div>
             </div>
@@ -386,7 +386,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
             {view === 'points' && 'Top 20 shown. Cumulative points from all scored rounds. Provisional scores update once official stats are confirmed.'}
             {view === 'h2h' && 'Top 20 shown. Ranked on wins, with a draw counting half. Ties broken by win rate, then by points scored. No minimum — join whenever, every win counts.'}
             {view === 'weekly' && 'Top score from the latest round. A new champion is crowned every week.'}
-            {view === 'clubs' && 'Ranked on average points per team, minimum five teams to rank. Ties broken by club total.'}
+            {view === 'clubs' && 'Ranked on average points per manager, minimum five managers to rank. Ties broken by club total.'}
           </p>
         </div>
       </section>
