@@ -25,20 +25,39 @@ export default function InstallPrompt() {
 
     const ios = /iphone|ipad|ipod/i.test(window.navigator.userAgent)
     setIsIOS(ios)
-    if (ios) { setShow(true); return }
 
+    let cancelled = false
     const onPrompt = (e: Event) => {
       e.preventDefault()
       setDeferred(e as BeforeInstallPromptEvent)
-      setShow(true)
     }
     window.addEventListener('beforeinstallprompt', onPrompt)
-    return () => window.removeEventListener('beforeinstallprompt', onPrompt)
+
+    /* The profile is the durable record; a signed-out visitor gets false back
+       and sees the prompt, which is what we want. */
+    fetch('/api/install-dismissed')
+      .then(r => r.json())
+      .then(({ dismissed }: { dismissed?: boolean }) => {
+        if (cancelled) return
+        if (dismissed) {
+          try { localStorage.setItem('gf-install-dismissed', '1') } catch { /* ignore */ }
+          return
+        }
+        setShow(true)
+      })
+      .catch(() => { if (!cancelled) setShow(true) })
+
+    return () => {
+      cancelled = true
+      window.removeEventListener('beforeinstallprompt', onPrompt)
+    }
   }, [])
 
   function dismiss() {
     setShow(false)
     try { localStorage.setItem('gf-install-dismissed', '1') } catch { /* ignore */ }
+    fetch('/api/install-dismissed', { method: 'POST' })
+      .catch(() => { /* local flag still holds for this device */ })
   }
 
   async function install() {
@@ -81,7 +100,7 @@ export default function InstallPrompt() {
             </p>
           )}
           <div className="flex items-center gap-3 mt-3">
-            {!isIOS && (
+            {!isIOS && deferred && (
               <button onClick={install}
                 className="text-[11px] font-black uppercase tracking-widest rounded-full"
                 style={{ color: '#141210', background: '#E8C15A', padding: '9px 20px' }}>
