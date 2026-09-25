@@ -32,7 +32,7 @@ type LineupRec = {
 }
 type Palette = ReturnType<typeof theme>
 
-function TeamCard({ title, slots, T, winner, pointsByPlayer, earnedByPlayer, pointsRoundLabel, doubled }: {
+function TeamCard({ title, slots, T, winner, pointsByPlayer, earnedByPlayer, pointsRoundLabel, doubled, provisional = false }: {
   title: string
   slots: SlotRow[]
   T: Palette
@@ -41,6 +41,7 @@ function TeamCard({ title, slots, T, winner, pointsByPlayer, earnedByPlayer, poi
   earnedByPlayer: Map<string, number> | null
   pointsRoundLabel: string | null
   doubled: Set<string>
+  provisional?: boolean
 }) {
   const sorted = slots.filter(s => !s.slot.startsWith('RES'))
     .sort((a, b) => slotRank(a.slot) - slotRank(b.slot))
@@ -57,7 +58,7 @@ function TeamCard({ title, slots, T, winner, pointsByPlayer, earnedByPlayer, poi
         </div>
         {pointsByPlayer && (
           <span className="flex shrink-0">
-            <span className="w-14 text-center text-[10px] font-black uppercase tracking-widest" style={{ color: T.textDim }}>
+            <span className="w-14 text-center text-[10px] font-black uppercase tracking-widest" style={{ color: provisional ? '#FF6B6B' : T.textDim }}>
               {pointsRoundLabel ?? 'Points'}
             </span>
             {showEarned && (
@@ -91,7 +92,7 @@ function TeamCard({ title, slots, T, winner, pointsByPlayer, earnedByPlayer, poi
               )}
             </span>
             {pointsByPlayer && (
-              <span className="w-14 text-center text-sm font-bold shrink-0" style={{ color: T.textDim }}>{pts ?? '—'}</span>
+              <span className="w-14 text-center text-sm font-bold shrink-0" style={{ color: provisional && pts != null ? '#FF6B6B' : T.textDim }}>{pts ?? '—'}</span>
             )}
             {showEarned && (
               <span className="w-14 text-center text-sm font-black shrink-0" style={{ color: earn != null && earn > 0 ? T.accent : T.textDim }}>
@@ -117,7 +118,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
     user
       ? supabase.from('profiles').select('site_theme').eq('id', user.id).single()
       : Promise.resolve({ data: null }),
-    supabase.from('rounds').select('id, round_number, lock_at')
+    supabase.from('rounds').select('id, round_number, lock_at, status')
       .eq('grade', grade).lte('lock_at', new Date().toISOString())
       .order('round_number', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('public_teams').select('id, team_name, avatar_image, avatar_frame, club:clubs!club_id(name), avatar_club:clubs!avatar_club_id(name)'),
@@ -127,6 +128,10 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
   ])
   const siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
   const T = theme(grade, siteTheme)
+  /* Provisional scores are live but not final — shown in red until the round
+     is confirmed, because a late stat correction can still move them. */
+  const PROV = '#FF6B6B'
+  const roundProvisional = round?.status === 'provisional'
 
   // An open round sitting above the one on screen: matchups aren't drawn until it locks
   const pendingRound = newestRound && newestRound.status === 'open'
@@ -284,6 +289,11 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
                       {scored ? `${myMatchup.score_a} – ${myMatchup.score_b}` : 'VS'}
                     </p>
                     {!scored && <p className="text-[10px] uppercase tracking-[0.3em] mt-1" style={{ color: T.textDim }}>locks in — good luck</p>}
+                    {scored && roundProvisional && (
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-1" style={{ color: PROV }}>
+                        Provisional · final Tuesday 5pm
+                      </p>
+                    )}
                   </div>
                   <div className="text-center" style={{ opacity: scored && !bWins ? 0.55 : 1 }}>
                     <div className="flex justify-center" style={{ marginBottom: '10px' }}><ClubAvatar {...avatarOf(myMatchup.user_b)} size={56} /></div>
@@ -294,7 +304,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-6 mb-4">
-                <TeamCard title={nameOf(myMatchup.user_a)} slots={lineupA?.lineup_slots ?? []} T={T} winner={!!aWins} pointsByPlayer={pointsByPlayer} earnedByPlayer={earnedA} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber}` : null} doubled={doubled} />
+                <TeamCard title={nameOf(myMatchup.user_a)} slots={lineupA?.lineup_slots ?? []} T={T} winner={!!aWins} pointsByPlayer={pointsByPlayer} earnedByPlayer={earnedA} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber}` : null} doubled={doubled} provisional={roundProvisional && pointsRoundNumber === round?.round_number} />
                 <TeamCard title={nameOf(myMatchup.user_b)} slots={lineupB?.lineup_slots ?? []} T={T} winner={!!bWins} pointsByPlayer={pointsByPlayer} earnedByPlayer={earnedB} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber}` : null} doubled={doubled} />
               </div>
               {(earnedA || earnedB) && (
@@ -319,7 +329,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
               {otherMatchups.map((m, i) => (
                 <div key={i} className="flex items-center gap-4" style={{ borderBottom: '1px solid #ffffff08', padding: '16px 28px' }}>
                   <p className="flex-1 text-sm font-bold text-right truncate" style={{ color: T.text }}>{nameOf(m.user_a)}</p>
-                  <span className="px-3 text-xs font-black whitespace-nowrap shrink-0" style={{ color: T.accent }}>
+                  <span className="px-3 text-xs font-black whitespace-nowrap shrink-0" style={{ color: roundProvisional && m.score_a != null ? PROV : T.accent }}>
                     {m.score_a != null && m.score_b != null ? `${m.score_a} – ${m.score_b}` : 'vs'}
                   </span>
                   <p className="flex-1 text-sm font-bold truncate" style={{ color: T.text }}>{nameOf(m.user_b)}</p>
