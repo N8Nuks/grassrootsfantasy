@@ -55,7 +55,7 @@ export const PARTNERS: Partner[] = [
       'Head-to-Head Champion \u00b7 Men\u2019s and Women\u2019s',
       'Finals Challenge prize pool \u00b7 Men\u2019s and Women\u2019s',
     ],
-    offer: '10% off full-priced gear and standard cage bookings for Grassroots Fantasy players, all season.',
+    offer: '10% off full-priced gear and standard cage bookings for Grassroots Fantasy players. Conditions apply — exclusions include machines, team and bulk quotes, parties and exclusive facility hire.',
   },
   {
     key: 'placemakers',
