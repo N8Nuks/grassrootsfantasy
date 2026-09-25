@@ -124,8 +124,8 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
           {/* ── Reached this season ── */}
           {reached && reached.length > 0 && (
             <div className="rounded-2xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${GOLD}35`, marginBottom: '34px' }}>
-              <div style={{ background: `linear-gradient(90deg, ${GOLD}18 0%, transparent 65%)`, borderBottom: '1px solid #ffffff0a', padding: '14px 22px' }}>
-                <p className="text-[11px] font-black uppercase tracking-[0.25em]" style={{ color: GOLD }}>Reached This Season</p>
+              <div className="text-center" style={{ background: `linear-gradient(180deg, ${GOLD}18 0%, transparent 100%)`, borderBottom: '1px solid #ffffff0a', padding: '22px 22px 18px' }}>
+                <p className="text-xl sm:text-2xl font-black uppercase tracking-[0.18em]" style={{ fontFamily: 'var(--font-heading)', color: GOLD }}>Reached This Season</p>
               </div>
               {(reached as unknown as { stat: string; milestone: number; round_number: number; players: { full_name: string } }[]).map((r, i) => (
                 <div key={i} className="flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff08', padding: '12px 22px' }}>
@@ -140,7 +140,7 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
           )}
 
           {/* ── Career records ── */}
-          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-center" style={{ color: accent, marginBottom: '18px' }}>
+          <p className="text-xl sm:text-2xl font-black uppercase tracking-[0.18em] text-center" style={{ fontFamily: 'var(--font-heading)', color: accent, marginBottom: '22px' }}>
             Career Records · 2004–26
           </p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
