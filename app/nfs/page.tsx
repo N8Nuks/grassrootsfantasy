@@ -17,16 +17,34 @@ const OVER_BACKDROP = 'rgba(20,20,26,0.72)'
 export default function NFS() {
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#0D0D0F' }}>
-      <Nav /><SandboxBanner />
-      {/* The artwork's own black is lighter than the page, so it sits on a black
-         band that runs the full width — no rectangle edge, and the ribbon ends
-         have room to breathe. */}
-      <div style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 104px)', paddingBottom: '30px' }}>
-        <a href="/nfs/records" className="block transition-transform hover:scale-[1.02]"
-          style={{ padding: '0 20px', maxWidth: '860px', marginLeft: 'auto', marginRight: 'auto' }}>
+            <Nav /><SandboxBanner />
+      {/* The banner is the way into the Book of Records, so it has to read as a
+         door: it lifts and warms on hover, and the ribbon itself carries the
+         invitation rather than a caption sitting underneath it. */}
+      <div style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 74px)', paddingBottom: '18px' }}>
+        <a href="/nfs/records" className="gf-book block"
+          style={{ padding: '0 20px', maxWidth: '860px', marginLeft: 'auto', marginRight: 'auto', position: 'relative' }}>
+          <style>{`
+            .gf-book { text-decoration: none; }
+            .gf-book img { transition: transform 260ms ease, filter 260ms ease; }
+            .gf-book:hover img { transform: translateY(-4px) scale(1.015); filter: drop-shadow(0 0 22px #E8983A55); }
+            .gf-book:focus-visible { outline: 2px solid #E8C15A; outline-offset: 6px; border-radius: 8px; }
+            .gf-book-cue {
+              position: absolute; left: 0; right: 0; bottom: 14%;
+              text-align: center; pointer-events: none;
+              font-size: clamp(9px, 1.5vw, 13px); letter-spacing: 0.24em;
+              text-transform: uppercase; font-weight: 700;
+              color: #F3DFA4; opacity: 0.85;
+              text-shadow: 0 1px 6px #000000, 0 0 14px #00000090;
+              transition: opacity 260ms ease, letter-spacing 260ms ease;
+            }
+            .gf-book:hover .gf-book-cue { opacity: 1; letter-spacing: 0.3em; }
+            @media (prefers-reduced-motion: reduce) { .gf-book img { transition: none; } }
+          `}</style>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/book-of-records.webp" alt="The Book of Records — every career mark since 2004"
             style={{ display: 'block', width: '100%', height: 'auto' }} />
+          <span className="gf-book-cue">Open the book</span>
         </a>
       </div>
 
