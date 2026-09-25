@@ -18,6 +18,12 @@ export default function NFS() {
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#0D0D0F' }}>
       <Nav /><SandboxBanner />
+      <a href="/nfs/records" className="block transition-transform hover:scale-[1.02]"
+        style={{ padding: '26px 16px 4px', maxWidth: '820px', marginLeft: 'auto', marginRight: 'auto' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/book-of-records.png" alt="The Book of Records — every career mark since 2004"
+          style={{ display: 'block', width: '100%', height: 'auto' }} />
+      </a>
 
       {/* ══ Everything from the hero down to The History runs over one backdrop ══ */}
       <div className="relative overflow-hidden">
