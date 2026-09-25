@@ -18,12 +18,17 @@ export default function NFS() {
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#0D0D0F' }}>
       <Nav /><SandboxBanner />
-      <a href="/nfs/records" className="block transition-transform hover:scale-[1.02]"
-        style={{ padding: '26px 16px 4px', maxWidth: '820px', marginLeft: 'auto', marginRight: 'auto' }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/book-of-records.png" alt="The Book of Records — every career mark since 2004"
-          style={{ display: 'block', width: '100%', height: 'auto' }} />
-      </a>
+      {/* The artwork's own black is lighter than the page, so it sits on a black
+         band that runs the full width — no rectangle edge, and the ribbon ends
+         have room to breathe. */}
+      <div style={{ background: '#000000', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 40px)', paddingBottom: '30px' }}>
+        <a href="/nfs/records" className="block transition-transform hover:scale-[1.02]"
+          style={{ padding: '0 20px', maxWidth: '860px', marginLeft: 'auto', marginRight: 'auto' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/book-of-records.png" alt="The Book of Records — every career mark since 2004"
+            style={{ display: 'block', width: '100%', height: 'auto' }} />
+        </a>
+      </div>
 
       {/* ══ Everything from the hero down to The History runs over one backdrop ══ */}
       <div className="relative overflow-hidden">
