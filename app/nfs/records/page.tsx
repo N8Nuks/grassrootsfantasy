@@ -93,9 +93,9 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
 
           {/* ── Milestone watch ── */}
           <div className="rounded-2xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${accent}35`, marginBottom: '34px' }}>
-            <div style={{ background: `linear-gradient(90deg, ${accent}18 0%, transparent 65%)`, borderBottom: '1px solid #ffffff0a', padding: '14px 22px' }}>
-              <p className="text-[11px] font-black uppercase tracking-[0.25em]" style={{ color: accent }}>Milestone Watch</p>
-              <p className="text-[11px] text-[#F5F1E8]/45" style={{ marginTop: '3px' }}>Closest first. Updates the moment a round is scored.</p>
+            <div className="text-center" style={{ background: `linear-gradient(180deg, ${accent}18 0%, transparent 100%)`, borderBottom: '1px solid #ffffff0a', padding: '22px 22px 18px' }}>
+              <p className="text-xl sm:text-2xl font-black uppercase tracking-[0.18em]" style={{ fontFamily: 'var(--font-heading)', color: accent }}>Milestone Watch</p>
+              <p className="text-[11px] text-[#F5F1E8]/45" style={{ marginTop: '6px' }}>Closest first. Updates the moment a round is scored.</p>
             </div>
             {chasing.length === 0 ? (
               <p className="text-sm text-center text-[#F5F1E8]/50" style={{ padding: '28px 22px' }}>
