@@ -17,11 +17,16 @@ const BRONZE = '#C97F3D'
 /* Ranked on rounds, not raw difference. A player gets one game a round but can
    hit four home runs in an afternoon, so `rate` is what a productive player
    does in a round and decides how near a mark really is. */
+const BAT = 4   // what a good day at the plate adds to any one batting line
 const WATCH: { key: string; label: string; rate: number; marks: number[] }[] = [
-  { key: 'career_games', label: 'Games', rate: 1, marks: range(50, 1000, 50) },
-  { key: 'career_h', label: 'Hits', rate: 2, marks: range(100, 1000, 100) },
-  { key: 'career_hr', label: 'Home runs', rate: 0.4, marks: range(50, 500, 50) },
-  { key: 'career_rbi', label: 'RBI', rate: 1.5, marks: range(100, 1000, 100) },
+  /* Hits, home runs, RBI and steals all move at the same rate — any of them can
+     come in a single afternoon. Games are a quarter of that: one a round, no
+     matter how well you play. */
+  { key: 'career_games', label: 'Games', rate: BAT * 0.25, marks: range(50, 1000, 50) },
+  { key: 'career_h', label: 'Hits', rate: BAT, marks: range(100, 1000, 100) },
+  { key: 'career_hr', label: 'Home runs', rate: BAT, marks: range(50, 500, 50) },
+  { key: 'career_rbi', label: 'RBI', rate: BAT, marks: range(100, 1000, 100) },
+  { key: 'career_sb', label: 'Stolen bases', rate: BAT, marks: range(50, 500, 50) },
   /* Strikeouts are recorded and celebrated once reached, but deliberately not
      watched — a public countdown puts a pitcher under pressure mid-game and
      could change how a team plays around them. */
