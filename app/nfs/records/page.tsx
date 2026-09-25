@@ -112,8 +112,13 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
           .bk-div span { height: 1px; width: min(180px, 26vw); background: linear-gradient(90deg, transparent, #C9A24790, transparent); }
           .bk-gem {
             width: 13px; height: 13px; transform: rotate(45deg); flex: none;
-            background: linear-gradient(135deg, #8FD0FF, #14407E);
-            box-shadow: 0 0 10px #4DA6FF70, inset 0 0 0 1px #E8C15A;
+            background:
+              linear-gradient(135deg, #5C6474 0%, #1B1F28 34%, #04050A 58%, #2C3340 78%, #0A0C12 100%);
+            box-shadow:
+              inset 0 0 0 1px #E8C15A,
+              inset 2px 2px 5px #AFC0DA55,
+              inset -2px -2px 6px #000000,
+              0 0 12px #9FB4D555;
           }
 
           /* ── Notched gold frame, used on every panel ── */
@@ -150,8 +155,13 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
           .bk-seam {
             position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(45deg);
             width: 16px; height: 16px; z-index: 2;
-            background: linear-gradient(135deg, #8FD0FF, #14407E);
-            box-shadow: 0 0 12px #4DA6FF80, inset 0 0 0 1.5px #E8C15A;
+            background:
+              linear-gradient(135deg, #6A7385 0%, #1B1F28 34%, #04050A 58%, #333B49 78%, #0A0C12 100%);
+            box-shadow:
+              inset 0 0 0 1.5px #E8C15A,
+              inset 2px 2px 6px #C2D2EA66,
+              inset -2px -2px 7px #000000,
+              0 0 16px #9FB4D566;
           }
 
           /* ── Section banner ── */
