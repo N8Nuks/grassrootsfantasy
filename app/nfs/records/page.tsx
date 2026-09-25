@@ -221,9 +221,17 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
           .bk-first .bk-val { font-size: 17px; }
           .bk-empty { text-align: center; color: #C9B98A8C; font-size: 14px; padding: 26px 20px; font-style: italic; }
           .bk-close { text-align: center; font-size: 12px; font-style: italic; color: #C9B98A70; margin: 26px 0 0; }
+          .bk-back {
+            display: inline-block; margin: 0 0 14px; text-decoration: none;
+            font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+            color: #C9A247; opacity: 0.75; transition: opacity 200ms ease;
+          }
+          .bk-back:hover { opacity: 1; }
+          .bk-back:focus-visible { outline: 2px solid #E8C15A; outline-offset: 4px; }
         `}</style>
 
         <div className="bk-wrap">
+          <a href="/nfs" className="bk-back">← Back to the NFS Premier League</a>
           <h1 style={{ margin: 0, paddingTop: 'calc(env(safe-area-inset-top, 0px) + 20px)' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/book-of-records.webp" alt="The Book of Records"
