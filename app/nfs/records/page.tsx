@@ -1,52 +1,41 @@
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
-import FactsTicker from '@/components/FactsTicker'
 import { createClient } from '@/lib/supabase/server'
 import { CAREER_RECORDS } from '@/lib/nfsRecords'
 import { splitName } from '@/lib/names'
 
-const COBALT = '#2456E6'
-const GOLD = '#E8C15A'
-const SILVER = '#C9CDD4'
-const BRONZE = '#C97F3D'
-
-/* Milestone scales, the same ones the scoring run records against. Games every
-   50, hits and RBI every 100, home runs every 50, pitching strikeouts every 100
-   from 200. A player shows here once they're within the window of the next one. */
-/* Ranked on rounds, not raw difference. A player gets one game a round but can
-   hit four home runs in an afternoon, so `rate` is what a productive player
-   does in a round and decides how near a mark really is. */
-const BAT = 4   // what a good day at the plate adds to any one batting line
+/* Ranked on what could fall in a single round, not raw difference. Hits, home
+   runs and RBI all move at the same rate — any of them can come in one
+   afternoon. Games are a quarter of that: one a round however well you play.
+   Strikeouts are recorded and celebrated once reached, but deliberately not
+   watched: a public countdown puts a pitcher under pressure mid-game. */
+const BAT = 4
 const WATCH: { key: string; label: string; rate: number; marks: number[] }[] = [
-  /* Hits, home runs, RBI and steals all move at the same rate — any of them can
-     come in a single afternoon. Games are a quarter of that: one a round, no
-     matter how well you play. */
   { key: 'career_games', label: 'Games', rate: BAT * 0.25, marks: range(50, 1000, 50) },
   { key: 'career_h', label: 'Hits', rate: BAT, marks: range(100, 1000, 100) },
   { key: 'career_hr', label: 'Home runs', rate: BAT, marks: range(50, 500, 50) },
   { key: 'career_rbi', label: 'RBI', rate: BAT, marks: range(100, 1000, 100) },
- /* Strikeouts are recorded and celebrated once reached, but deliberately not
-     watched — a public countdown puts a pitcher under pressure mid-game and
-     could change how a team plays around them. */
 ]
 const HORIZON = 6   // rounds — anything further out isn't a watch yet
+
 function range(from: number, to: number, step: number) {
   const out: number[] = []
   for (let n = from; n <= to; n += step) out.push(n)
   return out
 }
 
-const name = (n: string) => (
-  <>{splitName(n).first} <span className="uppercase">{splitName(n).last}</span></>
+const STAT_WORD: Record<string, string> = {
+  games: 'games', hits: 'hits', hr: 'home runs', rbi: 'RBI', k_pit: 'strikeouts', sb: 'stolen bases',
+}
+const nameOf = (n: string) => (
+  <>{splitName(n).first} <span className="bk-sur">{splitName(n).last}</span></>
 )
 
 export default async function BookOfRecords({ searchParams }: { searchParams: Promise<{ grade?: string }> }) {
   const params = await searchParams
   const grade: 'mens' | 'womens' = params.grade === 'womens' ? 'womens' : 'mens'
-  const accent = grade === 'womens' ? COBALT : '#3FBF63'
   const supabase = await createClient()
 
-  // Live from the roster, so the watch moves the moment a round is scored
   const { data: players } = await supabase
     .from('players').select('full_name, stats, career_games')
     .eq('grade', grade).eq('active', true)
@@ -67,206 +56,272 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
   }
   chasing.sort((a, b) => a.rounds - b.rounds || b.mark - a.mark)
 
-  // Milestones already reached this season, newest first
   const { data: reached } = await supabase
     .from('milestones')
     .select('stat, milestone, round_number, players!inner(full_name, grade)')
     .eq('grade', grade).gt('round_number', 0)
     .order('round_number', { ascending: false }).limit(12)
-
-  const STAT_LABEL: Record<string, string> = {
-    games: 'Premier games', hits: 'career hits', hr: 'career home runs',
-    rbi: 'career RBI', k_pit: 'career strikeouts',
-  }
-  const medal = (i: number) => (i === 0 ? GOLD : i === 1 ? SILVER : i === 2 ? BRONZE : '#ffffff35')
-
-  /* Three heat bands: about to fall, close, still climbing. The bar underneath
-     shows how far through the milestone they are, so 40 short of 1,000 reads
-     differently from 40 short of 100. */
-  const HOT = '#FF8C42'
-  const heat = (rounds: number) =>
-    rounds <= 1 ? { tone: HOT, tint: `${HOT}14`, bar: HOT }
-      : rounds <= 3 ? { tone: GOLD, tint: `${GOLD}0C`, bar: GOLD }
-        : { tone: accent, tint: 'transparent', bar: '#ffffff30' }
+  const entries = (reached ?? []) as unknown as
+    { stat: string; milestone: number; round_number: number; players: { full_name: string } }[]
 
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: '#0D0D0F' }}>
+    <main className="min-h-screen flex flex-col" style={{ background: '#07090F' }}>
       <Nav />
-      <section className="flex-1 px-5 sm:px-8" style={{ paddingTop: '80px', paddingBottom: '90px' }}>
-        <div style={{ maxWidth: '1000px', marginLeft: 'auto', marginRight: 'auto', paddingTop: '10px' }}>
 
-          <div className="bk-head">
-            <style>{`
-              /* Two ribbon bookmarks out of the book — the one you're reading
-                 hangs lower. Notched tails, stitched edges, no glow needed. */
-              .bk-ribbons { display: flex; justify-content: center; gap: 22px; margin-bottom: 4px; }
-              .bk-ribbon {
-                display: block; width: 92px; padding: 12px 0 26px; text-align: center;
-                font-family: var(--font-heading); font-weight: 900; font-size: 12px;
-                letter-spacing: 0.16em; text-transform: uppercase; text-decoration: none;
-                color: #F0E4C8; background: linear-gradient(180deg, #7A1D1D, #4E1010);
-                clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%);
-                box-shadow: inset 0 0 0 1px #E8C15A45, 0 10px 20px #00000070;
-                transform: translateY(-14px); transition: transform 220ms ease, filter 220ms ease;
-              }
-              .bk-ribbon:hover { transform: translateY(-6px); }
-              .bk-ribbon:focus-visible { outline: 2px solid #E8C15A; outline-offset: 3px; }
-              .bk-ribbon[data-on='true'] {
-                transform: translateY(10px); padding-bottom: 34px;
-                background: linear-gradient(180deg, #A32424, #6B1414);
-                box-shadow: inset 0 0 0 1px #E8C15A, 0 14px 26px #00000080;
-              }
+      <div className="bk-room">
+        <style>{`
+          /* A candlelit library: warm light low on both sides, cold moonlight
+             behind the title, everything else swallowed by the dark. */
+          .bk-room {
+            flex: 1; position: relative; overflow: hidden;
+            padding: 92px 14px 80px;
+            background:
+              radial-gradient(ellipse 52% 30% at 50% 2%, #16294A 0%, transparent 62%),
+              radial-gradient(circle at 3% 22%, #E8983A26 0%, transparent 34%),
+              radial-gradient(circle at 97% 16%, #E8983A22 0%, transparent 32%),
+              radial-gradient(circle at 8% 78%, #E8983A18 0%, transparent 30%),
+              linear-gradient(180deg, #0B1020 0%, #07090F 55%, #05060A 100%);
+          }
+          .bk-wrap { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
+          .bk-room, .bk-room :where(h1, h2, p, span, a, div) {
+            font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+          }
 
-              /* The scroll — parchment unfurled, curled at both ends */
-              .bk-scroll { position: relative; max-width: 620px; margin: 22px auto 0; }
-              .bk-sheet {
-                position: relative; padding: 26px 30px 24px; text-align: center;
-                background:
-                  radial-gradient(ellipse 60% 40% at 22% 20%, #00000012, transparent 70%),
-                  linear-gradient(102deg, #D8C59B 0%, #EEDCB7 30%, #E5D3A9 70%, #D2BD90 100%);
-                box-shadow: inset 0 0 44px #7A5A2A30, 0 14px 34px #00000070;
-              }
-              .bk-sheet::before, .bk-sheet::after {
-                content: ''; position: absolute; top: 0; bottom: 0; width: 20px;
-                background: linear-gradient(90deg, #A88B56, #EADCB8 45%, #B39A67);
-                box-shadow: 0 8px 18px #00000060;
-              }
-              .bk-sheet::before { left: -20px; border-radius: 10px 0 0 10px; }
-              .bk-sheet::after { right: -20px; border-radius: 0 10px 10px 0; }
+          /* ── Gold leaf ── */
+          .bk-gold {
+            background: linear-gradient(180deg, #7A5A18 0%, #C9A247 30%, #FBEFC0 50%, #D8B252 64%, #8A6A22 100%);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+            text-shadow: 0 2px 18px #E8983A35;
+          }
+          .bk-the {
+            font-size: clamp(20px, 4vw, 30px); font-style: italic; line-height: 1;
+            margin: 0 0 2px; text-align: center;
+          }
+          .bk-title {
+            font-size: clamp(34px, 8.6vw, 68px); line-height: 1.02; letter-spacing: 0.01em;
+            margin: 0; text-align: center;
+          }
+          .bk-lede {
+            text-align: center; color: #EBD9AE; opacity: 0.72;
+            font-size: 15px; line-height: 1.6; max-width: 34em;
+            margin: 16px auto 0;
+          }
 
-              .bk-eyebrow {
-                font-size: 10px; letter-spacing: 0.34em; text-transform: uppercase;
-                color: #7A5C2C; margin: 0 0 8px; font-weight: 700;
-              }
-              .bk-title {
-                font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
-                font-size: clamp(28px, 6vw, 44px); line-height: 1.04; margin: 0;
-                background: linear-gradient(180deg, #8A6A22 0%, #C9A247 38%, #F3E0A4 52%, #B8912F 70%, #6E5218 100%);
-                -webkit-background-clip: text; background-clip: text; color: transparent;
-                text-shadow: 0 1px 0 #FFFFFF40;
-              }
-              .bk-quill { font-size: 13px; font-style: italic; color: #6B5836; margin: 8px 0 0; }
+          /* Rule with a gem in the middle — repeats as a section divider */
+          .bk-div { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 22px 0 20px; }
+          .bk-div span { height: 1px; width: min(180px, 26vw); background: linear-gradient(90deg, transparent, #C9A24790, transparent); }
+          .bk-gem {
+            width: 13px; height: 13px; transform: rotate(45deg); flex: none;
+            background: linear-gradient(135deg, #7FE3B0, #1E6B4B);
+            box-shadow: 0 0 10px #4FD69B70, inset 0 0 0 1px #E8C15A;
+          }
 
-              /* One slow breath of candlelight across the gold, nothing more */
-              .bk-glim {
-                position: absolute; inset: 0; pointer-events: none; mix-blend-mode: overlay;
-                background: linear-gradient(100deg, transparent 35%, #FFFFFFCC 50%, transparent 65%);
-                background-size: 300% 100%; animation: bk-breathe 9s ease-in-out infinite;
-              }
-              @keyframes bk-breathe {
-                0%, 100% { background-position: 130% 0; }
-                50% { background-position: -30% 0; }
-              }
-              @media (prefers-reduced-motion: reduce) { .bk-glim { animation: none; opacity: 0.25; } }
-            `}</style>
+          /* ── Notched gold frame, used on every panel ── */
+          .bk-frame {
+            position: relative; background: linear-gradient(180deg, #14161Cf2, #0C0E13f2);
+            border: 1px solid #C9A24755;
+            clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px),
+                               calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px);
+            box-shadow: 0 16px 40px #00000090;
+          }
+          .bk-frame + .bk-frame { margin-top: 18px; }
 
-            <div className="bk-ribbons">
-              <a className="bk-ribbon" data-on={grade === 'mens'} href="/nfs/records?grade=mens">Men&apos;s</a>
-              <a className="bk-ribbon" data-on={grade === 'womens'} href="/nfs/records?grade=womens">Women&apos;s</a>
-            </div>
+          /* ── Grade toggle: one plate split in two, gem on the seam ── */
+          .bk-toggle {
+            display: flex; align-items: stretch; justify-content: center;
+            max-width: 440px; margin: 0 auto; position: relative;
+          }
+          .bk-half {
+            flex: 1; text-align: center; text-decoration: none;
+            padding: 16px 10px; font-size: 16px; letter-spacing: 0.14em;
+            text-transform: uppercase; color: #C9B98A;
+            background: linear-gradient(180deg, #14161C, #0A0C11);
+            transition: color 200ms ease, background 200ms ease;
+          }
+          .bk-half:first-child { clip-path: polygon(14px 0, 100% 0, 100% 100%, 14px 100%, 0 calc(100% - 14px), 0 14px); }
+          .bk-half:last-child { clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%); }
+          .bk-half:hover { color: #F2E4BD; }
+          .bk-half:focus-visible { outline: 2px solid #E8C15A; outline-offset: 3px; }
+          .bk-half[data-on='true'] {
+            color: #241A08; font-weight: 700;
+            background: linear-gradient(180deg, #F3E2B0 0%, #D9BE79 55%, #C2A45D 100%);
+            box-shadow: inset 0 0 0 1px #FBEFC0, 0 0 26px #E8C15A40;
+          }
+          .bk-seam {
+            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(45deg);
+            width: 16px; height: 16px; z-index: 2;
+            background: linear-gradient(135deg, #7FE3B0, #1E6B4B);
+            box-shadow: 0 0 12px #4FD69B80, inset 0 0 0 1.5px #E8C15A;
+          }
 
-            <div className="bk-scroll">
-              <div className="bk-sheet">
-                <span className="bk-glim" aria-hidden="true" />
-                <p className="bk-eyebrow">NFS Premier League</p>
-                <h1 className="bk-title">The Book of Records</h1>
-                <p className="bk-quill">Every career mark set since 2004, and who is closing in</p>
-              </div>
-            </div>
+          /* ── Section banner ── */
+          .bk-banner {
+            text-align: center; padding: 18px 20px 16px; margin-bottom: 14px;
+            background: linear-gradient(180deg, #123227 0%, #0B1F18 100%);
+            border: 1px solid #C9A24766;
+            clip-path: polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% calc(100% - 16px),
+                               calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px), 0 16px);
+            box-shadow: 0 12px 30px #00000080;
+          }
+          .bk-banner h2 {
+            margin: 0; font-size: clamp(20px, 4.6vw, 30px);
+            letter-spacing: 0.12em; text-transform: uppercase;
+          }
+          .bk-banner .bk-div { margin: 10px 0 0; }
+
+          /* ── Watch rows ── */
+          .bk-row { display: flex; align-items: center; gap: 16px; padding: 14px 20px; }
+          .bk-row + .bk-row { border-top: 1px solid #C9A24722; }
+          .bk-togo { width: 58px; flex: none; text-align: center; }
+          .bk-togo b { display: block; font-size: 30px; line-height: 1; font-weight: 700; }
+          .bk-togo span {
+            display: block; font-size: 9px; letter-spacing: 0.22em;
+            text-transform: uppercase; color: #C9B98A99; margin-top: 4px;
+          }
+          .bk-who { flex: 1; min-width: 0; }
+          .bk-name { font-size: 18px; color: #F5EEDC; margin: 0 0 2px; }
+          .bk-sur { letter-spacing: 0.04em; text-transform: uppercase; }
+          .bk-sofar { font-size: 13px; color: #C9B98A8C; margin: 0 0 8px; }
+          .bk-track { height: 4px; border-radius: 2px; background: #FFFFFF12; overflow: hidden; }
+          .bk-fill { display: block; height: 4px; border-radius: 2px; }
+          .bk-mark { flex: none; text-align: right; min-width: 74px; }
+          .bk-mark b { display: block; font-size: 26px; line-height: 1; color: #F5EEDC; font-weight: 700; }
+          .bk-mark span {
+            display: block; font-size: 9px; letter-spacing: 0.18em;
+            text-transform: uppercase; color: #C9B98A99; margin-top: 5px;
+          }
+
+          /* ── Records ── */
+          .bk-cols { display: grid; gap: 18px; }
+          @media (min-width: 720px) { .bk-cols { grid-template-columns: 1fr 1fr; } }
+          .bk-set { padding: 16px 20px 14px; }
+          .bk-set h3 {
+            margin: 0 0 10px; text-align: center; font-size: 15px;
+            letter-spacing: 0.2em; text-transform: uppercase;
+          }
+          .bk-note { text-align: center; font-size: 11px; font-style: italic; color: #C9B98A70; margin: -6px 0 10px; }
+          .bk-rec { display: flex; align-items: baseline; gap: 10px; padding: 6px 0; font-size: 15px; }
+          .bk-rec + .bk-rec { border-top: 1px solid #C9A2471A; }
+          .bk-rank { width: 20px; flex: none; font-size: 12px; color: #C9A24799; }
+          .bk-rec-name { flex: 1; min-width: 0; color: #EDE3CC; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .bk-val { flex: none; font-weight: 700; color: #F5EEDC; }
+          .bk-first .bk-val { font-size: 17px; }
+          .bk-empty { text-align: center; color: #C9B98A8C; font-size: 14px; padding: 26px 20px; font-style: italic; }
+          .bk-close { text-align: center; font-size: 12px; font-style: italic; color: #C9B98A70; margin: 26px 0 0; }
+        `}</style>
+
+        <div className="bk-wrap">
+          <p className="bk-the bk-gold">The</p>
+          <h1 className="bk-title bk-gold">Book of Records</h1>
+          <p className="bk-lede">
+            Every career mark set in the Premier competition since 2004, and who&apos;s closing in.
+          </p>
+
+          <div className="bk-div"><span /><i className="bk-gem" /><span /></div>
+
+          <div className="bk-toggle">
+            <a className="bk-half" data-on={grade === 'mens'} href="/nfs/records?grade=mens">Men&apos;s</a>
+            <i className="bk-seam" aria-hidden="true" />
+            <a className="bk-half" data-on={grade === 'womens'} href="/nfs/records?grade=womens">Women&apos;s</a>
           </div>
 
           {/* ── Milestone watch ── */}
-          <div className="rounded-2xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${accent}35`, margin: '38px 0 34px' }}>
-            <div className="text-center" style={{ background: `linear-gradient(180deg, ${accent}18 0%, transparent 100%)`, borderBottom: '1px solid #ffffff0a', padding: '22px 22px 18px' }}>
-              <p className="text-xl sm:text-2xl font-black uppercase tracking-[0.18em]" style={{ fontFamily: 'var(--font-heading)', color: accent }}>Milestone Watch</p>
-           </div>
-            {chasing.length === 0 ? (
-              <p className="text-sm text-center text-[#F5F1E8]/50" style={{ padding: '28px 22px' }}>
-                Nobody within reach of a milestone right now.
-              </p>
-            ) : (
-              chasing.slice(0, 14).map((c, i) => (
-                (() => {
-                  const h = heat(c.rounds)
+          <div style={{ marginTop: '34px' }}>
+            <div className="bk-banner">
+              <h2 className="bk-gold">Milestone Watch</h2>
+              <div className="bk-div"><span /><i className="bk-gem" /><span /></div>
+            </div>
+
+            <div className="bk-frame">
+              {chasing.length === 0 ? (
+                <p className="bk-empty">No mark is within reach this week. Come back when the round is scored.</p>
+              ) : (
+                chasing.slice(0, 12).map((c, i) => {
+                  const hot = c.rounds <= 1
+                  const warm = c.rounds <= 3
+                  const tone = hot ? '#FFB547' : warm ? '#E8C15A' : '#C9A247'
+                  const fill = hot
+                    ? 'linear-gradient(90deg, #8A6A22, #FFC663)'
+                    : warm ? 'linear-gradient(90deg, #6E5218, #E8C15A)'
+                      : 'linear-gradient(90deg, #4A3A18, #C9A24799)'
                   const pct = Math.max(4, Math.min(100, (c.now / c.mark) * 100))
                   return (
-                    <div key={i} className="flex items-center gap-3"
-                      style={{
-                        borderBottom: '1px solid #ffffff08', padding: '12px 22px',
-                        background: h.tint,
-                        boxShadow: c.rounds <= 3 ? `inset 3px 0 0 ${h.tone}` : undefined,
-                      }}>
-                      <span className="w-12 shrink-0 text-center">
-                        <span className="text-lg font-black" style={{ fontFamily: 'var(--font-heading)', color: h.tone }}>{c.needs}</span>
-                        <span className="block text-[8px] font-black uppercase tracking-widest text-[#F5F1E8]/35">to go</span>
+                    <div key={i} className="bk-row">
+                      <span className="bk-togo">
+                        <b style={{ color: tone }}>{c.needs}</b>
+                        <span>to go</span>
                       </span>
-                      <span className="flex-1 min-w-0">
-                        <span className="block text-sm font-bold text-[#F5F1E8] truncate">{name(c.name)}</span>
-                        <span className="block text-[11px] text-[#F5F1E8]/45" style={{ marginBottom: '5px' }}>{c.now} {c.label.toLowerCase()}</span>
-                        <span className="block rounded-full" style={{ height: '3px', background: '#ffffff12' }}>
-                          <span className="block rounded-full" style={{ height: '3px', width: `${pct}%`, background: h.bar }} />
-                        </span>
+                      <span className="bk-who">
+                        <p className="bk-name">{nameOf(c.name)}</p>
+                        <p className="bk-sofar">{c.now} {c.label.toLowerCase()}</p>
+                        <span className="bk-track"><span className="bk-fill" style={{ width: `${pct}%`, background: fill }} /></span>
                       </span>
-                      <span className="shrink-0 text-right">
-                        <span className="text-sm font-black" style={{ color: '#F5F1E8' }}>{c.mark}</span>
-                        <span className="block text-[9px] font-black uppercase tracking-widest text-[#F5F1E8]/35">{c.label}</span>
+                      <span className="bk-mark">
+                        <b>{c.mark}</b>
+                        <span>{c.label}</span>
                       </span>
                     </div>
                   )
-                })()
-              ))
-            )}
+                })
+              )}
+            </div>
           </div>
 
           {/* ── Reached this season ── */}
-          {reached && reached.length > 0 && (
-            <div className="rounded-2xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${GOLD}35`, marginBottom: '34px' }}>
-              <div className="text-center" style={{ background: `linear-gradient(180deg, ${GOLD}18 0%, transparent 100%)`, borderBottom: '1px solid #ffffff0a', padding: '22px 22px 18px' }}>
-                <p className="text-xl sm:text-2xl font-black uppercase tracking-[0.18em]" style={{ fontFamily: 'var(--font-heading)', color: GOLD }}>Reached This Season</p>
+          {entries.length > 0 && (
+            <div style={{ marginTop: '34px' }}>
+              <div className="bk-banner">
+                <h2 className="bk-gold">Reached This Season</h2>
+                <div className="bk-div"><span /><i className="bk-gem" /><span /></div>
               </div>
-              {(reached as unknown as { stat: string; milestone: number; round_number: number; players: { full_name: string } }[]).map((r, i) => (
-                <div key={i} className="flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff08', padding: '12px 22px' }}>
-                  <span className="w-14 shrink-0 text-[10px] font-black uppercase tracking-widest text-[#F5F1E8]/40">Rd {r.round_number}</span>
-                  <span className="flex-1 min-w-0 text-sm font-bold text-[#F5F1E8] truncate">{name(r.players.full_name)}</span>
-                  <span className="shrink-0 text-sm font-black" style={{ color: GOLD }}>
-                    {r.milestone} <span className="text-[10px] font-bold uppercase tracking-widest text-[#F5F1E8]/45">{STAT_LABEL[r.stat] ?? r.stat}</span>
-                  </span>
-                </div>
-              ))}
+              <div className="bk-frame">
+                {entries.map((e, i) => (
+                  <div key={i} className="bk-row">
+                    <span className="bk-togo">
+                      <b style={{ color: '#E8C15A' }}>{e.round_number}</b>
+                      <span>round</span>
+                    </span>
+                    <span className="bk-who">
+                      <p className="bk-name">{nameOf(e.players.full_name)}</p>
+                      <p className="bk-sofar" style={{ marginBottom: 0 }}>{e.milestone} {STAT_WORD[e.stat] ?? e.stat}</p>
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
           {/* ── Career records ── */}
-          <p className="text-xl sm:text-2xl font-black uppercase tracking-[0.18em] text-center" style={{ fontFamily: 'var(--font-heading)', color: accent, marginBottom: '22px' }}>
-            Career Records · 2004–26
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {CAREER_RECORDS[grade].map(set => (
-              <div key={set.key} className="rounded-2xl overflow-hidden" style={{ background: '#121215', border: '1px solid #ffffff12' }}>
-                <div style={{ borderBottom: '1px solid #ffffff0a', padding: '12px 18px' }}>
-                  <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#F5F1E8]">{set.label}</p>
-                  {set.note && <p className="text-[9px] text-[#F5F1E8]/35" style={{ marginTop: '2px' }}>{set.note}</p>}
-                </div>
-                {set.rows.map((r, i) => (
-                  <div key={i} className="flex items-center gap-2" style={{ borderBottom: '1px solid #ffffff06', padding: '9px 18px' }}>
-                    <span className="w-4 shrink-0 text-[11px] font-black" style={{ color: medal(i) }}>{i + 1}</span>
-                    <span className="flex-1 min-w-0 text-[13px] font-bold text-[#F5F1E8]/85 truncate">{name(r.name)}</span>
-                    <span className="shrink-0 text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: i === 0 ? GOLD : '#F5F1E8' }}>{r.value}</span>
-                  </div>
-                ))}
-              </div>
-            ))}
+          <div style={{ marginTop: '34px' }}>
+            <div className="bk-banner">
+              <h2 className="bk-gold">Career Records</h2>
+              <div className="bk-div"><span /><i className="bk-gem" /><span /></div>
+            </div>
+
+            <div className="bk-cols">
+              {CAREER_RECORDS[grade].map(set => (
+                <section key={set.key} className="bk-frame bk-set">
+                  <h3 className="bk-gold">{set.label}</h3>
+                  {set.note && <p className="bk-note">{set.note}</p>}
+                  {set.rows.map((r, i) => (
+                    <div key={i} className={'bk-rec' + (i === 0 ? ' bk-first' : '')}>
+                      <span className="bk-rank">{i + 1}</span>
+                      <span className="bk-rec-name">{nameOf(r.name)}</span>
+                      <span className="bk-val" style={i === 0 ? { color: '#F3DFA4' } : undefined}>{r.value}</span>
+                    </div>
+                  ))}
+                </section>
+              ))}
+            </div>
           </div>
 
-          <p className="text-[11px] text-center text-[#F5F1E8]/40" style={{ marginTop: '26px' }}>
-            Career totals from the NFS lifetime stats, 2004–26. Single-season records arrive once the season-by-season splits are in.
+          <p className="bk-close">
+            Career totals from the NFS lifetime stats, 2004 to 2026. Season-by-season marks
+            are entered as the older scorebooks are transcribed.
           </p>
-
-          <div style={{ marginTop: '40px' }}>
-            <FactsTicker compact />
-          </div>
         </div>
-      </section>
+      </div>
+
       <Footer />
     </main>
   )
