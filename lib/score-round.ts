@@ -120,11 +120,46 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
     }
     if (a.ab > 0) seasonStats.season_ba = a.hits / a.ab
     else delete seasonStats.season_ba
-    const { data: base } = await admin.from('players').select('career_games_base').eq('id', playerId).single()
+    const { data: base } = await admin.from('players').select('career_games_base, grade').eq('id', playerId).single()
+    const careerGames = (base?.career_games_base ?? 0) + a.gp
+
+    /* Career totals = the pre-season base plus this season. Without this only
+       games moved, so career hits, HR, RBI, SB, K and W stayed frozen at their
+       import values and records went stale from round one. */
+    const b = (k: string) => Number(existing[k] ?? 0)
+    seasonStats.career_games = careerGames
+    seasonStats.career_h    = b('career_h_base')    + a.hits
+    seasonStats.career_hr   = b('career_hr_base')   + a.hr
+    seasonStats.career_rbi  = b('career_rbi_base')  + a.rbi
+    seasonStats.career_sb   = b('career_sb_base')   + a.sb
+    seasonStats.career_runs = b('career_runs_base') + a.runs
+    seasonStats.career_k    = b('career_k_base')    + a.k_pit
+    seasonStats.career_w    = b('career_w_base')    + a.wins
+
     await admin.from('players').update({
       stats: seasonStats,
-      career_games: (base?.career_games_base ?? 0) + a.gp,
+      career_games: careerGames,
     }).eq('id', playerId)
+
+    /* Milestones reached this round, recorded once each — the unique index on
+       (player_id, stat, milestone) means a rescore can't duplicate them. */
+    const SCALES: [string, number, number[]][] = [
+      ['games', careerGames,            [50,100,150,200,250,300,350,400,450,500]],
+      ['hits',  seasonStats.career_h,   [100,200,300,400,500,600,700,800,900,1000]],
+      ['hr',    seasonStats.career_hr,  [50,100,150,200,250,300]],
+      ['rbi',   seasonStats.career_rbi, [100,200,300,400,500,600]],
+      ['k_pit', seasonStats.career_k,   [200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500]],
+    ]
+    for (const [stat, now, marks] of SCALES) {
+      for (const m of marks) {
+        if (now >= m) {
+          await admin.from('milestones').upsert({
+            player_id: playerId, grade: base?.grade ?? round.grade, stat, milestone: m,
+            round_id, round_number: round.round_number,
+          }, { onConflict: 'player_id,stat,milestone', ignoreDuplicates: true })
+        }
+      }
+    }
   }
 
   // 3. Team scores with carry-forward + full substitution cascade
