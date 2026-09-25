@@ -130,6 +130,7 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
             box-shadow: 0 16px 40px #00000090;
           }
           .bk-frame + .bk-frame { margin-top: 18px; }
+          .bk-cols .bk-frame + .bk-frame { margin-top: 0; }
 
           /* ── Grade toggle: one plate split in two, gem on the seam ── */
           .bk-toggle {
@@ -202,7 +203,9 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
           }
 
           /* ── Records ── */
-          .bk-cols { display: grid; gap: 18px; }
+          /* Cards sit at the top of their row so a taller neighbour can't drag
+             the next one down, and each keeps its own height. */
+          .bk-cols { display: grid; gap: 18px; align-items: start; grid-auto-rows: min-content; }
           @media (min-width: 720px) { .bk-cols { grid-template-columns: 1fr 1fr; } }
           .bk-set { padding: 16px 20px 14px; }
           .bk-set h3 {
