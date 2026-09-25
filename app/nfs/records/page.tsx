@@ -14,13 +14,17 @@ const BRONZE = '#C97F3D'
 /* Milestone scales, the same ones the scoring run records against. Games every
    50, hits and RBI every 100, home runs every 50, pitching strikeouts every 100
    from 200. A player shows here once they're within the window of the next one. */
-const WATCH: { key: string; label: string; window: number; marks: number[] }[] = [
-  { key: 'career_games', label: 'Games', window: 15, marks: range(50, 1000, 50) },
-  { key: 'career_h', label: 'Hits', window: 15, marks: range(100, 1000, 100) },
-  { key: 'career_hr', label: 'Home runs', window: 5, marks: range(50, 500, 50) },
-  { key: 'career_rbi', label: 'RBI', window: 12, marks: range(100, 1000, 100) },
-  { key: 'career_k', label: 'Strikeouts', window: 50, marks: range(200, 2000, 100) },
+/* Ranked on rounds, not raw difference. A player gets one game a round but can
+   hit four home runs in an afternoon, so `rate` is what a productive player
+   does in a round and decides how near a mark really is. */
+const WATCH: { key: string; label: string; rate: number; marks: number[] }[] = [
+  { key: 'career_games', label: 'Games', rate: 1, marks: range(50, 1000, 50) },
+  { key: 'career_h', label: 'Hits', rate: 2, marks: range(100, 1000, 100) },
+  { key: 'career_hr', label: 'Home runs', rate: 0.4, marks: range(50, 500, 50) },
+  { key: 'career_rbi', label: 'RBI', rate: 1.5, marks: range(100, 1000, 100) },
+  { key: 'career_k', label: 'Strikeouts', rate: 8, marks: range(200, 2000, 100) },
 ]
+const HORIZON = 6   // rounds — anything further out isn't a watch yet
 function range(from: number, to: number, step: number) {
   const out: number[] = []
   for (let n = from; n <= to; n += step) out.push(n)
@@ -42,7 +46,7 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
     .from('players').select('full_name, stats, career_games')
     .eq('grade', grade).eq('active', true)
 
-  type Chase = { name: string; label: string; now: number; mark: number; needs: number }
+  type Chase = { name: string; label: string; now: number; mark: number; needs: number; rounds: number }
   const chasing: Chase[] = []
   for (const p of players ?? []) {
     const stats = (p.stats ?? {}) as Record<string, number>
@@ -52,10 +56,11 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
       const mark = w.marks.find(m => m > now)
       if (mark == null) continue
       const needs = mark - now
-      if (needs <= w.window) chasing.push({ name: p.full_name, label: w.label, now, mark, needs })
+      const rounds = needs / w.rate
+      if (rounds <= HORIZON) chasing.push({ name: p.full_name, label: w.label, now, mark, needs, rounds })
     }
   }
-  chasing.sort((a, b) => a.needs - b.needs || b.mark - a.mark)
+  chasing.sort((a, b) => a.rounds - b.rounds || b.mark - a.mark)
 
   // Milestones already reached this season, newest first
   const { data: reached } = await supabase
@@ -74,9 +79,9 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
      shows how far through the milestone they are, so 40 short of 1,000 reads
      differently from 40 short of 100. */
   const HOT = '#FF8C42'
-  const heat = (needs: number) =>
-    needs <= 2 ? { tone: HOT, tint: `${HOT}14`, bar: HOT }
-      : needs <= 6 ? { tone: GOLD, tint: `${GOLD}0C`, bar: GOLD }
+  const heat = (rounds: number) =>
+    rounds <= 1 ? { tone: HOT, tint: `${HOT}14`, bar: HOT }
+      : rounds <= 3 ? { tone: GOLD, tint: `${GOLD}0C`, bar: GOLD }
         : { tone: accent, tint: 'transparent', bar: '#ffffff30' }
 
   return (
@@ -105,7 +110,7 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
             <div className="text-center" style={{ background: `linear-gradient(180deg, ${accent}18 0%, transparent 100%)`, borderBottom: '1px solid #ffffff0a', padding: '22px 22px 18px' }}>
               <p className="text-xl sm:text-2xl font-black uppercase tracking-[0.18em]" style={{ fontFamily: 'var(--font-heading)', color: accent }}>Milestone Watch</p>
               <p className="text-[11px] text-[#F5F1E8]/45" style={{ marginTop: '6px' }}>
-                Closest first. <span style={{ color: '#FF8C42' }}>Orange</span> could fall this round, <span style={{ color: GOLD }}>gold</span> is within six.
+                Ranked by how near they really are — one game a round, but four hits in an afternoon. <span style={{ color: '#FF8C42' }}>Orange</span> could fall this round.
               </p>
             </div>
             {chasing.length === 0 ? (
@@ -115,14 +120,14 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
             ) : (
               chasing.slice(0, 14).map((c, i) => (
                 (() => {
-                  const h = heat(c.needs)
+                  const h = heat(c.rounds)
                   const pct = Math.max(4, Math.min(100, (c.now / c.mark) * 100))
                   return (
                     <div key={i} className="flex items-center gap-3"
                       style={{
                         borderBottom: '1px solid #ffffff08', padding: '12px 22px',
                         background: h.tint,
-                        boxShadow: c.needs <= 6 ? `inset 3px 0 0 ${h.tone}` : undefined,
+                        boxShadow: c.rounds <= 3 ? `inset 3px 0 0 ${h.tone}` : undefined,
                       }}>
                       <span className="w-12 shrink-0 text-center">
                         <span className="text-lg font-black" style={{ fontFamily: 'var(--font-heading)', color: h.tone }}>{c.needs}</span>
