@@ -19,6 +19,7 @@ const COLUMNS: { title: string; accent: string; links: { label: string; href: st
       { label: 'Fixtures', href: '/nfs/fixtures' },
       { label: 'Scoring', href: '/nfs/scoring' },
       { label: 'Honours Board', href: '/nfs/honours' },
+      { label: 'Book of Records', href: '/nfs/records' },
       { label: 'Officials Wing', href: '/nfs/officials' },
       { label: 'Partners', href: '/nfs/sponsors' },
     ],
