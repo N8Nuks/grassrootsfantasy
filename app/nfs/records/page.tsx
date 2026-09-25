@@ -74,7 +74,7 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
              behind the title, everything else swallowed by the dark. */
           .bk-room {
             flex: 1; position: relative; overflow: hidden;
-            padding: 92px 14px 80px;
+            padding: calc(env(safe-area-inset-top, 0px) + 104px) 14px 80px;
             background:
               radial-gradient(ellipse 52% 30% at 50% 2%, #16294A 0%, transparent 62%),
               radial-gradient(circle at 3% 22%, #E8983A26 0%, transparent 34%),
@@ -224,8 +224,11 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
         `}</style>
 
         <div className="bk-wrap">
-          <p className="bk-the bk-gold">The</p>
-          <h1 className="bk-title bk-gold">Book of Records</h1>
+          <h1 style={{ margin: 0, paddingTop: 'calc(env(safe-area-inset-top, 0px) + 20px)' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/book-of-records.png" alt="The Book of Records"
+              style={{ display: 'block', width: '100%', maxWidth: '760px', height: 'auto', margin: '0 auto' }} />
+          </h1>
           <p className="bk-lede">
             Every career mark set in the Premier competition since 2004, and who&apos;s closing in.
           </p>

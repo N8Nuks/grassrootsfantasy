@@ -21,7 +21,7 @@ export default function NFS() {
       {/* The artwork's own black is lighter than the page, so it sits on a black
          band that runs the full width — no rectangle edge, and the ribbon ends
          have room to breathe. */}
-      <div style={{ background: '#000000', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 40px)', paddingBottom: '30px' }}>
+      <div style={{ background: '#000000', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 104px)', paddingBottom: '30px' }}>
         <a href="/nfs/records" className="block transition-transform hover:scale-[1.02]"
           style={{ padding: '0 20px', maxWidth: '860px', marginLeft: 'auto', marginRight: 'auto' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
