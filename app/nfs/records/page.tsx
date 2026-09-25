@@ -226,7 +226,7 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
         <div className="bk-wrap">
           <h1 style={{ margin: 0, paddingTop: 'calc(env(safe-area-inset-top, 0px) + 20px)' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/book-of-records.png" alt="The Book of Records"
+            <img src="/book-of-records.webp" alt="The Book of Records"
               style={{ display: 'block', width: '100%', maxWidth: '760px', height: 'auto', margin: '0 auto' }} />
           </h1>
           <p className="bk-lede">

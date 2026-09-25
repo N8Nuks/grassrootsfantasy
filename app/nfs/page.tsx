@@ -21,11 +21,11 @@ export default function NFS() {
       {/* The artwork's own black is lighter than the page, so it sits on a black
          band that runs the full width — no rectangle edge, and the ribbon ends
          have room to breathe. */}
-      <div style={{ background: '#000000', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 104px)', paddingBottom: '30px' }}>
+      <div style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 104px)', paddingBottom: '30px' }}>
         <a href="/nfs/records" className="block transition-transform hover:scale-[1.02]"
           style={{ padding: '0 20px', maxWidth: '860px', marginLeft: 'auto', marginRight: 'auto' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/book-of-records.png" alt="The Book of Records — every career mark since 2004"
+          <img src="/book-of-records.webp" alt="The Book of Records — every career mark since 2004"
             style={{ display: 'block', width: '100%', height: 'auto' }} />
         </a>
       </div>
