@@ -111,10 +111,7 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
           <div className="rounded-2xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${accent}35`, marginBottom: '34px' }}>
             <div className="text-center" style={{ background: `linear-gradient(180deg, ${accent}18 0%, transparent 100%)`, borderBottom: '1px solid #ffffff0a', padding: '22px 22px 18px' }}>
               <p className="text-xl sm:text-2xl font-black uppercase tracking-[0.18em]" style={{ fontFamily: 'var(--font-heading)', color: accent }}>Milestone Watch</p>
-              <p className="text-[11px] text-[#F5F1E8]/45" style={{ marginTop: '6px' }}>
-                Ranked by how near they really are — one game a round, but four hits in an afternoon. <span style={{ color: '#FF8C42' }}>Orange</span> could fall this round.
-              </p>
-            </div>
+           </div>
             {chasing.length === 0 ? (
               <p className="text-sm text-center text-[#F5F1E8]/50" style={{ padding: '28px 22px' }}>
                 Nobody within reach of a milestone right now.
