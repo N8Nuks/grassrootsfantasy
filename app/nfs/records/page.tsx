@@ -22,7 +22,9 @@ const WATCH: { key: string; label: string; rate: number; marks: number[] }[] = [
   { key: 'career_h', label: 'Hits', rate: 2, marks: range(100, 1000, 100) },
   { key: 'career_hr', label: 'Home runs', rate: 0.4, marks: range(50, 500, 50) },
   { key: 'career_rbi', label: 'RBI', rate: 1.5, marks: range(100, 1000, 100) },
-  { key: 'career_k', label: 'Strikeouts', rate: 8, marks: range(200, 2000, 100) },
+  /* Strikeouts are recorded and celebrated once reached, but deliberately not
+     watched — a public countdown puts a pitcher under pressure mid-game and
+     could change how a team plays around them. */
 ]
 const HORIZON = 6   // rounds — anything further out isn't a watch yet
 function range(from: number, to: number, step: number) {
