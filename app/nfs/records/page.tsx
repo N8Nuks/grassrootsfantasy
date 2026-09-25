@@ -112,8 +112,8 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
           .bk-div span { height: 1px; width: min(180px, 26vw); background: linear-gradient(90deg, transparent, #C9A24790, transparent); }
           .bk-gem {
             width: 13px; height: 13px; transform: rotate(45deg); flex: none;
-            background: linear-gradient(135deg, #7FE3B0, #1E6B4B);
-            box-shadow: 0 0 10px #4FD69B70, inset 0 0 0 1px #E8C15A;
+            background: linear-gradient(135deg, #8FD0FF, #14407E);
+            box-shadow: 0 0 10px #4DA6FF70, inset 0 0 0 1px #E8C15A;
           }
 
           /* ── Notched gold frame, used on every panel ── */
@@ -150,8 +150,8 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
           .bk-seam {
             position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(45deg);
             width: 16px; height: 16px; z-index: 2;
-            background: linear-gradient(135deg, #7FE3B0, #1E6B4B);
-            box-shadow: 0 0 12px #4FD69B80, inset 0 0 0 1.5px #E8C15A;
+            background: linear-gradient(135deg, #8FD0FF, #14407E);
+            box-shadow: 0 0 12px #4DA6FF80, inset 0 0 0 1.5px #E8C15A;
           }
 
           /* ── Section banner ── */
