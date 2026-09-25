@@ -70,6 +70,15 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
   }
   const medal = (i: number) => (i === 0 ? GOLD : i === 1 ? SILVER : i === 2 ? BRONZE : '#ffffff35')
 
+  /* Three heat bands: about to fall, close, still climbing. The bar underneath
+     shows how far through the milestone they are, so 40 short of 1,000 reads
+     differently from 40 short of 100. */
+  const HOT = '#FF8C42'
+  const heat = (needs: number) =>
+    needs <= 2 ? { tone: HOT, tint: `${HOT}14`, bar: HOT }
+      : needs <= 6 ? { tone: GOLD, tint: `${GOLD}0C`, bar: GOLD }
+        : { tone: accent, tint: 'transparent', bar: '#ffffff30' }
+
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#0D0D0F' }}>
       <Nav />
@@ -95,7 +104,9 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
           <div className="rounded-2xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${accent}35`, marginBottom: '34px' }}>
             <div className="text-center" style={{ background: `linear-gradient(180deg, ${accent}18 0%, transparent 100%)`, borderBottom: '1px solid #ffffff0a', padding: '22px 22px 18px' }}>
               <p className="text-xl sm:text-2xl font-black uppercase tracking-[0.18em]" style={{ fontFamily: 'var(--font-heading)', color: accent }}>Milestone Watch</p>
-              <p className="text-[11px] text-[#F5F1E8]/45" style={{ marginTop: '6px' }}>Closest first. Updates the moment a round is scored.</p>
+              <p className="text-[11px] text-[#F5F1E8]/45" style={{ marginTop: '6px' }}>
+                Closest first. <span style={{ color: '#FF8C42' }}>Orange</span> could fall this round, <span style={{ color: GOLD }}>gold</span> is within six.
+              </p>
             </div>
             {chasing.length === 0 ? (
               <p className="text-sm text-center text-[#F5F1E8]/50" style={{ padding: '28px 22px' }}>
@@ -103,20 +114,34 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
               </p>
             ) : (
               chasing.slice(0, 14).map((c, i) => (
-                <div key={i} className="flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff08', padding: '12px 22px' }}>
-                  <span className="w-12 shrink-0 text-center">
-                    <span className="text-lg font-black" style={{ fontFamily: 'var(--font-heading)', color: c.needs <= 2 ? '#FF8C42' : accent }}>{c.needs}</span>
-                    <span className="block text-[8px] font-black uppercase tracking-widest text-[#F5F1E8]/35">to go</span>
-                  </span>
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-bold text-[#F5F1E8] truncate">{name(c.name)}</span>
-                    <span className="block text-[11px] text-[#F5F1E8]/45">{c.now} {c.label.toLowerCase()}</span>
-                  </span>
-                  <span className="shrink-0 text-right">
-                    <span className="text-sm font-black" style={{ color: '#F5F1E8' }}>{c.mark}</span>
-                    <span className="block text-[9px] font-black uppercase tracking-widest text-[#F5F1E8]/35">{c.label}</span>
-                  </span>
-                </div>
+                (() => {
+                  const h = heat(c.needs)
+                  const pct = Math.max(4, Math.min(100, (c.now / c.mark) * 100))
+                  return (
+                    <div key={i} className="flex items-center gap-3"
+                      style={{
+                        borderBottom: '1px solid #ffffff08', padding: '12px 22px',
+                        background: h.tint,
+                        boxShadow: c.needs <= 6 ? `inset 3px 0 0 ${h.tone}` : undefined,
+                      }}>
+                      <span className="w-12 shrink-0 text-center">
+                        <span className="text-lg font-black" style={{ fontFamily: 'var(--font-heading)', color: h.tone }}>{c.needs}</span>
+                        <span className="block text-[8px] font-black uppercase tracking-widest text-[#F5F1E8]/35">to go</span>
+                      </span>
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-sm font-bold text-[#F5F1E8] truncate">{name(c.name)}</span>
+                        <span className="block text-[11px] text-[#F5F1E8]/45" style={{ marginBottom: '5px' }}>{c.now} {c.label.toLowerCase()}</span>
+                        <span className="block rounded-full" style={{ height: '3px', background: '#ffffff12' }}>
+                          <span className="block rounded-full" style={{ height: '3px', width: `${pct}%`, background: h.bar }} />
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-right">
+                        <span className="text-sm font-black" style={{ color: '#F5F1E8' }}>{c.mark}</span>
+                        <span className="block text-[9px] font-black uppercase tracking-widest text-[#F5F1E8]/35">{c.label}</span>
+                      </span>
+                    </div>
+                  )
+                })()
               ))
             )}
           </div>
