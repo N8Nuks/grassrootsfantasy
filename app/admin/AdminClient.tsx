@@ -18,43 +18,48 @@ const P = {
   dim: '#F2EFFB80',
 }
 
+const field = { background: P.ink, border: `1px solid ${P.purple}40`, color: P.text }
+
+/* Panel and LogBox live outside the component on purpose. Defined inside it,
+   React rebuilt them on every keystroke, which destroyed the focused field
+   mid-typing and threw the page back to the top. */
+function Panel({ number, title, accent, sub, children }: {
+  number: string; title: string; accent: string; sub?: string; children: React.ReactNode
+}) {
+  return (
+    <div className="rounded-2xl" style={{
+      background: P.panel, border: `1px solid ${P.panelEdge}`,
+      padding: '28px', marginBottom: '24px', boxShadow: `0 0 40px ${accent}0E`,
+    }}>
+      <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: accent, marginBottom: sub ? '6px' : '18px' }}>
+        {number} · {title}
+      </p>
+      {sub && <p className="text-xs" style={{ color: P.dim, marginBottom: '18px' }}>{sub}</p>}
+      {children}
+    </div>
+  )
+}
+
+function LogBox({ lines, error }: { lines: string[]; error?: boolean }) {
+  if (!lines.length) return null
+  return (
+    <pre className="rounded-xl text-xs leading-relaxed whitespace-pre-wrap" style={{
+      marginTop: '20px', padding: '20px 24px',
+      background: P.ink,
+      border: `1px solid ${error ? P.red + '50' : P.blue + '30'}`,
+      color: error ? P.red : P.green,
+    }}>
+      {lines.join('\n')}
+    </pre>
+  )
+}
+
 export default function AdminClient({ stats, cardStyle: initialStyle }: { stats: AdminStats; cardStyle: string }) {
   const [csv, setCsv] = useState('')
   const [roundNumber, setRoundNumber] = useState('0')
   const [grade, setGrade] = useState<'mens' | 'womens'>('mens')
   const [log, setLog] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
-
-    function Panel({ number, title, accent, sub, children }: {
-    number: string; title: string; accent: string; sub?: string; children: React.ReactNode
-  }) {
-    return (
-      <div className="rounded-2xl" style={{
-        background: P.panel, border: `1px solid ${P.panelEdge}`,
-        padding: '28px', marginBottom: '24px', boxShadow: `0 0 40px ${accent}0E`,
-      }}>
-        <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: accent, marginBottom: sub ? '6px' : '18px' }}>
-          {number} · {title}
-        </p>
-        {sub && <p className="text-xs" style={{ color: P.dim, marginBottom: '18px' }}>{sub}</p>}
-        {children}
-      </div>
-    )
-  }
-
-  function LogBox({ lines, error }: { lines: string[]; error?: boolean }) {
-    if (!lines.length) return null
-    return (
-      <pre className="rounded-xl text-xs leading-relaxed whitespace-pre-wrap" style={{
-        marginTop: '20px', padding: '20px 24px',
-        background: P.ink,
-        border: `1px solid ${error ? P.red + '50' : P.blue + '30'}`,
-        color: error ? P.red : P.green,
-      }}>
-        {lines.join('\n')}
-      </pre>
-    )
-  }
 
   // Score-only
   const [scoreRound, setScoreRound] = useState('0')
@@ -233,8 +238,6 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
       : 'ERROR: ' + data.error])
     setDealBusy(false)
   }
-
-  const field = { background: P.ink, border: `1px solid ${P.purple}40`, color: P.text }
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: P.ink }}>
