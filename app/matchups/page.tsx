@@ -119,7 +119,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
       ? supabase.from('profiles').select('site_theme').eq('id', user.id).single()
       : Promise.resolve({ data: null }),
     supabase.from('rounds').select('id, round_number, lock_at, status')
-      .eq('grade', grade).lte('lock_at', new Date().toISOString())
+      .eq('grade', grade).gt('round_number', 0).lte('lock_at', new Date().toISOString())
       .order('round_number', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('public_teams').select('id, team_name, avatar_image, avatar_frame, club:clubs!club_id(name), avatar_club:clubs!avatar_club_id(name)'),
     // The live round, locked or not — used to explain why an open round isn't shown yet
