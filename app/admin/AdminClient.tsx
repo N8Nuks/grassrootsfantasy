@@ -181,6 +181,28 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
     setT2Busy(false)
   }
 
+  /* A manager who registered in one grade and now wants the other. There's no
+     path to this in the app, and the normal deal route only acts on whoever is
+     logged in — so it's done here by email. */
+  const [dealEmail, setDealEmail] = useState('')
+  const [dealGrade, setDealGrade] = useState<'mens' | 'womens'>('mens')
+  const [dealLog, setDealLog] = useState<string[]>([])
+  const [dealBusy, setDealBusy] = useState(false)
+
+  async function dealStarter() {
+    if (!confirm(`Deal a ${dealGrade === 'mens' ? "Men's" : "Women's"} Starter Pack to ${dealEmail.trim()}?`)) return
+    setDealBusy(true); setDealLog([])
+    const r = await fetch('/api/admin-deal-t1', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: dealEmail.trim(), grade: dealGrade }),
+    })
+    const data = await r.json()
+    setDealLog([r.ok
+      ? `Dealt ${data.dealt} cards to ${data.team} (${data.grade}). They can claim their Weekly Pack in that grade too.`
+      : 'ERROR: ' + data.error])
+    setDealBusy(false)
+  }
+
   const field = { background: P.ink, border: `1px solid ${P.purple}40`, color: P.text }
 
   function Panel({ number, title, accent, sub, children }: {
@@ -292,6 +314,7 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
                 <option value="womens">Women&apos;s</option>
               </select>
               <input type="number" value={roundNumber} onChange={e => setRoundNumber(e.target.value)}
+                onFocus={e => e.currentTarget.select()} onWheel={e => e.currentTarget.blur()}
                 placeholder="Round #" className="rounded-xl px-4 py-3.5 text-sm w-32" style={field} />
             </div>
             <textarea value={csv} onChange={e => setCsv(e.target.value)}
@@ -321,7 +344,10 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
                 <option value="mens">Men&apos;s</option>
                 <option value="womens">Women&apos;s</option>
               </select>
+              {/* Select on focus so typing replaces the value instead of making
+                  "01", and blur on scroll so a stray wheel can't change the round. */}
               <input type="number" value={scoreRound} onChange={e => setScoreRound(e.target.value)}
+                onFocus={e => e.currentTarget.select()} onWheel={e => e.currentTarget.blur()}
                 placeholder="Round #" className="rounded-xl px-4 py-3.5 text-sm w-32" style={field} />
             </div>
             <div className="text-center">
@@ -413,6 +439,28 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
             <LogBox lines={t2Log} />
           </Panel>
 
+          {/* 6 · Second grade */}
+          <Panel number="6" title="Deal a Starter Pack" accent={P.blue}
+            sub="For a manager who registered in one grade and now wants the other. Their existing squad is untouched, and the pack is refused if they already hold cards in that grade.">
+            <div className="flex gap-4 flex-wrap" style={{ marginBottom: '16px' }}>
+              <input type="email" value={dealEmail} onChange={e => setDealEmail(e.target.value)}
+                placeholder="their@email.com" className="rounded-xl px-4 py-3.5 text-sm flex-1" style={{ ...field, minWidth: '220px' }} />
+              <select value={dealGrade} onChange={e => setDealGrade(e.target.value as 'mens' | 'womens')}
+                className="rounded-xl px-4 py-3.5 text-sm w-40" style={field}>
+                <option value="mens">Men&apos;s</option>
+                <option value="womens">Women&apos;s</option>
+              </select>
+            </div>
+            <div className="text-center">
+              <button onClick={dealStarter} disabled={dealBusy || !dealEmail.trim()}
+                className="text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] disabled:opacity-40"
+                style={{ color: P.blue, border: `1px solid ${P.blue}`, background: 'transparent', padding: '16px 52px' }}>
+                {dealBusy ? 'Dealing…' : 'Deal Starter Pack'}
+              </button>
+            </div>
+            <LogBox lines={dealLog} error={dealLog[0]?.startsWith('ERROR')} />
+          </Panel>
+
           {/* 5 · Availability */}
           <Panel number="5" title="Player Availability" accent={P.green}
             sub="Mark players unavailable for a round — users see it on their team cards immediately.">
@@ -423,6 +471,7 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
                 <option value="womens">Women&apos;s</option>
               </select>
               <input type="number" value={availRound} onChange={e => setAvailRound(e.target.value)}
+                onFocus={e => e.currentTarget.select()} onWheel={e => e.currentTarget.blur()}
                 placeholder="Round #" className="rounded-xl px-4 py-3.5 text-sm w-32" style={field} />
             </div>
             <textarea value={availNames} onChange={e => setAvailNames(e.target.value)}
@@ -453,6 +502,7 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
                 <option value="womens">Women&apos;s</option>
               </select>
               <input type="number" value={pgRound} onChange={e => setPgRound(e.target.value)}
+                onFocus={e => e.currentTarget.select()} onWheel={e => e.currentTarget.blur()}
                 placeholder="Round #" className="rounded-xl px-4 py-3.5 text-sm w-32" style={field} />
             </div>
             <textarea value={pgNames} onChange={e => setPgNames(e.target.value)}
