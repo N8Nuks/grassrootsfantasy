@@ -25,6 +25,37 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
   const [log, setLog] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
 
+    function Panel({ number, title, accent, sub, children }: {
+    number: string; title: string; accent: string; sub?: string; children: React.ReactNode
+  }) {
+    return (
+      <div className="rounded-2xl" style={{
+        background: P.panel, border: `1px solid ${P.panelEdge}`,
+        padding: '28px', marginBottom: '24px', boxShadow: `0 0 40px ${accent}0E`,
+      }}>
+        <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: accent, marginBottom: sub ? '6px' : '18px' }}>
+          {number} · {title}
+        </p>
+        {sub && <p className="text-xs" style={{ color: P.dim, marginBottom: '18px' }}>{sub}</p>}
+        {children}
+      </div>
+    )
+  }
+
+  function LogBox({ lines, error }: { lines: string[]; error?: boolean }) {
+    if (!lines.length) return null
+    return (
+      <pre className="rounded-xl text-xs leading-relaxed whitespace-pre-wrap" style={{
+        marginTop: '20px', padding: '20px 24px',
+        background: P.ink,
+        border: `1px solid ${error ? P.red + '50' : P.blue + '30'}`,
+        color: error ? P.red : P.green,
+      }}>
+        {lines.join('\n')}
+      </pre>
+    )
+  }
+
   // Score-only
   const [scoreRound, setScoreRound] = useState('0')
   const [scoreGrade, setScoreGrade] = useState<'mens' | 'womens'>('mens')
@@ -204,37 +235,6 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
   }
 
   const field = { background: P.ink, border: `1px solid ${P.purple}40`, color: P.text }
-
-  function Panel({ number, title, accent, sub, children }: {
-    number: string; title: string; accent: string; sub?: string; children: React.ReactNode
-  }) {
-    return (
-      <div className="rounded-2xl" style={{
-        background: P.panel, border: `1px solid ${P.panelEdge}`,
-        padding: '28px', marginBottom: '24px', boxShadow: `0 0 40px ${accent}0E`,
-      }}>
-        <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: accent, marginBottom: sub ? '6px' : '18px' }}>
-          {number} · {title}
-        </p>
-        {sub && <p className="text-xs" style={{ color: P.dim, marginBottom: '18px' }}>{sub}</p>}
-        {children}
-      </div>
-    )
-  }
-
-  function LogBox({ lines, error }: { lines: string[]; error?: boolean }) {
-    if (!lines.length) return null
-    return (
-      <pre className="rounded-xl text-xs leading-relaxed whitespace-pre-wrap" style={{
-        marginTop: '20px', padding: '20px 24px',
-        background: P.ink,
-        border: `1px solid ${error ? P.red + '50' : P.blue + '30'}`,
-        color: error ? P.red : P.green,
-      }}>
-        {lines.join('\n')}
-      </pre>
-    )
-  }
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: P.ink }}>
@@ -439,28 +439,6 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
             <LogBox lines={t2Log} />
           </Panel>
 
-          {/* 6 · Second grade */}
-          <Panel number="6" title="Deal a Starter Pack" accent={P.blue}
-            sub="For a manager who registered in one grade and now wants the other. Their existing squad is untouched, and the pack is refused if they already hold cards in that grade.">
-            <div className="flex gap-4 flex-wrap" style={{ marginBottom: '16px' }}>
-              <input type="email" value={dealEmail} onChange={e => setDealEmail(e.target.value)}
-                placeholder="their@email.com" className="rounded-xl px-4 py-3.5 text-sm flex-1" style={{ ...field, minWidth: '220px' }} />
-              <select value={dealGrade} onChange={e => setDealGrade(e.target.value as 'mens' | 'womens')}
-                className="rounded-xl px-4 py-3.5 text-sm w-40" style={field}>
-                <option value="mens">Men&apos;s</option>
-                <option value="womens">Women&apos;s</option>
-              </select>
-            </div>
-            <div className="text-center">
-              <button onClick={dealStarter} disabled={dealBusy || !dealEmail.trim()}
-                className="text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] disabled:opacity-40"
-                style={{ color: P.blue, border: `1px solid ${P.blue}`, background: 'transparent', padding: '16px 52px' }}>
-                {dealBusy ? 'Dealing…' : 'Deal Starter Pack'}
-              </button>
-            </div>
-            <LogBox lines={dealLog} error={dealLog[0]?.startsWith('ERROR')} />
-          </Panel>
-
           {/* 5 · Availability */}
           <Panel number="5" title="Player Availability" accent={P.green}
             sub="Mark players unavailable for a round — users see it on their team cards immediately.">
@@ -490,6 +468,28 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
               </button>
             </div>
             <LogBox lines={availLog} error={availLog[0]?.startsWith('ERROR')} />
+          </Panel>
+
+          {/* 6 · Second grade */}
+          <Panel number="6" title="Deal a Starter Pack" accent={P.blue}
+            sub="For a manager who registered in one grade and now wants the other. Their existing squad is untouched, and the pack is refused if they already hold cards in that grade.">
+            <div className="flex gap-4 flex-wrap" style={{ marginBottom: '16px' }}>
+              <input type="email" value={dealEmail} onChange={e => setDealEmail(e.target.value)}
+                placeholder="their@email.com" className="rounded-xl px-4 py-3.5 text-sm flex-1" style={{ ...field, minWidth: '220px' }} />
+              <select value={dealGrade} onChange={e => setDealGrade(e.target.value as 'mens' | 'womens')}
+                className="rounded-xl px-4 py-3.5 text-sm w-40" style={field}>
+                <option value="mens">Men&apos;s</option>
+                <option value="womens">Women&apos;s</option>
+              </select>
+            </div>
+            <div className="text-center">
+              <button onClick={dealStarter} disabled={dealBusy || !dealEmail.trim()}
+                className="text-sm font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] disabled:opacity-40"
+                style={{ color: P.blue, border: `1px solid ${P.blue}`, background: 'transparent', padding: '16px 52px' }}>
+                {dealBusy ? 'Dealing…' : 'Deal Starter Pack'}
+              </button>
+            </div>
+            <LogBox lines={dealLog} error={dealLog[0]?.startsWith('ERROR')} />
           </Panel>
 
           {/* 7 · Perfect Games */}
