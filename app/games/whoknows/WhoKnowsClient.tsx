@@ -202,7 +202,7 @@ export default function WhoKnowsClient() {
           </p>
         )}
         <div style={{ marginTop: '26px' }}>
-          <ArcadeShare lines={[`Who Thinks They Know The NFS — ${line}`]} />
+          <ArcadeShare lines={[`Who thinks they know… The NFS — ${line}`]} />
         </div>
         <div style={{ marginTop: '22px' }}>
           <button className="ar-btn" onClick={() => setPhase('setup')}><span>Play again</span></button>

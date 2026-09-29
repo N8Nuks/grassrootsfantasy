@@ -11,7 +11,7 @@ const GAMES = [
   { href: '/games/batting', n: '05', title: 'Legends Cage', blurb: 'Every champion the NFS has crowned. Pick your bat, pick your arm.', tag: 'Archive', neon: '#B47CFF' },
   { href: '/games/memory', n: '06', title: 'Card Sharp', blurb: 'Two of every card, face down. Remember what you saw.', tag: 'Memory', neon: '#FF6B9D' },
   { href: '/games/merge', n: '07', title: 'Tier Up', blurb: 'Two Commons make an Elite. Climb to Immortal.', tag: 'Puzzle', neon: '#39FF9E' },
-  { href: '/games/whoknows', n: '08', title: 'Who Thinks They Know The NFS', blurb: 'Fifteen questions on twenty-two seasons. One wrong answer and you\u2019re out.', tag: 'Quiz', neon: '#4D7FFF', featured: true },
+  { href: '/games/whoknows', n: '08', title: 'Who thinks they know\u2026 The NFS', blurb: 'Fifteen questions on twenty-two seasons. One wrong answer and you\u2019re out.', tag: 'Quiz', neon: '#4D7FFF', chrome: true },
   { href: '/games/connections', n: '09', title: 'Connections', blurb: 'Sixteen players, four hidden fours. Find them.', tag: 'Daily', neon: '#7DF9FF' },
   { href: '/games/release', n: '10', title: 'Release Point', blurb: 'The windmill comes round. Tap the instant it leaves.', tag: 'Reaction', neon: '#FF4FD8' },
   { href: '/games/fielding', n: '11', title: "Knock 'em Down", blurb: 'Three lanes coming at you. Throw early — nothing crosses the line.', tag: 'Twelve levels', neon: '#5CFF6B' },
@@ -205,6 +205,24 @@ export default function Games() {
           to   { transform: translateX(100px); }
         }
 
+        /* Chrome — Auckland blue through polished silver to white. Same idea as
+           the featured tile, but its own gradient so the two never share a look
+           (and its own id, since an SVG gradient id is global to the page). */
+        .gm-tile[data-chrome="true"] {
+          border-color: transparent;
+          background: linear-gradient(155deg, #0A1020 0%, #06080E 100%);
+          animation: gm-chrome-breathe 3.8s ease-in-out infinite;
+        }
+        @keyframes gm-chrome-breathe {
+          0%, 100% { box-shadow: 0 0 22px #4D7FFF28, 0 18px 40px #00000090; }
+          50%      { box-shadow: 0 0 46px #8FD0FF55, 0 0 95px #FFFFFF1A, 0 18px 40px #00000090; }
+        }
+        .gm-tile[data-chrome="true"] .gm-frame rect { stroke: url(#gm-chrome-grad); }
+        .gm-tile[data-chrome="true"] .gm-n { display: none; }
+        .gm-tile[data-chrome="true"] .gm-nsvg text { stroke: url(#gm-chrome-grad); }
+        .gm-tile[data-chrome="true"] .gm-name { color: #E8F1FF; text-shadow: 0 0 20px #8FD0FF60; }
+        .gm-tile[data-chrome="true"] .gm-tag { color: #06080E; background: #CFE3FF; }
+
         /* Closed for the changeover — desaturated, unlit and inert. The tag and
            number stay, so the tile reads as a machine that's coming back rather
            than one that's been taken away. */
@@ -259,11 +277,29 @@ export default function Games() {
                   data-closed={closed ? 'true' : undefined}
                   data-featured={!closed && 'featured' in g ? 'true' : undefined}
                   data-gold={!closed && 'gold' in g ? 'true' : undefined}
+                  data-chrome={!closed && 'chrome' in g ? 'true' : undefined}
                   style={{ ['--neon' as string]: closed ? '#5C6878' : g.neon }}>
                   <span className="gm-n" data-n={g.n}>{g.n}</span>
-                  {!closed && 'featured' in g && (
+                  {!closed && ('featured' in g || 'chrome' in g) && (
                     <svg className="gm-frame" preserveAspectRatio="none" aria-hidden="true">
                       <rect x="2" y="2" width="calc(100% - 4px)" height="calc(100% - 4px)" />
+                    </svg>
+                  )}
+                  {!closed && 'chrome' in g && (
+                    <svg className="gm-nsvg" viewBox="0 0 96 76" aria-hidden="true">
+                      <defs>
+                        <linearGradient id="gm-chrome-grad" x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%" stopColor="#2E5BD8" />
+                          <stop offset="22%" stopColor="#CFE3FF" />
+                          <stop offset="42%" stopColor="#FFFFFF" />
+                          <stop offset="62%" stopColor="#8FD0FF" />
+                          <stop offset="82%" stopColor="#2E5BD8" />
+                          <stop offset="100%" stopColor="#CFE3FF" />
+                          <animate attributeName="x1" values="-1;1" dur="3.6s" repeatCount="indefinite" />
+                          <animate attributeName="x2" values="0;2" dur="3.6s" repeatCount="indefinite" />
+                        </linearGradient>
+                      </defs>
+                      <text x="93" y="60" textAnchor="end">{g.n}</text>
                     </svg>
                   )}
                   {!closed && 'featured' in g && (
