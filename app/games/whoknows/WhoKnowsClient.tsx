@@ -9,11 +9,13 @@ type Phase = 'setup' | 'playing' | 'won' | 'lost' | 'walked'
 /* Four tiers on the climb. Reaching one banks it, so a fall later still leaves
    you with the badge you earned — the only currency in a free game is what you
    can tell people afterwards. */
+/* The climb runs Auckland blue to pure white — the higher you get, the
+   brighter it burns, so Immortal is the whitest thing on the page. */
 const TIERS = [
-  { from: 1, to: 4, name: 'Common', colour: '#3FBF63' },
-  { from: 5, to: 9, name: 'Elite', colour: '#4DA6FF' },
-  { from: 10, to: 14, name: '2WP', colour: '#E8C15A' },
-  { from: 15, to: 15, name: 'Immortal', colour: '#FFD400' },
+  { from: 1, to: 4, name: 'Common', colour: '#7C9ECF' },
+  { from: 5, to: 9, name: 'Elite', colour: '#4D7FFF' },
+  { from: 10, to: 14, name: '2WP', colour: '#8FD0FF' },
+  { from: 15, to: 15, name: 'Immortal', colour: '#FFFFFF' },
 ]
 const tierAt = (q: number) => TIERS.find(t => q >= t.from && q <= t.to) ?? TIERS[0]
 // Banked = the highest tier whose opening question you actually answered
@@ -25,7 +27,7 @@ const banked = (answered: number) => {
   return null
 }
 
-const GOLD = '#FFD400'
+const GOLD = '#6E9BFF'   // Auckland blue, bright enough to read on the dark
 const INK = '#05060A'
 
 export default function WhoKnowsClient() {

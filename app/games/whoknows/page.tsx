@@ -1,7 +1,7 @@
 import ArcadeShell from '@/components/ArcadeShell'
 import WhoKnowsClient from './WhoKnowsClient'
 
-const NEON = '#FFD400'
+const NEON = '#4D7FFF'
 
 export default function WhoKnows() {
   return (
