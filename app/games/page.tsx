@@ -11,13 +11,13 @@ const GAMES = [
   { href: '/games/batting', n: '05', title: 'Legends Cage', blurb: 'Every champion the NFS has crowned. Pick your bat, pick your arm.', tag: 'Archive', neon: '#B47CFF' },
   { href: '/games/memory', n: '06', title: 'Card Sharp', blurb: 'Two of every card, face down. Remember what you saw.', tag: 'Memory', neon: '#FF6B9D' },
   { href: '/games/merge', n: '07', title: 'Tier Up', blurb: 'Two Commons make an Elite. Climb to Immortal.', tag: 'Puzzle', neon: '#39FF9E' },
-  { href: '/games/season', n: '08', title: 'Guess the Season', blurb: 'Four award winners. Name the year they won.', tag: 'Archive', neon: '#FF8A3D' },
+  { href: '/games/whoknows', n: '08', title: 'Who Thinks They Know The NFS', blurb: 'Fifteen questions on twenty-two seasons. One wrong answer and you\u2019re out.', tag: 'Quiz', neon: '#4D7FFF', featured: true },
   { href: '/games/connections', n: '09', title: 'Connections', blurb: 'Sixteen players, four hidden fours. Find them.', tag: 'Daily', neon: '#7DF9FF' },
   { href: '/games/release', n: '10', title: 'Release Point', blurb: 'The windmill comes round. Tap the instant it leaves.', tag: 'Reaction', neon: '#FF4FD8' },
   { href: '/games/fielding', n: '11', title: "Knock 'em Down", blurb: 'Three lanes coming at you. Throw early — nothing crosses the line.', tag: 'Twelve levels', neon: '#5CFF6B' },
   { href: '/games/pickthepitch', n: '12', title: gameTitle('Pick the Pitch'), blurb: "Steal the catcher's signs from second. Nobody tells you the code.", tag: 'Expert', neon: '#FFD400', featured: true },
   { href: '/games/goldenglove', n: '13', title: 'Golden Glove', blurb: 'Sixty seconds of fungo. Read it, reach it, take it clean.', tag: 'Drill', neon: '#FFC93C', gold: true },
-  { href: '/games/whoknows', n: '14', title: 'Who Thinks They Know The NFS', blurb: 'Fifteen questions on twenty-two seasons. One wrong answer and you\u2019re out.', tag: 'Quiz', neon: '#4D7FFF', featured: true },
+  { href: '/games/season', n: '14', title: 'Guess the Season', blurb: 'Four award winners. Name the year they won.', tag: 'Archive', neon: '#FF8A3D' },
 ]
 
 export default function Games() {
