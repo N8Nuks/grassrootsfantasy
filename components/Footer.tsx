@@ -42,6 +42,7 @@ const COLUMNS: { title: string; accent: string; links: { label: string; href: st
       { label: 'Leagues', href: '/leagues' },
       { label: 'Join', href: '/join' },
       { label: 'Log in', href: '/login' },
+      { label: 'Change password', href: '/reset-password' },
       { label: 'Contact', href: 'mailto:info@grassrootsfantasy.co.nz' },
       { label: 'Black Diamond Labs', href: 'https://blackdiamondlabs.co.nz', external: true },
     ],
