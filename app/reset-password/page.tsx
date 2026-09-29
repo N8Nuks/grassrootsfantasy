@@ -57,7 +57,7 @@ export default function ResetPassword() {
             <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: GOLD }}>Account</p>
             <div className="mx-auto mb-6 h-px w-24" style={{ background: COBALT }} />
             <h1 className="text-3xl sm:text-4xl font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>
-              Set a new password
+              {ready ? 'Change your password' : 'Set a new password'}
             </h1>
           </div>
 

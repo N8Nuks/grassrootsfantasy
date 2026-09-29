@@ -757,6 +757,11 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
           </p>
           <div className="flex items-center justify-center flex-wrap" style={{ gap: '12px' }}>
             <GradeSwitch grade={grade} mensHref="/team?grade=mens" womensHref="/team?grade=womens" palette={siteTheme !== 'grade' ? T : undefined} onImage={textured} />
+            <a href="/reset-password"
+              className="inline-flex items-center text-[11px] font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03]"
+              style={{ height: '48px', padding: '0 24px', color: T.textDim, background: 'transparent', border: '1px solid #ffffff25' }}>
+              Password
+            </a>
             <a href="/nfs/fixtures"
               className="inline-flex items-center text-[11px] font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03]"
               style={{ height: '48px', padding: '0 24px', color: T.text, background: '#141210E6', border: `2px solid ${T.accent}`, boxShadow: `0 0 14px ${T.accent}55` }}>

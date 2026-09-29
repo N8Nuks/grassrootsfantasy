@@ -19,6 +19,7 @@ const GENERIC_CODE = 'GFNFS26'
 export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [teamName, setTeamName] = useState('')
   const [clubCode, setClubCode] = useState('')
   const [fullName, setFullName] = useState('')
@@ -62,6 +63,12 @@ export default function Register() {
     setError('')
     if (!email || !password || !teamName || !clubCode) {
       setError('Email, password, team name, and club are required.')
+      return
+    }
+    /* One password field meant a typo became the password, and nobody found
+       out until they tried to log in. */
+    if (password !== confirmPassword) {
+      setError('Those passwords don\u2019t match. Check both and try again.')
       return
     }
     setBusy(true)
@@ -213,6 +220,10 @@ export default function Register() {
             <div>
               <label className={label}>Password *</label>
               <input className={field} style={fieldStyle} type="password" autoComplete="new-password" placeholder="At least 8 characters" value={password} onChange={e => setPassword(e.target.value)} />
+            </div>
+            <div>
+              <label className={label}>Confirm password *</label>
+              <input className={field} style={fieldStyle} type="password" autoComplete="new-password" placeholder="Same again" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
             </div>
             <div>
               <label className={label}>Team name *</label>
