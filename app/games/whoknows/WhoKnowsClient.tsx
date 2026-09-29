@@ -56,6 +56,7 @@ export default function WhoKnowsClient() {
 
   async function start() {
     setQNum(1); setPhase('playing')
+    setUsed({ twoDown: false, bullpen: false, bleachers: false })
     await pull(1)
   }
 
@@ -205,7 +206,10 @@ export default function WhoKnowsClient() {
           <ArcadeShare lines={[`Who thinks they know… The NFS — ${line}`]} />
         </div>
         <div style={{ marginTop: '22px' }}>
-          <button className="ar-btn" onClick={() => setPhase('setup')}><span>Play again</span></button>
+          <button className="ar-btn" onClick={() => {
+            setUsed({ twoDown: false, bullpen: false, bleachers: false })
+            setPhase('setup')
+          }}><span>Play again</span></button>
         </div>
       </div>
     )
