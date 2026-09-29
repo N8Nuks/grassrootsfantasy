@@ -16,8 +16,8 @@ const GAMES = [
   { href: '/games/release', n: '10', title: 'Release Point', blurb: 'The windmill comes round. Tap the instant it leaves.', tag: 'Reaction', neon: '#FF4FD8' },
   { href: '/games/fielding', n: '11', title: "Knock 'em Down", blurb: 'Three lanes coming at you. Throw early — nothing crosses the line.', tag: 'Twelve levels', neon: '#5CFF6B' },
   { href: '/games/pickthepitch', n: '12', title: gameTitle('Pick the Pitch'), blurb: "Steal the catcher's signs from second. Nobody tells you the code.", tag: 'Expert', neon: '#FFD400', featured: true },
-  { href: '/games/whoknows', n: '14', title: 'Who Thinks They Know The NFS', blurb: 'Fifteen questions on twenty-two seasons. One wrong answer and you\u2019re out.', tag: 'Quiz', neon: '#FFD400' },
   { href: '/games/goldenglove', n: '13', title: 'Golden Glove', blurb: 'Sixty seconds of fungo. Read it, reach it, take it clean.', tag: 'Drill', neon: '#FFC93C', gold: true },
+  { href: '/games/whoknows', n: '14', title: 'Who Thinks They Know The NFS', blurb: 'Fifteen questions on twenty-two seasons. One wrong answer and you\u2019re out.', tag: 'Quiz', neon: '#FFD400' },
 ]
 
 export default function Games() {
