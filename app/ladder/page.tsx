@@ -150,12 +150,14 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
       agg.total += userTotals.get(t.id) ?? 0
       clubs.set(club, agg)
     }
+    /* Only the average is shown — a club total would just reveal club size.
+       The total still breaks ties behind the scenes. */
     rows = [...clubs.entries()].map(([club, agg]) => {
       const avg = agg.users ? agg.total / agg.users : 0
       const qualified = agg.users >= 5
       return {
         id: club, team: club, club: clubSizeLabel(agg.users),
-        main: avg.toFixed(1), sub: `${agg.total} total`,
+        main: avg.toFixed(1), sub: '',
         sortKey: avg, tieKey: agg.total, unranked: !qualified,
       }
     })
