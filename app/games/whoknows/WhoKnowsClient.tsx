@@ -44,14 +44,24 @@ export default function WhoKnowsClient() {
   const [bullpen, setBullpen] = useState<string | null>(null)
   const [bleachers, setBleachers] = useState<Record<string, number> | null>(null)
 
+  /* Each fetch is stamped with the question it was asked for. A late reply from
+     an earlier question is dropped, which is what left the same question on
+     screen several times in a row. */
+  const [pending, setPending] = useState(0)
+
   async function pull(n: number) {
+    setPending(n)
     setLoading(true); setPicked(null); setRevealed(false)
-    setRemoved([]); setBullpen(null); setBleachers(null)
+    setQ(null); setRemoved([]); setBullpen(null); setBleachers(null)
     const supabase = createClient()
     const { data, error } = await supabase.rpc('quiz_question', { p_difficulty: n, p_grade: grade })
-    setLoading(false)
-    if (error || !data) { alert('Could not load a question — try again.'); return }
-    setQ(data as Q)
+    setPending(cur => {
+      if (cur !== n) return cur           // a newer question is already on its way
+      setLoading(false)
+      if (error || !data) { alert('Could not load a question — try again.'); return cur }
+      setQ(data as Q)
+      return cur
+    })
   }
 
   async function start() {
