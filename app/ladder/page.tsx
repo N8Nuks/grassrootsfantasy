@@ -8,6 +8,15 @@ import FactsTicker from '@/components/FactsTicker'
 import PresentedBy from '@/components/PresentedBy'
 import ClubAvatar from '@/components/ClubAvatar'
 
+/* Club size as shown on the Clubs board. Small clubs read as "Building" rather
+   than a lonely 1 or 2, and big clubs cap at 10+ so size never dwarfs the
+   average — which is what the board actually ranks on. */
+function clubSizeLabel(n: number) {
+  if (n <= 2) return 'Building'
+  if (n >= 10) return '10+ managers'
+  return `${n} managers`
+}
+
 export default async function Ladder({ searchParams }: { searchParams: Promise<{ grade?: string; view?: string }> }) {
   const params = await searchParams
   const grade: Grade = params.grade === 'womens' ? 'womens' : 'mens'
@@ -145,7 +154,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
       const avg = agg.users ? agg.total / agg.users : 0
       const qualified = agg.users >= 5
       return {
-        id: club, team: club, club: `${agg.users} manager${agg.users === 1 ? '' : 's'}`,
+        id: club, team: club, club: clubSizeLabel(agg.users),
         main: avg.toFixed(1), sub: `${agg.total} total`,
         sortKey: avg, tieKey: agg.total, unranked: !qualified,
       }
