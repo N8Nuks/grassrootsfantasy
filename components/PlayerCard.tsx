@@ -14,6 +14,17 @@ const posLabel = (p: string) => SLOT_LABELS[p] ?? p
  
 // Achievement double — the card is lit for the round the bonus applies to
 export const DOUBLE_ACCENT = '#FF8C42'
+
+/* Career milestone — the card wears a gold frame and a ribbon across the
+   photo for the round the milestone was reached. Comes from the milestones
+   table (stat + milestone); the caller passes only this round's. */
+export const MILESTONE_ACCENT = '#F2C94C'
+export type CardMilestone = { stat: string; milestone: number }
+const MILESTONE_WORD: Record<string, string> = {
+  games: 'GAMES', hits: 'HITS', hr: 'HR', rbi: 'RBI', k_pit: 'K', sb: 'SB',
+}
+const milestoneLabel = (m: CardMilestone) =>
+  `${m.milestone} ${MILESTONE_WORD[m.stat] ?? m.stat.toUpperCase()}`
  
 const CLUB_TINTS: Record<string, string> = {
   'Bandits': '#5B2D8E', 'Howick': '#8A1E41', 'Marist': '#2456E6',
@@ -60,7 +71,7 @@ export type PlayerCardData = {
   revealPos?: string | null
 }
  
-export default function PlayerCard({ player, grade, owned, chip, onClick, siteTheme, cardStyle = 'premium', doubled = false }: {
+export default function PlayerCard({ player, grade, owned, chip, onClick, siteTheme, cardStyle = 'premium', doubled = false, milestones }: {
   player: PlayerCardData
   grade: Grade
   owned: boolean            // owned = lit face; unowned = greyed
@@ -69,6 +80,7 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
   siteTheme?: string
   cardStyle?: 'standard' | 'premium'
   doubled?: boolean         // scores 2x this round — cycle or perfect game
+  milestones?: CardMilestone[] | null   // reached in the latest scored round
 }) {
   const T = theme(grade, siteTheme)
   const meta = TIER_META[player.tier] ?? TIER_META.common
@@ -79,167 +91,207 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
   const badge = longevityBadge(player.badges)
   const silhouette = silhouetteFor(player.revealPos, grade)
 
+  const ms = owned ? (milestones ?? []) : []
+  const hasMs = ms.length > 0
+  // The 2× double keeps its orange frame if both land in the same round; the ribbon still shows
+  const lit = doubled ? DOUBLE_ACCENT : hasMs ? MILESTONE_ACCENT : null
+  const edge = lit ?? meta.accent
+
   return (
-    <button onClick={onClick}
-      className={"rounded-xl text-left transition-all hover:scale-[1.03] flex flex-col" + (doubled ? ' gf-rim' : '')}
-      style={{
-        padding: '4px',
-        background: doubled
-          ? `linear-gradient(165deg, ${DOUBLE_ACCENT} 0%, ${DOUBLE_ACCENT}70 45%, ${DOUBLE_ACCENT}30 100%)`
-          : owned
-            ? `linear-gradient(165deg, ${meta.accent} 0%, ${meta.accent}50 40%, ${meta.accent}20 100%)`
-            : `linear-gradient(165deg, #ffffff20 0%, #ffffff10 100%)`,
-        boxShadow: doubled
-          ? `0 0 22px ${DOUBLE_ACCENT}70, 0 0 46px ${DOUBLE_ACCENT}30`
-          : owned ? `0 0 18px ${meta.accent}25` : 'none',
-        ...(doubled ? { ['--rim' as string]: `${DOUBLE_ACCENT}90` } : {}),
-      }}>
-      {/* Inner card */}
-      <div className="flex-1 rounded-lg overflow-hidden flex flex-col min-h-0 w-full"
-        style={{ background: T.surface, border: '1px solid #F5F1E820' }}>
+    <>
+      {hasMs && (
+        <style>{`
+          @keyframes gf-ms-shine { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+          @media (prefers-reduced-motion: reduce) { .gf-ms-ribbon { animation: none !important; } }
+        `}</style>
+      )}
+      <button onClick={onClick}
+        className={"rounded-xl text-left transition-all hover:scale-[1.03] flex flex-col" + (lit ? ' gf-rim' : '')}
+        style={{
+          padding: '4px',
+          background: lit
+            ? `linear-gradient(165deg, ${lit} 0%, ${lit}70 45%, ${lit}30 100%)`
+            : owned
+              ? `linear-gradient(165deg, ${meta.accent} 0%, ${meta.accent}50 40%, ${meta.accent}20 100%)`
+              : `linear-gradient(165deg, #ffffff20 0%, #ffffff10 100%)`,
+          boxShadow: lit
+            ? `0 0 22px ${lit}70, 0 0 46px ${lit}30`
+            : owned ? `0 0 18px ${meta.accent}25` : 'none',
+          ...(lit ? { ['--rim' as string]: `${lit}90` } : {}),
+        }}>
+        {/* Inner card */}
+        <div className="flex-1 rounded-lg overflow-hidden flex flex-col min-h-0 w-full"
+          style={{ background: T.surface, border: '1px solid #F5F1E820' }}>
  
-        {/* Mini banner — crest + name */}
-        <div className="flex items-center gap-2 pinstripe-fine"
-          style={{ background: bandBg, borderBottom: `1px solid ${(doubled ? DOUBLE_ACCENT : meta.accent)}35`, padding: '7px 10px' }}>
-          <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0"
-            style={{ width: '24px', height: '24px', background: '#141210', border: `1px solid ${tint}70` }}>
-            {player.club ? (
+          {/* Mini banner — crest + name */}
+          <div className="flex items-center gap-2 pinstripe-fine"
+            style={{ background: bandBg, borderBottom: `1px solid ${edge}35`, padding: '7px 10px' }}>
+            <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0"
+              style={{ width: '24px', height: '24px', background: '#141210', border: `1px solid ${tint}70` }}>
+              {player.club ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={`/clubs/${clubSlug(player.club)}.jpg`} alt={player.club}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const el = e.currentTarget
+                    el.style.display = 'none'
+                    if (el.parentElement) {
+                      el.parentElement.style.background = `${tint}25`
+                      el.parentElement.innerHTML = `<span style="color:${tint};font-weight:900;font-size:10px">${player.club![0]}</span>`
+                    }
+                  }} />
+              ) : (
+                <span className="text-[10px] font-black" style={{ color: tint }}>·</span>
+              )}
+            </div>
+            <p className="flex-1 min-w-0 text-xs font-black truncate"
+              style={{ fontFamily: 'var(--font-heading)', color: owned ? T.text : T.textDim }}>
+              {splitName(player.name).first} <span className="uppercase">{splitName(player.name).last}</span>
+            </p>
+          </div>
+ 
+          {/* Photo area — energy slashes backdrop, cut-out standing on base */}
+          <div className="relative flex items-end justify-center overflow-hidden" style={{ height: '110px' }}>
+            {cardStyle === 'premium' && owned ? (
+              <>
+                <div className="absolute inset-0" style={{
+                  backgroundImage: `url(/card-bg-${player.tier === 'rare_2wp_a' ? 'rare2wpa' : player.tier === 'rare_2wp_b' ? 'rare2wpb' : player.tier === 'elite' ? 'elite' : 'common'}.webp)`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center top',
+                }} />
+                {/* Base fade so the stat band transition stays clean at mini size */}
+                <div className="absolute inset-0" style={{
+                  background: `linear-gradient(180deg, transparent 55%, ${T.surface}E6 100%)`,
+                }} />
+              </>
+            ) : (
+              <div className="absolute inset-0" style={{
+                background: owned
+                  ? `linear-gradient(115deg, transparent 0%, transparent 44%, ${meta.accent}28 44%, ${meta.accent}28 54%, transparent 54%, transparent 62%, ${tint}22 62%, ${tint}22 68%, transparent 68%),
+                     linear-gradient(180deg, ${meta.accent}18 0%, ${T.surface} 88%)`
+                  : `linear-gradient(180deg, #ffffff06 0%, ${T.surface} 88%)`,
+              }} />
+            )}
+            {player.photoUrl && owned && (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={player.photoUrl} alt="" aria-hidden className="absolute pointer-events-none gf-nosave"
+                  style={{ bottom: 0, left: '50%', height: '96%', width: 'auto', maxWidth: '92%', objectFit: 'contain', objectPosition: 'bottom', transform: 'translateX(-50%) translateX(-16px)', opacity: 0.16, filter: `${meta.ghost} blur(1px)` }} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={player.photoUrl} alt="" aria-hidden className="absolute pointer-events-none gf-nosave"
+                  style={{ bottom: 0, left: '50%', height: '96%', width: 'auto', maxWidth: '92%', objectFit: 'contain', objectPosition: 'bottom', transform: 'translateX(-50%) translateX(-8px)', opacity: 0.32, filter: `${meta.ghost} blur(0.5px)` }} />
+              </>
+            )}
+            {player.photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={`/clubs/${clubSlug(player.club)}.jpg`} alt={player.club}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  const el = e.currentTarget
-                  el.style.display = 'none'
-                  if (el.parentElement) {
-                    el.parentElement.style.background = `${tint}25`
-                    el.parentElement.innerHTML = `<span style="color:${tint};font-weight:900;font-size:10px">${player.club![0]}</span>`
-                  }
+              <img src={player.photoUrl} alt={player.name} className="relative gf-nosave"
+                style={{
+                  height: '96%',
+                  width: 'auto',
+                  maxWidth: '92%',
+                  objectFit: 'contain',
+                  objectPosition: 'bottom',
+                  filter: owned
+                    ? `drop-shadow(0 0 4px ${meta.ink}) drop-shadow(0 0 14px ${meta.ink}66) drop-shadow(1px -1px 0 #FFFFFFA0) drop-shadow(-1px 1px 0 #00000080)`
+                    : 'grayscale(1) brightness(0.5)',
                 }} />
             ) : (
-              <span className="text-[10px] font-black" style={{ color: tint }}>·</span>
+              <div className="relative" aria-hidden
+                style={{
+                  height: '90%', width: '80%',
+                  WebkitMaskImage: `url(${silhouette})`, maskImage: `url(${silhouette})`,
+                  WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
+                  WebkitMaskPosition: 'bottom center', maskPosition: 'bottom center',
+                  WebkitMaskSize: 'contain', maskSize: 'contain',
+                  background: owned
+                    ? `linear-gradient(180deg, ${meta.ink}CC 0%, ${meta.accent}66 100%)`
+                    : '#F5F1E822',
+                }} />
+            )}
+            <span className="absolute top-1.5 left-2 text-[8px] font-black tracking-widest"
+              style={{ color: meta.ink, textShadow: `0 0 6px #000000C0, 0 0 6px ${meta.ink}60` }}>
+              {meta.label}
+            </span>
+            {/* Longevity badge — bottom-left, mark only at this size (word reads on the full card) */}
+            {badge && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={`/badges/${badge}.png`} alt="" aria-hidden
+                className="absolute pointer-events-none gf-nosave"
+                style={{
+                  left: '6px',
+                  bottom: '6px',
+                  width: '40px',
+                  height: '40px',
+                  objectFit: 'contain',
+                  filter: owned ? 'drop-shadow(0 2px 6px #00000080)' : 'grayscale(1) brightness(0.5)',
+                }} />
+            )}
+            {/* Milestone ribbon — bottom-right, opposite the longevity badge */}
+            {hasMs && (
+              <span className="absolute pointer-events-none gf-ms-ribbon"
+                aria-label={`Milestone: ${ms.map(milestoneLabel).join(', ')}`}
+                style={{
+                  right: 0,
+                  bottom: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '3px 8px 3px 13px',
+                  background: `linear-gradient(100deg, #B8892A 0%, ${MILESTONE_ACCENT} 35%, #FFF4C8 50%, ${MILESTONE_ACCENT} 65%, #B8892A 100%)`,
+                  backgroundSize: '200% 100%',
+                  backgroundPosition: '0 0',
+                  clipPath: 'polygon(9px 0, 100% 0, 100% 100%, 9px 100%, 0 50%)',
+                  color: '#2A1C04',
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: '9px',
+                  fontWeight: 900,
+                  letterSpacing: '0.1em',
+                  whiteSpace: 'nowrap',
+                  animation: 'gf-ms-shine 1.6s ease-in-out 2',
+                }}>
+                <span aria-hidden>★</span>
+                {milestoneLabel(ms[0])}{ms.length > 1 ? ` +${ms.length - 1}` : ''}
+              </span>
+            )}
+            {!owned && (
+              <span className="absolute top-1.5 right-2 text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full"
+                style={{ color: T.textDim, background: '#00000060' }}>
+                Unowned
+              </span>
+            )}
+            {owned && chip && !doubled && (
+              <span className="absolute top-1.5 right-2 text-[8px] font-black uppercase tracking-widest"
+                style={{ color: T.accent, textShadow: `0 0 6px ${T.accent}90` }}>
+                {chip}
+              </span>
+            )}
+            {/* Doubled this round — takes the corner so it can't be missed */}
+            {doubled && (
+              <span className="absolute top-1.5 right-2 text-[9px] font-black uppercase tracking-widest rounded-full gf-pulse"
+                style={{ color: '#141210', background: DOUBLE_ACCENT, padding: '2px 7px', boxShadow: `0 0 10px ${DOUBLE_ACCENT}` }}>
+                2×
+              </span>
             )}
           </div>
-          <p className="flex-1 min-w-0 text-xs font-black truncate"
-            style={{ fontFamily: 'var(--font-heading)', color: owned ? T.text : T.textDim }}>
-            {splitName(player.name).first} <span className="uppercase">{splitName(player.name).last}</span>
-          </p>
-        </div>
  
-        {/* Photo area — energy slashes backdrop, cut-out standing on base */}
-        <div className="relative flex items-end justify-center overflow-hidden" style={{ height: '110px' }}>
-          {cardStyle === 'premium' && owned ? (
-            <>
-              <div className="absolute inset-0" style={{
-                backgroundImage: `url(/card-bg-${player.tier === 'rare_2wp_a' ? 'rare2wpa' : player.tier === 'rare_2wp_b' ? 'rare2wpb' : player.tier === 'elite' ? 'elite' : 'common'}.webp)`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center top',
-              }} />
-              {/* Base fade so the stat band transition stays clean at mini size */}
-              <div className="absolute inset-0" style={{
-                background: `linear-gradient(180deg, transparent 55%, ${T.surface}E6 100%)`,
-              }} />
-            </>
-          ) : (
-            <div className="absolute inset-0" style={{
-              background: owned
-                ? `linear-gradient(115deg, transparent 0%, transparent 44%, ${meta.accent}28 44%, ${meta.accent}28 54%, transparent 54%, transparent 62%, ${tint}22 62%, ${tint}22 68%, transparent 68%),
-                   linear-gradient(180deg, ${meta.accent}18 0%, ${T.surface} 88%)`
-                : `linear-gradient(180deg, #ffffff06 0%, ${T.surface} 88%)`,
-            }} />
-          )}
-          {player.photoUrl && owned && (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={player.photoUrl} alt="" aria-hidden className="absolute pointer-events-none gf-nosave"
-                style={{ bottom: 0, left: '50%', height: '96%', width: 'auto', maxWidth: '92%', objectFit: 'contain', objectPosition: 'bottom', transform: 'translateX(-50%) translateX(-16px)', opacity: 0.16, filter: `${meta.ghost} blur(1px)` }} />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={player.photoUrl} alt="" aria-hidden className="absolute pointer-events-none gf-nosave"
-                style={{ bottom: 0, left: '50%', height: '96%', width: 'auto', maxWidth: '92%', objectFit: 'contain', objectPosition: 'bottom', transform: 'translateX(-50%) translateX(-8px)', opacity: 0.32, filter: `${meta.ghost} blur(0.5px)` }} />
-            </>
-          )}
-          {player.photoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={player.photoUrl} alt={player.name} className="relative gf-nosave"
-              style={{
-                height: '96%',
-                width: 'auto',
-                maxWidth: '92%',
-               objectFit: 'contain',
-                objectPosition: 'bottom',
-                filter: owned
-                  ? `drop-shadow(0 0 4px ${meta.ink}) drop-shadow(0 0 14px ${meta.ink}66) drop-shadow(1px -1px 0 #FFFFFFA0) drop-shadow(-1px 1px 0 #00000080)`
-                  : 'grayscale(1) brightness(0.5)',
-              }} />
-          ) : (
-            <div className="relative" aria-hidden
-              style={{
-                height: '90%', width: '80%',
-                WebkitMaskImage: `url(${silhouette})`, maskImage: `url(${silhouette})`,
-                WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
-                WebkitMaskPosition: 'bottom center', maskPosition: 'bottom center',
-                WebkitMaskSize: 'contain', maskSize: 'contain',
-                background: owned
-                  ? `linear-gradient(180deg, ${meta.ink}CC 0%, ${meta.accent}66 100%)`
-                  : '#F5F1E822',
-              }} />
-          )}
-          <span className="absolute top-1.5 left-2 text-[8px] font-black tracking-widest"
-            style={{ color: meta.ink, textShadow: `0 0 6px #000000C0, 0 0 6px ${meta.ink}60` }}>
-            {meta.label}
-          </span>
-          {/* Longevity badge — bottom-left, mark only at this size (word reads on the full card) */}
-          {badge && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={`/badges/${badge}.png`} alt="" aria-hidden
-              className="absolute pointer-events-none gf-nosave"
-              style={{
-                left: '6px',
-                bottom: '6px',
-                width: '40px',
-                height: '40px',
-                objectFit: 'contain',
-                filter: owned ? 'drop-shadow(0 2px 6px #00000080)' : 'grayscale(1) brightness(0.5)',
-              }} />
-          )}
-          {!owned && (
-            <span className="absolute top-1.5 right-2 text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full"
-              style={{ color: T.textDim, background: '#00000060' }}>
-              Unowned
-            </span>
-          )}
-          {owned && chip && !doubled && (
-            <span className="absolute top-1.5 right-2 text-[8px] font-black uppercase tracking-widest"
-              style={{ color: T.accent, textShadow: `0 0 6px ${T.accent}90` }}>
-              {chip}
-            </span>
-          )}
-          {/* Doubled this round — takes the corner so it can't be missed */}
-          {doubled && (
-            <span className="absolute top-1.5 right-2 text-[9px] font-black uppercase tracking-widest rounded-full gf-pulse"
-              style={{ color: '#141210', background: DOUBLE_ACCENT, padding: '2px 7px', boxShadow: `0 0 10px ${DOUBLE_ACCENT}` }}>
-              2×
-            </span>
-          )}
-        </div>
- 
-        {/* Mini stat band */}
-        <div style={{ background: bandBg, borderTop: `1px solid ${(doubled ? DOUBLE_ACCENT : meta.accent)}35`, padding: '7px 10px 9px' }}>
-          <p className="text-[9px] truncate" style={{ color: T.textDim, marginBottom: '3px' }}>
-            {player.positions.map(posLabel).join(' ')}{player.speedStar ? ' · ★' : ''}
-          </p>
-          <p className="text-xs font-black" style={{ color: doubled ? DOUBLE_ACCENT : meta.ink, marginBottom: '3px' }}>
-            {st.season_points ?? 0} pts
-          </p>
-          <div className="flex justify-between text-[10px] items-center" style={{ color: T.textDim }}>
-            {st.season_ba != null && <span>BA <b>{Number(st.season_ba).toFixed(3)}</b></span>}
-            <span>HR <b>{st.season_hr ?? 0}</b></span>
-            <span>RBI <b>{st.season_rbi ?? 0}</b></span>
-            <span>SB <b>{st.season_sb ?? 0}</b></span>
-            {(st.season_wins ?? 0) > 0 && <span>W <b>{st.season_wins}</b></span>}
+          {/* Mini stat band */}
+          <div style={{ background: bandBg, borderTop: `1px solid ${edge}35`, padding: '7px 10px 9px' }}>
+            <p className="text-[9px] truncate" style={{ color: T.textDim, marginBottom: '3px' }}>
+              {player.positions.map(posLabel).join(' ')}{player.speedStar ? ' · ★' : ''}
+            </p>
+            <p className="text-xs font-black" style={{ color: doubled ? DOUBLE_ACCENT : meta.ink, marginBottom: '3px' }}>
+              {st.season_points ?? 0} pts
+            </p>
+            <div className="flex justify-between text-[10px] items-center" style={{ color: T.textDim }}>
+              {st.season_ba != null && <span>BA <b>{Number(st.season_ba).toFixed(3)}</b></span>}
+              <span>HR <b>{st.season_hr ?? 0}</b></span>
+              <span>RBI <b>{st.season_rbi ?? 0}</b></span>
+              <span>SB <b>{st.season_sb ?? 0}</b></span>
+              {(st.season_wins ?? 0) > 0 && <span>W <b>{st.season_wins}</b></span>}
+            </div>
           </div>
         </div>
-      </div>
-    </button>
+      </button>
+    </>
   )
 }
- 
