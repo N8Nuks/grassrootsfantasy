@@ -1057,6 +1057,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
                   siteTheme={siteTheme}
                   cardStyle={cardStyle}
                   chip={inLineup ? `IN ${SLOT_LABELS[slot ?? ''] ?? ''}` : undefined}
+                  milestones={(c as TeamCard & { milestones?: { stat: string; milestone: number }[] }).milestones}
                   doubled={doubled.has(c.playerId)}
                   onClick={() => setDetailCard(c)}
                 />

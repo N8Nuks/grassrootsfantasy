@@ -138,6 +138,9 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
   // from the raw stat line — drives the Earned column on the Lineup Card
   let earned: Record<string, { earned: number; reason: string | null }> = {}
   let earnedLabel: string | null = null
+  // Milestones reached in the latest scored round — the card wears the ribbon
+  // from the moment that round is scored until the next one is
+  const milestonesByPlayer: Record<string, { stat: string; milestone: number }[]> = {}
   if (latestRound) {
     const { data: scoredRound } = await supabase.from('rounds')
       .select('id, round_number').eq('grade', grade)
@@ -145,15 +148,26 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
       .in('status', ['provisional', 'confirmed'])
       .order('round_number', { ascending: false }).limit(1).maybeSingle()
     if (scoredRound) {
-      const { data: earnRows } = await supabase.from('lineup_earnings')
-        .select('player_id, earned, reason')
-        .eq('owner_id', user!.id).eq('round_id', scoredRound.id)
+      const [{ data: earnRows }, { data: msRows }] = await Promise.all([
+        supabase.from('lineup_earnings')
+          .select('player_id, earned, reason')
+          .eq('owner_id', user!.id).eq('round_id', scoredRound.id),
+        supabase.from('milestones')
+          .select('player_id, stat, milestone')
+          .eq('grade', grade).eq('round_number', scoredRound.round_number)
+          .order('milestone', { ascending: false }),
+      ])
       for (const r of earnRows ?? []) {
         earned[r.player_id] = { earned: Number(r.earned), reason: r.reason }
       }
       if ((earnRows ?? []).length > 0) earnedLabel = `Rd ${scoredRound.round_number}`
+      for (const m of msRows ?? []) {
+        if (!milestonesByPlayer[m.player_id]) milestonesByPlayer[m.player_id] = []
+        milestonesByPlayer[m.player_id].push({ stat: m.stat, milestone: Number(m.milestone) })
+      }
     }
   }
+  const cardsWithMilestones = teamCards.map(c => ({ ...c, milestones: milestonesByPlayer[c.playerId] ?? [] }))
 
   // Players scoring double this round — cycle or perfect game earned last round
   const doubledMap = await doubledInRound(supabase, grade, latestRound?.round_number ?? null)
@@ -174,7 +188,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
             ownClubId: prof?.club_id ?? null,
           }}
           clubs={(clubRows ?? []) as { id: string; name: string }[]}
-          cards={teamCards}
+          cards={cardsWithMilestones}
           initialSlots={slots}
           grade={grade}
           siteTheme={siteTheme}
