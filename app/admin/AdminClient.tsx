@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import type { AdminStats } from './page'
@@ -19,6 +19,12 @@ const P = {
 }
 
 const field = { background: P.ink, border: `1px solid ${P.purple}40`, color: P.text }
+
+type AvailList = {
+  players: { name: string; reason: string | null }[]
+  round_found: boolean
+  error?: string
+}
 
 /* Panel and LogBox live outside the component on purpose. Defined inside it,
    React rebuilt them on every keystroke, which destroyed the focused field
@@ -73,6 +79,26 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
   const [availGrade, setAvailGrade] = useState<'mens' | 'womens'>('mens')
   const [availLog, setAvailLog] = useState<string[]>([])
   const [availBusy, setAvailBusy] = useState(false)
+  const [availList, setAvailList] = useState<AvailList | null>(null)
+  const [availRefresh, setAvailRefresh] = useState(0)
+
+  /* The unavailable list follows whatever grade + round is selected in
+     Panel 5, and reloads after every mark. Marks are stored per round, so
+     each round's list starts empty. */
+  useEffect(() => {
+    const n = Number(availRound)
+    if (availRound.trim() === '' || !Number.isInteger(n)) { setAvailList(null); return }
+    let cancelled = false
+    setAvailList(null)
+    fetch(`/api/availability-list?grade=${availGrade}&round=${n}`)
+      .then(r => r.json().then(d => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (cancelled) return
+        setAvailList(ok ? d : { players: [], round_found: false, error: d.error ?? 'Could not load list' })
+      })
+      .catch(() => { if (!cancelled) setAvailList({ players: [], round_found: false, error: 'Could not load list' }) })
+    return () => { cancelled = true }
+  }, [availGrade, availRound, availRefresh])
 
   function addLog(s: string) { setLog(prev => [...prev, s]) }
 
@@ -117,13 +143,16 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
     setScoreBusy(false)
   }
 
-  async function setAvailability(unavailable: boolean) {
+  // namesOverride lets a single row in the list be made available directly.
+  async function setAvailability(unavailable: boolean, namesOverride?: string[]) {
+    const names = namesOverride ?? availNames.split('\n').map(n => n.trim()).filter(Boolean)
+    if (!names.length) return
     setAvailBusy(true); setAvailLog([])
     const res = await fetch('/api/availability', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        names: availNames.split('\n').map(n => n.trim()).filter(Boolean),
+        names,
         grade: availGrade,
         round_number: Number(availRound),
         unavailable,
@@ -135,6 +164,7 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
     if (data.unmatched?.length) data.unmatched.forEach((n: string) => lines.push('  ⚠ no player match: ' + n))
     setAvailLog(lines)
     setAvailBusy(false)
+    setAvailRefresh(n => n + 1)
   }
 
   const [styleLog, setStyleLog] = useState('')
@@ -444,7 +474,7 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
 
           {/* 5 · Availability */}
           <Panel number="5" title="Player Availability" accent={P.green}
-            sub="Mark players unavailable for a round — users see it on their team cards immediately.">
+            sub="Mark players unavailable for a round — users see it on their team cards immediately. Marks apply to that round only; the next round starts clean.">
             <div className="flex gap-4" style={{ marginBottom: '16px' }}>
               <select value={availGrade} onChange={e => setAvailGrade(e.target.value as 'mens' | 'womens')}
                 className="rounded-xl px-4 py-3.5 text-sm flex-1" style={field}>
@@ -471,6 +501,36 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
               </button>
             </div>
             <LogBox lines={availLog} error={availLog[0]?.startsWith('ERROR')} />
+
+            {/* Unavailable list for the selected grade + round */}
+            <div className="rounded-xl" style={{ marginTop: '20px', padding: '16px 20px', background: P.ink, border: `1px solid ${P.red}30` }}>
+              <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: P.red, marginBottom: '12px' }}>
+                Unavailable · {availGrade === 'mens' ? "Men's" : "Women's"} R{availRound.trim() || '–'}
+                {availList && !availList.error && availList.round_found ? ` · ${availList.players.length}` : ''}
+              </p>
+              {!availList && <p className="text-xs" style={{ color: P.dim }}>Loading…</p>}
+              {availList?.error && <p className="text-xs" style={{ color: P.red }}>{availList.error}</p>}
+              {availList && !availList.error && !availList.round_found && (
+                <p className="text-xs" style={{ color: P.dim }}>No round with that number for this grade yet.</p>
+              )}
+              {availList && !availList.error && availList.round_found && availList.players.length === 0 && (
+                <p className="text-xs" style={{ color: P.dim }}>Nobody marked unavailable.</p>
+              )}
+              {availList?.players.map(p => (
+                <div key={p.name} className="flex items-center justify-between gap-3"
+                  style={{ padding: '10px 0', borderTop: `1px solid ${P.purple}20` }}>
+                  <span className="text-sm font-bold" style={{ color: P.text }}>
+                    {p.name}
+                    {p.reason ? <span style={{ color: P.dim, fontWeight: 400 }}> · {p.reason}</span> : null}
+                  </span>
+                  <button onClick={() => setAvailability(false, [p.name])} disabled={availBusy}
+                    className="text-[10px] font-black uppercase tracking-widest rounded-full transition-all hover:scale-[1.03] disabled:opacity-40"
+                    style={{ color: P.green, border: `1px solid ${P.green}70`, background: 'transparent', padding: '7px 16px' }}>
+                    Make Available
+               </button>
+                </div>
+              ))}
+            </div>
           </Panel>
 
           {/* 6 · Second grade */}
@@ -555,4 +615,4 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
       <Footer />
     </main>
   )
-}
+}      
