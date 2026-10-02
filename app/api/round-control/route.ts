@@ -43,13 +43,34 @@ export async function POST(req: Request) {
 
     const nextNumber = (round?.round_number ?? 0) + 1
     // New rounds open with lineups hidden from opponents until Lock stamps lock_at
-    const { error: advErr } = await admin.from('rounds')
+    const { data: newRound, error: advErr } = await admin.from('rounds')
       .insert({ grade, round_number: nextNumber, lock_at: FAR_FUTURE(), status: 'open' })
-    if (advErr) return NextResponse.json({ error: 'Advance failed: ' + advErr.message }, { status: 500 })
+      .select('id').single()
+    if (advErr || !newRound) {
+      return NextResponse.json({ error: 'Advance failed: ' + (advErr?.message ?? 'no round returned') }, { status: 500 })
+    }
+
+    /* Auto team: every team gets its latest lineup carried into the new round,
+       so anyone who doesn't re-save still has a side on /matchups and in
+       scoring. Runs in the database (carry_forward_lineups) because the slot
+       copy runs to thousands of rows, past the 1,000-row select cap. Teams
+       that already have a lineup in the new round are skipped, so a re-run is
+       harmless. */
+    const { data: carried, error: cfErr } = await admin
+      .rpc('carry_forward_lineups', { p_to: newRound.id })
+    if (cfErr) {
+      return NextResponse.json({
+        error: `Round ${nextNumber} created, but carrying lineups forward failed: ${cfErr.message}. ` +
+               `Run carry_forward_lineups for this round in SQL before locking.`,
+      }, { status: 500 })
+    }
+    const cf = Array.isArray(carried) ? carried[0] : carried
 
     return NextResponse.json({
       ok: true, round_number: nextNumber, status: 'open',
       auto_dealt: auto.dealt, auto_cards: auto.cards,
+      lineups_carried: cf?.lineups_created ?? 0,
+      slots_carried: cf?.slots_copied ?? 0,
     })
   }
 
