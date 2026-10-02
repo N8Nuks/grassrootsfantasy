@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { CAREER_RECORDS } from '@/lib/nfsRecords'
 import { splitName } from '@/lib/names'
+import SeasonRecords, { type SeasonRec } from './SeasonRecords'
 
 /* Single-season records are built but held back for launch. While this is
    false only admins see the section (tagged "Admin preview"); everyone else
@@ -37,55 +38,7 @@ const nameOf = (n: string) => (
   <>{splitName(n).first} <span className="bk-sur">{splitName(n).last}</span></>
 )
 
-/* ── Single-season records (from the single_season_records view) ── */
-type SeasonRec = {
-  category: string; sort_order: number; value: number
-  grade: string; season: string; player_name: string; clubs: string | null
-  g: number | null; pa: number | null; ab: number | null; h: number | null
-  doubles: number | null; triples: number | null; hr: number | null; rbi: number | null
-  runs: number | null; bb: number | null; sb: number | null
-  w: number | null; l: number | null; ip_outs: number | null; k: number | null
-  p_bb: number | null; er: number | null
-}
-
-const isPitching = (cat: string) => /^era$|win|strikeout|pitch/i.test(cat)
-
-function seasonValue(r: SeasonRec) {
-  const v = Number(r.value)
-  if (/average/i.test(r.category)) return v.toFixed(3).replace(/^0/, '')
-  if (/^era$/i.test(r.category)) return v.toFixed(2)
-  return String(Math.round(v))
-}
-
-function ip(outs: number) {
-  return `${Math.floor(outs / 3)}${outs % 3 ? '.' + (outs % 3) : ''}`
-}
-
-function seasonLine(r: SeasonRec) {
-  if (isPitching(r.category)) {
-    return [
-      r.w != null && r.l != null ? `${r.w}-${r.l}` : null,
-      r.ip_outs != null ? `${ip(r.ip_outs)} IP` : null,
-      r.k != null ? `${r.k} K` : null,
-      r.p_bb != null ? `${r.p_bb} BB` : null,
-      r.er != null && r.ip_outs ? `${(r.er * 21 / r.ip_outs).toFixed(2)} ERA` : null,
-    ].filter(Boolean).join(' · ')
-  }
-  const ba = r.h != null && r.ab ? (r.h / r.ab).toFixed(3).replace(/^0/, '') : null
-  return [
-    r.g != null ? `${r.g} G` : null,
-    r.pa != null ? `${r.pa} PA` : null,
-    r.h != null ? `${r.h} H` : null,
-    r.doubles != null ? `${r.doubles} 2B` : null,
-    r.triples != null ? `${r.triples} 3B` : null,
-    r.hr != null ? `${r.hr} HR` : null,
-    r.rbi != null ? `${r.rbi} RBI` : null,
-    r.sb != null ? `${r.sb} SB` : null,
-    ba ? `${ba} BA` : null,
-  ].filter(Boolean).join(' · ')
-}
-
-export default async function BookOfRecords({ searchParams }: { searchParams: Promise<{ grade?: string }> }) {
+export default async function BookOfRecords({ searchParams }: { searchParams: Promise<{ grade?: string; rec?: string }> }) {
   const params = await searchParams
   const grade: 'mens' | 'womens' = params.grade === 'womens' ? 'womens' : 'mens'
   const supabase = await createClient()
@@ -141,15 +94,13 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
     seasonRecs = (data ?? []) as SeasonRec[]
   }
 
-  const byCat = new Map<string, SeasonRec[]>()
+  // Group holders under their category, keeping the view's sort order
+  const seasonCats: { category: string; holders: SeasonRec[] }[] = []
   for (const r of seasonRecs) {
-    if (!byCat.has(r.category)) byCat.set(r.category, [])
-    byCat.get(r.category)!.push(r)
+    const last = seasonCats[seasonCats.length - 1]
+    if (last && last.category === r.category) last.holders.push(r)
+    else seasonCats.push({ category: r.category, holders: [r] })
   }
-  const seasonCols = [
-    { label: 'Batting', cats: [...byCat.entries()].filter(([c]) => !isPitching(c)) },
-    { label: 'Pitching', cats: [...byCat.entries()].filter(([c]) => isPitching(c)) },
-  ]
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#07090F' }}>
@@ -330,7 +281,6 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
           .bk-ss-tag { font-size: 10px; font-style: italic; color: #C9B98A99; margin: 0 0 4px; }
           .bk-ss-holder { margin: 2px 0; font-size: 15px; color: #EDE3CC; }
           .bk-ss-meta { font-size: 12px; color: #C9B98A8C; }
-          .bk-ss-line { font-size: 11px; color: #C9B98A70; margin: 1px 0 4px; }
         `}</style>
 
         <div className="bk-wrap">
@@ -453,38 +403,15 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
 
               {seasonErr ? (
                 <div className="bk-frame"><p className="bk-empty">Couldn&apos;t load single-season records: {seasonErr}</p></div>
-              ) : seasonRecs.length === 0 ? (
+              ) : seasonCats.length === 0 ? (
                 <div className="bk-frame"><p className="bk-empty">No single-season records loaded for this grade.</p></div>
               ) : (
-                <div className="bk-cols">
-                  {seasonCols.map(col => col.cats.length === 0 ? null : (
-                    <section key={col.label} className="bk-frame bk-set">
-                      <h3 className="bk-gold">{col.label}</h3>
-                      {col.cats.map(([cat, holders]) => (
-                        <div key={cat} className="bk-ss-cat">
-                          <div className="bk-ss-head">
-                            <span className="bk-ss-label">{cat}</span>
-                            <span className="bk-ss-val">{seasonValue(holders[0])}</span>
-                          </div>
-                          {holders.length > 1 && <p className="bk-ss-tag">Shared by {holders.length}</p>}
-                          {holders.map((h, i) => (
-                            <div key={`${h.player_name}-${h.season}-${i}`}>
-                              <p className="bk-ss-holder">
-                                {nameOf(h.player_name)}{' '}
-                                <span className="bk-ss-meta">{h.clubs ? `${h.clubs} · ` : ''}{h.season}</span>
-                              </p>
-                              {holders.length <= 2 && <p className="bk-ss-line">{seasonLine(h)}</p>}
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                    </section>
-                  ))}
-                </div>
+                <SeasonRecords grade={grade} cats={seasonCats} initialRec={params.rec} />
               )}
               <p className="bk-note" style={{ marginTop: '14px' }}>
-                Batting average and ERA count only seasons above that season&apos;s qualifying minimum.
-                ERA is over seven innings. No statistics survive for 2013/14.
+                Tap a record to see the champion&apos;s season. Batting average, ERA and walks per 7 innings
+                count only seasons above that season&apos;s qualifying minimum. ERA is over seven innings.
+                No statistics survive for 2013/14.
               </p>
             </div>
           )}
