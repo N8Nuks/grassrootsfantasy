@@ -109,7 +109,7 @@ export default function SeasonRecords({ grade, cats, initialRec }: {
   // Keep the address bar in step, so the link always points at what's open
   useEffect(() => {
     const url = new URL(window.location.href)
-    if (open) url.searchParams.set('rec', open)
+    if (open) { url.searchParams.set('rec', open); url.searchParams.set('grade', grade) }
     else url.searchParams.delete('rec')
     window.history.replaceState(null, '', url.toString())
     setCopied(false)
