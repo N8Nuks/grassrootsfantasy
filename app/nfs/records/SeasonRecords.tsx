@@ -268,7 +268,7 @@ export default function SeasonRecords({ grade, cats, initialRec }: {
                 <div key={`${h.player_name}-${h.season}-${i}`} className="bk-champ">
                   <p className="bk-champ-name">{nameOf(h.player_name)}</p>
                   <p className="bk-champ-meta">{h.clubs ? `${h.clubs} · ` : ''}{h.season}</p>
-                  <div className="bk-tiles">
+                  <div className="bk-tiles" style={{ gridTemplateColumns: `repeat(${tiles(h).length > 8 ? 6 : 4}, minmax(0, 1fr))` }}>
                     {tiles(h).map(([label, val]) => (
                       <div key={label} className={'bk-tile' + (label === on ? ' bk-tile-on' : '')}>
                         <b>{val}</b>
