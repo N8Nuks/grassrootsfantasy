@@ -27,7 +27,7 @@ export async function getCoachRound(
   admin: SupabaseClient,
   grade: 'mens' | 'womens',
 ): Promise<CoachRound | null> {
-  const { data } = await admin.from('fixtures')
+  const { data, error } = await admin.from('fixtures')
     .select('round_number, played_on, start_time, team_a, team_b')
     .eq('grade', grade)
     .order('round_number')
@@ -35,9 +35,10 @@ export async function getCoachRound(
   const first = new Map<number, { day: string; at: Date }>()
   for (const f of data ?? []) {
     if (f.team_a === 'BYE' || f.team_b === 'BYE') continue
-    const at = nzToDate(f.played_on, f.start_time)
-    const cur = first.get(f.round_number)
-    if (!cur || at < cur.at) first.set(f.round_number, { day: f.played_on, at })
+    const at = nzToDate(String(f.played_on), f.start_time)
+    const rn = Number(f.round_number)
+    const cur = first.get(rn)
+    if (!cur || at < cur.at) first.set(rn, { day: String(f.played_on), at })
   }
 
   const now = new Date()
@@ -45,5 +46,13 @@ export async function getCoachRound(
     const r = first.get(n)!
     if (r.at > now) return { round_number: n, opens_day: r.day, closes_at: r.at }
   }
+
+  console.error('getCoachRound found no upcoming round', JSON.stringify({
+    grade,
+    queryError: error?.message ?? null,
+    rowsRead: (data ?? []).length,
+    now: now.toISOString(),
+    firstGameByRound: [...first.entries()].slice(0, 6).map(([n, r]) => [n, r.day, r.at.toISOString()]),
+  }))
   return null
 }
