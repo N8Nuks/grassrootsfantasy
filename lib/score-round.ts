@@ -60,28 +60,50 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
     .eq('applies_round_number', round.round_number)
   const doubledPlayers = new Set((dueRows ?? []).map(r => r.player_id))
 
-  // 2. Season totals with display floors
-  for (const ps of playerScores) {
-    const { data: prev } = await admin.from('player_season_totals')
-      .select('true_total, floor_locked').eq('player_id', ps.player_id).eq('grade', round.grade).maybeSingle()
-    const next = updateSeasonTotals(Number(prev?.true_total ?? 0), Number(prev?.floor_locked ?? 0), ps.points)
-    await admin.from('player_season_totals').upsert(
-      { player_id: ps.player_id, grade: round.grade, ...next },
-      { onConflict: 'player_id,grade' })
+  // 2. Season totals with display floors — REPLAYED from every scored round in
+  // round order, starting from zero. Scoring a round a second time (after a stat
+  // correction) therefore gives the same totals as scoring it once; nothing is
+  // added on top of a previous run.
+  const { data: gradeRounds } = await admin.from('rounds')
+    .select('id, round_number').eq('grade', round.grade)
+  if (!gradeRounds || gradeRounds.length === 0) {
+    return { ok: false, error: 'Could not read rounds for grade', status: 500 }
+  }
+  const gradeRoundIds = gradeRounds.map(r => r.id)
+  const roundNumberById = new Map<string, number>(gradeRounds.map(r => [r.id, Number(r.round_number)]))
+
+  const { data: allScores, error: scoresErr } = await admin.from('player_scores')
+    .select('player_id, round_id, points').in('round_id', gradeRoundIds)
+  if (scoresErr || !allScores) {
+    return { ok: false, error: 'Could not read player scores: ' + (scoresErr?.message ?? 'no data'), status: 500 }
+  }
+
+  const scoresByPlayer = new Map<string, { n: number; points: number }[]>()
+  for (const s of allScores) {
+    const list = scoresByPlayer.get(s.player_id) ?? []
+    list.push({ n: roundNumberById.get(s.round_id) ?? 0, points: Number(s.points) || 0 })
+    scoresByPlayer.set(s.player_id, list)
+  }
+
+  const seasonRows = [...scoresByPlayer].map(([player_id, list]) => {
+    let t = { true_total: 0, floor_locked: 0, displayed_total: 0 }
+    for (const r of list.sort((x, y) => x.n - y.n)) {
+      t = updateSeasonTotals(t.true_total, t.floor_locked, r.points)
+    }
+    return { player_id, grade: round.grade, ...t }
+  })
+  for (let i = 0; i < seasonRows.length; i += 500) {
+    const { error: stErr } = await admin.from('player_season_totals')
+      .upsert(seasonRows.slice(i, i + 500), { onConflict: 'player_id,grade' })
+    if (stErr) return { ok: false, error: 'Season totals update failed: ' + stErr.message, status: 500 }
   }
 
   // 2b. Season stats onto players (recomputed from ALL scored rounds — re-run safe)
-  const { data: gradeRounds } = await admin.from('rounds')
-    .select('id').eq('grade', round.grade)
-  const gradeRoundIds = (gradeRounds ?? []).map(r => r.id)
-
   const { data: allStats } = await admin.from('player_stats')
     .select('player_id, raw').in('round_id', gradeRoundIds)
-  const { data: allScores } = await admin.from('player_scores')
-    .select('player_id, points').in('round_id', gradeRoundIds)
 
   const pointsByPlayer = new Map<string, number>()
-  for (const s of allScores ?? []) {
+  for (const s of allScores) {
     pointsByPlayer.set(s.player_id, (pointsByPlayer.get(s.player_id) ?? 0) + Number(s.points))
   }
 
