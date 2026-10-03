@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-const STAT_COLS = ['gp','ab','singles','doubles','triples','hr','rbi','runs','bb','hbp','sb','cs','k_bat','ip','k_pit','win','er']
+const STAT_COLS = ['gp','ab','singles','doubles','triples','hr','rbi','runs','bb','hbp','sac','sb','cs','k_bat','ip','k_pit','win','er']
 
 // ── Name matching ──
 // Names are compared with capitals, macrons, apostrophes, hyphens and extra

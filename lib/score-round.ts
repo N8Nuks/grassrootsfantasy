@@ -235,7 +235,7 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
   // steals without batting still counts as having played.
   const hasPlayed = (line: StatLine) => {
     const n = (x: unknown) => Number(x) || 0
-    const plateAppearances = n(line.ab) + n(line.bb) + n(line.hbp)
+    const plateAppearances = n(line.ab) + n(line.bb) + n(line.hbp) + n(line.sac) + n(line.sac)
     const pitched = n(line.ip) + n(line.k_pit) + n(line.win) + n(line.er)
     const ran = n(line.runs) + n(line.sb) + n(line.cs)
     return plateAppearances > 0 || pitched > 0 || ran > 0
