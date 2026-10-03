@@ -189,10 +189,18 @@ export function resolveSubs(
     resQ.splice(dIdx, 1)
   }
 
-  // Remaining bench players who played score at bench multiplier
+  // Remaining bench: a bench player who played scores at the bench multiplier.
+  // A bench player who didn't play is replaced by the first reserve (in R1 to R5
+  // order) who did, and that reserve scores at the bench multiplier in their place.
   for (const b of benchQ) {
     if (played.has(b.player_id)) {
       scored.push({ slot: 'BENCH', player_id: b.player_id, promoted: false })
+      continue
+    }
+    const rIdx = resQ.findIndex(r => played.has(r.player_id))
+    if (rIdx !== -1) {
+      scored.push({ slot: 'BENCH', player_id: resQ[rIdx].player_id, promoted: false })
+      resQ.splice(rIdx, 1)
     }
   }
   return { scored }
