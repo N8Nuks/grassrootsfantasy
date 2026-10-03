@@ -139,6 +139,9 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
     seasonStats.career_w    = b('career_w_base')    + a.wins
     // Innings are in scorebook thirds: add in outs, store back in thirds
     seasonStats.career_ip   = outsToIp(ipToOuts(b('career_ip_base')) + a.outs)
+    // Career BA = career hits / career at-bats, both base + season
+    seasonStats.career_ab   = b('career_ab_base')   + a.ab
+    if (seasonStats.career_ab > 0) seasonStats.career_ba = seasonStats.career_h / seasonStats.career_ab
 
     await admin.from('players').update({
       stats: seasonStats,
