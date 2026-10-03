@@ -2,6 +2,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import ClubAvatar from '@/components/ClubAvatar'
 import { createClient } from '@/lib/supabase/server'
+import { POOL_FILTER } from '@/lib/pool'
 
 const COBALT = '#2456E6'
 const GOLD = '#E8C15A'
@@ -21,7 +22,11 @@ type Fixture = {
   venue: string | null
   section: string | null
 }
-type Round = { round_number: number; lock_at: string | null; status: string }
+type Round = { id: string; round_number: number; lock_at: string | null; status: string }
+type StatRow = { player_id: string; round_id: string; raw: Record<string, unknown> | null }
+type PlayerRow = { id: string; full_name: string; playing_number: number | string | null; reveal_pos: string | null; club_id: string | null }
+type ClubRow = { id: string; name: string }
+type Proj = { id: string; name: string; number: string | null; pos: string | null; pitched: boolean }
 
 /* Who hosts at each ground. Matched on a keyword in the location name so
    "Simson Reserve" and "Simson Reserve D1" both resolve. */
@@ -58,6 +63,13 @@ const isPlaceholder = (t: string) => /^[A-Z]\d$/.test(t)
 const label = (team: string, club: string | null) =>
   team === 'BYE' ? 'Bye' : isPlaceholder(team) ? `Seed ${team.slice(1)}` : (club ?? team)
 
+/* Projected lineups: helpers for reading a round's loaded stats. */
+const num = (v: unknown) => { const x = Number(v); return Number.isFinite(x) ? x : 0 }
+const tookField = (raw: Record<string, unknown> | null) =>
+  raw == null ? false : (raw.gp == null || raw.gp === '' ? true : num(raw.gp) > 0)
+const clubKey = (s: string | null) => (s ?? '').trim().toLowerCase()
+const surname = (n: string) => (n.trim().split(/\s+/).slice(-1)[0] ?? '').toLowerCase()
+
 export default async function Fixtures({ searchParams }: { searchParams: Promise<{ grade?: string }> }) {
   const sp = await searchParams
   const grade: 'mens' | 'womens' = sp.grade === 'womens' ? 'womens' : 'mens'
@@ -69,15 +81,87 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
       .select('id, grade, round_number, played_on, start_time, team_a, team_b, club_a, club_b, location, venue, section')
       .eq('grade', grade)
       .order('round_number').order('played_on').order('start_time'),
-    supabase.from('rounds').select('round_number, lock_at, status').eq('grade', grade),
+    supabase.from('rounds').select('id, round_number, lock_at, status').eq('grade', grade),
   ])
 
-  const lockOf = new Map(((rounds ?? []) as Round[]).map(r => [r.round_number, r]))
+  const roundList = (rounds ?? []) as Round[]
+  const lockOf = new Map(roundList.map(r => [r.round_number, r]))
+  const numberOf = new Map(roundList.map(r => [r.id, r.round_number]))
   const byRound = new Map<number, Fixture[]>()
   for (const f of (fixtures ?? []) as Fixture[]) {
     byRound.set(f.round_number, [...(byRound.get(f.round_number) ?? []), f])
   }
   const roundNumbers = [...byRound.keys()].sort((a, b) => a - b)
+
+  /* Projected lineups. Source is the last scored round: every player who
+     took the field (gp > 0), pitchers flagged from innings pitched. Shown on
+     the next round only. Manager-facing, so the under-18 pool filter applies. */
+  let lastScored: number | null = null
+  let projRound: number | null = null
+  const lineupOf = new Map<string, Proj[]>()
+  const roundIds = roundList.filter(r => r.round_number > 0).map(r => r.id)
+  if (roundIds.length > 0) {
+    const { data: statRows } = await supabase.from('player_stats')
+      .select('player_id, round_id, raw')
+      .in('round_id', roundIds)
+    const played = ((statRows ?? []) as StatRow[]).filter(s => tookField(s.raw))
+    for (const s of played) {
+      const rn = numberOf.get(s.round_id)
+      if (rn != null && (lastScored == null || rn > lastScored)) lastScored = rn
+    }
+    if (lastScored != null) {
+      const scored: number = lastScored
+      const last = played.filter(s => numberOf.get(s.round_id) === scored)
+      const pitched = new Set(last.filter(s => num(s.raw?.ip) > 0).map(s => s.player_id))
+      const ids = [...new Set(last.map(s => s.player_id))]
+      const [{ data: plRows }, { data: clubRows }] = await Promise.all([
+        supabase.from('players')
+          .select('id, full_name, playing_number, reveal_pos, club_id')
+          .eq('grade', grade)
+          .eq('active', true)
+          .or(POOL_FILTER)
+          .in('id', ids),
+        supabase.from('clubs').select('id, name'),
+      ])
+      const clubName = new Map(((clubRows ?? []) as ClubRow[]).map(c => [c.id, c.name]))
+      for (const p of (plRows ?? []) as PlayerRow[]) {
+        const k = clubKey(p.club_id ? clubName.get(p.club_id) ?? null : null)
+        if (!k) continue
+        lineupOf.set(k, [...(lineupOf.get(k) ?? []), {
+          id: p.id,
+          name: p.full_name,
+          number: p.playing_number == null || p.playing_number === '' ? null : String(p.playing_number),
+          pos: p.reveal_pos,
+          pitched: pitched.has(p.id),
+        }])
+      }
+      for (const list of lineupOf.values()) {
+        list.sort((a, b) =>
+          a.pitched !== b.pitched ? (a.pitched ? -1 : 1) : surname(a.name).localeCompare(surname(b.name)))
+      }
+      projRound = roundNumbers.find(rn => rn > scored) ?? null
+    }
+  }
+
+  const lineupCol = (club: string, list: Proj[]) => (
+    <div className="min-w-0">
+      <p className="text-[11px] font-black text-white/90" style={{ paddingBottom: '6px', borderBottom: `1px solid ${accent}40` }}>{club}</p>
+      {list.length === 0 && (
+        <p className="text-[11px] text-white/40" style={{ paddingTop: '6px' }}>No lineup yet</p>
+      )}
+      {list.map(p => (
+        <div key={p.id} className="flex items-center gap-2" style={{ padding: '5px 0', borderBottom: '1px solid #ffffff08' }}>
+          <span className="w-5 shrink-0 text-[10px] text-white/40">{p.number ?? ''}</span>
+          <span className="flex-1 min-w-0 truncate text-xs text-white/85">{p.name}</span>
+          {p.pitched
+            ? <span className="text-[9px] font-black rounded" style={{ color: '#0D0D0F', background: accent, padding: '1px 6px' }}>P</span>
+            : p.pos
+              ? <span className="text-[9px] font-black uppercase text-white/45">{p.pos}</span>
+              : null}
+        </div>
+      ))}
+    </div>
+  )
 
   const seg = (active: boolean) => ({
     color: active ? '#0D0D0F' : '#F5F1E8',
@@ -125,7 +209,7 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
           {roundNumbers.map(n => {
             const games = byRound.get(n)!
             const dates = [...new Set(games.map(g => g.played_on))]
-                        const lock = lockOf.get(n)
+            const lock = lockOf.get(n)
             /* A round can run across more than one park. Each ground's club is
                named in the header, and the games group under their ground. */
             const grounds: string[] = []
@@ -139,28 +223,51 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
 
             /* Park and diamond sit under the matchup so they're readable on a
                phone — the old right-hand column was hidden below sm. When the
-               games are already grouped by park, the line shows the diamond. */
+               games are already grouped by park, the line shows the diamond.
+               On the next round to be played, each game also carries a
+               closed-by-default Projected lineups panel. */
             const gameRow = (g: Fixture, withGround: boolean) => {
               const bye = g.team_a === 'BYE' || g.team_b === 'BYE'
               const time = fmtTime(g.start_time)
               const where = [withGround ? g.location : null, g.venue].filter(v => v && v !== 'Unallocated').join(' · ')
+              const la = lineupOf.get(clubKey(g.club_a)) ?? []
+              const lb = lineupOf.get(clubKey(g.club_b)) ?? []
+              const hasProj = n === projRound && !bye
+                && !isPlaceholder(g.team_a) && !isPlaceholder(g.team_b)
+                && (la.length > 0 || lb.length > 0)
               return (
-                <div key={g.id} className="flex items-start gap-4"
-                  style={{ borderBottom: '1px solid #ffffff06', padding: '12px 20px', opacity: bye ? 0.55 : 1 }}>
-                  <span className="w-16 shrink-0 text-[11px] font-black" style={{ color: accent, paddingTop: '2px' }}>
-                    {dates.length > 1 ? fmtDate(g.played_on).split(' ')[0] + ' ' : ''}{time ?? (bye ? '' : 'TBC')}
-                  </span>
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-bold text-white/90">
-                      {label(g.team_a, g.club_a)} <span className="text-white/35">v</span> {label(g.team_b, g.club_b)}
-                      {g.section && g.section !== 'Section A' && (
-                        <span className="text-[9px] uppercase tracking-widest ml-2" style={{ color: '#ffffff40' }}>{g.section}</span>
+                <div key={g.id} style={{ borderBottom: '1px solid #ffffff06', opacity: bye ? 0.55 : 1 }}>
+                  <div className="flex items-start gap-4" style={{ padding: '12px 20px' }}>
+                    <span className="w-16 shrink-0 text-[11px] font-black" style={{ color: accent, paddingTop: '2px' }}>
+                      {dates.length > 1 ? fmtDate(g.played_on).split(' ')[0] + ' ' : ''}{time ?? (bye ? '' : 'TBC')}
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm font-bold text-white/90">
+                        {label(g.team_a, g.club_a)} <span className="text-white/35">v</span> {label(g.team_b, g.club_b)}
+                        {g.section && g.section !== 'Section A' && (
+                          <span className="text-[9px] uppercase tracking-widest ml-2" style={{ color: '#ffffff40' }}>{g.section}</span>
+                        )}
+                      </span>
+                      {where && (
+                        <span className="block text-[10px] text-white/45" style={{ marginTop: '3px' }}>{where}</span>
                       )}
                     </span>
-                    {where && (
-                      <span className="block text-[10px] text-white/45" style={{ marginTop: '3px' }}>{where}</span>
-                    )}
-                  </span>
+                  </div>
+                  {hasProj && (
+                    <details style={{ padding: '0 20px 14px' }}>
+                      <summary className="cursor-pointer select-none text-[10px] font-black uppercase tracking-[0.18em] [&::-webkit-details-marker]:hidden"
+                        style={{ color: accent, marginLeft: '80px', listStyle: 'none' }}>
+                        Projected lineups ▾
+                      </summary>
+                      <div className="grid grid-cols-2 gap-4" style={{ marginTop: '12px' }}>
+                        {lineupCol(label(g.team_a, g.club_a), la)}
+                        {lineupCol(label(g.team_b, g.club_b), lb)}
+                      </div>
+                      <p className="text-[10px] text-white/45" style={{ marginTop: '10px' }}>
+                        Projected from Round {lastScored}. Not confirmed by the clubs.
+                      </p>
+                    </details>
+                  )}
                 </div>
               )
             }
