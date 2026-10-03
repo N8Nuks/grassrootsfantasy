@@ -272,7 +272,7 @@ export default function CoachClient(props: Props) {
             <p className="text-[11px] text-white/55" style={{ marginTop: '2px' }}>{gameWhere}</p>
           )}
           <p className="text-[11px] text-white/55" style={{ marginTop: '6px' }}>
-            {closed ? 'Lineups are closed for this round' : `Lineup closes ${closesLabel}`}
+            {closed ? 'Lineups are closed for this round' : closesLabel ? `Lineup closes ${closesLabel}` : ''}
           </p>
         </header>
 
