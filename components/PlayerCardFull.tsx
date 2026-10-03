@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { theme, type Grade } from '@/lib/clubhouse'
 import { splitName } from '@/lib/names'
-import { silhouetteFor } from '@/components/PlayerCard'
+import { silhouetteFor, MILESTONE_ACCENT, type CardMilestone } from '@/components/PlayerCard'
 
 const TIER_META: Record<string, { label: string; accent: string; ink: string; ghost: string }> = {
   rare_2wp_a: { label: '2WP A', accent: '#FFD700', ink: '#FFD700', ghost: 'grayscale(1) sepia(1) saturate(4) brightness(1.15)' },
@@ -57,6 +57,16 @@ const longevityOf = (badges: string[]) =>
 
 const badgeMeta = (b: string) => BADGE_META[b.toLowerCase()] ?? null
 
+/* Milestone ribbon wording — the same as the small card. A new longevity badge
+   arrives as stat 'longevity' at the games mark that earns it. */
+const MILESTONE_WORD: Record<string, string> = {
+  games: 'GAMES', hits: 'HITS', hr: 'HR', rbi: 'RBI', k_pit: 'K', sb: 'SB',
+}
+const milestoneLabel = (m: CardMilestone) =>
+  m.stat === 'longevity'
+    ? `NEW ${m.milestone === 1 ? 'ROOKIE' : m.milestone === 25 ? 'PROSPECT' : 'BADGE'}`
+    : `${m.milestone} ${MILESTONE_WORD[m.stat] ?? m.stat.toUpperCase()}`
+
 export type FullCardPlayer = {
   id: string
   name: string
@@ -101,7 +111,7 @@ function lineFor(raw: Record<string, number>): string {
   return parts.join(' · ')
 }
 
-export default function PlayerCardFull({ player, grade, owned, siteTheme, cardStyle = 'premium', flippable = false, doubled = false }: {
+export default function PlayerCardFull({ player, grade, owned, siteTheme, cardStyle = 'premium', flippable = false, doubled = false, milestones }: {
   player: FullCardPlayer
   grade: Grade
   owned: boolean
@@ -109,6 +119,7 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
   cardStyle?: 'standard' | 'premium'
   flippable?: boolean
   doubled?: boolean       // cycle or perfect game last round — scores 2x this round
+  milestones?: CardMilestone[] | null   // reached in the latest scored round
 }) {
   const T = theme(grade, siteTheme)
   const meta = TIER_META[player.tier] ?? TIER_META.common
@@ -117,6 +128,9 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
   const textured = siteTheme === 'neon' || !!siteTheme?.endsWith('_tx')
   const bandBg = textured ? `linear-gradient(#14121059, #14121059), ${T.headerBg}` : T.headerBg
   const isPitcher = (st.season_ip ?? 0) > 0 || (st.career_ip ?? 0) > 0
+  // An achievement is celebrated on every card, owned or not
+  const ms = milestones ?? []
+  const hasMs = ms.length > 0
 
   /* Three faces on two physical sides. Rotation only ever increases, so the
      side turning away is edge-on (invisible) at the halfway point — that's when
@@ -202,17 +216,22 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
     )
   }
 
-  // A doubled card takes the achievement colour so it can't be mistaken for its tier
+  // A doubled card takes the achievement colour so it can't be mistaken for its
+  // tier. A milestone card takes a gold frame with a softer, steady glow; the
+  // double keeps its orange frame if both land in the same round.
   const DOUBLE = '#FF8C42'
+  const frame = doubled ? DOUBLE : hasMs ? MILESTONE_ACCENT : null
   const shellStyle = {
     backfaceVisibility: 'hidden' as const, WebkitBackfaceVisibility: 'hidden' as const,
     padding: '7px',
-    background: doubled
-      ? `linear-gradient(165deg, ${DOUBLE} 0%, ${DOUBLE}70 45%, ${DOUBLE}30 100%)`
+    background: frame
+      ? `linear-gradient(165deg, ${frame} 0%, ${frame}70 45%, ${frame}30 100%)`
       : `linear-gradient(165deg, ${meta.accent} 0%, ${meta.accent}55 40%, ${meta.accent}25 100%)`,
     boxShadow: doubled
       ? `0 0 30px ${DOUBLE}70, 0 0 70px ${DOUBLE}28`
-      : `0 0 36px ${meta.accent}30`,
+      : hasMs
+        ? `0 0 18px ${MILESTONE_ACCENT}45, 0 0 40px ${MILESTONE_ACCENT}18`
+        : `0 0 36px ${meta.accent}30`,
   }
 
   /* ── FACE: the player card itself ── */
@@ -336,6 +355,31 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
                 }} />
             )
           })()}
+          {/* Milestone ribbon — bottom-right, opposite the longevity badge and
+              clear of the "tap for career" line beneath it */}
+          {hasMs && (
+            <span className="absolute pointer-events-none"
+              aria-label={`Milestone: ${ms.map(milestoneLabel).join(', ')}`}
+              style={{
+                right: 0,
+                bottom: '34px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '5px 12px 5px 18px',
+                background: `linear-gradient(100deg, #B8892A 0%, ${MILESTONE_ACCENT} 35%, #FFF4C8 50%, ${MILESTONE_ACCENT} 65%, #B8892A 100%)`,
+                clipPath: 'polygon(12px 0, 100% 0, 100% 100%, 12px 100%, 0 50%)',
+                color: '#2A1C04',
+                fontFamily: 'var(--font-heading)',
+                fontSize: '12px',
+                fontWeight: 900,
+                letterSpacing: '0.1em',
+                whiteSpace: 'nowrap',
+              }}>
+              <span aria-hidden>★</span>
+              {milestoneLabel(ms[0])}{ms.length > 1 ? ` +${ms.length - 1}` : ''}
+            </span>
+          )}
           {flippable && (
             <span className="absolute bottom-2 right-3 text-[8px] font-bold uppercase tracking-widest"
               style={{ color: T.textDim, textShadow: '0 0 6px #000000' }}>Tap for career ⟳</span>

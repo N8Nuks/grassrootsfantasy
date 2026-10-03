@@ -133,6 +133,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
               siteTheme={siteTheme}
               cardStyle={cardStyle}
               flippable={true}
+              milestones={milestones[detail.id]}
             />
             <button onClick={() => setDetail(null)} className="w-full text-center text-xs font-bold uppercase tracking-widest mt-4" style={{ color: T.textDim }}>Close</button>
           </div>

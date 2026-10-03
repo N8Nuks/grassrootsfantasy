@@ -1184,6 +1184,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
                     siteTheme={siteTheme}
                     cardStyle={cardStyle}
                     flippable={true}
+                    milestones={(c as TeamCard & { milestones?: { stat: string; milestone: number }[] }).milestones}
                     doubled={doubled.has(c.playerId)}
                   />
                 </div>
