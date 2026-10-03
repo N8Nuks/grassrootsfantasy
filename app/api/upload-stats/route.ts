@@ -4,6 +4,32 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 const STAT_COLS = ['gp','ab','singles','doubles','triples','hr','rbi','runs','bb','hbp','sb','cs','k_bat','ip','k_pit','win','er']
 
+// ── Name matching ──
+// Names are compared with capitals, macrons, apostrophes, hyphens and extra
+// spaces removed, so "Ogden Kiri" and "Ogden-Kiri" are the same name.
+const normName = (s: string) => s
+  .toLowerCase()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/['’`]/g, '')
+  .replace(/[^a-z0-9 ]+/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim()
+
+// Number of single-letter changes needed to turn one name into the other
+function editDistance(a: string, b: string): number {
+  const row = Array.from({ length: b.length + 1 }, (_, i) => i)
+  for (let i = 1; i <= a.length; i++) {
+    let diagonal = row[0]
+    row[0] = i
+    for (let j = 1; j <= b.length; j++) {
+      const above = row[j]
+      row[j] = Math.min(row[j] + 1, row[j - 1] + 1, diagonal + (a[i - 1] === b[j - 1] ? 0 : 1))
+      diagonal = above
+    }
+  }
+  return row[b.length]
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -38,7 +64,26 @@ export async function POST(request: Request) {
 
   // Players for name matching
   const { data: players } = await admin.from('players').select('id, full_name').eq('grade', grade)
-  const byName = new Map((players ?? []).map(p => [p.full_name.toLowerCase().trim(), p.id]))
+  const pool = (players ?? []).map(p => ({ id: p.id as string, name: p.full_name as string, key: normName(p.full_name) }))
+  const byKey = new Map(pool.map(p => [p.key, p]))
+
+  // Closest GF name to a name that has no exact match. Accepted only when it is
+  // within two letters (three for long names) AND no other player is nearly as
+  // close — two similar names (siblings, say) are left for a person to decide.
+  const closestTo = (name: string) => {
+    const key = normName(name)
+    let best: typeof pool[number] | null = null
+    let bestD = Infinity
+    let secondD = Infinity
+    for (const p of pool) {
+      const d = editDistance(key, p.key)
+      if (d < bestD) { secondD = bestD; bestD = d; best = p }
+      else if (d < secondD) secondD = d
+    }
+    const limit = key.length >= 14 ? 3 : 2
+    const accepted = best !== null && bestD <= limit && secondD - bestD >= 2
+    return { best, accepted }
+  }
 
   // Parse: commas, tabs, or runs of 2+ spaces (clipboard artifacts) as delimiters
   const lines = csv.trim().split('\n').map(l => l.trim()).filter(Boolean)
@@ -51,13 +96,35 @@ export async function POST(request: Request) {
 
   const rows: { player_id: string; round_id: string; raw: Record<string, number> }[] = []
   const unmatched: string[] = []
+  const warnings: string[] = []
+
+  // Players named exactly in this file — a closest-spelling match must never
+  // land on one of them, or two rows would load onto the same player.
+  const taken = new Set<string>()
+  for (const line of lines.slice(1)) {
+    const name = splitLine(line)[nameIdx]
+    const exact = name ? byKey.get(normName(name)) : undefined
+    if (exact) taken.add(exact.id)
+  }
 
   for (const line of lines.slice(1)) {
     const cells = splitLine(line)
     const name = cells[nameIdx]
     if (!name) continue
-    const playerId = byName.get(name.toLowerCase())
-    if (!playerId) { unmatched.push(name); continue }
+
+    let playerId = byKey.get(normName(name))?.id
+    if (!playerId) {
+      const { best, accepted } = closestTo(name)
+      if (best && accepted && !taken.has(best.id)) {
+        playerId = best.id
+        taken.add(best.id)
+        warnings.push(`"${name}" loaded as ${best.name} (closest spelling) — check it is the right player`)
+      } else {
+        unmatched.push(best ? `${name} (closest: ${best.name})` : name)
+        continue
+      }
+    }
+
     const raw: Record<string, number> = {}
     header.forEach((h, i) => {
       if (STAT_COLS.includes(h)) {
@@ -69,7 +136,6 @@ export async function POST(request: Request) {
   }
 
   // ── Sanity warnings (advisory only, nothing blocks) ──
-  const warnings: string[] = []
   if (!header.includes('ab')) {
     warnings.push('No "ab" column — season batting averages will not accrue from this round')
   }
