@@ -25,7 +25,15 @@ export async function POST(req: Request) {
 
   const cr = await getCoachRound(admin, grade)
   if (!cr) return bad('There is no upcoming round to submit for.')
-  if (cr.closes_at <= new Date()) return bad('This round has started, so lineups are closed.')
+  const nowAt = new Date()
+  if (cr.closes_at <= nowAt) {
+    // Soft close: a club that has not submitted yet can still send its team until hard_closes_at
+    const { data: already } = await admin.from('coach_submissions').select('id')
+      .eq('grade', grade).eq('club_id', clubId).eq('round_number', cr.round_number).maybeSingle()
+    if (already || cr.hard_closes_at <= nowAt) {
+      return bad('Lineups are closed for this round. Contact GF if your team needs to change.')
+    }
+  }
   const rn = cr.round_number
 
   // The coach names their real team from the club's full list. Who is visible
