@@ -121,8 +121,8 @@ export default async function CoachPage({ params }: { params: Promise<{ token: s
       clubName={club?.name ?? 'Your club'}
       roundNumber={rn}
       dayLabel={DAY.format(new Date(cr.opens_day + 'T12:00:00+12:00'))}
-      closesLabel={WHEN.format(cr.closes_at)}
-      closed={cr.closes_at <= new Date()}
+      closesLabel={cr.closes_at > new Date() ? WHEN.format(cr.closes_at) : ''}
+      closed={cr.hard_closes_at <= new Date() || (cr.closes_at <= new Date() && !!sub)}
       opponent={opponent}
       gameWhen={gameWhen}
       gameWhere={gameWhere}
