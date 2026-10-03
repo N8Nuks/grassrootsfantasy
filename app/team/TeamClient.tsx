@@ -20,7 +20,7 @@ const TEAM_GUIDE: GuideStep[] = [
   },
   {
     title: 'Captain and Vice Captain',
-    body: "Tap C to name your Captain — they score 2×. Tap VC for your Vice Captain, who scores 1.5×. Both apply every round, so you have three picks that matter. The multiplier applies to everything, including negatives, so pick with care. Anyone sitting in your reserves earns nothing, armband or not.",
+    body: "Tap C to name your Captain — they score 2×. Tap VC for your Vice Captain, who scores 1.5×. Both apply every round, so you have three picks that matter. The multiplier applies to everything, including negatives, so pick with care. Anyone sitting in your reserves earns nothing, armband or not. On a phone held upright, rotate it to see the C and VC buttons, or set the armband from the player's card.",
   },
   {
     title: 'Points and Earned',
@@ -344,6 +344,11 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
     return sum + (c ? (earned[c.playerId]?.earned ?? 0) : 0)
   }, 0)
   const hasEarned = earnedLabel != null
+  /* Once a round has been scored, an upright phone shows that round's points and
+     Earned in place of the C and VC buttons. Rotating the phone (or a wider
+     screen) brings back the buttons and every column. Before any round is scored
+     there are no points to show, so the buttons stay in both orientations. */
+  const hasRoundPoints = thisRoundLabel != null
 
   // ── Armbands ──
   // A player already on an achievement 2× can never hold one.
@@ -608,11 +613,38 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
             {isDoubled && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1 gf-pulse" style={{ background: '#FF8C42', color: '#141210', boxShadow: '0 0 10px #FF8C42' }}>2×</span>}
           </p>
           <p className="text-[10px]" style={{ color: T.textDim }}>
+            {/* Upright phone: the buttons are hidden, so the armband shows as a tag */}
+            {hasRoundPoints && isCap && (
+              <span className="sm:hidden landscape:hidden text-[9px] font-black px-1.5 py-0.5 rounded-full"
+                style={{ background: CAPTAIN_GOLD, color: '#141210', marginRight: '6px' }}>C</span>
+            )}
+            {hasRoundPoints && isVice && (
+              <span className="sm:hidden landscape:hidden text-[9px] font-black px-1.5 py-0.5 rounded-full"
+                style={{ background: VICE_SILVER, color: '#141210', marginRight: '6px' }}>VC</span>
+            )}
             {c.club}
             {e?.reason && <span style={{ color: accentBright, marginLeft: '6px' }}>· {earnedLabel ? `${earnedLabel} ` : ''}{e.reason}</span>}
           </p>
         </button>
-        <ArmbandButtons cardId={s.card_id} />
+        {/* Armband buttons: always on wide and rotated screens; on an upright
+            phone only until the first round has been scored */}
+        <span className={hasRoundPoints ? 'hidden sm:flex landscape:flex shrink-0' : 'flex shrink-0'}>
+          <ArmbandButtons cardId={s.card_id} />
+        </span>
+        {/* Upright phone: the latest round's points and Earned */}
+        {hasRoundPoints && (
+          <span className="flex sm:hidden landscape:hidden items-center shrink-0">
+            <span className="w-9 text-right text-[12px]" style={{ color: T.text }}>
+              {thisRoundPoints[c.playerId] ?? '—'}
+            </span>
+            {hasEarned && (
+              <span className="w-12 text-right text-[12px] font-black"
+                style={{ color: e && e.earned > 0 ? accentBright : T.textDim }}>
+                {e ? fmt(e.earned) : '—'}
+              </span>
+            )}
+          </span>
+        )}
         <span className="hidden sm:flex landscape:flex w-20 justify-center shrink-0">
           <span className="text-[9px] font-black tracking-widest px-2 py-1 rounded-full" style={{ color: meta.accent, background: meta.accent + '15' }}>
             {meta.label}
@@ -878,7 +910,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
                 }}>
                 <span style={{ fontSize: '14px', color: T.accent, lineHeight: 1 }}>↻</span>
                 <span className="text-[11px] font-black uppercase tracking-[0.12em]" style={{ color: T.accent }}>
-                  Rotate Phone for full stats
+                  {hasRoundPoints ? 'Rotate Phone for full stats and armbands' : 'Rotate Phone for full stats'}
                 </span>
               </span>
             </div>
@@ -899,6 +931,16 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
                 </span>
               )}
             </div>
+            {/* Column titles — upright phone: the latest round and Earned only */}
+            {hasRoundPoints && (
+              <div className="flex sm:hidden landscape:hidden items-center gap-3" style={{ borderBottom: '1px solid #ffffff0a', padding: '8px 28px' }}>
+                <span className="flex-1" />
+                <span className="w-9 text-right text-[9px] font-black uppercase shrink-0" style={{ color: T.textDim }}>{thisRoundLabel}</span>
+                {hasEarned && (
+                  <span className="w-12 text-right text-[9px] font-black uppercase shrink-0" style={{ color: accentBright }}>Earned</span>
+                )}
+              </div>
+            )}
             {/* Column titles */}
             <div className="hidden sm:flex landscape:flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff0a', padding: '10px 28px' }}>
               <span className="w-9 shrink-0" />
@@ -1108,6 +1150,18 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
         const currentSlot = slotByCard.get(c.id)
         const isOut = unavailable.has(c.playerId)
         const placeTargets = [...STARTER_SLOTS.filter(s => isEligible(c, s)), ...BENCH_SLOTS, ...RES_SLOTS]
+        // Armband from the card — the same rules as the C and VC buttons on the row
+        const armbandBlocked = doubled.has(c.playerId)
+        const armbandOff = !roundOpen || !currentSlot || armbandBlocked
+        const armbandNote = !roundOpen
+          ? 'Lineups are locked — armbands can change when the next round opens.'
+          : !currentSlot
+            ? 'Place this player in your lineup to give them an armband.'
+            : armbandBlocked
+              ? 'Already scoring 2× this round — they can\'t wear an armband.'
+              : 'Tap again to remove. Save your Lineup Card to keep it.'
+        const cardIsCaptain = captainId === c.id
+        const cardIsVice = viceCaptainId === c.id
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto" style={{ background: '#000000CC' }} onClick={() => setDetailCard(null)}>
             <div className="w-full rounded-2xl overflow-hidden" style={{ maxWidth: "820px", maxHeight: "94vh", background: T.surface, border: `1px solid ${meta.accent}50` }} onClick={e => e.stopPropagation()}>
@@ -1142,6 +1196,28 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
                     onSelect={(slot) => assignToSlot(slot, c.id)}
                   />
                   <p className="text-[10px] mt-3 text-center" style={{ color: T.textDim }}>Whoever holds that spot swaps into this player&apos;s current position.</p>
+
+                  {/* Armband — set Captain or Vice Captain without leaving the card */}
+                  <div style={{ marginTop: '20px' }}>
+                    <p className="text-[10px] font-black uppercase tracking-[0.25em] mb-2 text-center" style={{ color: T.textDim }}>Armband</p>
+                    <div className="flex" style={{ gap: '10px' }}>
+                      <button onClick={() => toggleCaptain(c.id)} disabled={armbandOff}
+                        className="flex-1 text-[11px] font-black uppercase tracking-widest rounded-full transition-all disabled:opacity-30"
+                        style={cardIsCaptain
+                          ? { padding: '13px 8px', background: CAPTAIN_GOLD, color: '#141210', boxShadow: `0 0 12px ${CAPTAIN_GOLD}80` }
+                          : { padding: '13px 8px', background: 'transparent', color: T.text, border: `1px solid ${CAPTAIN_GOLD}70` }}>
+                        Captain 2×
+                      </button>
+                      <button onClick={() => toggleViceCaptain(c.id)} disabled={armbandOff}
+                        className="flex-1 text-[11px] font-black uppercase tracking-widest rounded-full transition-all disabled:opacity-30"
+                        style={cardIsVice
+                          ? { padding: '13px 8px', background: VICE_SILVER, color: '#141210', boxShadow: `0 0 10px ${VICE_SILVER}70` }
+                          : { padding: '13px 8px', background: 'transparent', color: T.text, border: `1px solid ${VICE_SILVER}70` }}>
+                        Vice Captain 1.5×
+                      </button>
+                    </div>
+                    <p className="text-[10px] mt-3 text-center" style={{ color: T.textDim }}>{armbandNote}</p>
+                  </div>
                 </div>
               </div>
             </div>
