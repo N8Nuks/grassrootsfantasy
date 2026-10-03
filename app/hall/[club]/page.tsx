@@ -86,6 +86,32 @@ export default async function ClubHall({ params, searchParams }: {
       playingNumber: p.playing_number,
     }))
 
+  /* Milestones and new longevity badges from the latest scored round, by player.
+     Every card on this roster wears its ribbon, owned or not. Only players on
+     the roster are kept, so the pool filter above applies to these too. A career
+     mark is listed ahead of a new badge when a player has both. */
+  const milestones: Record<string, { stat: string; milestone: number }[]> = {}
+  const { data: scoredRound } = await supabase.from('rounds')
+    .select('round_number').eq('grade', grade)
+    .in('status', ['provisional', 'confirmed'])
+    .order('round_number', { ascending: false }).limit(1).maybeSingle()
+  if (scoredRound) {
+    const rosterIds = new Set(roster.map(p => p.id))
+    const { data: msRows } = await supabase.from('milestones')
+      .select('player_id, stat, milestone')
+      .eq('grade', grade).eq('round_number', scoredRound.round_number)
+      .order('milestone', { ascending: false })
+    for (const m of msRows ?? []) {
+      if (!rosterIds.has(m.player_id)) continue
+      if (!milestones[m.player_id]) milestones[m.player_id] = []
+      milestones[m.player_id].push({ stat: m.stat, milestone: Number(m.milestone) })
+    }
+    for (const id of Object.keys(milestones)) {
+      milestones[id].sort((a, b) =>
+        (a.stat === 'longevity' ? 1 : 0) - (b.stat === 'longevity' ? 1 : 0))
+    }
+  }
+
   return (
     <HallClient
       clubName={club.name}
@@ -96,6 +122,7 @@ export default async function ClubHall({ params, searchParams }: {
       ownedPlayerIds={ownedPlayerIds}
       siteTheme={siteTheme}
       cardStyle={cardStyle}
+      milestones={milestones}
     />
   )
 }

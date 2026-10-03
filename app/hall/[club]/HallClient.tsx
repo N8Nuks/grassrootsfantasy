@@ -4,7 +4,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { theme, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
-import PlayerCard from '@/components/PlayerCard'
+import PlayerCard, { type CardMilestone } from '@/components/PlayerCard'
 import PlayerCardFull from '@/components/PlayerCardFull'
 import PageGuide, { GuideStep } from '@/components/PageGuide'
 import { splitName } from '@/lib/names'
@@ -36,7 +36,7 @@ export type HallPlayer = {
 
 const TIER_ORDER = ['rare_2wp_a', 'rare_2wp_b', 'elite', 'common']
 
-export default function HallClient({ clubName, clubSlug, grade, grades, roster, ownedPlayerIds, siteTheme, cardStyle }: {
+export default function HallClient({ clubName, clubSlug, grade, grades, roster, ownedPlayerIds, siteTheme, cardStyle, milestones = {} }: {
   clubName: string
   clubSlug: string
   grade: Grade
@@ -45,6 +45,9 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
   ownedPlayerIds: string[]
   siteTheme: string
   cardStyle: 'standard' | 'premium'
+  // Milestones and new badges from the latest scored round, by player id.
+  // Every card wears its ribbon here, owned or not.
+  milestones?: Record<string, CardMilestone[]>
 }) {
   const T = theme(grade, siteTheme)
   const owned = new Set(ownedPlayerIds)
@@ -106,11 +109,12 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
           <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
             {sorted.map(p => (
               <PlayerCard key={p.id}
-                player={{ id: p.id, name: p.name, tier: p.tier, positions: p.positions, speedStar: p.speedStar, club: clubName, stats: p.stats, photoUrl: p.photoUrl, playingNumber: p.playingNumber, revealPos: p.revealPos }}
+                player={{ id: p.id, name: p.name, tier: p.tier, positions: p.positions, speedStar: p.speedStar, club: clubName, stats: p.stats, photoUrl: p.photoUrl, playingNumber: p.playingNumber, badges: p.badges, revealPos: p.revealPos }}
                 grade={grade}
                 owned={owned.has(p.id)}
                 siteTheme={siteTheme}
                 cardStyle={cardStyle}
+                milestones={milestones[p.id]}
                 onClick={() => setDetail(p)}
               />
             ))}
