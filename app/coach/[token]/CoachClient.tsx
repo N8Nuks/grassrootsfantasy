@@ -9,6 +9,7 @@ export type Entry = {
   shown: boolean
   pos: string
   number: string | number | null
+  active?: boolean
 }
 
 type Props = {
@@ -49,6 +50,7 @@ export default function CoachClient(props: Props) {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [savedLabel, setSavedLabel] = useState<string | null>(props.submittedLabel)
   const [canShare, setCanShare] = useState(false)
+  const [showOther, setShowOther] = useState(false)
 
   useEffect(() => {
     setCanShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function')
@@ -216,8 +218,46 @@ export default function CoachClient(props: Props) {
   )
 
   const swapLabel = swap ? (swap.kind === 'b' ? `slot ${slotLabel(swap.i)}` : 'the relief pitcher spot') : ''
-  const squadSorted = [...squad].sort((a, b) =>
+
+  // This year's players first; players on file but marked inactive sit in their own group
+  const sortSquad = (list: Entry[]) => [...list].sort((a, b) =>
     a.shown !== b.shown ? (a.shown ? -1 : 1) : a.name.localeCompare(b.name))
+  const mainSquad = sortSquad(squad.filter(e => e.active !== false))
+  const otherSquad = sortSquad(squad.filter(e => e.active === false))
+
+  const squadRow = (e: Entry) => {
+    const flagged = isOut(e)
+    return (
+      <div key={e.key} style={{ padding: '10px 0', borderBottom: '1px solid #ffffff10' }}>
+        <div className="flex items-center gap-3">
+          <span className="w-6 shrink-0 text-[10px] text-white/40">{e.number ?? ''}</span>
+          <span className="flex-1 min-w-0">
+            <span className="block text-sm text-white/85 truncate">{e.name}</span>
+            {tag(e)}
+          </span>
+          {flagged && <span className="text-[10px]" style={{ color: '#F09595' }}>Unavailable</span>}
+        </div>
+        {editable && (
+          <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: '8px', marginLeft: '36px' }}>
+            {!flagged && swap && (
+              <button type="button" onClick={() => useInSlot(e)} style={{ ...btn, borderColor: accent, color: accent }}>
+                Use in {swapLabel}
+              </button>
+            )}
+            {!flagged && !swap && (
+              <>
+                <button type="button" onClick={() => addBatter(e)} style={btn}>Add to batting order</button>
+                <button type="button" onClick={() => addReliever(e)} style={btn}>Add as relief pitcher</button>
+              </>
+            )}
+            {e.player_id && (
+              <button type="button" onClick={() => toggleOut(e)} style={btn}>{flagged ? 'Available' : 'Unavailable'}</button>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <main className="min-h-screen" style={{ background: '#0D0D0F', paddingBottom: '150px' }}>
@@ -320,42 +360,24 @@ export default function CoachClient(props: Props) {
 
         <section style={{ padding: '4px 18px' }}>
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45" style={{ padding: '14px 0 4px' }}>
-            Squad ({squad.length})
+            Squad ({mainSquad.length})
           </p>
-          {squadSorted.map(e => {
-            const flagged = isOut(e)
-            return (
-              <div key={e.key} style={{ padding: '10px 0', borderBottom: '1px solid #ffffff10' }}>
-                <div className="flex items-center gap-3">
-                  <span className="w-6 shrink-0 text-[10px] text-white/40">{e.number ?? ''}</span>
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-sm text-white/85 truncate">{e.name}</span>
-                    {tag(e)}
-                  </span>
-                  {flagged && <span className="text-[10px]" style={{ color: '#F09595' }}>Unavailable</span>}
-                </div>
-                {editable && (
-                  <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: '8px', marginLeft: '36px' }}>
-                    {!flagged && swap && (
-                      <button type="button" onClick={() => useInSlot(e)} style={{ ...btn, borderColor: accent, color: accent }}>
-                        Use in {swapLabel}
-                      </button>
-                    )}
-                    {!flagged && !swap && (
-                      <>
-                        <button type="button" onClick={() => addBatter(e)} style={btn}>Add to batting order</button>
-                        <button type="button" onClick={() => addReliever(e)} style={btn}>Add as relief pitcher</button>
-                      </>
-                    )}
-                    {e.player_id && (
-                      <button type="button" onClick={() => toggleOut(e)} style={btn}>{flagged ? 'Available' : 'Unavailable'}</button>
-                    )}
-                  </div>
-                )}
-              </div>
-            )
-          })}
+          {mainSquad.map(squadRow)}
         </section>
+
+        {otherSquad.length > 0 && (
+          <section style={{ padding: '4px 18px' }}>
+            <button type="button" onClick={() => setShowOther(!showOther)}
+              className="w-full flex items-center justify-between"
+              style={{ padding: '14px 0 8px', background: 'transparent', border: 'none' }}>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45">
+                Other players on file ({otherSquad.length})
+              </span>
+              <span className="text-[11px] text-white/45">{showOther ? 'Hide' : 'Show'}</span>
+            </button>
+            {showOther && otherSquad.map(squadRow)}
+          </section>
+        )}
 
         <p className="text-[10px] text-white/35 text-center" style={{ padding: '18px 18px 0' }}>
           This page shows your club only. Teams on Grassroots Fantasy are projected and not confirmed.
@@ -368,7 +390,7 @@ export default function CoachClient(props: Props) {
             <p className="text-xs" style={{ color: msg.ok ? accent : '#F09595', marginBottom: '8px' }}>{msg.text}</p>
           )}
           {closed ? (
-            <p className="text-xs text-white/60 text-center">This round has started, so lineups are closed.</p>
+            <p className="text-xs text-white/60 text-center">Lineups are closed for this round. Contact GF if your team needs to change.</p>
           ) : (
             <button type="button" onClick={submit} disabled={saving}
               className="w-full text-sm font-black uppercase tracking-widest rounded-full"
