@@ -41,6 +41,18 @@ export async function POST(req: Request) {
       }
     }
 
+    // Next Round is the Tuesday cut-off: a scored (provisional) round becomes
+    // confirmed, which locks its stats, before the next round opens.
+    if (round && round.status === 'provisional') {
+      const { error: confErr } = await admin.from('rounds')
+        .update({ status: 'confirmed' }).eq('id', round.id)
+      if (confErr) {
+        return NextResponse.json(
+          { error: 'Could not confirm the round, not advanced: ' + confErr.message },
+          { status: 500 })
+      }
+    }
+
     const nextNumber = (round?.round_number ?? 0) + 1
     // New rounds open with lineups hidden from opponents until Lock stamps lock_at
     const { data: newRound, error: advErr } = await admin.from('rounds')
