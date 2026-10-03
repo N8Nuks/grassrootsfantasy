@@ -137,6 +137,11 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
     aggByPlayer.set(s.player_id, a)
   }
 
+  // Milestones carry the date they were recorded (NZ date). Any that fail to
+  // record are collected and reported once the rest of the round has scored.
+  const reachedOn = new Date().toLocaleDateString('en-CA', { timeZone: 'Pacific/Auckland' })
+  const milestoneErrors: string[] = []
+
   for (const [playerId, a] of aggByPlayer) {
     const { data: p } = await admin.from('players').select('stats').eq('id', playerId).single()
     const existing = (p?.stats ?? {}) as Record<string, number>
@@ -180,10 +185,6 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
       career_games: careerGames,
     }).eq('id', playerId)
 
-    /* Milestones reached this round, recorded once each — the unique index on
-       (player_id, stat, milestone) means a rescore can't duplicate them. */
-    // Each scale carries the pre-season base, so only marks crossed THIS season
-    // are recorded. Marks a player was already past before Round 1 are skipped.
     /* Longevity badge follows career games. The band's badge replaces whichever
        longevity badge the player holds; every other badge is left alone. Career
        games are recalculated from the base each time, so a corrected rescore
@@ -205,6 +206,10 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
       await admin.from('players').update({ badges: nextBadges }).eq('id', playerId)
     }
 
+    /* Milestones reached this season, recorded once each — the unique index on
+       (player_id, stat, milestone) means a rescore can't duplicate them.
+       Each scale carries the pre-season base, so only marks crossed THIS season
+       are recorded. Marks a player was already past before Round 1 are skipped. */
     const SCALES: [string, number, number, number[]][] = [
       ['games', careerGames,            base?.career_games_base ?? 0, [50,100,150,200,250,300,350,400,450,500]],
       ['hits',  seasonStats.career_h,   b('career_h_base'),           [100,200,300,400,500,600,700,800,900,1000]],
@@ -215,10 +220,12 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
     for (const [stat, now, before, marks] of SCALES) {
       for (const m of marks) {
         if (before < m && now >= m) {
-          await admin.from('milestones').upsert({
+          const { error: msErr } = await admin.from('milestones').upsert({
             player_id: playerId, grade: base?.grade ?? round.grade, stat, milestone: m,
             round_id, round_number: round.round_number,
+            reached_on: reachedOn,
           }, { onConflict: 'player_id,stat,milestone', ignoreDuplicates: true })
+          if (msErr) milestoneErrors.push(`${stat} ${m}: ${msErr.message}`)
         }
       }
     }
@@ -230,12 +237,13 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
   // Appearing in the upload isn't the same as playing. A player named on the
   // sheet who never reached the plate, the mound or the bases can't score, so
   // they're treated as absent and the substitution cascade fills their slot.
-  // Plate appearance = AB + BB + HBP (AB alone misses a walk-only game).
+  // Plate appearance = AB + BB + HBP + sacrifices (AB alone misses a walk-only
+  // or sacrifice-only game).
   // Running = runs + SB + CS, so a pinch or designated runner who scores or
   // steals without batting still counts as having played.
   const hasPlayed = (line: StatLine) => {
     const n = (x: unknown) => Number(x) || 0
-    const plateAppearances = n(line.ab) + n(line.bb) + n(line.hbp) + n(line.sac) + n(line.sac)
+    const plateAppearances = n(line.ab) + n(line.bb) + n(line.hbp) + n(line.sac)
     const pitched = n(line.ip) + n(line.k_pit) + n(line.win) + n(line.er)
     const ran = n(line.runs) + n(line.sb) + n(line.cs)
     return plateAppearances > 0 || pitched > 0 || ran > 0
@@ -391,6 +399,16 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
 
   // 5. Armbands off anyone due a bonus next round, and notify their managers
   await moveArmbandsOffDoubled(admin, round.grade as 'mens' | 'womens', round.round_number)
+
+  // Everything above has scored. If any milestone failed to record, say so now
+  // rather than let it pass silently.
+  if (milestoneErrors.length) {
+    return {
+      ok: false,
+      error: `Round scored, but ${milestoneErrors.length} milestone(s) could not be recorded. First: ${milestoneErrors[0]}`,
+      status: 500,
+    }
+  }
 
   return {
     ok: true,
