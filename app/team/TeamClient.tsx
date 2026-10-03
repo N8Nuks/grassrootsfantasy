@@ -495,7 +495,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
 
   const surname = (n: string) => n.trim().split(' ').slice(-1)[0].toLowerCase()
   const sortedCollection = [...cards].sort((a, b) => {
-    if (sortBy === 'ba') return (b.stats.career_ba ?? 0) - (a.stats.career_ba ?? 0)
+    if (sortBy === 'ba') return (b.stats.season_ba ?? -1) - (a.stats.season_ba ?? -1)
     if (sortBy === 'points') {
       const diff = (b.stats.season_points ?? 0) - (a.stats.season_points ?? 0)
       return diff !== 0 ? diff : surname(a.name).localeCompare(surname(b.name))
