@@ -19,9 +19,12 @@ export function nzToDate(day: string, time: string | null): Date {
   return new Date(`${day}T${t}:00+12:00`)
 }
 
-/* Coaches close at noon the day before a round's first game, so GF managers
-   have the named teams for the evening before the GF lock. */
+/* Coaches are told the deadline is noon the day before a round's first game,
+   so GF managers have the named teams for the evening before the GF lock.
+   Behind that sits a quiet soft close: a club that has not submitted yet can
+   still send its team until 8pm that day. It is never shown to coaches. */
 const COACH_CLOSE_TIME = '12:00'
+const COACH_HARD_CLOSE_TIME = '20:00'
 
 function dayBefore(day: string): string {
   const d = new Date(`${day}T12:00:00Z`)
@@ -33,12 +36,12 @@ export type CoachRound = {
   round_number: number
   opens_day: string
   starts_at: Date
-  closes_at: Date
+  closes_at: Date        // the published deadline
+  hard_closes_at: Date   // last moment for a club that has not yet submitted
 }
 
 /* The round a coach is submitting for: the first round whose opening game has
-   not started yet. Null once every round has begun. closes_at is the coach
-   deadline (noon the day before), which falls before the game starts. */
+   not started yet. Null once every round has begun. */
 export async function getCoachRound(
   admin: SupabaseClient,
   grade: 'mens' | 'womens',
@@ -61,11 +64,13 @@ export async function getCoachRound(
   for (const n of [...first.keys()].sort((a, b) => a - b)) {
     const r = first.get(n)!
     if (r.at > now) {
+      const eve = dayBefore(r.day)
       return {
         round_number: n,
         opens_day: r.day,
         starts_at: r.at,
-        closes_at: nzToDate(dayBefore(r.day), COACH_CLOSE_TIME),
+        closes_at: nzToDate(eve, COACH_CLOSE_TIME),
+        hard_closes_at: nzToDate(eve, COACH_HARD_CLOSE_TIME),
       }
     }
   }
