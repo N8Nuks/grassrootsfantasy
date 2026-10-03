@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 
 export type Entry = {
   key: string
@@ -20,6 +20,9 @@ type Props = {
   dayLabel: string
   closesLabel: string
   closed: boolean
+  opponent: string | null
+  gameWhen: string | null
+  gameWhere: string | null
   sourceNote: string
   submittedLabel: string | null
   batters: Entry[]
@@ -34,7 +37,7 @@ const CYCLE = ['P', 'C', 'IF', 'OF', 'DP']
 const slotLabel = (i: number) => (i === 9 ? 'FL' : String(i + 1))
 
 export default function CoachClient(props: Props) {
-  const { token, grade, gradeLabel, clubName, roundNumber, dayLabel, closesLabel, closed, sourceNote } = props
+  const { token, grade, gradeLabel, clubName, roundNumber, dayLabel, closesLabel, closed, sourceNote, opponent, gameWhen, gameWhere } = props
   const accent = grade === 'mens' ? GOLD : SILVER
 
   const [batters, setBatters] = useState<Entry[]>(props.batters)
@@ -45,6 +48,11 @@ export default function CoachClient(props: Props) {
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [savedLabel, setSavedLabel] = useState<string | null>(props.submittedLabel)
+  const [canShare, setCanShare] = useState(false)
+
+  useEffect(() => {
+    setCanShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function')
+  }, [])
 
   const editable = !closed
   const isOut = (e: Entry) => !!e.player_id && out.has(e.player_id)
@@ -54,6 +62,10 @@ export default function CoachClient(props: Props) {
     borderRadius: '8px', border: '1px solid #ffffff30', color: '#F5F1E8', background: 'transparent',
   }
   const chip: CSSProperties = { ...btn, minWidth: '46px', textAlign: 'center', borderColor: `${accent}80`, color: accent }
+
+  const gameLine = opponent
+    ? (opponent === 'Bye' ? 'Bye this round' : `v ${opponent}`) + (gameWhen ? ` · ${gameWhen}` : '')
+    : null
 
   function move(i: number, d: number) {
     const j = i + d
@@ -116,6 +128,52 @@ export default function CoachClient(props: Props) {
     setMsg(null)
   }
 
+  /* Plain-text copy of the team as it stands on screen, for the coach to keep */
+  function buildText() {
+    const lines: string[] = []
+    lines.push(`${clubName} · ${gradeLabel} · Round ${roundNumber} · ${dayLabel}`)
+    if (gameLine) lines.push(gameLine)
+    if (gameWhere) lines.push(gameWhere)
+    lines.push('')
+    batters.forEach((e, i) => lines.push(`${slotLabel(i)}  ${e.name} (${e.pos})`))
+    if (relievers.length) {
+      lines.push('')
+      lines.push('Relief: ' + relievers.map(e => e.name).join(', '))
+    }
+    const outNames = [...batters, ...relievers, ...squad]
+      .filter(e => e.player_id && out.has(e.player_id)).map(e => e.name)
+    if (outNames.length) lines.push('Unavailable: ' + outNames.join(', '))
+    return lines.join('\n')
+  }
+  async function copyText() {
+    const text = buildText()
+    try {
+      await navigator.clipboard.writeText(text)
+      setMsg({ ok: true, text: 'Lineup copied.' })
+    } catch {
+      try {
+        const ta = document.createElement('textarea')
+        ta.value = text
+        ta.style.position = 'fixed'
+        ta.style.opacity = '0'
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+        setMsg({ ok: true, text: 'Lineup copied.' })
+      } catch {
+        setMsg({ ok: false, text: 'Couldn\'t copy. Try again.' })
+      }
+    }
+  }
+  async function shareText() {
+    try {
+      await navigator.share({ title: `${clubName} lineup`, text: buildText() })
+    } catch {
+      // closed without sending
+    }
+  }
+
   async function submit() {
     setMsg(null)
     const blocked = [...batters, ...relievers].find(e => isOut(e))
@@ -162,11 +220,17 @@ export default function CoachClient(props: Props) {
     a.shown !== b.shown ? (a.shown ? -1 : 1) : a.name.localeCompare(b.name))
 
   return (
-    <main className="min-h-screen" style={{ background: '#0D0D0F', paddingBottom: '120px' }}>
+    <main className="min-h-screen" style={{ background: '#0D0D0F', paddingBottom: '150px' }}>
       <div style={{ maxWidth: '480px', marginLeft: 'auto', marginRight: 'auto' }}>
         <header style={{ padding: '22px 18px 14px', borderBottom: '1px solid #ffffff14' }}>
           <p className="text-[11px] text-white/55">{gradeLabel} · Round {roundNumber} · {dayLabel}</p>
           <h1 className="text-xl font-black text-white" style={{ marginTop: '2px' }}>{clubName}</h1>
+          {gameLine && (
+            <p className="text-sm font-bold" style={{ color: accent, marginTop: '6px' }}>{gameLine}</p>
+          )}
+          {gameWhere && opponent !== 'Bye' && (
+            <p className="text-[11px] text-white/55" style={{ marginTop: '2px' }}>{gameWhere}</p>
+          )}
           <p className="text-[11px] text-white/55" style={{ marginTop: '6px' }}>
             {closed ? 'Lineups are closed for this round' : `Lineup closes ${closesLabel}`}
           </p>
@@ -306,16 +370,20 @@ export default function CoachClient(props: Props) {
           {closed ? (
             <p className="text-xs text-white/60 text-center">This round has started, so lineups are closed.</p>
           ) : (
-            <>
-              <button type="button" onClick={submit} disabled={saving}
-                className="w-full text-sm font-black uppercase tracking-widest rounded-full"
-                style={{ color: '#0D0D0F', background: accent, padding: '14px', opacity: saving ? 0.6 : 1 }}>
-                {saving ? 'Saving…' : 'Submit lineup'}
-              </button>
-              <p className="text-[10px] text-white/45 text-center" style={{ marginTop: '6px' }}>
-                {savedLabel ? `Last sent ${savedLabel}. ` : ''}You can resubmit until it closes.
-              </p>
-            </>
+            <button type="button" onClick={submit} disabled={saving}
+              className="w-full text-sm font-black uppercase tracking-widest rounded-full"
+              style={{ color: '#0D0D0F', background: accent, padding: '14px', opacity: saving ? 0.6 : 1 }}>
+              {saving ? 'Saving…' : 'Submit lineup'}
+            </button>
+          )}
+          <div className="flex items-center justify-center gap-3" style={{ marginTop: '8px' }}>
+            <button type="button" onClick={copyText} style={btn}>Copy lineup</button>
+            {canShare && <button type="button" onClick={shareText} style={btn}>Send to myself</button>}
+          </div>
+          {!closed && (
+            <p className="text-[10px] text-white/45 text-center" style={{ marginTop: '6px' }}>
+              {savedLabel ? `Last sent ${savedLabel}. ` : ''}You can resubmit until it closes.
+            </p>
           )}
         </div>
       </div>

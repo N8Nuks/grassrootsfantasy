@@ -9,11 +9,22 @@ export const metadata: Metadata = { title: 'Coach lineup', robots: { index: fals
 const DAY = new Intl.DateTimeFormat('en-NZ', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Pacific/Auckland' })
 const WHEN = new Intl.DateTimeFormat('en-NZ', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Pacific/Auckland' })
 
+const fmtTime = (t: string | null) => {
+  if (!t || t === '23:59') return null
+  const [h, m] = t.split(':').map(Number)
+  const ampm = h >= 12 ? 'pm' : 'am'
+  return `${h % 12 || 12}${m ? ':' + String(m).padStart(2, '0') : ''}${ampm}`
+}
+
 type PlayerRow = {
   id: string; full_name: string; active: boolean | null
   is_under18: boolean | null; has_consent: boolean | null; playing_number: number | string | null
 }
 type LuRow = { round_number: number; player_id: string | null; player_name: string | null; bat_order: number | null; pos: string }
+type FxRow = {
+  team_a: string; team_b: string; club_a: string | null; club_b: string | null
+  location: string | null; venue: string | null; start_time: string | null
+}
 
 function Notice({ text }: { text: string }) {
   return (
@@ -35,14 +46,10 @@ export default async function CoachPage({ params }: { params: Promise<{ token: s
   const clubId = link.club_id as string
 
   const cr = await getCoachRound(admin, grade)
-  if (!cr) {
-    const { data: dbg, error: dbgErr } = await admin.from('fixtures')
-      .select('round_number, played_on, start_time').eq('grade', grade).order('round_number').limit(3)
-    return <Notice text={`There is no upcoming round to name a team for. [debug ${grade} now=${new Date().toISOString()} rows=${dbg?.length ?? 'null'} err=${dbgErr?.message ?? 'none'} first=${JSON.stringify(dbg?.[0] ?? null)}]`} />
-  }
+  if (!cr) return <Notice text="There is no upcoming round to name a team for." />
   const rn = cr.round_number
 
-  const [{ data: club }, { data: plRows }, { data: luRows }, { data: sub }] = await Promise.all([
+  const [{ data: club }, { data: plRows }, { data: luRows }, { data: sub }, { data: fxRows }] = await Promise.all([
     admin.from('clubs').select('name').eq('id', clubId).single(),
     admin.from('players')
       .select('id, full_name, active, is_under18, has_consent, playing_number')
@@ -52,7 +59,26 @@ export default async function CoachPage({ params }: { params: Promise<{ token: s
       .eq('grade', grade).eq('club_id', clubId).lte('round_number', rn),
     admin.from('coach_submissions').select('submitted_at')
       .eq('grade', grade).eq('club_id', clubId).eq('round_number', rn).maybeSingle(),
+    admin.from('fixtures')
+      .select('team_a, team_b, club_a, club_b, location, venue, start_time')
+      .eq('grade', grade).eq('round_number', rn),
   ])
+
+  // This club's game this round: the opposition, the time and the ground
+  const key = (club?.name ?? '').trim().toLowerCase()
+  let opponent: string | null = null
+  let gameWhen: string | null = null
+  let gameWhere: string | null = null
+  for (const f of (fxRows ?? []) as FxRow[]) {
+    const a = (f.club_a ?? '').trim().toLowerCase() === key
+    const b = (f.club_b ?? '').trim().toLowerCase() === key
+    if (!a && !b) continue
+    const other = a ? { team: f.team_b, club: f.club_b } : { team: f.team_a, club: f.club_a }
+    opponent = other.team === 'BYE' ? 'Bye' : (other.club ?? other.team)
+    gameWhen = fmtTime(f.start_time)
+    gameWhere = [f.location, f.venue].filter(v => v && v !== 'Unallocated').join(' · ') || null
+    break
+  }
 
   const players = (plRows ?? []) as PlayerRow[]
   const byId = new Map(players.map(p => [p.id, p]))
@@ -97,6 +123,9 @@ export default async function CoachPage({ params }: { params: Promise<{ token: s
       dayLabel={DAY.format(new Date(cr.opens_day + 'T12:00:00+12:00'))}
       closesLabel={WHEN.format(cr.closes_at)}
       closed={cr.closes_at <= new Date()}
+      opponent={opponent}
+      gameWhen={gameWhen}
+      gameWhere={gameWhere}
       sourceNote={
         named ? `Your team for Round ${rn}, as you last sent it`
           : latest > 0 ? `Filled in from your Round ${latest} lineup` : 'No team on file yet. Build one below'
