@@ -105,7 +105,7 @@ export default async function CoachPage({ params }: { params: Promise<{ token: s
   const used = new Set(rows.map(r => r.player_id).filter(Boolean) as string[])
 
   const squad: Entry[] = players.filter(p => !used.has(p.id)).map(p => ({
-    key: p.id, player_id: p.id, name: p.full_name, shown: shownOf(p), pos: '', number: p.playing_number,
+    key: p.id, player_id: p.id, name: p.full_name, shown: shownOf(p), pos: '', number: p.playing_number, active: !!p.active,
   }))
 
   const { data: flagRows } = await admin.from('coach_unavailable').select('player_id')
