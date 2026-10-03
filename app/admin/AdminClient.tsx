@@ -4,6 +4,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import type { AdminStats } from './page'
 import CoachLinksPanel from './CoachLinksPanel'
+import LateTeamPanel from './LateTeamPanel'
 
 // ── Command palette — matches the Photo Studio ──
 const P = {
