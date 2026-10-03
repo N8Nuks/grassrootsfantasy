@@ -26,13 +26,36 @@ const PIT_KEYS: [keyof StatLine, string][] = [
   ['ip','ip'],['k_pit','k_pit'],['win','win'],['er','er'],
 ]
 
+// ── Innings pitched: scorebook thirds ──
+// Round CSVs give ip in scorebook notation: 1.2 = 1 inning and 2 outs (not 1.2
+// innings). All ip maths runs in outs. The digit after the point is rounded
+// (1.2 is held as 1.1999… in floating point) and capped at 2.
+export function ipToOuts(ip: unknown): number {
+  const n = Number(ip) || 0
+  if (n <= 0) return 0
+  const whole = Math.floor(n)
+  const thirds = Math.min(Math.round((n - whole) * 10), 2)
+  return whole * 3 + thirds
+}
+
+// Outs back to scorebook thirds: 10 outs -> 3.1
+export function outsToIp(outs: number): number {
+  const total = Math.max(Math.round(Number(outs) || 0), 0)
+  return Number(`${Math.floor(total / 3)}.${total % 3}`)
+}
+
 // Raw subtotals (can be negative) — used internally, floored at combination points
 function battingRaw(s: StatLine, v: PointValues): number {
   return BAT_KEYS.reduce((sum, [stat, key]) => sum + (Number(s[stat]) || 0) * (v[key] ?? 0), 0)
 }
 
+// ip scores per out: the ip point value is per full inning, so each out is worth
+// a third of it (ip = 3 -> 1 point per out). Other pitching stats are plain counts.
 function pitchingRaw(s: StatLine, v: PointValues): number {
-  return PIT_KEYS.reduce((sum, [stat, key]) => sum + (Number(s[stat]) || 0) * (v[key] ?? 0), 0)
+  return PIT_KEYS.reduce((sum, [stat, key]) => {
+    if (stat === 'ip') return sum + ipToOuts(s.ip) * ((v.ip ?? 0) / 3)
+    return sum + (Number(s[stat]) || 0) * (v[key] ?? 0)
+  }, 0)
 }
 
 // ROUND FLOOR RULE: no player scores below 0 in any round, on any basis.
@@ -90,6 +113,7 @@ export function armbandMultiplier(
   if (vicePlayerId && playerId === vicePlayerId) return 1.5
   return 1
 }
+
 // Hitting for the cycle: a single, a double, a triple and a home run in one round.
 export function isCycle(s: StatLine): boolean {
   return (Number(s.singles) || 0) > 0
