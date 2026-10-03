@@ -9,6 +9,8 @@ export type StatLine = {
   ab?: number
   singles?: number; doubles?: number; triples?: number; hr?: number
   rbi?: number; runs?: number; bb?: number; hbp?: number
+  // sac = sacrifice bunts and sacrifice flies together, scored the same as a walk
+  sac?: number
   sb?: number; cs?: number; k_bat?: number
   ip?: number; k_pit?: number; win?: number; er?: number
 }
@@ -19,7 +21,7 @@ export type PointValues = Record<string, number> & {
 
 const BAT_KEYS: [keyof StatLine, string][] = [
   ['singles','single'],['doubles','double'],['triples','triple'],['hr','hr'],
-  ['rbi','rbi'],['runs','run'],['bb','bb'],['hbp','hbp'],
+  ['rbi','rbi'],['runs','run'],['bb','bb'],['hbp','hbp'],['sac','sac'],
   ['sb','sb'],['cs','cs'],['k_bat','k_bat'],
 ]
 const PIT_KEYS: [keyof StatLine, string][] = [
