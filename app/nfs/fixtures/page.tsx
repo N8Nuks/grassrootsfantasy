@@ -2,6 +2,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import ClubAvatar from '@/components/ClubAvatar'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { POOL_FILTER } from '@/lib/pool'
 
 const COBALT = '#2456E6'
@@ -24,13 +25,16 @@ type Fixture = {
 }
 type Round = { id: string; round_number: number; lock_at: string | null; status: string }
 type StatRow = { player_id: string; round_id: string; raw: Record<string, unknown> | null }
-type PlayerRow = { id: string; full_name: string; playing_number: number | string | null; reveal_pos: string | null; club_id: string | null }
+type PlayerRow = {
+  id: string; full_name: string; playing_number: number | string | null
+  reveal_pos: string | null; club_id: string | null; career_games: number | null
+}
 type ClubRow = { id: string; name: string }
-type LineupRow = { round_number: number; player_id: string; bat_order: number | null; pos: string }
-type Proj = { id: string; name: string; slot: string; tag: string | null; strong: boolean }
-/* named  = the club's real team for the coming round
-   lineup = its starting lineup from the last round on file
-   played = no lineup on file, so everyone who took the field last round */
+type LineupRow = { round_number: number; player_id: string | null; club_id: string | null; bat_order: number | null; pos: string }
+type Proj = { id: string; name: string; slot: string; tag: string | null; strong: boolean; ord: number }
+/* named  = the club's own team for the coming round
+   lineup = its team from the last round on file
+   played = no team on file, so everyone who took the field last round */
 type ClubProj = { kind: 'named' | 'lineup' | 'played'; round: number; list: Proj[] }
 
 /* Who hosts at each ground. Matched on a keyword in the location name so
@@ -102,14 +106,17 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
   }
   const roundNumbers = [...byRound.keys()].sort((a, b) => a - b)
 
-  /* Projected lineups, shown on the next round to be played. Per club, in
-     order of preference:
-       1. the real team named for that round (club_lineups at that round)
-       2. its starting lineup from the last round on file, same order and
-          positions, relief pitchers (P2) listed underneath
-       3. everyone who took the field in the last scored round
-     Manager-facing, so players come through the under-18 pool filter; a
-     lineup row for a player outside the pool is simply not shown. */
+  /* Projected lineups, shown on the next round to be played. Each club's team
+     is whatever its coach named (club_lineups), at the latest round on file.
+     The coach names the real team; GF decides what shows:
+       - players who are inactive, under 18 without consent, or not in GF are
+         left out
+       - if that leaves fewer than nine batters, each gap is filled with that
+         club's best eligible player who isn't already in the lineup: most
+         points in the last scored round, then most career games, and not
+         anyone a coach has flagged unavailable. A fill-in takes the hidden
+         player's batting slot.
+     A club with no team on file falls back to who played last round. */
   let projRound: number | null = null
   const projOf = new Map<string, ClubProj>()
   const roundIds = roundList.filter(r => r.round_number > 0).map(r => r.id)
@@ -131,25 +138,41 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
         const last = played.filter(s => numberOf.get(s.round_id) === scored)
         const lastIds = new Set(last.map(s => s.player_id))
         const pitched = new Set(last.filter(s => num(s.raw?.ip) > 0).map(s => s.player_id))
+        const scoredRoundId = roundList.find(r => r.round_number === scored)?.id ?? null
 
         const [{ data: plRows }, { data: clubRows }, { data: luRows }] = await Promise.all([
           supabase.from('players')
-            .select('id, full_name, playing_number, reveal_pos, club_id')
+            .select('id, full_name, playing_number, reveal_pos, club_id, career_games')
             .eq('grade', grade)
             .eq('active', true)
             .or(POOL_FILTER),
           supabase.from('clubs').select('id, name'),
           supabase.from('club_lineups')
-            .select('round_number, player_id, bat_order, pos')
+            .select('round_number, player_id, club_id, bat_order, pos')
             .eq('grade', grade)
             .lte('round_number', next),
         ])
+        const pointsOf = new Map<string, number>()
+        if (scoredRoundId) {
+          const { data: scRows } = await supabase.from('player_scores')
+            .select('player_id, points').eq('round_id', scoredRoundId)
+          for (const s of scRows ?? []) pointsOf.set(s.player_id as string, Number(s.points))
+        }
+        // Flags from coaches for the coming round; server-only table
+        const { data: flagRows } = await createAdminClient().from('coach_unavailable')
+          .select('player_id').eq('grade', grade).eq('round_number', next)
+        const flagged = new Set((flagRows ?? []).map(f => f.player_id as string))
+
         const players = (plRows ?? []) as PlayerRow[]
         const clubName = new Map(((clubRows ?? []) as ClubRow[]).map(c => [c.id, c.name]))
-        const playerOf = new Map(players.map(p => [p.id, p]))
-        const keyOf = (p: PlayerRow) => clubKey(p.club_id ? clubName.get(p.club_id) ?? null : null)
+        const byId = new Map(players.map(p => [p.id, p]))
+        const poolByClub = new Map<string, PlayerRow[]>()
+        for (const p of players) {
+          if (!p.club_id) continue
+          poolByClub.set(p.club_id, [...(poolByClub.get(p.club_id) ?? []), p])
+        }
 
-        // 3. Fallback list: who took the field last round.
+        // Fallback list: who took the field last round, pitchers first.
         const playedOf = new Map<string, Proj[]>()
         const sortedPlayed = players
           .filter(p => lastIds.has(p.id))
@@ -158,7 +181,7 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
             return pa !== pb ? (pa ? -1 : 1) : surname(a.full_name).localeCompare(surname(b.full_name))
           })
         for (const p of sortedPlayed) {
-          const k = keyOf(p)
+          const k = clubKey(p.club_id ? clubName.get(p.club_id) ?? null : null)
           if (!k) continue
           playedOf.set(k, [...(playedOf.get(k) ?? []), {
             id: p.id,
@@ -166,46 +189,71 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
             slot: p.playing_number == null || p.playing_number === '' ? '' : String(p.playing_number),
             tag: pitched.has(p.id) ? 'P' : p.reveal_pos,
             strong: pitched.has(p.id),
+            ord: 0,
           }])
         }
 
-        // 1 and 2. Lineup rows, grouped by club then round.
+        // Named teams: group the coach's rows by club, latest round on file.
         const rowsOf = new Map<string, Map<number, LineupRow[]>>()
         for (const r of (luRows ?? []) as LineupRow[]) {
-          const p = playerOf.get(r.player_id)
-          if (!p) continue
-          const k = keyOf(p)
-          if (!k) continue
-          const byR = rowsOf.get(k) ?? new Map<number, LineupRow[]>()
-          rowsOf.set(k, byR)
+          if (!r.club_id) continue
+          const byR = rowsOf.get(r.club_id) ?? new Map<number, LineupRow[]>()
+          rowsOf.set(r.club_id, byR)
           byR.set(r.round_number, [...(byR.get(r.round_number) ?? []), r])
         }
 
-        for (const k of new Set([...playedOf.keys(), ...rowsOf.keys()])) {
-          const byR = rowsOf.get(k)
-          const rn = byR ? [...byR.keys()].sort((a, b) => b - a)[0] : undefined
-          if (byR && rn != null) {
-            const rows = [...(byR.get(rn) ?? [])].sort((a, b) => {
-              if (a.bat_order != null && b.bat_order != null) return a.bat_order - b.bat_order
-              if (a.bat_order != null) return -1
-              if (b.bat_order != null) return 1
-              return surname(playerOf.get(a.player_id)?.full_name ?? '')
-                .localeCompare(surname(playerOf.get(b.player_id)?.full_name ?? ''))
+        for (const [clubId, byR] of rowsOf) {
+          const key = clubKey(clubName.get(clubId) ?? null)
+          if (!key) continue
+          const rn = [...byR.keys()].sort((a, b) => b - a)[0]
+          const rows = byR.get(rn) ?? []
+
+          // Who GF will show: in GF, active, and adult or consented
+          const visible = rows.filter(r => r.player_id && byId.has(r.player_id))
+          const visibleSet = new Set(visible)
+          const hiddenPos = new Map<number, string>()
+          for (const r of rows) if (!visibleSet.has(r) && r.bat_order != null) hiddenPos.set(r.bat_order, r.pos)
+
+          const list: Proj[] = visible.map(r => {
+            const p = byId.get(r.player_id as string) as PlayerRow
+            return {
+              id: p.id,
+              name: p.full_name,
+              slot: r.bat_order == null ? '' : r.bat_order === 10 ? 'FL' : String(r.bat_order),
+              tag: r.pos,
+              strong: r.pos === 'P',
+              ord: r.bat_order ?? 99,
+            }
+          })
+
+          // Fill each empty batting slot (1 to 9) so at least nine show
+          const have = new Set(visible.filter(r => r.bat_order != null && r.bat_order <= 9).map(r => r.bat_order as number))
+          const inLineup = new Set(rows.map(r => r.player_id).filter(Boolean) as string[])
+          const candidates = (poolByClub.get(clubId) ?? [])
+            .filter(p => !inLineup.has(p.id) && !flagged.has(p.id))
+            .sort((a, b) => {
+              const pa = pointsOf.get(a.id) ?? -1, pb = pointsOf.get(b.id) ?? -1
+              if (pa !== pb) return pb - pa
+              const ca = a.career_games ?? 0, cb = b.career_games ?? 0
+              if (ca !== cb) return cb - ca
+              return surname(a.full_name).localeCompare(surname(b.full_name))
             })
-            projOf.set(k, {
-              kind: rn === next ? 'named' : 'lineup',
-              round: rn,
-              list: rows.map(r => ({
-                id: r.player_id,
-                name: playerOf.get(r.player_id)?.full_name ?? '',
-                slot: r.bat_order == null ? '' : r.bat_order === 10 ? 'FL' : String(r.bat_order),
-                tag: r.pos,
-                strong: r.pos === 'P',
-              })),
-            })
-          } else {
-            projOf.set(k, { kind: 'played', round: scored, list: playedOf.get(k) ?? [] })
+          let ci = 0
+          for (let o = 1; o <= 9; o++) {
+            if (have.has(o)) continue
+            const cand = candidates[ci++]
+            if (!cand) break
+            const hp = hiddenPos.get(o)
+            const tag = hp && hp !== 'P' && hp !== 'P2' ? hp : cand.reveal_pos
+            list.push({ id: cand.id, name: cand.full_name, slot: String(o), tag, strong: false, ord: o })
           }
+
+          list.sort((a, b) => a.ord - b.ord)
+          projOf.set(key, { kind: rn === next ? 'named' : 'lineup', round: rn, list })
+        }
+
+        for (const [k, list] of playedOf) {
+          if (!projOf.has(k)) projOf.set(k, { kind: 'played', round: scored, list })
         }
       }
     }
@@ -330,7 +378,7 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
                     <details style={{ padding: '0 20px 14px' }}>
                       <summary className="cursor-pointer select-none text-[10px] font-black uppercase tracking-[0.18em] [&::-webkit-details-marker]:hidden"
                         style={{ color: accent, marginLeft: '80px', listStyle: 'none' }}>
-                        {allNamed ? 'Lineups ▾' : 'Projected lineups ▾'}
+                        Projected lineups ▾
                       </summary>
                       <div className="grid grid-cols-2 gap-4" style={{ marginTop: '12px' }}>
                         {lineupCol(label(g.team_a, g.club_a), pa)}
@@ -338,7 +386,7 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
                       </div>
                       <p className="text-[10px] text-white/45" style={{ marginTop: '10px' }}>
                         {allNamed
-                          ? 'Teams as named by the clubs.'
+                          ? 'Teams as named by the clubs. Projected, not yet confirmed.'
                           : "Projected from each club's last lineup. Not confirmed by the clubs."}
                       </p>
                     </details>
