@@ -212,6 +212,7 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
        are recorded. Marks a player was already past before Round 1 are skipped. */
     const SCALES: [string, number, number, number[]][] = [
       ['games', careerGames,            base?.career_games_base ?? 0, [50,100,150,200,250,300,350,400,450,500]],
+      ['longevity', careerGames,        base?.career_games_base ?? 0, [1,25]],
       ['hits',  seasonStats.career_h,   b('career_h_base'),           [100,200,300,400,500,600,700,800,900,1000]],
       ['hr',    seasonStats.career_hr,  b('career_hr_base'),          [50,100,150,200,250,300]],
       ['rbi',   seasonStats.career_rbi, b('career_rbi_base'),         [100,200,300,400,500,600]],

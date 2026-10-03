@@ -24,7 +24,9 @@ const MILESTONE_WORD: Record<string, string> = {
   games: 'GAMES', hits: 'HITS', hr: 'HR', rbi: 'RBI', k_pit: 'K', sb: 'SB',
 }
 const milestoneLabel = (m: CardMilestone) =>
-  `${m.milestone} ${MILESTONE_WORD[m.stat] ?? m.stat.toUpperCase()}`
+  m.stat === 'longevity'
+    ? `NEW ${m.milestone === 1 ? 'ROOKIE' : m.milestone === 25 ? 'PROSPECT' : 'BADGE'}`
+    : `${m.milestone} ${MILESTONE_WORD[m.stat] ?? m.stat.toUpperCase()}`
  
 const CLUB_TINTS: Record<string, string> = {
   'Bandits': '#5B2D8E', 'Howick': '#8A1E41', 'Marist': '#2456E6',
@@ -91,7 +93,7 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
   const badge = longevityBadge(player.badges)
   const silhouette = silhouetteFor(player.revealPos, grade)
 
-  const ms = owned ? (milestones ?? []) : []
+  const ms = milestones ?? []
   const hasMs = ms.length > 0
   // The 2× double keeps its orange frame if both land in the same round; the ribbon still shows
   const lit = doubled ? DOUBLE_ACCENT : hasMs ? MILESTONE_ACCENT : null

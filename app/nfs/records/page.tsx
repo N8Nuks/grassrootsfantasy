@@ -69,6 +69,7 @@ export default async function BookOfRecords({ searchParams }: { searchParams: Pr
     .from('milestones')
     .select('stat, milestone, round_number, players!inner(full_name, grade)')
     .eq('grade', grade).gt('round_number', 0)
+    .neq('stat', 'longevity')
     .eq('players.active', true)
     .or('is_under18.eq.false,has_consent.eq.true', { referencedTable: 'players' })
     .order('round_number', { ascending: false })
