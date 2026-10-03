@@ -88,7 +88,6 @@ function lineFor(raw: Record<string, number>): string {
   if (raw.hbp) parts.push(`HBP ${raw.hbp}`)
   if (raw.sb) parts.push(`SB ${raw.sb}`)
   if (raw.cs) parts.push(`CS ${raw.cs}`)
-  if (raw.k_bat) parts.push(`SO ${raw.k_bat}`)
   if (raw.ip) parts.push(`IP ${raw.ip}`)
   if (raw.k_pit) parts.push(`K ${raw.k_pit}`)
   if (raw.win) parts.push('W')
