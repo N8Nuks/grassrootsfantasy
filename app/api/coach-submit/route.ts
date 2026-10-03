@@ -4,7 +4,7 @@ import { getCoachRound } from '@/lib/coach'
 
 const POS = ['P', 'C', 'IF', 'OF', 'DP', 'P2']
 
-type LineupIn = { player_id: string; bat_order: number | null; pos: string }
+type LineupIn = { player_id: string | null; player_name?: string | null; bat_order: number | null; pos: string }
 type UnavailIn = { player_id: string; reason?: string | null }
 
 const bad = (error: string, status = 400) => NextResponse.json({ error }, { status })
@@ -21,6 +21,7 @@ export async function POST(req: Request) {
     .select('grade, club_id').eq('token', body.token).maybeSingle()
   if (!link) return bad('That link isn\'t recognised. Ask for a new one.', 401)
   const grade = link.grade as 'mens' | 'womens'
+  const clubId = link.club_id as string
 
   const cr = await getCoachRound(admin, grade)
   if (!cr) return bad('There is no upcoming round to submit for.')
@@ -29,10 +30,17 @@ export async function POST(req: Request) {
 
   // The coach names their real team from the club's full list. Who is visible
   // in GF (active, adult or consented) is decided on the way out, never here.
-  const { data: everyone } = await admin.from('players').select('id')
-    .eq('grade', grade).eq('club_id', link.club_id)
+  const [{ data: everyone }, { data: priorNames }, { data: existing }] = await Promise.all([
+    admin.from('players').select('id').eq('grade', grade).eq('club_id', clubId),
+    admin.from('club_lineups').select('player_name')
+      .eq('grade', grade).eq('club_id', clubId).not('player_name', 'is', null),
+    admin.from('club_lineups').select('id')
+      .eq('grade', grade).eq('club_id', clubId).eq('round_number', rn),
+  ])
   const allIds = (everyone ?? []).map(p => p.id as string)
   const clubIds = new Set(allIds)
+  const allowedNames = new Map(
+    (priorNames ?? []).map(r => [String(r.player_name).trim().toLowerCase(), String(r.player_name).trim()]))
 
   const lineup = Array.isArray(body.lineup) ? body.lineup : []
   const unavailable = Array.isArray(body.unavailable) ? body.unavailable : []
@@ -40,10 +48,21 @@ export async function POST(req: Request) {
 
   const seen = new Set<string>()
   const orders = new Set<number>()
+  const real: { player_id: string; bat_order: number | null; pos: string }[] = []
+  const named: { player_name: string; bat_order: number | null; pos: string }[] = []
+
   for (const l of lineup) {
-    if (!clubIds.has(l.player_id)) return bad('One of the players isn\'t on this club\'s list.')
-    if (seen.has(l.player_id)) return bad('A player is in the lineup twice.')
-    seen.add(l.player_id)
+    let key: string
+    if (l.player_id) {
+      if (!clubIds.has(l.player_id)) return bad('One of the players isn\'t on this club\'s list.')
+      key = l.player_id
+    } else {
+      const canonical = allowedNames.get(String(l.player_name ?? '').trim().toLowerCase())
+      if (!canonical) return bad('One of the names isn\'t recognised for this club.')
+      key = 'name:' + canonical.toLowerCase()
+    }
+    if (seen.has(key)) return bad('A player is in the lineup twice.')
+    seen.add(key)
     if (!POS.includes(l.pos)) return bad('One of the positions isn\'t valid.')
     if (l.pos === 'P2') {
       if (l.bat_order != null) return bad('A relief pitcher can\'t have a batting order.')
@@ -54,6 +73,8 @@ export async function POST(req: Request) {
       if (orders.has(l.bat_order as number)) return bad('Two players share the same batting order.')
       orders.add(l.bat_order as number)
     }
+    if (l.player_id) real.push({ player_id: l.player_id, bat_order: l.bat_order, pos: l.pos })
+    else named.push({ player_name: allowedNames.get(String(l.player_name).trim().toLowerCase()) as string, bat_order: l.bat_order, pos: l.pos })
   }
   for (let i = 1; i <= 9; i++) {
     if (!orders.has(i)) return bad('Pick nine batters, in orders 1 to 9.')
@@ -67,19 +88,25 @@ export async function POST(req: Request) {
     flagged.set(u.player_id, reason || null)
   }
 
-  // 1. Lineup: save the new rows first, then clear any old rows not in it
-  const rows = lineup.map(l => ({
-    grade, round_number: rn, player_id: l.player_id, bat_order: l.bat_order, pos: l.pos,
-  }))
-  const { error: luErr } = await admin.from('club_lineups')
-    .upsert(rows, { onConflict: 'grade,round_number,player_id' })
-  if (luErr) return bad('Couldn\'t save the lineup: ' + luErr.message, 500)
-
-  const stale = allIds.filter(id => !seen.has(id))
-  if (stale.length) {
-    const { error: delErr } = await admin.from('club_lineups').delete()
-      .eq('grade', grade).eq('round_number', rn).in('player_id', stale)
+  // 1. Lineup: save the new rows first, then clear whatever is no longer in it
+  let keepIds: string[] = []
+  if (real.length) {
+    const { data: saved, error: luErr } = await admin.from('club_lineups')
+      .upsert(real.map(r => ({ grade, round_number: rn, club_id: clubId, ...r })),
+        { onConflict: 'grade,round_number,player_id' })
+      .select('id')
+    if (luErr) return bad('Couldn\'t save the lineup: ' + luErr.message, 500)
+    keepIds = (saved ?? []).map(r => r.id as string)
+  }
+  const oldIds = (existing ?? []).map(r => r.id as string).filter(id => !keepIds.includes(id))
+  if (oldIds.length) {
+    const { error: delErr } = await admin.from('club_lineups').delete().in('id', oldIds)
     if (delErr) return bad('Couldn\'t clear the old lineup: ' + delErr.message, 500)
+  }
+  if (named.length) {
+    const { error: nmErr } = await admin.from('club_lineups')
+      .insert(named.map(n => ({ grade, round_number: rn, club_id: clubId, player_id: null, ...n })))
+    if (nmErr) return bad('Couldn\'t save the lineup: ' + nmErr.message, 500)
   }
 
   // 2. Unavailable players, held by round number until the round exists
@@ -117,7 +144,7 @@ export async function POST(req: Request) {
 
   // 4. Record the submission for the Admin panel
   await admin.from('coach_submissions').upsert(
-    { grade, club_id: link.club_id, round_number: rn, submitted_at: new Date().toISOString() },
+    { grade, club_id: clubId, round_number: rn, submitted_at: new Date().toISOString() },
     { onConflict: 'grade,club_id,round_number' })
 
   return NextResponse.json({
