@@ -35,7 +35,11 @@ export default async function CoachPage({ params }: { params: Promise<{ token: s
   const clubId = link.club_id as string
 
   const cr = await getCoachRound(admin, grade)
-  if (!cr) return <Notice text="There is no upcoming round to name a team for." />
+  if (!cr) {
+    const { data: dbg, error: dbgErr } = await admin.from('fixtures')
+      .select('round_number, played_on, start_time').eq('grade', grade).order('round_number').limit(3)
+    return <Notice text={`There is no upcoming round to name a team for. [debug ${grade} now=${new Date().toISOString()} rows=${dbg?.length ?? 'null'} err=${dbgErr?.message ?? 'none'} first=${JSON.stringify(dbg?.[0] ?? null)}]`} />
+  }
   const rn = cr.round_number
 
   const [{ data: club }, { data: plRows }, { data: luRows }, { data: sub }] = await Promise.all([
