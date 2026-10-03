@@ -78,6 +78,18 @@ export async function POST(req: Request) {
     }
     const cf = Array.isArray(carried) ? carried[0] : carried
 
+    /* Coach-flagged unavailable players: coaches flag against the round number
+       before the round row exists, so copy them across now. Non-fatal: a
+       failure is logged and the round still advances. */
+    const { data: coachFlags } = await admin.from('coach_unavailable')
+      .select('player_id, reason').eq('grade', grade).eq('round_number', nextNumber)
+    if (coachFlags?.length) {
+      const { error: flagErr } = await admin.from('player_availability').upsert(
+        coachFlags.map(f => ({ player_id: f.player_id, round_id: newRound.id, unavailable: true, reason: f.reason })),
+        { onConflict: 'player_id,round_id' })
+      if (flagErr) console.error('Coach availability copy failed:', flagErr.message)
+    }
+
     return NextResponse.json({
       ok: true, round_number: nextNumber, status: 'open',
       auto_dealt: auto.dealt, auto_cards: auto.cards,
