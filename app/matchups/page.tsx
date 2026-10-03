@@ -19,6 +19,10 @@ const slotRank = (s: string) => {
 const slotLabel = (s: string) => SLOT_LABELS[s] ?? s
 const fmt = (n: number) => (Number.isInteger(n) ? String(n) : String(Number(n.toFixed(2))))
 
+/* Provisional scores are live but not final — shown in red until the round
+   is confirmed, because a late stat correction can still move them. */
+const PROV = '#FF6B6B'
+
 type SlotRow = {
   slot: string
   batting_order: number | null
@@ -55,10 +59,14 @@ function TeamCard({ title, slots, T, winner, pointsByPlayer, earnedByPlayer, poi
             <span className="text-[10px] font-black px-2 py-0.5 rounded-full shrink-0" style={{ color: '#141210', background: '#3FBF63' }}>W</span>
           )}
           <p className="text-xs font-black uppercase tracking-[0.2em] truncate" style={{ color: T.accent }}>{title}</p>
+          {provisional && (
+            <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shrink-0"
+              style={{ color: PROV, border: `1px solid ${PROV}70` }}>Provisional</span>
+          )}
         </div>
         {pointsByPlayer && (
           <span className="flex shrink-0">
-            <span className="w-14 text-center text-[10px] font-black uppercase tracking-widest" style={{ color: provisional ? '#FF6B6B' : T.textDim }}>
+            <span className="w-14 text-center text-[10px] font-black uppercase tracking-widest" style={{ color: provisional ? PROV : T.textDim }}>
               {pointsRoundLabel ?? 'Points'}
             </span>
             {showEarned && (
@@ -92,7 +100,7 @@ function TeamCard({ title, slots, T, winner, pointsByPlayer, earnedByPlayer, poi
               )}
             </span>
             {pointsByPlayer && (
-              <span className="w-14 text-center text-sm font-bold shrink-0" style={{ color: provisional && pts != null ? '#FF6B6B' : T.textDim }}>{pts ?? '—'}</span>
+              <span className="w-14 text-center text-sm font-bold shrink-0" style={{ color: provisional && pts != null ? PROV : T.textDim }}>{pts ?? '—'}</span>
             )}
             {showEarned && (
               <span className="w-14 text-center text-sm font-black shrink-0" style={{ color: earn != null && earn > 0 ? T.accent : T.textDim }}>
@@ -121,16 +129,13 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
     supabase.from('rounds').select('id, round_number, lock_at, status')
       .eq('grade', grade).gt('round_number', 0).lte('lock_at', new Date().toISOString())
       .order('round_number', { ascending: false }).limit(1).maybeSingle(),
-        supabase.from('public_teams').select('id, team_name, avatar_image, avatar_frame, club:clubs!club_id(name), avatar_club:clubs!avatar_club_id(name)'),
+    supabase.from('public_teams').select('id, team_name, avatar_image, avatar_frame, club:clubs!club_id(name), avatar_club:clubs!avatar_club_id(name)'),
     // The live round, locked or not — used to explain why an open round isn't shown yet
     supabase.from('rounds').select('round_number, status')
       .eq('grade', grade).order('round_number', { ascending: false }).limit(1).maybeSingle(),
   ])
   const siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
   const T = theme(grade, siteTheme)
-  /* Provisional scores are live but not final — shown in red until the round
-     is confirmed, because a late stat correction can still move them. */
-  const PROV = '#FF6B6B'
   const roundProvisional = round?.status === 'provisional'
 
   // An open round sitting above the one on screen: matchups aren't drawn until it locks
@@ -232,6 +237,10 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
   const bWins = scored && Number(myMatchup!.score_b) > Number(myMatchup!.score_a)
   const otherMatchups = allMatchups.filter(m => !myMatchup || m.user_a !== myMatchup.user_a || m.user_b !== myMatchup.user_b)
 
+  // The points on the team cards are provisional only when they belong to the
+  // provisional round on screen (not when they're a fallback to an earlier round)
+  const cardProvisional = roundProvisional && pointsRoundNumber === round?.round_number
+
   // Players scoring double in the round on screen
   const doubledMap = await doubledInRound(supabase, grade, round?.round_number ?? null)
   const doubled = new Set(doubledMap.keys())
@@ -264,6 +273,16 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
               <p className="text-sm leading-relaxed" style={{ color: T.textDim, maxWidth: '520px', margin: '0 auto' }}>
                 Your new matchup is drawn when lineups lock. Until then you&apos;re looking at how
                 {round ? ` Round ${round.round_number}` : ' the last round'} finished — so get your lineup set.
+              </p>
+            </div>
+          )}
+
+          {/* Scored but not yet confirmed — say so, and say when it becomes final */}
+          {round && roundProvisional && (
+            <div className="rounded-2xl text-center mb-8"
+              style={{ background: `${PROV}14`, border: `1px solid ${PROV}55`, padding: '14px 20px' }}>
+              <p className="text-xs font-bold leading-relaxed" style={{ color: PROV }}>
+                Provisional scores. May change if official stats are corrected. Confirmed scores Tuesday 5pm
               </p>
             </div>
           )}
@@ -304,8 +323,8 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-6 mb-4">
-                <TeamCard title={nameOf(myMatchup.user_a)} slots={lineupA?.lineup_slots ?? []} T={T} winner={!!aWins} pointsByPlayer={pointsByPlayer} earnedByPlayer={earnedA} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber}` : null} doubled={doubled} provisional={roundProvisional && pointsRoundNumber === round?.round_number} />
-                <TeamCard title={nameOf(myMatchup.user_b)} slots={lineupB?.lineup_slots ?? []} T={T} winner={!!bWins} pointsByPlayer={pointsByPlayer} earnedByPlayer={earnedB} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber}` : null} doubled={doubled} />
+                <TeamCard title={nameOf(myMatchup.user_a)} slots={lineupA?.lineup_slots ?? []} T={T} winner={!!aWins} pointsByPlayer={pointsByPlayer} earnedByPlayer={earnedA} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber}` : null} doubled={doubled} provisional={cardProvisional} />
+                <TeamCard title={nameOf(myMatchup.user_b)} slots={lineupB?.lineup_slots ?? []} T={T} winner={!!bWins} pointsByPlayer={pointsByPlayer} earnedByPlayer={earnedB} pointsRoundLabel={pointsRoundNumber != null ? `Rd ${pointsRoundNumber}` : null} doubled={doubled} provisional={cardProvisional} />
               </div>
               {(earnedA || earnedB) && (
                 <p className="text-[11px] text-center mb-12" style={{ color: T.textDim }}>
