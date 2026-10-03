@@ -330,6 +330,10 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
   // Re-scoring a round overwrites cleanly via the unique constraint.
   // Errors are surfaced rather than swallowed — a silent failure here leaves the
   // Lineup Card unable to explain its own totals.
+  // Clear the round's earnings first: a correction can move a player into a
+  // different slot, and the old slot's row would otherwise stay on the card.
+  const { error: clearErr } = await admin.from('lineup_earnings').delete().eq('round_id', round_id)
+  if (clearErr) return { ok: false, error: 'Earnings clear failed: ' + clearErr.message, status: 500 }
   for (let i = 0; i < earnings.length; i += 500) {
     const { error: eErr } = await admin.from('lineup_earnings')
       .upsert(earnings.slice(i, i + 500), { onConflict: 'owner_id,round_id,player_id,slot' })
