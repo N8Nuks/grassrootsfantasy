@@ -184,6 +184,27 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
        (player_id, stat, milestone) means a rescore can't duplicate them. */
     // Each scale carries the pre-season base, so only marks crossed THIS season
     // are recorded. Marks a player was already past before Round 1 are skipped.
+    /* Longevity badge follows career games. The band's badge replaces whichever
+       longevity badge the player holds; every other badge is left alone. Career
+       games are recalculated from the base each time, so a corrected rescore
+       moves the badge back as well as forward. */
+    const LONGEVITY = ['newcomer', 'rookie', 'prospect', 'established', 'veteran', 'club_legend', 'icon']
+    const band = careerGames >= 300 ? 'icon'
+      : careerGames >= 200 ? 'club_legend'
+      : careerGames >= 100 ? 'veteran'
+      : careerGames >= 50 ? 'established'
+      : careerGames >= 25 ? 'prospect'
+      : careerGames >= 1 ? 'rookie'
+      : 'newcomer'
+    const { data: badgeRow } = await admin.from('players').select('badges').eq('id', playerId).single()
+    const heldBadges: string[] = Array.isArray(badgeRow?.badges) ? badgeRow.badges : []
+    if (!heldBadges.includes(band)) {
+      const at = heldBadges.findIndex(x => LONGEVITY.includes(x))
+      const nextBadges = heldBadges.filter(x => !LONGEVITY.includes(x))
+      nextBadges.splice(at === -1 ? 0 : at, 0, band)
+      await admin.from('players').update({ badges: nextBadges }).eq('id', playerId)
+    }
+
     const SCALES: [string, number, number, number[]][] = [
       ['games', careerGames,            base?.career_games_base ?? 0, [50,100,150,200,250,300,350,400,450,500]],
       ['hits',  seasonStats.career_h,   b('career_h_base'),           [100,200,300,400,500,600,700,800,900,1000]],

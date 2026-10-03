@@ -310,7 +310,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
                     {!scored && <p className="text-[10px] uppercase tracking-[0.3em] mt-1" style={{ color: T.textDim }}>locks in — good luck</p>}
                     {scored && roundProvisional && (
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-1" style={{ color: PROV }}>
-                        Provisional · final Tuesday 5pm
+                        Provisional · confirmed Tuesday 5pm
                       </p>
                     )}
                   </div>
