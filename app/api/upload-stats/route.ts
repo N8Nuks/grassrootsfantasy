@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     header.forEach((h, i) => {
       if (STAT_COLS.includes(h)) {
         const v = parseFloat(cells[i])
-        if (!isNaN(v) && v !== 0) raw[h] = v
+        if (!isNaN(v) && (v !== 0 || h === 'gp')) raw[h] = v
       }
     })
     rows.push({ player_id: playerId, round_id: round!.id, raw })
