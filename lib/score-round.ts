@@ -145,16 +145,18 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
 
     /* Milestones reached this round, recorded once each — the unique index on
        (player_id, stat, milestone) means a rescore can't duplicate them. */
-    const SCALES: [string, number, number[]][] = [
-      ['games', careerGames,            [50,100,150,200,250,300,350,400,450,500]],
-      ['hits',  seasonStats.career_h,   [100,200,300,400,500,600,700,800,900,1000]],
-      ['hr',    seasonStats.career_hr,  [50,100,150,200,250,300]],
-      ['rbi',   seasonStats.career_rbi, [100,200,300,400,500,600]],
-      ['k_pit', seasonStats.career_k,   [200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500]],
+    // Each scale carries the pre-season base, so only marks crossed THIS season
+    // are recorded. Marks a player was already past before Round 1 are skipped.
+    const SCALES: [string, number, number, number[]][] = [
+      ['games', careerGames,            base?.career_games_base ?? 0, [50,100,150,200,250,300,350,400,450,500]],
+      ['hits',  seasonStats.career_h,   b('career_h_base'),           [100,200,300,400,500,600,700,800,900,1000]],
+      ['hr',    seasonStats.career_hr,  b('career_hr_base'),          [50,100,150,200,250,300]],
+      ['rbi',   seasonStats.career_rbi, b('career_rbi_base'),         [100,200,300,400,500,600]],
+      ['k_pit', seasonStats.career_k,   b('career_k_base'),           [200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500]],
     ]
-    for (const [stat, now, marks] of SCALES) {
+    for (const [stat, now, before, marks] of SCALES) {
       for (const m of marks) {
-        if (now >= m) {
+        if (before < m && now >= m) {
           await admin.from('milestones').upsert({
             player_id: playerId, grade: base?.grade ?? round.grade, stat, milestone: m,
             round_id, round_number: round.round_number,
