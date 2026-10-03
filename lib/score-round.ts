@@ -48,6 +48,16 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
       earned_round_id: round_id,
       applies_round_number: round.round_number + 1,
     }))
+  // A correction can take a cycle away: remove this round's cycle rows for
+  // anyone who no longer has one, so they aren't doubled next round.
+  const cycleIds = cycleRows.map(r => r.player_id)
+  const { data: oldCycles } = await admin.from('player_achievements')
+    .select('player_id').eq('earned_round_id', round_id).eq('kind', 'cycle')
+  const staleCycleIds = (oldCycles ?? []).map(r => r.player_id).filter(id => !cycleIds.includes(id))
+  if (staleCycleIds.length) {
+    await admin.from('player_achievements').delete()
+      .eq('earned_round_id', round_id).eq('kind', 'cycle').in('player_id', staleCycleIds)
+  }
   if (cycleRows.length) {
     await admin.from('player_achievements')
       .upsert(cycleRows, { onConflict: 'player_id,earned_round_id,kind' })
