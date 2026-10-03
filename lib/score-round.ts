@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { slotPoints, applyBench, applyDouble, armbandMultiplier, isCycle, updateSeasonTotals, battingPoints, pitchingPoints, resolveSubs, StatLine, PointValues, SlotAssignment } from '@/lib/scoring'
+import { slotPoints, applyBench, applyDouble, armbandMultiplier, isCycle, updateSeasonTotals, battingPoints, pitchingPoints, resolveSubs, ipToOuts, outsToIp, StatLine, PointValues, SlotAssignment } from '@/lib/scoring'
 import { moveArmbandsOffDoubled } from '@/lib/armbands'
 
 export type ScoreRoundResult =
@@ -88,7 +88,7 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
   const aggByPlayer = new Map<string, Record<string, number>>()
   for (const s of allStats ?? []) {
     const line = s.raw as StatLine
-    const a = aggByPlayer.get(s.player_id) ?? { ab: 0, hits: 0, hr: 0, rbi: 0, sb: 0, wins: 0, k_pit: 0, ip: 0, runs: 0, gp: 0 }
+    const a = aggByPlayer.get(s.player_id) ?? { ab: 0, hits: 0, hr: 0, rbi: 0, sb: 0, wins: 0, k_pit: 0, outs: 0, runs: 0, gp: 0 }
     // A row is an appearance. gp overrides when the scorer gives it (2 for a double-header).
     a.gp += line.gp != null ? (Number(line.gp) || 0) : 1
     a.ab += Number(line.ab) || 0
@@ -99,7 +99,9 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
     a.sb += Number(line.sb) || 0
     a.wins += Number(line.win) || 0
     a.k_pit += Number(line.k_pit) || 0
-    a.ip += Number(line.ip) || 0
+    // ip arrives in scorebook thirds (1.2 = 1 inning, 2 outs) — add in outs so
+    // 1.2 + 1.2 comes to 3.1, not 2.4
+    a.outs += ipToOuts(line.ip)
     aggByPlayer.set(s.player_id, a)
   }
 
@@ -114,7 +116,7 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
       season_runs: a.runs,
       season_wins: a.wins,
       season_k_pit: a.k_pit,
-      season_ip: a.ip,
+      season_ip: outsToIp(a.outs),
       season_points: pointsByPlayer.get(playerId) ?? 0,
       season_games: a.gp,
     }
@@ -166,14 +168,17 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
   const statByPlayer = new Map(stats.map(s => [s.player_id, s.raw as StatLine]))
 
   // Appearing in the upload isn't the same as playing. A player named on the
-  // sheet who never reached the plate or the mound can't score, so they're
-  // treated as absent and the substitution cascade fills their slot.
+  // sheet who never reached the plate, the mound or the bases can't score, so
+  // they're treated as absent and the substitution cascade fills their slot.
   // Plate appearance = AB + BB + HBP (AB alone misses a walk-only game).
+  // Running = runs + SB + CS, so a pinch or designated runner who scores or
+  // steals without batting still counts as having played.
   const hasPlayed = (line: StatLine) => {
     const n = (x: unknown) => Number(x) || 0
     const plateAppearances = n(line.ab) + n(line.bb) + n(line.hbp)
     const pitched = n(line.ip) + n(line.k_pit) + n(line.win) + n(line.er)
-    return plateAppearances > 0 || pitched > 0
+    const ran = n(line.runs) + n(line.sb) + n(line.cs)
+    return plateAppearances > 0 || pitched > 0 || ran > 0
   }
   const played = new Set(
     stats.filter(s => hasPlayed(s.raw as StatLine)).map(s => s.player_id)
