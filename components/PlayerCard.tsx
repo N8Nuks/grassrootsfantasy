@@ -108,7 +108,7 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
         `}</style>
       )}
       <button onClick={onClick}
-        className={"rounded-xl text-left transition-all hover:scale-[1.03] flex flex-col" + (lit ? ' gf-rim' : '')}
+        className={"rounded-xl text-left transition-all hover:scale-[1.03] flex flex-col" + (doubled ? ' gf-rim' : '')}
         style={{
           padding: '4px',
           background: lit
@@ -117,9 +117,9 @@ export default function PlayerCard({ player, grade, owned, chip, onClick, siteTh
               ? `linear-gradient(165deg, ${meta.accent} 0%, ${meta.accent}50 40%, ${meta.accent}20 100%)`
               : `linear-gradient(165deg, #ffffff20 0%, #ffffff10 100%)`,
           boxShadow: lit
-            ? `0 0 22px ${lit}70, 0 0 46px ${lit}30`
+            ? (doubled ? `0 0 22px ${lit}70, 0 0 46px ${lit}30` : `0 0 12px ${lit}50, 0 0 26px ${lit}1F`)
             : owned ? `0 0 18px ${meta.accent}25` : 'none',
-          ...(lit ? { ['--rim' as string]: `${lit}90` } : {}),
+          ...(doubled ? { ['--rim' as string]: `${lit}90`, pointerEvents: 'auto' as const } : {}),
         }}>
         {/* Inner card */}
         <div className="flex-1 rounded-lg overflow-hidden flex flex-col min-h-0 w-full"
