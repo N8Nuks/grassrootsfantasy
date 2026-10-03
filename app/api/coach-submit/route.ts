@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { POOL_FILTER } from '@/lib/pool'
 import { getCoachRound } from '@/lib/coach'
 
 const POS = ['P', 'C', 'IF', 'OF', 'DP', 'P2']
@@ -28,16 +27,12 @@ export async function POST(req: Request) {
   if (cr.closes_at <= new Date()) return bad('This round has started, so lineups are closed.')
   const rn = cr.round_number
 
-  // Who this coach can pick: the club's active, consented players. allIds
-  // (everyone ever on the club) is only used to clean out stale rows.
-  const [{ data: pool }, { data: everyone }] = await Promise.all([
-    admin.from('players').select('id')
-      .eq('grade', grade).eq('club_id', link.club_id).eq('active', true).or(POOL_FILTER),
-    admin.from('players').select('id')
-      .eq('grade', grade).eq('club_id', link.club_id),
-  ])
-  const poolIds = new Set((pool ?? []).map(p => p.id as string))
+  // The coach names their real team from the club's full list. Who is visible
+  // in GF (active, adult or consented) is decided on the way out, never here.
+  const { data: everyone } = await admin.from('players').select('id')
+    .eq('grade', grade).eq('club_id', link.club_id)
   const allIds = (everyone ?? []).map(p => p.id as string)
+  const clubIds = new Set(allIds)
 
   const lineup = Array.isArray(body.lineup) ? body.lineup : []
   const unavailable = Array.isArray(body.unavailable) ? body.unavailable : []
@@ -46,7 +41,7 @@ export async function POST(req: Request) {
   const seen = new Set<string>()
   const orders = new Set<number>()
   for (const l of lineup) {
-    if (!poolIds.has(l.player_id)) return bad('One of the players isn\'t on this club\'s list.')
+    if (!clubIds.has(l.player_id)) return bad('One of the players isn\'t on this club\'s list.')
     if (seen.has(l.player_id)) return bad('A player is in the lineup twice.')
     seen.add(l.player_id)
     if (!POS.includes(l.pos)) return bad('One of the positions isn\'t valid.')
@@ -66,7 +61,7 @@ export async function POST(req: Request) {
 
   const flagged = new Map<string, string | null>()
   for (const u of unavailable) {
-    if (!poolIds.has(u.player_id)) return bad('One of the unavailable players isn\'t on this club\'s list.')
+    if (!clubIds.has(u.player_id)) return bad('One of the unavailable players isn\'t on this club\'s list.')
     if (seen.has(u.player_id)) return bad('A player can\'t be in the lineup and unavailable.')
     const reason = typeof u.reason === 'string' ? u.reason.trim().slice(0, 120) : ''
     flagged.set(u.player_id, reason || null)
