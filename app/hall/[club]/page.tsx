@@ -15,10 +15,14 @@ export default async function ClubHall({ params, searchParams }: {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Admin view: an admin sees every card in full colour, for marketing use
   let siteTheme = 'grade'
+  let adminView = false
   if (user) {
-    const { data: prof } = await supabase.from('profiles').select('site_theme').eq('id', user.id).single()
-    siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
+    const { data: prof } = await supabase.from('profiles').select('site_theme, is_admin').eq('id', user.id).single()
+    const p = prof as unknown as { site_theme?: string; is_admin?: boolean } | null
+    siteTheme = p?.site_theme ?? 'grade'
+    adminView = !!p?.is_admin
   }
   const { data: styleRow } = await supabase.from('site_settings')
     .select('value').eq('key', 'card_style').maybeSingle()
@@ -123,6 +127,7 @@ export default async function ClubHall({ params, searchParams }: {
       siteTheme={siteTheme}
       cardStyle={cardStyle}
       milestones={milestones}
+      adminView={adminView}
     />
   )
 }

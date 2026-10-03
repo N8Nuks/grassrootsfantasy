@@ -36,7 +36,7 @@ export type HallPlayer = {
 
 const TIER_ORDER = ['rare_2wp_a', 'rare_2wp_b', 'elite', 'common']
 
-export default function HallClient({ clubName, clubSlug, grade, grades, roster, ownedPlayerIds, siteTheme, cardStyle, milestones = {} }: {
+export default function HallClient({ clubName, clubSlug, grade, grades, roster, ownedPlayerIds, siteTheme, cardStyle, milestones = {}, adminView = false }: {
   clubName: string
   clubSlug: string
   grade: Grade
@@ -48,9 +48,13 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
   // Milestones and new badges from the latest scored round, by player id.
   // Every card wears its ribbon here, owned or not.
   milestones?: Record<string, CardMilestone[]>
+  // Admin view: every card shows in full colour, as if owned. Display only —
+  // it changes nothing about who actually holds a card.
+  adminView?: boolean
 }) {
   const T = theme(grade, siteTheme)
   const owned = new Set(ownedPlayerIds)
+  const showFull = (id: string) => adminView || owned.has(id)
   const [detail, setDetail] = useState<HallPlayer | null>(null)
 
   const sorted = [...roster].sort((a, b) => {
@@ -95,6 +99,11 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
             <p className="text-sm mb-5" style={{ color: T.textDim }}>
               {roster.length} players · {ownedCount} in your squad
             </p>
+            {adminView && (
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] mb-5" style={{ color: '#FFB547' }}>
+                Admin view · every card shown in full
+              </p>
+            )}
             {grades.length > 1 ? (
               <div className="flex justify-center">
                 <GradeSwitch grade={grade} mensHref={`/hall/${clubSlug}?grade=mens`} womensHref={`/hall/${clubSlug}?grade=womens`} />
@@ -111,7 +120,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
               <PlayerCard key={p.id}
                 player={{ id: p.id, name: p.name, tier: p.tier, positions: p.positions, speedStar: p.speedStar, club: clubName, stats: p.stats, photoUrl: p.photoUrl, playingNumber: p.playingNumber, badges: p.badges, revealPos: p.revealPos }}
                 grade={grade}
-                owned={owned.has(p.id)}
+                owned={showFull(p.id)}
                 siteTheme={siteTheme}
                 cardStyle={cardStyle}
                 milestones={milestones[p.id]}
@@ -129,7 +138,7 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
             <PlayerCardFull
               player={{ id: detail.id, name: detail.name, tier: detail.tier, positions: detail.positions, club: clubName, speedStar: detail.speedStar, badges: detail.badges, stats: detail.stats, photoUrl: detail.photoUrl, playingNumber: detail.playingNumber, revealPos: detail.revealPos }}
               grade={grade}
-              owned={owned.has(detail.id)}
+              owned={showFull(detail.id)}
               siteTheme={siteTheme}
               cardStyle={cardStyle}
               flippable={true}
