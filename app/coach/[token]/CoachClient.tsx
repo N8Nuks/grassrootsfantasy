@@ -51,6 +51,7 @@ export default function CoachClient(props: Props) {
   const [savedLabel, setSavedLabel] = useState<string | null>(props.submittedLabel)
   const [canShare, setCanShare] = useState(false)
   const [showOther, setShowOther] = useState(false)
+  const [confirmedSig, setConfirmedSig] = useState<string | null>(null)
 
   useEffect(() => {
     setCanShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function')
@@ -58,6 +59,15 @@ export default function CoachClient(props: Props) {
 
   const editable = !closed
   const isOut = (e: Entry) => !!e.player_id && out.has(e.player_id)
+
+  // A fingerprint of the team on screen. The confirmation panel only shows
+  // while the team still matches what was sent.
+  const currentSig = JSON.stringify([
+    batters.map(b => [b.key, b.pos]),
+    relievers.map(r => r.key),
+    [...out].sort(),
+  ])
+  const showConfirm = confirmedSig !== null && confirmedSig === currentSig
 
   const btn: CSSProperties = {
     fontSize: '11px', fontWeight: 800, letterSpacing: '0.04em', padding: '7px 11px',
@@ -130,6 +140,9 @@ export default function CoachClient(props: Props) {
     setMsg(null)
   }
 
+  const outNames = [...batters, ...relievers, ...squad]
+    .filter(e => e.player_id && out.has(e.player_id)).map(e => e.name)
+
   /* Plain-text copy of the team as it stands on screen, for the coach to keep */
   function buildText() {
     const lines: string[] = []
@@ -142,8 +155,6 @@ export default function CoachClient(props: Props) {
       lines.push('')
       lines.push('Relief: ' + relievers.map(e => e.name).join(', '))
     }
-    const outNames = [...batters, ...relievers, ...squad]
-      .filter(e => e.player_id && out.has(e.player_id)).map(e => e.name)
     if (outNames.length) lines.push('Unavailable: ' + outNames.join(', '))
     return lines.join('\n')
   }
@@ -192,6 +203,7 @@ export default function CoachClient(props: Props) {
     ]
     const inLineup = new Set([...batters, ...relievers].map(e => e.player_id).filter(Boolean) as string[])
     const unavailable = [...out].filter(id => !inLineup.has(id)).map(player_id => ({ player_id }))
+    const sentSig = currentSig
 
     setSaving(true)
     try {
@@ -202,8 +214,10 @@ export default function CoachClient(props: Props) {
       })
       const data = await res.json()
       if (res.ok) {
-        setMsg({ ok: true, text: 'Saved. You can change it until the round closes.' })
+        setConfirmedSig(sentSig)
         setSavedLabel('just now')
+        setMsg(null)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
         setMsg({ ok: false, text: data.error ?? 'That didn\'t save. Try again.' })
       }
@@ -276,7 +290,34 @@ export default function CoachClient(props: Props) {
           </p>
         </header>
 
-        <div style={{ padding: '12px 18px', background: `${accent}18` }}>
+        {showConfirm && (
+          <div style={{ margin: '14px 18px 0', padding: '16px', borderRadius: '12px', border: `1px solid ${accent}`, background: `${accent}14` }}>
+            <p className="text-sm font-black uppercase tracking-widest" style={{ color: accent }}>Your team is in</p>
+            <p className="text-[11px] text-white/60" style={{ marginTop: '4px' }}>
+              Sent {savedLabel ?? 'just now'}. You can keep changing it until the round closes.
+            </p>
+            <div style={{ marginTop: '12px' }}>
+              {batters.map((e, i) => (
+                <p key={e.key} className="text-xs text-white/85" style={{ padding: '3px 0' }}>
+                  <span className="font-black" style={{ color: accent, display: 'inline-block', width: '26px' }}>{slotLabel(i)}</span>
+                  {e.name} <span className="text-white/45">({e.pos})</span>
+                </p>
+              ))}
+              {relievers.length > 0 && (
+                <p className="text-xs text-white/70" style={{ marginTop: '8px' }}>Relief: {relievers.map(e => e.name).join(', ')}</p>
+              )}
+              {outNames.length > 0 && (
+                <p className="text-xs" style={{ marginTop: '4px', color: '#F09595' }}>Unavailable: {outNames.join(', ')}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-3 flex-wrap" style={{ marginTop: '14px' }}>
+              <button type="button" onClick={copyText} style={btn}>Copy lineup</button>
+              {canShare && <button type="button" onClick={shareText} style={btn}>Send to myself</button>}
+            </div>
+          </div>
+        )}
+
+        <div style={{ padding: '12px 18px', background: `${accent}18`, marginTop: showConfirm ? '14px' : 0 }}>
           <p className="text-xs leading-relaxed" style={{ color: accent }}>
             Name your real team. Players tagged &quot;Not shown in GF&quot; stay in your team but are never added to or displayed on Grassroots Fantasy.
           </p>
@@ -395,7 +436,7 @@ export default function CoachClient(props: Props) {
             <button type="button" onClick={submit} disabled={saving}
               className="w-full text-sm font-black uppercase tracking-widest rounded-full"
               style={{ color: '#0D0D0F', background: accent, padding: '14px', opacity: saving ? 0.6 : 1 }}>
-              {saving ? 'Saving…' : 'Submit lineup'}
+              {saving ? 'Saving…' : showConfirm ? 'Sent. Submit again to update' : 'Submit lineup'}
             </button>
           )}
           <div className="flex items-center justify-center gap-3" style={{ marginTop: '8px' }}>
