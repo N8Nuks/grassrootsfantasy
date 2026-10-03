@@ -534,6 +534,8 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
             </div>
           </Panel>
 
+          <CoachLinksPanel />
+
           {/* 6 · Second grade */}
           <Panel number="6" title="Deal a Starter Pack" accent={P.blue}
             sub="For a manager who registered in one grade and now wants the other. Their existing squad is untouched, and the pack is refused if they already hold cards in that grade.">
