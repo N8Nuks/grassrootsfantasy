@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import type { AdminStats } from './page'
+import CoachLinksPanel from './CoachLinksPanel'
 
 // ── Command palette — matches the Photo Studio ──
 const P = {
