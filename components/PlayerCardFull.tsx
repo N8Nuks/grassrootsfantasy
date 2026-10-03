@@ -75,10 +75,14 @@ type RoundLine = { round: number; status: string; raw: Record<string, number>; p
 type Face = 'front' | 'career' | 'rounds'
 const ORDER: Face[] = ['front', 'career', 'rounds']
 
+/* The round line lists every stat that scores, so the points beside it can be
+   read off the line: hits-at-bats first, then each scoring stat in turn.
+   Batting strikeouts are deliberately left off the line (they still score). */
 function lineFor(raw: Record<string, number>): string {
   const hits = (raw.singles ?? 0) + (raw.doubles ?? 0) + (raw.triples ?? 0) + (raw.hr ?? 0)
   const parts: string[] = []
   if (raw.ab != null) parts.push(`${hits}-${raw.ab}`)
+  if (raw.singles) parts.push(`1B ${raw.singles}`)
   if (raw.doubles) parts.push(`2B ${raw.doubles}`)
   if (raw.triples) parts.push(`3B ${raw.triples}`)
   if (raw.hr) parts.push(`HR ${raw.hr}`)
