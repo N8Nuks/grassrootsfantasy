@@ -5,14 +5,16 @@ import { theme, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
 import { splitName } from '@/lib/names'
 
-const CATS: { key: string; label: string; format?: 'ba' }[] = [
-  { key: 'season_points', label: 'Fantasy Points' },
-  { key: 'season_hr', label: 'Home Runs' },
-  { key: 'season_rbi', label: 'RBI' },
-  { key: 'season_sb', label: 'Stolen Bases' },
-  { key: 'season_ba', label: 'Batting Average', format: 'ba' },
-  { key: 'season_wins', label: 'Pitching Wins' },
-  { key: 'season_k_pit', label: 'Pitching Strikeouts' },
+/* `empty` is what a board says once the season is under way but nobody is on
+   it yet — a rare stat (a women's home run) reads as a race, not a blank. */
+const CATS: { key: string; label: string; format?: 'ba'; empty: [string, string] }[] = [
+  { key: 'season_points', label: 'Fantasy Points', empty: ['No points on the board yet.', 'The first scores land when the round is scored.'] },
+  { key: 'season_hr', label: 'Home Runs', empty: ['The first home run of the season is still out there.', 'Whoever hits it tops this board.'] },
+  { key: 'season_rbi', label: 'RBI', empty: ['The first RBI of the season is still out there.', 'Whoever drives in a run tops this board.'] },
+  { key: 'season_sb', label: 'Stolen Bases', empty: ['The first stolen base of the season is still out there.', 'Whoever swipes one tops this board.'] },
+  { key: 'season_ba', label: 'Batting Average', format: 'ba', empty: ['No batting averages yet.', 'The board fills as hitters reach base.'] },
+  { key: 'season_wins', label: 'Pitching Wins', empty: ['The first win of the season is still out there.', 'Whoever earns it tops this board.'] },
+  { key: 'season_k_pit', label: 'Pitching Strikeouts', empty: ['The first strikeout of the season is still out there.', 'Whoever rings one up tops this board.'] },
 ]
 
 export default async function Leaders({ searchParams }: { searchParams: Promise<{ grade?: string }> }) {
@@ -28,10 +30,18 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
   }
   const T = theme(grade, siteTheme)
 
-  const { data: players } = await supabase
-    .from('players')
-    .select('id, full_name, tier, stats, photo_url, clubs(name)')
-    .eq('grade', grade).eq('active', true).or('is_under18.eq.false,has_consent.eq.true')
+  const [{ data: players }, { count: scoredRounds }] = await Promise.all([
+    supabase
+      .from('players')
+      .select('id, full_name, tier, stats, photo_url, clubs(name)')
+      .eq('grade', grade).eq('active', true).or('is_under18.eq.false,has_consent.eq.true'),
+    // The season has started for this grade once any round is scored
+    supabase
+      .from('rounds')
+      .select('id', { count: 'exact', head: true })
+      .eq('grade', grade).in('status', ['provisional', 'confirmed']),
+  ])
+  const seasonStarted = (scoredRounds ?? 0) > 0
 
   type Row = { id: string; full_name: string; tier: string; stats: Record<string, number> | null; photo_url: string | null; clubs: { name: string } | null }
   const all = ((players ?? []) as unknown as Row[]).map(p => ({ ...p, stats: p.stats ?? {} }))
@@ -86,7 +96,16 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
                       </span>
                     </div>
                   ))}
-                  {rows.length === 0 && <p className="text-sm text-center" style={{ color: T.textDim, padding: '28px' }}>Season not started</p>}
+                  {rows.length === 0 && (
+                    seasonStarted ? (
+                      <div className="text-center" style={{ padding: '26px 22px' }}>
+                        <p className="text-sm font-bold" style={{ color: T.text, marginBottom: '6px' }}>{cat.empty[0]}</p>
+                        <p className="text-xs" style={{ color: T.textDim }}>{cat.empty[1]}</p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-center" style={{ color: T.textDim, padding: '28px' }}>Season not started</p>
+                    )
+                  )}
                 </div>
               )
             })}
