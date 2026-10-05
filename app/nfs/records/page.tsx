@@ -10,7 +10,7 @@ import MilestonesPopout, { type MilestoneEntry } from './MilestonesPopout'
 /* Single-season records are built but held back for launch. While this is
    false only admins see the section (tagged "Admin preview"); everyone else
    sees the page exactly as before. At launch, change this one word to true. */
-const SEASON_RECORDS_PUBLIC = false
+const SEASON_RECORDS_PUBLIC = true
 
 /* Ranked on what could fall in a single round, not raw difference. Hits, home
    runs and RBI all move at the same rate — any of them can come in one
