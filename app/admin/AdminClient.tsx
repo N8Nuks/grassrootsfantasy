@@ -488,7 +488,7 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
                 placeholder="Round #" className="rounded-xl px-4 py-3.5 text-sm w-32" style={field} />
             </div>
             <textarea value={availNames} onChange={e => setAvailNames(e.target.value)}
-              placeholder={"One player name per line:\nJack Besgrove\nHarrison Wildbore"}
+              placeholder={"One player per line, or club:Marist United for a whole team:\nJack Besgrove\nHarrison Wildbore"}
               rows={5} className="w-full rounded-xl px-4 py-3.5 text-xs font-mono" style={field} />
             <div className="text-center flex justify-center gap-4 flex-wrap" style={{ marginTop: '22px' }}>
               <button onClick={() => setAvailability(true)} disabled={availBusy || !availNames.trim()}

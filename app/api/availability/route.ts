@@ -22,22 +22,37 @@ export async function POST(request: Request) {
     .select('id').eq('grade', grade).eq('round_number', round_number).maybeSingle()
   if (!round) return NextResponse.json({ error: `Round ${round_number} (${grade}) does not exist yet` }, { status: 400 })
 
-  const { data: players } = await admin.from('players').select('id, full_name').eq('grade', grade)
+  const { data: players } = await admin.from('players').select('id, full_name, club_id').eq('grade', grade)
+  const { data: clubs } = await admin.from('clubs').select('id, name')
   const byName = new Map((players ?? []).map(p => [p.full_name.toLowerCase().trim(), p.id]))
 
   const rows: { player_id: string; round_id: string; unavailable: boolean }[] = []
+  const clubRows: { player_id: string; round_id: string; unavailable: boolean; reason: string | null }[] = []
   const unmatched: string[] = []
   for (const raw of names) {
-    const id = byName.get(raw.toLowerCase().trim())
+    const text = raw.trim()
+    // "club:Marist United" marks the whole squad (a bye, a forfeit, a club pulling out)
+    if (text.toLowerCase().startsWith('club:')) {
+      const clubName = text.slice(5).trim().toLowerCase()
+      const clubIds = (clubs ?? []).filter(c => c.name.toLowerCase() === clubName).map(c => c.id)
+      const members = (players ?? []).filter(p => p.club_id && clubIds.includes(p.club_id))
+      if (!members.length) { unmatched.push(raw); continue }
+      for (const m of members) {
+        clubRows.push({ player_id: m.id, round_id: round.id, unavailable, reason: unavailable ? 'Bye' : null })
+      }
+      continue
+    }
+    const id = byName.get(text.toLowerCase())
     if (!id) { unmatched.push(raw); continue }
     rows.push({ player_id: id, round_id: round.id, unavailable })
   }
 
-  if (rows.length) {
+  for (const batch of [rows, clubRows]) {
+    if (!batch.length) continue
     const { error } = await admin.from('player_availability')
-      .upsert(rows, { onConflict: 'player_id,round_id' })
+      .upsert(batch, { onConflict: 'player_id,round_id' })
     if (error) return NextResponse.json({ error: 'Availability insert failed: ' + error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ marked: rows.length, unmatched })
+  return NextResponse.json({ marked: rows.length + clubRows.length, unmatched })
 }
