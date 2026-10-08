@@ -421,7 +421,10 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
                   </div>
                   {lock?.lock_at && (
                     <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: accent }}>
-                      Lineups lock {LOCK.format(new Date(lock.lock_at))}
+                      Lineups lock {LOCK.format(
+                        new Date(lock.lock_at).getTime() - Date.now() > 60 * 24 * 3600 * 1000
+                          ? nzToDate(new Date(new Date(dates[0] + 'T12:00:00Z').getTime() - 86400000).toISOString().slice(0, 10), '23:00')
+                          : new Date(lock.lock_at))}
                     </span>
                   )}
                 </div>
