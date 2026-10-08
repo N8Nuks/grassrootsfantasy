@@ -23,6 +23,8 @@ type Fixture = {
   location: string | null
   venue: string | null
   section: string | null
+  score_a: number | null
+  score_b: number | null
 }
 type Round = { id: string; round_number: number; lock_at: string | null; status: string }
 type StatRow = { player_id: string; round_id: string; raw: Record<string, unknown> | null }
@@ -92,7 +94,7 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
   const supabase = await createClient()
   const [{ data: fixtures, error: fxError }, { data: rounds }] = await Promise.all([
     supabase.from('fixtures')
-      .select('id, grade, round_number, played_on, start_time, team_a, team_b, club_a, club_b, location, venue, section')
+      .select('id, grade, round_number, played_on, start_time, team_a, team_b, club_a, club_b, location, venue, section, score_a, score_b')
       .eq('grade', grade)
       .order('round_number').order('played_on').order('start_time'),
     supabase.from('rounds').select('id, round_number, lock_at, status').eq('grade', grade),
@@ -349,6 +351,9 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
                closed-by-default Projected lineups panel. */
             const gameRow = (g: Fixture, withGround: boolean) => {
               const bye = g.team_a === 'BYE' || g.team_b === 'BYE'
+              const hasScore = g.score_a != null && g.score_b != null
+              const aWon = hasScore && Number(g.score_a) > Number(g.score_b)
+              const bWon = hasScore && Number(g.score_b) > Number(g.score_a)
               const time = fmtTime(g.start_time)
               const where = [withGround ? g.location : null, g.venue].filter(v => v && v !== 'Unallocated').join(' · ')
               const pa = projOf.get(clubKey(g.club_a))
@@ -365,7 +370,15 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
                     </span>
                     <span className="flex-1 min-w-0">
                       <span className="block text-sm font-bold text-white/90">
-                        {label(g.team_a, g.club_a)} <span className="text-white/35">v</span> {label(g.team_b, g.club_b)}
+                        {hasScore ? (
+                          <>
+                            <span style={{ fontWeight: aWon ? 900 : 600, color: aWon ? '#ffffff' : '#ffffffA0' }}>{label(g.team_a, g.club_a)} {g.score_a}</span>
+                            <span className="text-white/35"> – </span>
+                            <span style={{ fontWeight: bWon ? 900 : 600, color: bWon ? '#ffffff' : '#ffffffA0' }}>{g.score_b} {label(g.team_b, g.club_b)}</span>
+                          </>
+                        ) : (
+                          <>{label(g.team_a, g.club_a)} <span className="text-white/35">v</span> {label(g.team_b, g.club_b)}</>
+                        )}
                         {g.section && g.section !== 'Section A' && (
                           <span className="text-[9px] uppercase tracking-widest ml-2" style={{ color: '#ffffff40' }}>{g.section}</span>
                         )}
@@ -419,7 +432,12 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
                       )}
                     </div>
                   </div>
-                  {lock?.lock_at && (
+                  {lock && (lock.status === 'provisional' || lock.status === 'confirmed') && (
+                    <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: accent }}>
+                      {lock.status === 'confirmed' ? 'Confirmed' : 'Played'}
+                    </span>
+                  )}
+                  {lock?.lock_at && lock.status !== 'provisional' && lock.status !== 'confirmed' && (
                     <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: accent }}>
                       Lineups lock {LOCK.format(
                         new Date(lock.lock_at).getTime() - Date.now() > 60 * 24 * 3600 * 1000
