@@ -101,7 +101,7 @@ export default function CoachLinksPanel() {
             <div className="flex items-center justify-between gap-3 flex-wrap" style={{ marginBottom: '10px' }}>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: P.blue }}>
-                  {label}{g.round_number != null ? ` · Round ${g.round_number}` : ''}{g.round_number != null ? ` · ${sent} of ${g.clubs.length} sent` : ''}
+                  {label}{g.round_number != null ? ` · Round ${g.round_number}` : ''}{g.round_number != null ? ` · ${sent} of ${g.clubs.length} submitted` : ''}
                 </p>
                 {g.closes_at && (
                   <p className="text-xs" style={{ color: P.dim, marginTop: '4px' }}>Coaches close {WHEN.format(new Date(g.closes_at))}</p>
@@ -126,7 +126,7 @@ export default function CoachLinksPanel() {
                     marginLeft: '10px', fontSize: '11px', fontWeight: 400,
                     color: c.submitted_at ? P.green : P.dim,
                   }}>
-                    {c.submitted_at ? `Sent ${WHEN.format(new Date(c.submitted_at))}` : 'Not sent yet'}
+                    {c.submitted_at ? `Submitted ${WHEN.format(new Date(c.submitted_at))}` : 'Not submitted'}
                   </span>
                 </span>
                 <span className="flex items-center gap-2">
