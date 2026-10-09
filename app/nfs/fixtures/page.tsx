@@ -433,12 +433,12 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
                     </div>
                   </div>
                   {lock && (lock.status === 'provisional' || lock.status === 'confirmed') && (
-                    <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: accent }}>
+                    <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: lock.status === 'confirmed' ? '#4ADE80' : accent }}>
                       {lock.status === 'confirmed' ? 'Confirmed' : 'Played'}
                     </span>
                   )}
                   {lock?.lock_at && lock.status !== 'provisional' && lock.status !== 'confirmed' && (
-                    <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: accent }}>
+                    <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: new Date(lock.lock_at).getTime() < Date.now() ? '#B4BEC9' : accent }}>
                       {new Date(lock.lock_at).getTime() < Date.now() ? 'Locked' : <>Lineups lock {LOCK.format(
                         new Date(lock.lock_at).getTime() - Date.now() > 60 * 24 * 3600 * 1000
                           ? nzToDate(new Date(new Date(dates[0] + 'T12:00:00Z').getTime() - 86400000).toISOString().slice(0, 10), '23:00')
