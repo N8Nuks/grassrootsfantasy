@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-const POS = ['P', 'C', 'IF', 'OF', 'DP', 'P2']
+const POS = ['P', 'C', 'IF', 'OF', 'DP', 'P2', 'DR']
 
 const norm = (s: string) =>
   s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '')
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
     if (!name) { errors.push(`Line ${idx + 1}: no player name`); return }
     if (!POS.includes(pos)) { errors.push(`Line ${idx + 1} (${name}): position must be P, C, IF, OF, DP or P2`); return }
     let bat_order: number | null = null
-    if (pos === 'P2') {
+    if (pos === 'P2' || pos === 'DR') {
       if (orderRaw) { errors.push(`Line ${idx + 1} (${name}): a relief pitcher has no batting order`); return }
     } else {
       bat_order = orderRaw === 'FL' ? 10 : Number(orderRaw)
