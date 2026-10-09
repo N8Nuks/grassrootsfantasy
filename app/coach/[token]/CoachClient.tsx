@@ -42,7 +42,8 @@ export default function CoachClient(props: Props) {
   const accent = grade === 'mens' ? GOLD : SILVER
 
   const [batters, setBatters] = useState<Entry[]>(props.batters)
-  const [relievers, setRelievers] = useState<Entry[]>(props.relievers)
+  const [relievers, setRelievers] = useState<Entry[]>(props.relievers.filter(e => e.pos !== 'DR'))
+  const [runners, setRunners] = useState<Entry[]>(props.relievers.filter(e => e.pos === 'DR'))
   const [squad, setSquad] = useState<Entry[]>(props.squad)
   const [out, setOut] = useState<Set<string>>(new Set(props.unavailable))
   const [swap, setSwap] = useState<{ kind: 'b' | 'r'; i: number } | null>(null)
@@ -65,6 +66,7 @@ export default function CoachClient(props: Props) {
   const currentSig = JSON.stringify([
     batters.map(b => [b.key, b.pos]),
     relievers.map(r => r.key),
+    runners.map(r => r.key),
     [...out].sort(),
   ])
   const showConfirm = confirmedSig !== null && confirmedSig === currentSig
@@ -116,6 +118,17 @@ export default function CoachClient(props: Props) {
     setRelievers(relievers.filter((_, k) => k !== i))
     setSquad([...squad, { ...old, pos: '' }])
   }
+  function addRunner(e: Entry) {
+    if (runners.length >= 2) { setMsg({ ok: false, text: 'You can name up to two designated runners.' }); return }
+    setRunners([...runners, { ...e, pos: 'DR' }])
+    setSquad(squad.filter(s => s.key !== e.key))
+    setMsg(null)
+  }
+  function removeRunner(i: number) {
+    const old = runners[i]
+    setRunners(runners.filter((_, k) => k !== i))
+    setSquad([...squad, { ...old, pos: '' }])
+  }
   function useInSlot(e: Entry) {
     if (!swap) return
     const idx = swap.i
@@ -133,14 +146,15 @@ export default function CoachClient(props: Props) {
   }
   function reset() {
     setBatters(props.batters)
-    setRelievers(props.relievers)
+    setRelievers(props.relievers.filter(e => e.pos !== 'DR'))
+    setRunners(props.relievers.filter(e => e.pos === 'DR'))
     setSquad(props.squad)
     setOut(new Set(props.unavailable))
     setSwap(null)
     setMsg(null)
   }
 
-  const outNames = [...batters, ...relievers, ...squad]
+  const outNames = [...batters, ...relievers, ...runners, ...squad]
     .filter(e => e.player_id && out.has(e.player_id)).map(e => e.name)
 
   /* Plain-text copy of the team as it stands on screen, for the coach to keep */
@@ -155,6 +169,7 @@ export default function CoachClient(props: Props) {
       lines.push('')
       lines.push('Relief: ' + relievers.map(e => e.name).join(', '))
     }
+    if (runners.length) lines.push('DR: ' + runners.map(e => e.name).join(', '))
     if (outNames.length) lines.push('Unavailable: ' + outNames.join(', '))
     return lines.join('\n')
   }
@@ -189,7 +204,7 @@ export default function CoachClient(props: Props) {
 
   async function submit() {
     setMsg(null)
-    const blocked = [...batters, ...relievers].find(e => isOut(e))
+    const blocked = [...batters, ...relievers, ...runners].find(e => isOut(e))
     if (blocked) { setMsg({ ok: false, text: `${blocked.name} is marked unavailable. Swap them out first.` }); return }
     if (batters.length < 9) { setMsg({ ok: false, text: 'Name at least nine batters.' }); return }
 
@@ -200,8 +215,11 @@ export default function CoachClient(props: Props) {
       ...relievers.map(e => ({
         player_id: e.player_id, player_name: e.player_id ? null : e.name, bat_order: null, pos: 'P2',
       })),
+      ...runners.map(e => ({
+        player_id: e.player_id, player_name: e.player_id ? null : e.name, bat_order: null, pos: 'DR',
+      })),
     ]
-    const inLineup = new Set([...batters, ...relievers].map(e => e.player_id).filter(Boolean) as string[])
+    const inLineup = new Set([...batters, ...relievers, ...runners].map(e => e.player_id).filter(Boolean) as string[])
     const unavailable = [...out].filter(id => !inLineup.has(id)).map(player_id => ({ player_id }))
     const sentSig = currentSig
 
@@ -262,6 +280,7 @@ export default function CoachClient(props: Props) {
               <>
                 <button type="button" onClick={() => addBatter(e)} style={btn}>Add to batting order</button>
                 <button type="button" onClick={() => addReliever(e)} style={btn}>Add as relief pitcher</button>
+                <button type="button" onClick={() => addRunner(e)} style={btn}>Add as DR</button>
               </>
             )}
             {e.player_id && (
@@ -306,6 +325,9 @@ export default function CoachClient(props: Props) {
               {relievers.length > 0 && (
                 <p className="text-xs text-white/70" style={{ marginTop: '8px' }}>Relief: {relievers.map(e => e.name).join(', ')}</p>
               )}
+              {runners.length > 0 && (
+                <p className="text-xs text-white/70" style={{ marginTop: '4px' }}>DR: {runners.map(e => e.name).join(', ')}</p>
+              )}
               {outNames.length > 0 && (
                 <p className="text-xs" style={{ marginTop: '4px', color: '#F09595' }}>Unavailable: {outNames.join(', ')}</p>
               )}
@@ -337,6 +359,7 @@ export default function CoachClient(props: Props) {
 
         <section style={{ padding: '4px 18px' }}>
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45" style={{ padding: '10px 0 4px' }}>Batting order</p>
+          <p className="text-[10px] text-white/40" style={{ paddingBottom: '6px' }}>FL = Flex, the 10th batting spot. Optional: only use it if you play a DP.</p>
           {batters.map((e, i) => {
             const flagged = isOut(e)
             return (
@@ -394,6 +417,24 @@ export default function CoachClient(props: Props) {
                     <button type="button" onClick={() => removeReliever(i)} style={btn}>Remove</button>
                   </>
                 )}
+              </div>
+            )
+          })}
+        </section>
+
+        <section style={{ padding: '4px 18px' }}>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45" style={{ padding: '14px 0 4px' }}>Designated runners (optional, up to 2)</p>
+          {runners.length === 0 && <p className="text-[11px] text-white/40" style={{ padding: '6px 0' }}>None named. Add one from the squad list below.</p>}
+          {runners.map((e, i) => {
+            const flagged = isOut(e)
+            return (
+              <div key={e.key} className="flex items-center gap-3" style={{ padding: '10px 0', borderBottom: '1px solid #ffffff10' }}>
+                <span className="w-6 shrink-0 text-xs font-black text-white/50">DR</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm text-white/90 truncate" style={{ textDecoration: flagged ? 'line-through' : 'none' }}>{e.name}</span>
+                  {flagged ? <span className="block text-[10px]" style={{ color: '#F09595' }}>Unavailable. Remove them</span> : tag(e)}
+                </span>
+                {editable && <button type="button" onClick={() => removeRunner(i)} style={btn}>Remove</button>}
               </div>
             )
           })}

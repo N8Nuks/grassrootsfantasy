@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getCoachRound } from '@/lib/coach'
 
-const POS = ['P', 'C', 'IF', 'OF', 'DP', 'P2']
+const POS = ['P', 'C', 'IF', 'OF', 'DP', 'P2', 'DR']
 
 type LineupIn = { player_id: string | null; player_name?: string | null; bat_order: number | null; pos: string }
 type UnavailIn = { player_id: string; reason?: string | null }
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
 
   const lineup = Array.isArray(body.lineup) ? body.lineup : []
   const unavailable = Array.isArray(body.unavailable) ? body.unavailable : []
-  if (lineup.length > 14) return bad('That is too many players in the lineup.')
+  if (lineup.length > 16) return bad('That is too many players in the lineup.')
 
   const seen = new Set<string>()
   const orders = new Set<number>()
@@ -72,8 +72,8 @@ export async function POST(req: Request) {
     if (seen.has(key)) return bad('A player is in the lineup twice.')
     seen.add(key)
     if (!POS.includes(l.pos)) return bad('One of the positions isn\'t valid.')
-    if (l.pos === 'P2') {
-      if (l.bat_order != null) return bad('A relief pitcher can\'t have a batting order.')
+    if (l.pos === 'P2' || l.pos === 'DR') {
+      if (l.bat_order != null) return bad('Relief pitchers and designated runners can\'t have a batting order.')
     } else {
       if (!Number.isInteger(l.bat_order) || (l.bat_order as number) < 1 || (l.bat_order as number) > 10) {
         return bad('Every batter needs an order from 1 to 10.')
