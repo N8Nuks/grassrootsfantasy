@@ -13,7 +13,7 @@ const P = {
   dim: '#F2EFFB80',
 }
 
-type ClubRow = { club_id: string; club: string; token: string; submitted_at: string | null }
+type ClubRow = { club_id: string; club: string; token: string; submitted_at: string | null; bye: boolean }
 type GradeBlock = { grade: 'mens' | 'womens'; round_number: number | null; closes_at: string | null; clubs: ClubRow[] }
 
 const WHEN = new Intl.DateTimeFormat('en-NZ', {
@@ -95,13 +95,14 @@ export default function CoachLinksPanel() {
 
       {grades?.map(g => {
         const sent = g.clubs.filter(c => c.submitted_at).length
+        const expected = g.clubs.filter(c => !c.bye).length
         const label = g.grade === 'mens' ? "Men's" : "Women's"
         return (
           <div key={g.grade} className="rounded-xl" style={{ marginTop: '14px', padding: '16px 20px', background: P.ink, border: `1px solid ${P.purple}30` }}>
             <div className="flex items-center justify-between gap-3 flex-wrap" style={{ marginBottom: '10px' }}>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: P.blue }}>
-                  {label}{g.round_number != null ? ` · Round ${g.round_number}` : ''}{g.round_number != null ? ` · ${sent} of ${g.clubs.length} submitted` : ''}
+                  {label}{g.round_number != null ? ` · Round ${g.round_number}` : ''}{g.round_number != null ? ` · ${sent} of ${expected} submitted` : ''}
                 </p>
                 {g.closes_at && (
                   <p className="text-xs" style={{ color: P.dim, marginTop: '4px' }}>Coaches close {WHEN.format(new Date(g.closes_at))}</p>
@@ -124,9 +125,9 @@ export default function CoachLinksPanel() {
                   {c.club}
                   <span style={{
                     marginLeft: '10px', fontSize: '11px', fontWeight: 400,
-                    color: c.submitted_at ? P.green : P.dim,
+                    color: c.submitted_at ? P.green : c.bye ? P.dim : P.dim,
                   }}>
-                    {c.submitted_at ? `Submitted ${WHEN.format(new Date(c.submitted_at))}` : 'Not submitted'}
+                    {c.submitted_at ? `Submitted ${WHEN.format(new Date(c.submitted_at))}` : c.bye ? 'Bye round' : 'Not submitted'}
                   </span>
                 </span>
                 <span className="flex items-center gap-2">

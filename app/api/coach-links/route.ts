@@ -26,21 +26,32 @@ export async function GET() {
   const grades = []
   for (const grade of ['mens', 'womens'] as const) {
     const cr = await getCoachRound(admin, grade)
-    const [{ data: links }, { data: subs }] = await Promise.all([
+    const [{ data: links }, { data: subs }, { data: fx }] = await Promise.all([
       admin.from('coach_links').select('club_id, token').eq('grade', grade),
       cr
         ? admin.from('coach_submissions').select('club_id, submitted_at')
             .eq('grade', grade).eq('round_number', cr.round_number)
         : Promise.resolve({ data: [] as { club_id: string; submitted_at: string }[] }),
+      cr
+        ? admin.from('fixtures').select('club_a, club_b')
+            .eq('grade', grade).eq('round_number', cr.round_number)
+        : Promise.resolve({ data: [] as { club_a: string; club_b: string }[] }),
     ])
     const submitted = new Map((subs ?? []).map(s => [s.club_id as string, s.submitted_at as string]))
+    // A club with no fixture in the coach round is on a bye — no team to submit.
+    const playing = new Set((fx ?? []).flatMap(f => [f.club_a, f.club_b]))
+    const hasFixtures = (fx ?? []).length > 0
     const clubs = (links ?? [])
-      .map(l => ({
-        club_id: l.club_id as string,
-        club: clubName.get(l.club_id as string) ?? 'Unknown club',
-        token: l.token as string,
-        submitted_at: submitted.get(l.club_id as string) ?? null,
-      }))
+      .map(l => {
+        const name = clubName.get(l.club_id as string) ?? 'Unknown club'
+        return {
+          club_id: l.club_id as string,
+          club: name,
+          token: l.token as string,
+          submitted_at: submitted.get(l.club_id as string) ?? null,
+          bye: hasFixtures && !playing.has(name),
+        }
+      })
       .sort((a, b) => a.club.localeCompare(b.club))
     grades.push({
       grade,
