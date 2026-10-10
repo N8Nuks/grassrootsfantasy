@@ -90,11 +90,36 @@ export async function POST(req: Request) {
       if (flagErr) console.error('Coach availability copy failed:', flagErr.message)
     }
 
+    /* Automatic bye step: a club with no fixture in the new round gets its
+       whole squad marked unavailable, same as pasting "club:X" into the
+       availability tool by hand. Only runs once fixtures for this round
+       actually exist, so missing fixture data is never mistaken for a bye. */
+    let byeMarked = 0
+    const { data: fx } = await admin.from('fixtures')
+      .select('club_a, club_b').eq('grade', grade).eq('round_number', nextNumber)
+    if (fx?.length) {
+      const playing = new Set(fx.flatMap(f => [f.club_a, f.club_b]))
+      const { data: clubs } = await admin.from('clubs').select('id, name')
+      const byeClubIds = (clubs ?? []).filter(c => !playing.has(c.name)).map(c => c.id)
+      if (byeClubIds.length) {
+        const { data: byePlayers } = await admin.from('players')
+          .select('id').eq('grade', grade).in('club_id', byeClubIds)
+        if (byePlayers?.length) {
+          const { error: byeErr } = await admin.from('player_availability').upsert(
+            byePlayers.map(p => ({ player_id: p.id, round_id: newRound.id, unavailable: true, reason: 'Bye' })),
+            { onConflict: 'player_id,round_id' })
+          if (byeErr) console.error('Bye availability failed:', byeErr.message)
+          else byeMarked = byePlayers.length
+        }
+      }
+    }
+
     return NextResponse.json({
       ok: true, round_number: nextNumber, status: 'open',
       auto_dealt: auto.dealt, auto_cards: auto.cards,
       lineups_carried: cf?.lineups_created ?? 0,
       slots_carried: cf?.slots_copied ?? 0,
+      bye_marked: byeMarked,
     })
   }
 
