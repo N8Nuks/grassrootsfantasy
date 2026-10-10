@@ -84,7 +84,7 @@ export default function Register() {
     })
     const nameData = await nameCheck.json().catch(() => null)
     if (nameData && nameData.available === false) {
-      setError(`"${wanted}" is already taken. Choose a different team name.`)
+      setError(nameData.error ?? `"${wanted}" is already taken. Choose a different team name.`)
       setBusy(false)
       return
     }
@@ -103,21 +103,16 @@ export default function Register() {
       return
     }
 
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: auth.user.id,
-      team_name: teamName.trim(),
-      club_id: club.id,
-      full_name: fullName.trim() || null,
-      phone: phone.trim() || null,
+    /* The profile is written by the server, which re-checks the team name
+       against the blocklist. That way the check can't be skipped by calling
+       Supabase directly from the browser. */
+    const profRes = await fetch('/api/register-profile', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ team_name: wanted, club_id: club.id, full_name: fullName.trim() || null, phone: phone.trim() || null }),
     })
-    if (profileError) {
-      // The unique constraint fires if someone claimed the name in the seconds
-      // between the check above and this insert.
-      const clash = profileError.code === '23505'
-        || /duplicate key|team_name/i.test(profileError.message)
-      setError(clash
-        ? `"${wanted}" is already taken. Choose a different team name and press Register again.`
-        : 'Something went wrong setting up your team. Try again, or email info@grassrootsfantasy.co.nz.')
+    const profData = await profRes.json().catch(() => null)
+    if (!profRes.ok) {
+      setError(profData?.error ?? 'Something went wrong setting up your team. Try again, or email info@grassrootsfantasy.co.nz.')
       setBusy(false)
       return
     }
