@@ -16,7 +16,6 @@ export const isLocked = (path: string) => matches(LOCKED, path)
 /* Arcade games that need scored rounds before they make sense.
    Perfect Card opens once the first round is scored. */
 export const CLOSED_GAMES = [
-  '/games/lineup',
 ]
 
 export const isClosedGame = (path: string) =>
