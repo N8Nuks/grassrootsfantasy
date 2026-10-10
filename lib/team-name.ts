@@ -1,22 +1,23 @@
-/* Team-name filter. Two lists:
-   - BLOCKED_WORDS: only block as a whole word, because they sit inside
-     ordinary words ("cunt" in "country", "ass" in "class"). Hyphens, spaces
-     and digits count as word breaks, so "Cunt-ry" is caught and "Country" is not.
-   - BLOCKED_ANYWHERE: slurs with no innocent use; block if they appear at all,
-     even run together with other letters.
-   Leetspeak is folded first (0→o, 1→i, 3→e, 4→a, 5→s, @→a, $→s, !→i). */
+/* Team-name filter.
+   - WORD_ONLY: block as a whole word, because the word also sits inside
+     ordinary words ("ass" in "class", "cock" in "cockpit", "rape" in "grape",
+     "coon" in "raccoon", "dick" in "Dickens"). Hyphens, spaces and digits
+     count as word breaks.
+   - ANYWHERE: no safe word contains these, so they're blocked even glued to
+     other letters or run together with no separator at all ("yofuck").
+   Leetspeak is folded first (0->o, 1->i, 3->e, 4->a, 5->s, @->a, $->s, !->i). */
 
-const BLOCKED_WORDS = [
-  'cunt', 'cunts', 'fuck', 'fucks', 'fucked', 'fucker', 'fuckers', 'fucking',
-  'shit', 'shits', 'shitty', 'bitch', 'bitches', 'cock', 'cocks', 'dick', 'dicks',
-  'pussy', 'pussies', 'twat', 'twats', 'wanker', 'wankers', 'arse', 'arsehole',
-  'ass', 'asshole', 'assholes', 'slut', 'sluts', 'whore', 'whores', 'rape', 'rapist',
-  'nazi', 'nazis', 'hitler', 'paedo', 'pedo', 'molester',
+const WORD_ONLY = [
+  'ass', 'asshole', 'assholes', 'cock', 'cocks', 'dick', 'dicks', 'twat', 'twats',
+  'rape', 'rapist', 'fag', 'coon', 'retard', 'spastic', 'arse', 'arsehole',
 ]
 
-const BLOCKED_ANYWHERE = [
-  'nigger', 'nigga', 'faggot', 'fag', 'retard', 'spastic', 'kike', 'chink',
-  'gook', 'wetback', 'tranny', 'coon',
+const ANYWHERE = [
+  'fuck', 'fucks', 'fucked', 'fucker', 'fuckers', 'fucking',
+  'shit', 'shits', 'shitty', 'cunt', 'cunts', 'bitch', 'bitches',
+  'pussy', 'pussies', 'wanker', 'wankers', 'slut', 'sluts', 'whore', 'whores',
+  'nazi', 'nazis', 'hitler', 'paedo', 'pedo', 'molester', 'faggot',
+  'nigger', 'nigga', 'kike', 'chink', 'gook', 'wetback', 'tranny',
 ]
 
 const LEET: Record<string, string> = { '0': 'o', '1': 'i', '3': 'e', '4': 'a', '5': 's', '7': 't', '@': 'a', '$': 's', '!': 'i' }
@@ -34,9 +35,9 @@ export function teamNameProblem(raw: string): string | null {
 
   const folded = fold(name)
   const tokens = folded.split(/[^a-z]+/).filter(Boolean)
-  const joined = tokens.join('')
+  const compact = folded.replace(/[^a-z]/g, '')
 
-  if (tokens.some(t => BLOCKED_WORDS.includes(t))) return 'That name isn\'t allowed.'
-  if (BLOCKED_ANYWHERE.some(w => joined.includes(w))) return 'That name isn\'t allowed.'
+  if (tokens.some(t => WORD_ONLY.includes(t))) return 'That name isn\'t allowed.'
+  if (ANYWHERE.some(w => compact.includes(w))) return 'That name isn\'t allowed.'
   return null
 }
