@@ -28,7 +28,7 @@ function fold(s: string) {
 
 /** Returns null if the name is fine, or a short reason if it isn't. */
 export function teamNameProblem(raw: string): string | null {
-  const name = raw.trim()
+  const name = raw.trim().replace(/[\u2018\u2019\u02bc]/g, "'")
   if (name.length < 3) return 'Team names need at least 3 characters.'
   if (name.length > 30) return 'Team names can be up to 30 characters.'
   if (!/^[A-Za-z0-9 '\-.&!]+$/.test(name)) return 'Use letters, numbers, spaces, apostrophes, hyphens, dots, & or !'
