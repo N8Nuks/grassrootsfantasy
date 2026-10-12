@@ -128,7 +128,7 @@ export default function ResetPassword() {
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="w-full rounded-lg px-4 py-3 text-sm font-black uppercase tracking-wider text-white transition-opacity disabled:opacity-50"
+                className="w-full rounded-lg px-4 py-3 text-sm font-black uppercase tracking-wider text-white transition-opacity active:opacity-70 disabled:opacity-50"
                 style={{ background: COBALT }}
               >
                 {loading ? 'Saving…' : 'Save new password'}
