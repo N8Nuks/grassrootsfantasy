@@ -14,6 +14,7 @@ const GREEN = '#3FBF63'
 export default function ResetPassword() {
   const router = useRouter()
   const [ready, setReady] = useState(false)
+  const [linkError, setLinkError] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
@@ -22,8 +23,20 @@ export default function ResetPassword() {
 
   useEffect(() => {
     const supabase = createClient()
-    // The recovery link signs the user in with a temporary session.
-    // Wait for the session to exist before showing the form.
+
+    /* The reset email carries a token_hash. Verifying it here signs the user
+       in from any browser or device — no tie to where the link was requested. */
+    const params = new URLSearchParams(window.location.search)
+    const tokenHash = params.get('token_hash')
+    if (tokenHash) {
+      supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' }).then(({ error: err }) => {
+        if (err) setLinkError('This reset link has expired or was already used.')
+        else setReady(true)
+      })
+      return
+    }
+
+    // Older-style links sign the user in on arrival; wait for that session.
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) setReady(true)
     })
@@ -70,10 +83,20 @@ export default function ResetPassword() {
                 Taking you to your team…
               </p>
             </div>
+          ) : linkError ? (
+            <div className="rounded-2xl px-8 py-8 text-center" style={{ background: '#121215', border: '1px solid #FF6B6B40' }}>
+              <p className="text-sm font-bold leading-relaxed mb-2" style={{ color: '#FF6B6B' }}>
+                {linkError}
+              </p>
+              <p className="text-xs text-white/40 leading-relaxed">
+                Reset links work once and expire after an hour.{' '}
+                <Link href="/forgot-password" className="underline hover:text-white transition-colors">Request a new one</Link>.
+              </p>
+            </div>
           ) : !ready ? (
             <div className="rounded-2xl px-8 py-8 text-center" style={{ background: '#121215', border: `1px solid ${COBALT}30` }}>
               <p className="text-sm text-white/70 leading-relaxed mb-2">
-                Waiting for your reset link…
+                Checking your reset link…
               </p>
               <p className="text-xs text-white/40 leading-relaxed">
                 This page only works when opened from the link in your reset email. If you got here another way,{' '}
