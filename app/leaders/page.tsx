@@ -3,11 +3,11 @@ import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/server'
 import { theme, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
-import { splitName } from '@/lib/names'
+import LeadersClient, { type LeaderCat, type LeaderPlayer } from './LeadersClient'
 
 /* `empty` is what a board says once the season is under way but nobody is on
    it yet — a rare stat (a women's home run) reads as a race, not a blank. */
-const CATS: { key: string; label: string; format?: 'ba'; empty: [string, string] }[] = [
+const CATS: LeaderCat[] = [
   { key: 'season_points', label: 'Fantasy Points', empty: ['No points on the board yet.', 'The first scores land when the round is scored.'] },
   { key: 'season_hr', label: 'Home Runs', empty: ['The first home run of the season is still out there.', 'Whoever hits it tops this board.'] },
   { key: 'season_rbi', label: 'RBI', empty: ['The first RBI of the season is still out there.', 'Whoever drives in a run tops this board.'] },
@@ -24,32 +24,75 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   let siteTheme = 'grade'
+  let ownedPlayerIds: string[] = []
   if (user) {
-    const { data: prof } = await supabase.from('profiles').select('site_theme').eq('id', user.id).single()
+    const [{ data: prof }, { data: myCards }] = await Promise.all([
+      supabase.from('profiles').select('site_theme').eq('id', user.id).single(),
+      supabase.from('cards').select('player_id').eq('owner_id', user.id),
+    ])
     siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
+    ownedPlayerIds = (myCards ?? []).map(c => c.player_id)
   }
   const T = theme(grade, siteTheme)
 
-  const [{ data: players }, { count: scoredRounds }] = await Promise.all([
+  const [{ data: players }, { count: scoredRounds }, { data: styleRow }, { data: scoredRound }] = await Promise.all([
     supabase
       .from('players')
-      .select('id, full_name, tier, stats, photo_url, clubs(name)')
+      .select('id, full_name, tier, positions, badges, speed_star, stats, photo_url, playing_number, reveal_pos, clubs(name)')
       .eq('grade', grade).eq('active', true).or('is_under18.eq.false,has_consent.eq.true'),
     // The season has started for this grade once any round is scored
     supabase
       .from('rounds')
       .select('id', { count: 'exact', head: true })
       .eq('grade', grade).in('status', ['provisional', 'confirmed']),
+    supabase.from('site_settings').select('value').eq('key', 'card_style').maybeSingle(),
+    // Latest scored round, for the milestone ribbons on an opened card
+    supabase.from('rounds')
+      .select('round_number').eq('grade', grade)
+      .in('status', ['provisional', 'confirmed'])
+      .order('round_number', { ascending: false }).limit(1).maybeSingle(),
   ])
   const seasonStarted = (scoredRounds ?? 0) > 0
+  const cardStyle = (styleRow?.value ?? 'premium') as 'standard' | 'premium'
 
-  type Row = { id: string; full_name: string; tier: string; stats: Record<string, number> | null; photo_url: string | null; clubs: { name: string } | null }
-  const all = ((players ?? []) as unknown as Row[]).map(p => ({ ...p, stats: p.stats ?? {} }))
+  type Row = {
+    id: string; full_name: string; tier: string; positions: string[] | null; badges: string[] | null
+    speed_star: boolean | null; stats: Record<string, number> | null; photo_url: string | null
+    playing_number: number | null; reveal_pos: string | null; clubs: { name: string } | null
+  }
+  const all: LeaderPlayer[] = ((players ?? []) as unknown as Row[]).map(p => ({
+    id: p.id,
+    name: p.full_name,
+    tier: p.tier,
+    positions: p.positions ?? [],
+    club: p.clubs?.name ?? '',
+    playingNumber: p.playing_number,
+    speedStar: !!p.speed_star,
+    badges: p.badges ?? [],
+    stats: p.stats ?? {},
+    photoUrl: p.photo_url,
+    revealPos: p.reveal_pos ?? null,
+  }))
 
-  const leadersFor = (key: string) =>
-    all.filter(p => (p.stats[key] ?? 0) > 0)
-      .sort((a, b) => (b.stats[key] ?? 0) - (a.stats[key] ?? 0))
-      .slice(0, 5)
+  /* Milestones and new longevity badges from the latest scored round, by player —
+     same ribbon the Athlete Hall card wears. */
+  const milestones: Record<string, { stat: string; milestone: number }[]> = {}
+  if (scoredRound) {
+    const ids = new Set(all.map(p => p.id))
+    const { data: msRows } = await supabase.from('milestones')
+      .select('player_id, stat, milestone')
+      .eq('grade', grade).eq('round_number', scoredRound.round_number)
+      .order('milestone', { ascending: false })
+    for (const m of msRows ?? []) {
+      if (!ids.has(m.player_id)) continue
+      if (!milestones[m.player_id]) milestones[m.player_id] = []
+      milestones[m.player_id].push({ stat: m.stat, milestone: Number(m.milestone) })
+    }
+    for (const id of Object.keys(milestones)) {
+      milestones[id].sort((a, b) =>
+        (a.stat === 'longevity' ? 1 : 0) - (b.stat === 'longevity' ? 1 : 0))
+    }
+  }
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
@@ -66,50 +109,16 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
             </div>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {CATS.map(cat => {
-              const rows = leadersFor(cat.key)
-              return (
-                <div key={cat.key} className="rounded-2xl overflow-hidden pinstripe" style={{ background: T.surface, border: '1px solid #ffffff12' }}>
-                  <div style={{ background: T.headerBg, borderBottom: `1px solid ${T.accent}30`, padding: '14px 22px' }}>
-                    <p className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: T.accent }}>{cat.label}</p>
-                  </div>
-                  {rows.map((p, i) => (
-                    <div key={p.id} className="flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff08', padding: '10px 22px' }}>
-                      <span className="w-6 text-sm font-black shrink-0" style={{ color: i === 0 ? '#FFD700' : T.textDim }}>{i + 1}</span>
-                      <div className="w-9 h-9 rounded-full overflow-hidden flex items-end justify-center shrink-0" style={{ background: `${T.accent}18` }}>
-                        {p.photo_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.photo_url} alt={p.full_name} className="h-full w-auto object-contain" />
-                        ) : (
-                          <span className="text-xs font-black" style={{ color: T.textDim }}>{p.full_name[0]}</span>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold truncate" style={{ color: T.text }}>
-                          {splitName(p.full_name).first} <span className="uppercase">{splitName(p.full_name).last}</span>
-                        </p>
-                        <p className="text-[10px] truncate" style={{ color: T.textDim }}>{p.clubs?.name ?? ''}</p>
-                      </div>
-                      <span className="text-base font-black shrink-0" style={{ fontFamily: 'var(--font-heading)', color: i === 0 ? '#FFD700' : T.text }}>
-                        {cat.format === 'ba' ? Number(p.stats[cat.key]).toFixed(3) : p.stats[cat.key]}
-                      </span>
-                    </div>
-                  ))}
-                  {rows.length === 0 && (
-                    seasonStarted ? (
-                      <div className="text-center" style={{ padding: '26px 22px' }}>
-                        <p className="text-sm font-bold" style={{ color: T.text, marginBottom: '6px' }}>{cat.empty[0]}</p>
-                        <p className="text-xs" style={{ color: T.textDim }}>{cat.empty[1]}</p>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-center" style={{ color: T.textDim, padding: '28px' }}>Season not started</p>
-                    )
-                  )}
-                </div>
-              )
-            })}
-          </div>
+          <LeadersClient
+            cats={CATS}
+            players={all}
+            grade={grade}
+            siteTheme={siteTheme}
+            seasonStarted={seasonStarted}
+            ownedPlayerIds={ownedPlayerIds}
+            cardStyle={cardStyle}
+            milestones={milestones}
+          />
         </div>
       </section>
       <Footer />
