@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { theme, type Grade } from '@/lib/clubhouse'
 import PlayerCardFull, { type FullCardPlayer } from '@/components/PlayerCardFull'
-import { type CardMilestone } from '@/components/PlayerCard'
+import { type CardMilestone, silhouetteFor } from '@/components/PlayerCard'
 import { splitName } from '@/lib/names'
 
 export type LeaderCat = { key: string; label: string; format?: 'ba'; empty: [string, string] }
@@ -48,12 +48,8 @@ export default function LeadersClient({ cats, players, grade, siteTheme, seasonS
                 >
                   <span className="w-6 text-sm font-black shrink-0" style={{ color: i === 0 ? '#FFD700' : T.textDim }}>{i + 1}</span>
                   <div className="w-9 h-9 rounded-full overflow-hidden flex items-end justify-center shrink-0" style={{ background: `${T.accent}18` }}>
-                    {p.photoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.photoUrl} alt={p.name} className="h-full w-auto object-contain" />
-                    ) : (
-                      <span className="text-xs font-black" style={{ color: T.textDim }}>{p.name[0]}</span>
-                    )}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.photoUrl ?? silhouetteFor(p.revealPos, grade)} alt={p.name} className="h-full w-auto object-contain" style={p.photoUrl ? undefined : { opacity: 0.6 }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold truncate" style={{ color: T.text }}>
