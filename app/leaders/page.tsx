@@ -165,6 +165,11 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
             <h1 className="text-3xl sm:text-4xl font-black mb-4" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
               {grade === 'mens' ? "Men's" : "Women's"} League Leaders
             </h1>
+            {(roundRow ?? latest)?.status === 'provisional' && (
+              <p className="text-[11px]" style={{ color: T.textDim, marginBottom: '14px' }}>
+                Provisional scores. May change if official stats are corrected. Confirmed scores Tuesday 5pm.
+              </p>
+            )}
             <div className="flex justify-center">
               <GradeSwitch grade={grade}
                 mensHref={href('mens', view, roundRow?.round_number)}
