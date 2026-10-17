@@ -7,7 +7,7 @@ import LeadersClient, { type LeaderCat, type LeaderPlayer } from './LeadersClien
 
 /* `empty` is what a board says once the season is under way but nobody is on
    it yet — a rare stat (a women's home run) reads as a race, not a blank. */
-const CATS: LeaderCat[] = [
+const SEASON_CATS: LeaderCat[] = [
   { key: 'season_points', label: 'Fantasy Points', empty: ['No points on the board yet.', 'The first scores land when the round is scored.'] },
   { key: 'season_hr', label: 'Home Runs', empty: ['The first home run of the season is still out there.', 'Whoever hits it tops this board.'] },
   { key: 'season_rbi', label: 'RBI', empty: ['The first RBI of the season is still out there.', 'Whoever drives in a run tops this board.'] },
@@ -17,7 +17,28 @@ const CATS: LeaderCat[] = [
   { key: 'season_k_pit', label: 'Pitching Strikeouts', empty: ['The first strikeout of the season is still out there.', 'Whoever rings one up tops this board.'] },
 ]
 
-export default async function Leaders({ searchParams }: { searchParams: Promise<{ grade?: string }> }) {
+/* Round boards read that round's stat line (player_stats.raw) and points
+   (player_scores). Hits stands in for batting average — one round is too few
+   at-bats for an average to mean anything — and Wins is left off because every
+   winning pitcher sits on 1. */
+function roundCats(n: number): LeaderCat[] {
+  const empty: [string, string] = [`Nothing on this board for Round ${n}.`, 'It fills when the round is scored.']
+  return [
+    { key: 'r_points', label: 'Fantasy Points', empty },
+    { key: 'r_hr', label: 'Home Runs', empty },
+    { key: 'r_rbi', label: 'RBI', empty },
+    { key: 'r_hits', label: 'Hits', empty },
+    { key: 'r_sb', label: 'Stolen Bases', empty },
+    { key: 'r_runs', label: 'Runs Scored', empty },
+    { key: 'r_k_pit', label: 'Pitching Strikeouts', empty },
+  ]
+}
+
+type View = 'season' | 'round'
+const href = (grade: Grade, view: View, round?: number) =>
+  `/leaders?grade=${grade}${view === 'round' ? `&view=round${round ? `&round=${round}` : ''}` : ''}`
+
+export default async function Leaders({ searchParams }: { searchParams: Promise<{ grade?: string; view?: string; round?: string }> }) {
   const params = await searchParams
   const grade: Grade = params.grade === 'womens' ? 'womens' : 'mens'
 
@@ -35,24 +56,27 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
   }
   const T = theme(grade, siteTheme)
 
-  const [{ data: players }, { count: scoredRounds }, { data: styleRow }, { data: scoredRound }] = await Promise.all([
+  /* Every scored round for the grade, oldest first — the round picker, and
+     the season has started once there is at least one. */
+  const { data: roundRows } = await supabase.from('rounds')
+    .select('id, round_number, status').eq('grade', grade)
+    .in('status', ['provisional', 'confirmed'])
+    .order('round_number', { ascending: true })
+  const rounds = (roundRows ?? []) as { id: string; round_number: number; status: string }[]
+  const latest = rounds.length ? rounds[rounds.length - 1] : null
+  const seasonStarted = rounds.length > 0
+
+  const view: View = params.view === 'round' && latest ? 'round' : 'season'
+  const wanted = Number(params.round)
+  const roundRow = view === 'round' ? (rounds.find(r => r.round_number === wanted) ?? latest) : null
+
+  const [{ data: players }, { data: styleRow }] = await Promise.all([
     supabase
       .from('players')
       .select('id, full_name, tier, positions, badges, speed_star, stats, photo_url, playing_number, reveal_pos, clubs(name)')
       .eq('grade', grade).eq('active', true).or('is_under18.eq.false,has_consent.eq.true'),
-    // The season has started for this grade once any round is scored
-    supabase
-      .from('rounds')
-      .select('id', { count: 'exact', head: true })
-      .eq('grade', grade).in('status', ['provisional', 'confirmed']),
     supabase.from('site_settings').select('value').eq('key', 'card_style').maybeSingle(),
-    // Latest scored round, for the milestone ribbons on an opened card
-    supabase.from('rounds')
-      .select('round_number').eq('grade', grade)
-      .in('status', ['provisional', 'confirmed'])
-      .order('round_number', { ascending: false }).limit(1).maybeSingle(),
   ])
-  const seasonStarted = (scoredRounds ?? 0) > 0
   const cardStyle = (styleRow?.value ?? 'premium') as 'standard' | 'premium'
 
   type Row = {
@@ -74,14 +98,40 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
     revealPos: p.reveal_pos ?? null,
   }))
 
+  /* Round view: merge the round's line and points into each player's stats
+     under r_* keys. Season keys are untouched, so an opened card still reads
+     its season figures. */
+  if (roundRow) {
+    const [{ data: lines }, { data: scores }] = await Promise.all([
+      supabase.from('player_stats').select('player_id, raw').eq('round_id', roundRow.id),
+      supabase.from('player_scores').select('player_id, points').eq('round_id', roundRow.id),
+    ])
+    const n = (v: unknown) => Number(v ?? 0) || 0
+    const byId = new Map<string, Record<string, number>>()
+    for (const l of lines ?? []) {
+      const r = (l.raw ?? {}) as Record<string, unknown>
+      byId.set(l.player_id, {
+        r_hr: n(r.hr), r_rbi: n(r.rbi), r_sb: n(r.sb), r_runs: n(r.runs), r_k_pit: n(r.k_pit),
+        r_hits: n(r.singles) + n(r.doubles) + n(r.triples) + n(r.hr),
+      })
+    }
+    for (const s of scores ?? []) {
+      byId.set(s.player_id, { ...(byId.get(s.player_id) ?? {}), r_points: n(s.points) })
+    }
+    for (const p of all) {
+      const r = byId.get(p.id)
+      if (r) p.stats = { ...p.stats, ...r }
+    }
+  }
+
   /* Milestones and new longevity badges from the latest scored round, by player —
      same ribbon the Athlete Hall card wears. */
   const milestones: Record<string, { stat: string; milestone: number }[]> = {}
-  if (scoredRound) {
+  if (latest) {
     const ids = new Set(all.map(p => p.id))
     const { data: msRows } = await supabase.from('milestones')
       .select('player_id, stat, milestone')
-      .eq('grade', grade).eq('round_number', scoredRound.round_number)
+      .eq('grade', grade).eq('round_number', latest.round_number)
       .order('milestone', { ascending: false })
     for (const m of msRows ?? []) {
       if (!ids.has(m.player_id)) continue
@@ -94,23 +144,54 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
     }
   }
 
+  const pill = (on: boolean) => ({
+    fontSize: '10px', fontWeight: 900, letterSpacing: '0.18em', textTransform: 'uppercase' as const,
+    borderRadius: '999px', padding: '8px 16px', textDecoration: 'none',
+    color: on ? T.field : T.accent, background: on ? T.accent : 'transparent',
+    border: `1px solid ${T.accent}${on ? '' : '70'}`,
+  })
+
+  const eyebrow = roundRow
+    ? `Round ${roundRow.round_number} · ${roundRow.status === 'confirmed' ? 'Confirmed' : 'Provisional'}`
+    : '2026/27 Season'
+
   return (
     <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
       <Nav />
       <section className="flex-1 px-6" style={{ paddingTop: '80px', paddingBottom: '90px' }}>
         <div style={{ maxWidth: '980px', marginLeft: 'auto', marginRight: 'auto' }}>
           <div className="text-center" style={{ marginBottom: '48px' }}>
-            <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: T.accent }}>2026/27 Season</p>
+            <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: T.accent }}>{eyebrow}</p>
             <h1 className="text-3xl sm:text-4xl font-black mb-4" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
               {grade === 'mens' ? "Men's" : "Women's"} League Leaders
             </h1>
             <div className="flex justify-center">
-              <GradeSwitch grade={grade} mensHref="/leaders?grade=mens" womensHref="/leaders?grade=womens" palette={siteTheme !== 'grade' ? T : undefined} />
+              <GradeSwitch grade={grade}
+                mensHref={href('mens', view, roundRow?.round_number)}
+                womensHref={href('womens', view, roundRow?.round_number)}
+                palette={siteTheme !== 'grade' ? T : undefined} />
             </div>
+
+            {seasonStarted && (
+              <div className="flex flex-wrap items-center justify-center gap-2" style={{ marginTop: '18px' }}>
+                <a href={href(grade, 'season')} style={pill(view === 'season')}>Season</a>
+                <a href={href(grade, 'round')} style={pill(view === 'round')}>Round</a>
+                {view === 'round' && (
+                  <span className="flex flex-wrap items-center justify-center gap-2" style={{ marginLeft: '8px' }}>
+                    {rounds.map(r => (
+                      <a key={r.id} href={href(grade, 'round', r.round_number)}
+                        style={{ ...pill(r.round_number === roundRow?.round_number), padding: '8px 12px' }}>
+                        R{r.round_number}
+                      </a>
+                    ))}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           <LeadersClient
-            cats={CATS}
+            cats={roundRow ? roundCats(roundRow.round_number) : SEASON_CATS}
             players={all}
             grade={grade}
             siteTheme={siteTheme}
