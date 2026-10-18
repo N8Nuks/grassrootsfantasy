@@ -248,6 +248,41 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
           </div>
                     {/* The all-time record, sitting above the week's champion */}
           {view === 'weekly' && hi && (
+            <div className="relative overflow-hidden mb-6"
+              style={{
+                borderRadius: '18px',
+                border: `2px solid ${T.accent}AA`,
+                boxShadow: `inset 0 0 0 5px ${T.field}, inset 0 0 0 6px ${T.accent}40, 0 0 24px ${T.accent}30`,
+                background: `repeating-linear-gradient(0deg, #0000002e 0 1px, transparent 1px 3px), linear-gradient(${T.accent}10 1px, transparent 1px) 0 0 / 100% 26px, linear-gradient(90deg, ${T.accent}10 1px, transparent 1px) 0 0 / 26px 100%, repeating-linear-gradient(115deg, ${T.accent}12 0 2px, transparent 2px 22px), radial-gradient(ellipse 60% 140% at 15% 10%, #E8C15A26, transparent 70%), linear-gradient(135deg, ${T.field}, ${T.surface} 55%, ${T.field})`,
+              }}>
+              <div aria-hidden="true" className="gf-sheen absolute top-0 bottom-0 left-0 pointer-events-none"
+                style={{ width: '60%', background: `linear-gradient(90deg, transparent, ${T.accent}33, transparent)` }} />
+              <div className="relative flex items-center justify-between gap-4" style={{ padding: '26px 28px' }}>
+                <div className="min-w-0">
+                  <p style={{ fontFamily: arcade.style.fontFamily, fontSize: '11px', letterSpacing: '0.08em', color: '#E8C15A', textShadow: '2px 2px 0 #5a4310' }}>
+                    ALL-TIME HI-SCORE
+                  </p>
+                  <p className="truncate" style={{ fontFamily: arcade.style.fontFamily, fontSize: '14px', color: T.text, marginTop: '14px' }}>
+                    {hi.team_name}
+                  </p>
+                  <p style={{ fontFamily: arcade.style.fontFamily, fontSize: '9px', color: T.textDim, marginTop: '12px' }}>
+                    ROUND {hi.round_number}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  {hi.is_new && (
+                    <span className="gf-pulse" style={{ fontFamily: arcade.style.fontFamily, fontSize: '9px', background: '#E8C15A', color: '#0F1710', padding: '6px 8px' }}>
+                      NEW
+                    </span>
+                  )}
+                  <p style={{ fontFamily: arcadeNum.style.fontFamily, fontSize: 'clamp(34px, 9vw, 54px)', lineHeight: 1, color: T.accent, textShadow: `3px 3px 0 ${T.accent}55, 0 0 24px ${T.accent}99` }}>
+                    {hi.points}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          {false && hi && (
             <div className="rounded-2xl overflow-hidden mb-6 relative"
               style={{ background: '#07080D', border: `1px solid ${T.accent}55` }}>
               {/* Neon haze drifting behind the record — the arcade treatment,
