@@ -3,11 +3,11 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /* HIGH TIDE admin — listings moderation.
-   GET  ?status=pending|needs_info|approved|rejected|all  → rows with player name
+   GET  ?status=pending|needs_info|approved|rejected|all  → rows with GF player name
    POST { action, id, admin_note }        action: approve | needs_info | reject | deactivate | reactivate
-   POST { action: 'create', listing }     admin-loaded listing; player_name is matched to players.full_name */
-
-const STATUSES = ['pending', 'needs_info', 'approved', 'rejected'] as const
+   POST { action: 'create', listing }     admin-loaded listing. first_name + last_name are the owner's real
+                                          name (required); player_name is their GF name (optional) and is
+                                          matched to players.full_name */
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -23,7 +23,7 @@ export async function GET(req: Request) {
   const admin = createAdminClient()
 
   let q = admin.from('listings')
-    .select('id, business_name, blurb, category, area, phone, email, website, socials, logo_url, status, admin_note, active, paid_until, created_at, approved_at, player_id, players(full_name)')
+    .select('id, business_name, blurb, category, area, phone, email, website, socials, logo_url, status, admin_note, active, paid_until, created_at, approved_at, first_name, last_name, player_id, players(full_name)')
     .order('created_at', { ascending: false })
   if (status !== 'all') q = q.eq('status', status)
 
@@ -45,6 +45,9 @@ export async function POST(req: Request) {
 
   if (body.action === 'create') {
     const l = body.listing ?? {}
+    if (!l.first_name?.trim() || !l.last_name?.trim()) {
+      return NextResponse.json({ error: 'Real first name and last name are required' }, { status: 400 })
+    }
     if (!l.business_name?.trim() || !l.blurb?.trim() || !l.category) {
       return NextResponse.json({ error: 'business_name, blurb and category are required' }, { status: 400 })
     }
@@ -52,16 +55,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'At least one of phone, email or website is required' }, { status: 400 })
     }
 
-    // Match the named player to a GF player (active, not an unconsented minor)
+    // Optional GF name → player link (active, not a minor)
     let player_id: string | null = null
     let player_note = ''
     if (l.player_name?.trim()) {
       const { data: p } = await admin.from('players')
-        .select('id, full_name, is_under18, has_consent')
+        .select('id, full_name, is_under18')
         .ilike('full_name', l.player_name.trim())
         .eq('active', true)
         .limit(2)
-      if (!p || p.length === 0) player_note = `no player match for "${l.player_name.trim()}" — saved without a player link`
+      if (!p || p.length === 0) player_note = `no GF player match for "${l.player_name.trim()}" — saved without a player link`
       else if (p.length > 1) player_note = `"${l.player_name.trim()}" matches more than one player — saved without a player link`
       else if (p[0].is_under18) return NextResponse.json({ error: 'That player is under 18 — High Tide cannot list minors' }, { status: 400 })
       else player_id = p[0].id
@@ -70,6 +73,8 @@ export async function POST(req: Request) {
     const { data, error } = await admin.from('listings').insert({
       owner_id: null,
       player_id,
+      first_name: l.first_name.trim(),
+      last_name: l.last_name.trim(),
       business_name: l.business_name.trim(),
       blurb: l.blurb.trim().slice(0, 160),
       category: l.category,
