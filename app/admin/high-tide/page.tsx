@@ -20,6 +20,8 @@ export type Listing = {
   paid_until: string | null
   created_at: string
   approved_at: string | null
+  first_name: string
+  last_name: string
   player_id: string | null
   player_name: string | null
 }
