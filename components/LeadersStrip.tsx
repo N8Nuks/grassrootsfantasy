@@ -25,6 +25,8 @@ export default function LeadersStrip({ grade, accent, text, textDim, surface }: 
     return () => { cancelled = true }
   }, [grade])
 
+  // Held back until mid-week, then it shows itself
+  if (Date.now() < new Date('2026-10-21T17:00:00+13:00').getTime()) return null
   if (!data?.round || data.top.length === 0) return null
 
   return (
