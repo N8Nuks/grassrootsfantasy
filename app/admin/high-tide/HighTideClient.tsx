@@ -4,7 +4,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import type { Listing } from './page'
 
-const CATEGORIES = ['Trades', 'Food & hospo', 'Professional services', 'Health & fitness', 'Retail', 'Side hustle / other'] as const
+const CATEGORIES = ['Trades', 'Food & hospo', 'Professional services', 'Health & fitness', 'Retail', 'Digital services', 'Sports technology', 'Media', 'Other'] as const
 
 const P = {
   purple: '#8B5CF6',
