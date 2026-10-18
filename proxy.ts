@@ -4,18 +4,8 @@ import { isClosed, isLocked, isClosedGame } from '@/lib/construction'
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-
-  /* Closed pages are settled before any Supabase work — there's no point
-     refreshing a session for a page nobody can reach. Rewrite rather than
-     redirect, so the URL stays as typed and bookmarks still work when a page
-     reopens. Both lists are empty in season; a path added to either in
-     lib/construction.ts closes it on the next deploy. */
-  if (isClosed(pathname) || isClosedGame(pathname)) {
-    return NextResponse.rewrite(new URL('/closed', request.url))
-  }
-  if (isLocked(pathname)) {
-    return NextResponse.rewrite(new URL('/locked', request.url))
-  }
+  const closed = isClosed(pathname) || isClosedGame(pathname)
+  const locked = isLocked(pathname)
 
   let supabaseResponse = NextResponse.next({ request })
 
@@ -41,8 +31,25 @@ export async function proxy(request: NextRequest) {
   // Refresh session if expired — keeps users logged in
   const { data: { user } } = await supabase.auth.getUser()
 
+  /* Closed and locked pages: rewrite rather than redirect, so the URL stays as
+     typed and bookmarks still work when a page reopens. Both lists are empty in
+     season; a path added to either in lib/construction.ts closes it on the next
+     deploy. Admins pass straight through, so a page can be built and checked
+     on the live site before anyone else sees it. The is_admin lookup only runs
+     on a closed path. */
+  if (closed || locked) {
+    let isAdmin = false
+    if (user) {
+      const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
+      isAdmin = profile?.is_admin === true
+    }
+    if (!isAdmin) {
+      return NextResponse.rewrite(new URL(closed ? '/closed' : '/locked', request.url))
+    }
+  }
+
   // Protect /team routes — the app area
-  if (!user && request.nextUrl.pathname.startsWith('/team')) {
+  if (!user && pathname.startsWith('/team')) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
