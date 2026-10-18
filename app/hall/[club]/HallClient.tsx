@@ -35,6 +35,7 @@ export type HallPlayer = {
 }
 
 const TIER_ORDER = ['rare_2wp_a', 'rare_2wp_b', 'elite', 'common']
+type Sort = 'tier' | 'points'
 
 export default function HallClient({ clubName, clubSlug, grade, grades, roster, ownedPlayerIds, siteTheme, cardStyle, milestones = {}, adminView = false }: {
   clubName: string
@@ -56,14 +57,31 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
   const owned = new Set(ownedPlayerIds)
   const showFull = (id: string) => adminView || owned.has(id)
   const [detail, setDetail] = useState<HallPlayer | null>(null)
+  const [sort, setSort] = useState<Sort>('tier')
 
-  const sorted = [...roster].sort((a, b) => {
-    const t = TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier)
-    if (t !== 0) return t
+  /* Tier order is the collector's view; Points puts the season's best fantasy
+     scorers first, with tier and then name breaking ties. */
+  const byName = (a: HallPlayer, b: HallPlayer) => {
     const sa = splitName(a.name), sb = splitName(b.name)
     return sa.last.localeCompare(sb.last) || sa.first.localeCompare(sb.first)
+  }
+  const byTier = (a: HallPlayer, b: HallPlayer) =>
+    TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier)
+  const sorted = [...roster].sort((a, b) => {
+    if (sort === 'points') {
+      const d = (b.stats.season_points ?? 0) - (a.stats.season_points ?? 0)
+      if (d !== 0) return d
+    }
+    return byTier(a, b) || byName(a, b)
   })
   const ownedCount = roster.filter(p => owned.has(p.id)).length
+
+  const pill = (on: boolean) => ({
+    fontSize: '10px', fontWeight: 900, letterSpacing: '0.18em', textTransform: 'uppercase' as const,
+    borderRadius: '999px', padding: '8px 16px', cursor: 'pointer',
+    color: on ? T.field : T.accent, background: on ? T.accent : 'transparent',
+    border: `1px solid ${T.accent}${on ? '' : '70'}`,
+  })
 
   return (
     <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
@@ -113,6 +131,12 @@ export default function HallClient({ clubName, clubSlug, grade, grades, roster, 
                 {grade === 'mens' ? "Men's" : "Women's"}
               </p>
             )}
+
+            <div className="flex items-center justify-center gap-2" style={{ marginTop: '18px' }}>
+              <span className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim, marginRight: '4px' }}>Sort</span>
+              <button type="button" onClick={() => setSort('tier')} style={pill(sort === 'tier')}>Tier</button>
+              <button type="button" onClick={() => setSort('points')} style={pill(sort === 'points')}>Points</button>
+            </div>
           </div>
 
           <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
