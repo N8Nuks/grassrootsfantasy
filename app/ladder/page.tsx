@@ -7,6 +7,10 @@ import PageGuide from '@/components/PageGuide'
 import FactsTicker from '@/components/FactsTicker'
 import PresentedBy from '@/components/PresentedBy'
 import ClubAvatar from '@/components/ClubAvatar'
+import { Press_Start_2P, Russo_One } from 'next/font/google'
+
+const arcade = Press_Start_2P({ subsets: ['latin'], weight: '400' })
+const arcadeNum = Russo_One({ subsets: ['latin'], weight: '400' })
 
 /* Club size as shown on the Clubs board. Small clubs read as "Building" rather
    than a lonely 1 or 2, and big clubs cap at 10+ so size never dwarfs the
