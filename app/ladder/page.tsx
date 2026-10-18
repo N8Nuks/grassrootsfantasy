@@ -288,7 +288,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
           {/* Weekly champion honour board */}
           {champion && (
             <div className="relative rounded-2xl overflow-hidden text-center mb-8 pinstripe-fine"
-              style={{ background: `radial-gradient(ellipse 70% 120% at 50% 0%, ${T.accent}1F 0%, transparent 70%), linear-gradient(180deg, ${T.surface} 0%, ${T.field} 100%)`, border: `1px solid ${T.accent}66` }}>
+              style={{ background: `radial-gradient(ellipse 70% 120% at 50% 0%, ${T.accent}1F 0%, transparent 70%), linear-gradient(${T.field}C7, ${T.field}C7), ${T.headerBg}`, border: `1px solid ${T.accent}66` }}>
               <div className="relative z-10" style={{ padding: '48px 32px 40px' }}>
                 <p className="text-[10px] font-black uppercase tracking-[0.4em] mb-4" style={{ color: T.accent }}>
                   Round {weeklyRoundNumber} · High Score
