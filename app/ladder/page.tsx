@@ -282,7 +282,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
               </div>
             </div>
           )}
-          {false && hi && (
+          {hi && false && (
             <div className="rounded-2xl overflow-hidden mb-6 relative"
               style={{ background: '#07080D', border: `1px solid ${T.accent}55` }}>
               {/* Neon haze drifting behind the record — the arcade treatment,
