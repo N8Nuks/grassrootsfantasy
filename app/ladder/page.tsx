@@ -30,7 +30,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
     user
       ? supabase.from('profiles').select('site_theme').eq('id', user.id).single()
       : Promise.resolve({ data: null }),
-    supabase.from('public_teams').select('id, team_name, is_house, avatar_image, avatar_frame, club:clubs!club_id(name), avatar_club:clubs!avatar_club_id(name)'),
+    supabase.from('public_teams').select('id, team_name, is_house, hide_from_boards, avatar_image, avatar_frame, club:clubs!club_id(name), avatar_club:clubs!avatar_club_id(name)'),
     view === 'h2h'
       ? supabase.from('matchups').select('user_a, user_b, points_a, points_b, score_a, score_b')
           .eq('grade', grade).not('points_a', 'is', null)
