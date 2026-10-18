@@ -31,8 +31,10 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
     supabase.from('clubs').select('id, name').order('name'),
     supabase.from('site_settings').select('value').eq('key', 'card_style').maybeSingle(),
     supabase.from('cards')
-      .select('id, source, players(id, full_name, tier, positions, stats, photo_url, playing_number, badges, speed_star, reveal_pos, clubs(name))')
-      .eq('owner_id', user!.id).eq('grade', grade),
+      .select('id, source, players!inner(id, full_name, tier, positions, stats, photo_url, playing_number, badges, speed_star, reveal_pos, clubs(name))')
+      .eq('owner_id', user!.id).eq('grade', grade)
+      .eq('players.active', true)
+      .or('is_under18.eq.false,has_consent.eq.true', { referencedTable: 'players' }),
     supabase.from('lineups')
       .select('id, captain_card_id, vice_captain_card_id, lineup_slots(slot, card_id, batting_order)')
       .eq('owner_id', user!.id).eq('grade', grade)
