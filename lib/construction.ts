@@ -1,7 +1,7 @@
 /* The sandbox changeover is done and the season is open. Both arrays stay here
    so a page can be closed again in a hurry — add its path and deploy. */
 
-export const UNDER_CONSTRUCTION: string[] = []
+export const UNDER_CONSTRUCTION: string[] = ['/high-tide']
 
 /* Shut rather than under construction — different message, because people
    arriving at these have a specific intent. */
