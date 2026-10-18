@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { theme, THEMES, THEME_ORDER, TEXTURED_KEYS, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
 import PlayerCard from '@/components/PlayerCard'
+import LeadersStrip from '@/components/LeadersStrip'
 import PlayerCardFull from '@/components/PlayerCardFull'
 import FieldPicker from '@/components/FieldPicker'
 import PackReveal, { RevealCard } from '@/components/PackReveal'
@@ -1087,6 +1088,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
               ))}
             </div>
           </div>
+          <LeadersStrip grade={grade} accent={T.accent} text={T.text} textDim={T.textDim} surface={T.surface} />
           <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
             {sortedCollection.map(c => {
               const inLineup = assignedIds.has(c.id)
