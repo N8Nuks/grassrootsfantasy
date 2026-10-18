@@ -246,7 +246,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
               </div>
             )}
           </div>
-                    {/* The all-time record, sitting above the week's champion */}
+          {/* The all-time record, sitting above the week's champion */}
           {view === 'weekly' && hi && (
             <div className="relative overflow-hidden mb-6"
               style={{
@@ -276,48 +276,6 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
                     </span>
                   )}
                   <p style={{ fontFamily: arcadeNum.style.fontFamily, fontSize: 'clamp(34px, 9vw, 54px)', lineHeight: 1, color: T.accent, textShadow: `3px 3px 0 ${T.accent}55, 0 0 24px ${T.accent}99` }}>
-                    {hi.points}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          {hi && false && (
-            <div className="rounded-2xl overflow-hidden mb-6 relative"
-              style={{ background: '#07080D', border: `1px solid ${T.accent}55` }}>
-              {/* Neon haze drifting behind the record — the arcade treatment,
-                  turned down so the number still reads first. */}
-              <div aria-hidden="true" className="absolute inset-0 pointer-events-none"
-                style={{
-                  background: `radial-gradient(ellipse 40% 120% at 88% 50%, ${T.accent}22 0%, transparent 70%),
-                               radial-gradient(ellipse 55% 140% at 8% 20%, ${T.accent}14 0%, transparent 72%)`,
-                }} />
-              <div aria-hidden="true" className="absolute inset-0 pointer-events-none"
-                style={{
-                  opacity: 0.5,
-                  background: `repeating-linear-gradient(180deg, ${T.accent}0A 0px, ${T.accent}0A 1px, transparent 1px, transparent 5px)`,
-               }} />
-              <div className="relative flex items-center justify-between gap-4" style={{ padding: '18px 24px' }}>
-                <div className="min-w-0">
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: T.textDim }}>
-                    All-time high score
-                  </p>
-                  <p className="text-sm font-black truncate" style={{ fontFamily: 'var(--font-heading)', color: T.text, marginTop: '5px' }}>
-                    {hi.team_name}
-                  </p>
-                  <p className="text-[10px] uppercase tracking-widest" style={{ color: T.textDim, marginTop: '2px' }}>
-                    Round {hi.round_number}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  {hi.is_new && (
-                    <span className="text-[9px] font-black uppercase tracking-[0.22em]"
-                      style={{ background: T.accent, color: T.buttonText, padding: '5px 9px' }}>
-                      New
-                    </span>
-                  )}
-                  <p className="text-3xl sm:text-4xl font-black"
-                    style={{ fontFamily: 'var(--font-heading)', color: T.accent, textShadow: T.glow }}>
                     {hi.points}
                   </p>
                 </div>
