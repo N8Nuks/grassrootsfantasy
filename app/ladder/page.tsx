@@ -296,7 +296,7 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
                 style={{
                   opacity: 0.5,
                   background: `repeating-linear-gradient(180deg, ${T.accent}0A 0px, ${T.accent}0A 1px, transparent 1px, transparent 5px)`,
-                }} />
+               }} />
               <div className="relative flex items-center justify-between gap-4" style={{ padding: '18px 24px' }}>
                 <div className="min-w-0">
                   <p className="text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: T.textDim }}>
