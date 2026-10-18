@@ -69,7 +69,10 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
     return { club: t?.avatar_club?.name ?? t?.club?.name ?? '', image: t?.avatar_image ?? null, frame: t?.avatar_frame ?? 'gold' }
   }
   // GF House fills odd matchup slots — it plays, but it never ranks
-  const isHouse = (id: string) => teamById.get(id)?.is_house === true
+  const isHouse = (id: string) => {
+    const t = teamById.get(id) as (TeamRow & { hide_from_boards?: boolean }) | undefined
+    return t?.is_house === true || (t?.hide_from_boards === true && id !== user?.id)
+  }
 
   type Row = { id: string; team: string; club: string; main: string; sub: string; sortKey: number; tieKey: number; unranked?: boolean }
   let rows: Row[] = []
