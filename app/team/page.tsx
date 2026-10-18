@@ -3,6 +3,7 @@ import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/server'
 import { theme, type Grade } from '@/lib/clubhouse'
 import TeamClient, { TeamCard } from './TeamClient'
+import ManagerNotices from '@/components/ManagerNotices'
 
 import { doubledInRound } from '@/lib/achievements'
 
@@ -175,10 +176,17 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
   const doubledMap = await doubledInRound(supabase, grade, latestRound?.round_number ?? null)
   const doubledIds = [...doubledMap.keys()]
 
+  // Admin notices to this manager (collection changes, bonus packs) — shown until dismissed
+  const { data: mgrNoticeRows } = await supabase.from('manager_notices')
+    .select('id, title, body').eq('owner_id', user!.id).eq('seen', false)
+    .order('created_at', { ascending: false })
+  const mgrNotices = (mgrNoticeRows ?? []) as { id: string; title: string; body: string }[]
+
   return (
     <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
       <Nav />
       <section className="flex-1 px-4 sm:px-6" style={{ paddingTop: "70px", paddingBottom: "100px" }}>
+        <ManagerNotices notices={mgrNotices} T={{ surface: T.surface, surfaceRaised: T.surfaceRaised, text: T.text, textDim: T.textDim, accent: T.accent }} />
         <TeamClient
           teamName={prof?.team_name ?? 'Your team'}
           clubName={prof?.club?.name ?? ''}
