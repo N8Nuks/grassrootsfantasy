@@ -11,6 +11,8 @@ const SEASON_CATS: LeaderCat[] = [
   { key: 'season_points', label: 'Fantasy Points', empty: ['No points on the board yet.', 'The first scores land when the round is scored.'] },
   { key: 'season_hr', label: 'Home Runs', empty: ['The first home run of the season is still out there.', 'Whoever hits it tops this board.'] },
   { key: 'season_rbi', label: 'RBI', empty: ['The first RBI of the season is still out there.', 'Whoever drives in a run tops this board.'] },
+  { key: 'season_2b', label: 'Doubles', empty: ['The first double of the season is still out there.', 'Whoever hits it tops this board.'] },
+  { key: 'season_3b', label: 'Triples', empty: ['The first triple of the season is still out there.', 'Whoever legs one out tops this board.'] },
   { key: 'season_sb', label: 'Stolen Bases', empty: ['The first stolen base of the season is still out there.', 'Whoever swipes one tops this board.'] },
   { key: 'season_ba', label: 'Batting Average', format: 'ba', empty: ['No batting averages yet.', 'The board fills as hitters reach base.'] },
   { key: 'season_wins', label: 'Pitching Wins', empty: ['The first win of the season is still out there.', 'Whoever earns it tops this board.'] },
@@ -27,6 +29,8 @@ function roundCats(n: number): LeaderCat[] {
     { key: 'r_points', label: 'Fantasy Points', empty },
     { key: 'r_hr', label: 'Home Runs', empty },
     { key: 'r_rbi', label: 'RBI', empty },
+    { key: 'r_2b', label: 'Doubles', empty },
+    { key: 'r_3b', label: 'Triples', empty },
     { key: 'r_hits', label: 'Hits', empty },
     { key: 'r_sb', label: 'Stolen Bases', empty },
     { key: 'r_runs', label: 'Runs Scored', empty },
@@ -37,6 +41,8 @@ function roundCats(n: number): LeaderCat[] {
 type View = 'season' | 'round'
 const href = (grade: Grade, view: View, round?: number) =>
   `/leaders?grade=${grade}${view === 'round' ? `&view=round${round ? `&round=${round}` : ''}` : ''}`
+
+const num = (v: unknown) => Number(v ?? 0) || 0
 
 export default async function Leaders({ searchParams }: { searchParams: Promise<{ grade?: string; view?: string; round?: string }> }) {
   const params = await searchParams
@@ -98,6 +104,23 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
     revealPos: p.reveal_pos ?? null,
   }))
 
+  /* Doubles and triples aren't kept as season keys on the player, so the
+     season boards total the round lines across every scored round. */
+  if (view === 'season' && rounds.length) {
+    const { data: lines } = await supabase.from('player_stats')
+      .select('player_id, raw').in('round_id', rounds.map(r => r.id))
+    const tot = new Map<string, { d: number; t: number }>()
+    for (const l of lines ?? []) {
+      const r = (l.raw ?? {}) as Record<string, unknown>
+      const cur = tot.get(l.player_id) ?? { d: 0, t: 0 }
+      tot.set(l.player_id, { d: cur.d + num(r.doubles), t: cur.t + num(r.triples) })
+    }
+    for (const p of all) {
+      const x = tot.get(p.id)
+      if (x) p.stats = { ...p.stats, season_2b: x.d, season_3b: x.t }
+    }
+  }
+
   /* Round view: merge the round's line and points into each player's stats
      under r_* keys. Season keys are untouched, so an opened card still reads
      its season figures. */
@@ -106,17 +129,17 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
       supabase.from('player_stats').select('player_id, raw').eq('round_id', roundRow.id),
       supabase.from('player_scores').select('player_id, points').eq('round_id', roundRow.id),
     ])
-    const n = (v: unknown) => Number(v ?? 0) || 0
     const byId = new Map<string, Record<string, number>>()
     for (const l of lines ?? []) {
       const r = (l.raw ?? {}) as Record<string, unknown>
       byId.set(l.player_id, {
-        r_hr: n(r.hr), r_rbi: n(r.rbi), r_sb: n(r.sb), r_runs: n(r.runs), r_k_pit: n(r.k_pit),
-        r_hits: n(r.singles) + n(r.doubles) + n(r.triples) + n(r.hr),
+        r_hr: num(r.hr), r_rbi: num(r.rbi), r_sb: num(r.sb), r_runs: num(r.runs), r_k_pit: num(r.k_pit),
+        r_2b: num(r.doubles), r_3b: num(r.triples),
+        r_hits: num(r.singles) + num(r.doubles) + num(r.triples) + num(r.hr),
       })
     }
     for (const s of scores ?? []) {
-      byId.set(s.player_id, { ...(byId.get(s.player_id) ?? {}), r_points: n(s.points) })
+      byId.set(s.player_id, { ...(byId.get(s.player_id) ?? {}), r_points: num(s.points) })
     }
     for (const p of all) {
       const r = byId.get(p.id)
