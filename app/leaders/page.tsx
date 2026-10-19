@@ -6,17 +6,19 @@ import GradeSwitch from '@/components/GradeSwitch'
 import LeadersClient, { type LeaderCat, type LeaderPlayer } from './LeadersClient'
 
 /* `empty` is what a board says once the season is under way but nobody is on
-   it yet — a rare stat (a women's home run) reads as a race, not a blank. */
+   it yet — a rare stat (a women's home run) reads as a race, not a blank.
+   Order runs points → power → hits → speed → average, then the pitching pair. */
 const SEASON_CATS: LeaderCat[] = [
   { key: 'season_points', label: 'Fantasy Points', empty: ['No points on the board yet.', 'The first scores land when the round is scored.'] },
   { key: 'season_hr', label: 'Home Runs', empty: ['The first home run of the season is still out there.', 'Whoever hits it tops this board.'] },
   { key: 'season_rbi', label: 'RBI', empty: ['The first RBI of the season is still out there.', 'Whoever drives in a run tops this board.'] },
+  { key: 'season_hits', label: 'Hits', empty: ['The first hit of the season is still out there.', 'Whoever gets it tops this board.'] },
   { key: 'season_2b', label: 'Doubles', empty: ['The first double of the season is still out there.', 'Whoever hits it tops this board.'] },
   { key: 'season_3b', label: 'Triples', empty: ['The first triple of the season is still out there.', 'Whoever legs one out tops this board.'] },
   { key: 'season_sb', label: 'Stolen Bases', empty: ['The first stolen base of the season is still out there.', 'Whoever swipes one tops this board.'] },
   { key: 'season_ba', label: 'Batting Average', format: 'ba', empty: ['No batting averages yet.', 'The board fills as hitters reach base.'] },
-  { key: 'season_wins', label: 'Pitching Wins', empty: ['The first win of the season is still out there.', 'Whoever earns it tops this board.'] },
-  { key: 'season_k_pit', label: 'Pitching Strikeouts', empty: ['The first strikeout of the season is still out there.', 'Whoever rings one up tops this board.'] },
+  { key: 'season_wins', label: 'Pitching Wins', kind: 'pitching', empty: ['The first win of the season is still out there.', 'Whoever earns it tops this board.'] },
+  { key: 'season_k_pit', label: 'Pitching Strikeouts', kind: 'pitching', empty: ['The first strikeout of the season is still out there.', 'Whoever rings one up tops this board.'] },
 ]
 
 /* Round boards read that round's stat line (player_stats.raw) and points
@@ -29,12 +31,12 @@ function roundCats(n: number): LeaderCat[] {
     { key: 'r_points', label: 'Fantasy Points', empty },
     { key: 'r_hr', label: 'Home Runs', empty },
     { key: 'r_rbi', label: 'RBI', empty },
+    { key: 'r_hits', label: 'Hits', empty },
     { key: 'r_2b', label: 'Doubles', empty },
     { key: 'r_3b', label: 'Triples', empty },
-    { key: 'r_hits', label: 'Hits', empty },
     { key: 'r_sb', label: 'Stolen Bases', empty },
     { key: 'r_runs', label: 'Runs Scored', empty },
-    { key: 'r_k_pit', label: 'Pitching Strikeouts', empty },
+    { key: 'r_k_pit', label: 'Pitching Strikeouts', kind: 'pitching', empty },
   ]
 }
 
@@ -104,20 +106,21 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
     revealPos: p.reveal_pos ?? null,
   }))
 
-  /* Doubles and triples aren't kept as season keys on the player, so the
-     season boards total the round lines across every scored round. */
+  /* Hits, doubles and triples aren't kept as season keys on the player, so
+     the season boards total the round lines across every scored round. */
   if (view === 'season' && rounds.length) {
     const { data: lines } = await supabase.from('player_stats')
       .select('player_id, raw').in('round_id', rounds.map(r => r.id))
-    const tot = new Map<string, { d: number; t: number }>()
+    const tot = new Map<string, { h: number; d: number; t: number }>()
     for (const l of lines ?? []) {
       const r = (l.raw ?? {}) as Record<string, unknown>
-      const cur = tot.get(l.player_id) ?? { d: 0, t: 0 }
-      tot.set(l.player_id, { d: cur.d + num(r.doubles), t: cur.t + num(r.triples) })
+      const cur = tot.get(l.player_id) ?? { h: 0, d: 0, t: 0 }
+      const d = num(r.doubles), t = num(r.triples)
+      tot.set(l.player_id, { h: cur.h + num(r.singles) + d + t + num(r.hr), d: cur.d + d, t: cur.t + t })
     }
     for (const p of all) {
       const x = tot.get(p.id)
-      if (x) p.stats = { ...p.stats, season_2b: x.d, season_3b: x.t }
+      if (x) p.stats = { ...p.stats, season_hits: x.h, season_2b: x.d, season_3b: x.t }
     }
   }
 
