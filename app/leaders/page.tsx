@@ -36,6 +36,7 @@ function roundCats(n: number): LeaderCat[] {
     { key: 'r_3b', label: 'Triples', empty },
     { key: 'r_sb', label: 'Stolen Bases', empty },
     { key: 'r_runs', label: 'Runs Scored', empty },
+    { key: 'r_wins', label: 'Pitching Wins', kind: 'pitching', empty },
     { key: 'r_k_pit', label: 'Pitching Strikeouts', kind: 'pitching', empty },
   ]
 }
@@ -137,7 +138,7 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
       const r = (l.raw ?? {}) as Record<string, unknown>
       byId.set(l.player_id, {
         r_hr: num(r.hr), r_rbi: num(r.rbi), r_sb: num(r.sb), r_runs: num(r.runs), r_k_pit: num(r.k_pit),
-        r_2b: num(r.doubles), r_3b: num(r.triples),
+        r_2b: num(r.doubles), r_3b: num(r.triples), r_wins: num(r.win),
         r_hits: num(r.singles) + num(r.doubles) + num(r.triples) + num(r.hr),
       })
     }
