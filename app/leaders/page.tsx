@@ -17,8 +17,8 @@ const SEASON_CATS: LeaderCat[] = [
   { key: 'season_3b', label: 'Triples', empty: ['The first triple of the season is still out there.', 'Whoever legs one out tops this board.'] },
   { key: 'season_sb', label: 'Stolen Bases', empty: ['The first stolen base of the season is still out there.', 'Whoever swipes one tops this board.'] },
   { key: 'season_ba', label: 'Batting Average', format: 'ba', empty: ['No batting averages yet.', 'The board fills as hitters reach base.'] },
-  { key: 'season_wins', label: 'Pitching Wins', kind: 'pitching', empty: ['The first win of the season is still out there.', 'Whoever earns it tops this board.'] },
-  { key: 'season_k_pit', label: 'Pitching Strikeouts', kind: 'pitching', empty: ['The first strikeout of the season is still out there.', 'Whoever rings one up tops this board.'] },
+  { key: 'season_wins', label: 'Wins', kind: 'pitching', empty: ['The first win of the season is still out there.', 'Whoever earns it tops this board.'] },
+  { key: 'season_k_pit', label: 'Strikeouts', kind: 'pitching', empty: ['The first strikeout of the season is still out there.', 'Whoever rings one up tops this board.'] },
 ]
 
 /* Round boards read that round's stat line (player_stats.raw) and points
@@ -36,8 +36,8 @@ function roundCats(n: number): LeaderCat[] {
     { key: 'r_3b', label: 'Triples', empty },
     { key: 'r_sb', label: 'Stolen Bases', empty },
     { key: 'r_runs', label: 'Runs Scored', empty },
-    { key: 'r_wins', label: 'Pitching Wins', kind: 'pitching', empty },
-    { key: 'r_k_pit', label: 'Pitching Strikeouts', kind: 'pitching', empty },
+    { key: 'r_wins', label: 'Wins', kind: 'pitching', empty },
+    { key: 'r_k_pit', label: 'Strikeouts', kind: 'pitching', empty },
   ]
 }
 
