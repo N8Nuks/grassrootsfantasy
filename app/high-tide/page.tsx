@@ -134,7 +134,7 @@ export default async function HighTide({ searchParams }: { searchParams: Promise
                     <div className="flex-1 flex flex-col gap-3" style={{ padding: '20px 22px' }}>
                       <div className="flex items-center gap-4">
                         {l.logo_url
-                          ? <img src={l.logo_url} alt="" style={{ width: 52, height: 52, objectFit: 'contain', borderRadius: 10, background: '#ffffff', padding: 4, flexShrink: 0 }} />
+                          ? <img src={l.logo_url} alt="" style={{ width: 52, height: 52, objectFit: 'contain', borderRadius: 10, background: T.headerBg, padding: 4, flexShrink: 0 }} />
                           : <div className="flex items-center justify-center" style={{ width: 52, height: 52, borderRadius: 10, background: T.headerBg, color: T.text, flexShrink: 0 }}><WaveH size={34} blue={BLUE} green={GREEN} /></div>}
                         <p className="text-xl font-black uppercase italic leading-none" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{l.business_name}</p>
                       </div>
