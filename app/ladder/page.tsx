@@ -257,19 +257,19 @@ export default async function Ladder({ searchParams }: { searchParams: Promise<{
               }}>
               <div aria-hidden="true" className="gf-sheen absolute top-0 bottom-0 left-0 pointer-events-none"
                 style={{ width: '60%', background: `linear-gradient(90deg, transparent, ${T.accent}33, transparent)` }} />
-              <div className="relative flex items-center justify-between gap-4" style={{ padding: '26px 28px' }}>
+              <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" style={{ padding: '22px 22px' }}>
                 <div className="min-w-0">
-                  <p style={{ fontFamily: arcade.style.fontFamily, fontSize: '11px', letterSpacing: '0.08em', color: '#E8C15A', textShadow: '2px 2px 0 #5a4310' }}>
+                  <p className="whitespace-nowrap" style={{ fontFamily: arcade.style.fontFamily, fontSize: 'clamp(9px, 2.6vw, 11px)', letterSpacing: '0.06em', color: '#E8C15A', textShadow: '2px 2px 0 #5a4310' }}>
                     ALL-TIME HI-SCORE
                   </p>
-                  <p className="truncate" style={{ fontFamily: arcade.style.fontFamily, fontSize: '14px', color: T.text, marginTop: '14px' }}>
+                  <p className="truncate" style={{ fontFamily: arcade.style.fontFamily, fontSize: 'clamp(12px, 3.4vw, 14px)', color: T.text, marginTop: '14px' }}>
                     {hi.team_name}
                   </p>
                   <p style={{ fontFamily: arcade.style.fontFamily, fontSize: '9px', color: T.textDim, marginTop: '12px' }}>
                     ROUND {hi.round_number}
                   </p>
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-3 self-end sm:self-auto sm:shrink-0">
                   {hi.is_new && (
                     <span className="gf-pulse" style={{ fontFamily: arcade.style.fontFamily, fontSize: '9px', background: '#E8C15A', color: '#0F1710', padding: '6px 8px' }}>
                       NEW
