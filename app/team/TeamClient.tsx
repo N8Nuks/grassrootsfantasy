@@ -746,7 +746,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
                 </p>
               )}
             </div>
-            <button onClick={() => dismissNotice(n.id)} className="text-xl font-black shrink-0" style={{ color: T.textDim }}>×</button>
+            <button onClick={() => dismissNotice(n.id)} className="text-xl font-black shrink-0" style={{ color: '#FFFFFF', textShadow: '0 1px 4px #000000C0' }}>×</button>
           </div>
         </div>
       ))}
@@ -1190,7 +1190,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
                   {isOut && <span className="text-[9px] font-black px-2 py-0.5 rounded" style={{ background: '#FF6B6B', color: '#141210' }}>OUT THIS ROUND</span>}
                   {currentSlot && <span className="text-[10px] uppercase tracking-widest" style={{ color: T.textDim }}>currently {SLOT_LABELS[currentSlot] ?? currentSlot}</span>}
                 </div>
-                <button onClick={() => setDetailCard(null)} className="text-xl font-black" style={{ color: T.textDim }}>×</button>
+                <button onClick={() => setDetailCard(null)} className="text-xl font-black" style={{ color: '#FFFFFF', textShadow: '0 1px 4px #000000C0' }}>×</button>
               </div>
               <div className="overflow-y-auto px-6 py-5 sm:grid sm:grid-cols-[1fr_1.3fr] sm:gap-7 sm:items-start" style={{ maxHeight: "calc(94vh - 64px)" }}>
                 <div className="mb-6 sm:mb-0">
@@ -1250,7 +1250,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
           <div className="w-full rounded-2xl overflow-hidden" style={{ maxWidth: '440px', background: T.surface, border: '1px solid #ffffff20' }} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a', padding: '16px 22px' }}>
               <span className="text-sm font-black" style={{ color: T.text }}>Your avatar</span>
-              <button onClick={() => setAvatarOpen(false)} className="text-xl font-black" style={{ color: T.textDim }}>×</button>
+              <button onClick={() => setAvatarOpen(false)} className="text-xl font-black" style={{ color: '#FFFFFF', textShadow: '0 1px 4px #000000C0' }}>×</button>
             </div>
             <div style={{ padding: '22px' }}>
               <div className="flex justify-center" style={{ marginBottom: '22px' }}>
