@@ -157,6 +157,22 @@ function SoftballSwatch({ colors, seam, selected, ringColor }: {
   )
 }
 
+/* Halloween's ball is a pumpkin — ribs, stem, and a grin that lights when selected */
+function PumpkinSwatch({ selected, ringColor }: { selected: boolean; ringColor: string }) {
+  return (
+    <svg width="26" height="26" viewBox="0 0 26 26" style={{ display: 'block' }}>
+      <rect x="11.6" y="2.2" width="2.8" height="4" rx="1" fill="#3FBF63" />
+      <ellipse cx="13" cy="14.5" rx="10.5" ry="9" fill="#FF7A1A" />
+      <ellipse cx="13" cy="14.5" rx="5.2" ry="9" fill="none" stroke="#C9560D" strokeWidth="1" />
+      <ellipse cx="13" cy="14.5" rx="9" ry="9" fill="none" stroke="#C9560D" strokeWidth="0.8" />
+      <path d="M8 12.2 L10.6 13.9 L8.2 14.6 Z" fill={selected ? '#FFE082' : '#0A0612'} />
+      <path d="M18 12.2 L15.4 13.9 L17.8 14.6 Z" fill={selected ? '#FFE082' : '#0A0612'} />
+      <path d="M7.6 17 L9.4 18.6 L10.8 17.2 L12.2 18.8 L13.8 17.2 L15.2 18.8 L16.6 17.2 L18.4 17 L16.2 20 L9.8 20 Z" fill={selected ? '#FFE082' : '#0A0612'} />
+      <circle cx="13" cy="13" r="12" fill="none" stroke={selected ? ringColor : '#ffffff30'} strokeWidth={selected ? 2 : 1} />
+    </svg>
+  )
+}
+
 /* Three wisps behind the Textured label — grey at rest, neon when the
    textured variant is on. Purely decorative; the label carries the meaning. */
 function Wisps({ on }: { on: boolean }) {
@@ -800,7 +816,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
 
                     {/* Site theme switcher — balls in one row, mode buttons beneath */}
           <div style={{ marginTop: '22px', opacity: themeSaving ? 0.5 : 1 }}>
-            <div className="flex items-center justify-center" style={{ gap: '14px' }}>
+            <div className="flex items-center justify-center flex-wrap" style={{ gap: '10px 12px', maxWidth: '360px', marginLeft: 'auto', marginRight: 'auto' }}>
               {THEME_ORDER.map(k => {
                 const base = siteTheme.replace(/_tx$/, '')
                 const on = base === k
@@ -809,12 +825,14 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
                   <button key={k} onClick={() => setSiteTheme(target)} title={THEMES[target].label}
                     className="transition-all hover:scale-110 shrink-0"
                     style={{ padding: '4px', filter: on ? `drop-shadow(0 0 6px ${THEMES[k].accent})` : 'none' }}>
-                    <SoftballSwatch
-                      colors={THEMES[k].swatch}
-                      seam={THEMES[k].seam}
-                      selected={on}
-                      ringColor={T.text}
-                    />
+                    {k === 'halloween'
+                      ? <PumpkinSwatch selected={on} ringColor={T.text} />
+                      : <SoftballSwatch
+                          colors={THEMES[k].swatch}
+                          seam={THEMES[k].seam}
+                          selected={on}
+                          ringColor={T.text}
+                        />}
                   </button>
                 )
               })}
