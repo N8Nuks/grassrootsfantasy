@@ -1,5 +1,9 @@
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
+import { isHalloween } from '@/lib/clubhouse'
+
+// Re-render hourly so the Halloween hero switches on and off by itself
+export const revalidate = 3600
 
 const CREAM = '#F5F1E8'
 const GREEN = '#3FBF63'
@@ -30,8 +34,8 @@ export default function Home() {
 
       {/* ── HERO ── */}
       <section className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden">
-        <link rel="preload" as="image" href="/hero-grass.jpg" />
-        <div className="absolute inset-0" style={{ backgroundImage: "url('/hero-grass.jpg')", backgroundSize: 'cover', backgroundPosition: 'center 65%' }} />
+        <link rel="preload" as="image" href={isHalloween() ? '/hero-halloween.jpg' : '/hero-grass.jpg'} />
+        <div className="absolute inset-0" style={{ backgroundImage: `url('${isHalloween() ? '/hero-halloween.jpg' : '/hero-grass.jpg'}')`, backgroundSize: 'cover', backgroundPosition: isHalloween() ? 'center 55%' : 'center 65%' }} />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #141210E6 0%, #14121080 40%, #141210B3 75%, #141210 100%)' }} />
 
         <div className="relative z-10 w-full flex flex-col items-center px-6 text-center"

@@ -25,6 +25,16 @@ export type Palette = {
   seam: string               // softball stitching colour
 }
 
+/* Halloween weekend — Round 4. On by default for everyone on the grade look
+   from Thursday evening to Sunday midnight; anyone on a chosen theme keeps it
+   and can pick Halloween from the switcher while the window is open. */
+const HALLOWEEN_FROM = Date.parse('2026-10-29T18:00:00+13:00')
+const HALLOWEEN_UNTIL = Date.parse('2026-11-02T00:00:00+13:00')
+export const isHalloween = () => {
+  const now = Date.now()
+  return now >= HALLOWEEN_FROM && now < HALLOWEEN_UNTIL
+}
+
 export const THEMES: Record<string, Palette> = {
   padres: {
     label: 'Brown & Gold',
@@ -170,6 +180,26 @@ export const THEMES: Record<string, Palette> = {
     swatch: ['#FF2E97', '#39FF6A'],
     seam: '#F5F1E8',
   },
+  halloween: {
+    label: 'Halloween',
+    accent: '#FF7A1A',                // pumpkin
+    accentSoft: '#FF7A1A20',
+    button: '#FF7A1A',
+    buttonText: '#0A0612',
+    chipNonBatting: '#00F0FF',        // circuit cyan
+    chipBench: '#FF7AC0',             // circuit magenta, lighter
+    chipReserve: '#B4BEC9',
+    field: '#0A0612',
+    surface: '#15101F',
+    surfaceRaised: '#1E1629',
+    headerBg: 'linear-gradient(180deg, #14121070 0%, #14121050 55%, #14121090 100%), url(/banner-halloween.webp) center / cover no-repeat',
+    text: '#F5F1E8',
+    textDim: '#F5F1E870',
+    electric: '#00F0FF',
+    glow: '0 0 18px #FF7A1A55, 0 0 36px #FF2D9525',
+    swatch: ['#FF7A1A', '#00F0FF'],
+    seam: '#0A0612',
+  },
 }
 
 // Textured variants — same palette, banner image behind the headers.
@@ -189,8 +219,12 @@ THEMES.neon_tx.headerBg = 'linear-gradient(#0000001A, #0000001A), url(/banner-ne
 export type ThemeKey = keyof typeof THEMES
 export type SiteTheme = ThemeKey | 'grade'
 
-// Switcher order — every theme selectable in both grades
-export const THEME_ORDER: string[] = ['padres', 'chevron', 'rwb', 'blackgold', 'cardinal', 'purple', 'greenyellow', 'neon']
+// Switcher order — every theme selectable in both grades. Halloween leads the
+// list only while its window is open.
+export const THEME_ORDER: string[] = [
+  ...(isHalloween() ? ['halloween'] : []),
+  'padres', 'chevron', 'rwb', 'blackgold', 'cardinal', 'purple', 'greenyellow', 'neon',
+]
 
 // Back-compat: existing grade-keyed lookups
 export const CLUBHOUSE = {
@@ -210,6 +244,9 @@ const CLASSIC_TX: Record<Grade, Palette> = {
 }
 
 export function theme(grade: Grade, siteTheme?: string | null): Palette {
+  // Halloween weekend: the grade look becomes Halloween; chosen themes stay
+  const onGradeLook = !siteTheme || siteTheme === 'grade' || siteTheme === 'grade_tx'
+  if (onGradeLook && isHalloween()) return THEMES.halloween
   if (siteTheme === 'grade_tx') return CLASSIC_TX[grade]
   if (siteTheme && siteTheme !== 'grade' && siteTheme in THEMES) {
     return THEMES[siteTheme]
