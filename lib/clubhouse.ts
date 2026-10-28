@@ -28,7 +28,7 @@ export type Palette = {
 /* Halloween weekend — Round 4. On by default for everyone on the grade look
    from Thursday evening to Sunday midnight; anyone on a chosen theme keeps it
    and can pick Halloween from the switcher while the window is open. */
-const HALLOWEEN_FROM = Date.parse('2026-10-29T18:00:00+13:00')
+const HALLOWEEN_FROM = Date.parse('2026-10-28T00:00:00+13:00')
 const HALLOWEEN_UNTIL = Date.parse('2026-11-02T00:00:00+13:00')
 export const isHalloween = () => {
   const now = Date.now()
