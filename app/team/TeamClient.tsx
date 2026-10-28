@@ -1134,7 +1134,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
           <div className="w-full rounded-2xl overflow-hidden" style={{ maxWidth: "480px", maxHeight: "70vh", background: T.surface, border: '1px solid #ffffff20' }} onClick={e => e.stopPropagation()}>
             <div className="px-5 py-4 flex items-center justify-between" style={{ background: T.headerBg, borderBottom: '1px solid #ffffff0a' }}>
               <span className="text-sm font-black" style={{ color: T.text }}>Select for {SLOT_LABELS[pickerSlot] ?? pickerSlot}</span>
-              <button onClick={() => setPickerSlot(null)} className="text-xl font-black" style={{ color: T.textDim }}>×</button>
+              <button onClick={() => setPickerSlot(null)} className="text-xl font-black" style={{ color: '#FFFFFF', textShadow: '0 1px 4px #000000C0' }}>×</button>
             </div>
             <div className="overflow-y-auto" style={{ maxHeight: "55vh" }}>
               {pickerCandidates.map(c => {
