@@ -148,7 +148,8 @@ export default function CoachClient(props: Props) {
   }
   /* A player the coach can't find on the list. The name is snapped to the
      closest player on file first, so a short form or a typo attaches to the
-     real player rather than becoming a second copy. */
+     real player rather than becoming a second copy. A new name joins the
+     squad list, where the usual Add and Swap buttons work on it. */
   function addWriteIn() {
     const name = cleanTypedName(typed)
     if (name.length < 3) { setMsg({ ok: false, text: 'Type the player\'s full name.' }); return }
@@ -156,22 +157,17 @@ export default function CoachClient(props: Props) {
     const hit = snapName(name, everyone.map(e => ({ id: e.player_id as string, name: e.name })))
     if (hit) {
       const inTeam = [...batters, ...relievers, ...runners].find(e => e.player_id === hit.id)
-      if (inTeam) { setMsg({ ok: false, text: `${hit.name} is already in your team.` }); return }
-      const entry = squad.find(e => e.player_id === hit.id)
-      if (!entry) return
-      if (batters.length >= 10) { setMsg({ ok: false, text: 'The batting order is full. Swap someone out instead.' }); return }
-      setBatters([...batters, { ...entry, pos: 'IF' }])
-      setSquad(squad.filter(e => e.key !== entry.key))
       setTyped('')
-      setMsg({ ok: true, text: `Added ${hit.name} from your list.` })
+      setMsg({ ok: true, text: inTeam
+        ? `${hit.name} is already in your team.`
+        : `${hit.name} is on your list. Use the buttons under their name to add or swap them in.` })
       return
     }
-    const dup = [...batters, ...relievers, ...runners].find(e => !e.player_id && e.name.toLowerCase() === name.toLowerCase())
-    if (dup) { setMsg({ ok: false, text: `${name} is already in your team.` }); return }
-    if (batters.length >= 10) { setMsg({ ok: false, text: 'The batting order is full. Swap someone out instead.' }); return }
-    setBatters([...batters, { key: 'n:' + name.toLowerCase(), player_id: null, name, shown: false, pos: 'IF', number: null }])
+    const dup = [...batters, ...relievers, ...runners, ...squad].find(e => !e.player_id && e.name.toLowerCase() === name.toLowerCase())
+    if (dup) { setMsg({ ok: false, text: `${name} is already on this page.` }); return }
+    setSquad([{ key: 'n:' + name.toLowerCase(), player_id: null, name, shown: false, pos: '', number: null }, ...squad])
     setTyped('')
-    setMsg({ ok: true, text: `Added ${name}. They aren't in GF yet, so GF will fill that spot by its own rule.` })
+    setMsg({ ok: true, text: `${name} added to your squad list. Add or swap them in from there.` })
   }
   function reset() {
     setBatters(props.batters)
@@ -282,9 +278,10 @@ export default function CoachClient(props: Props) {
 
   const swapLabel = swap ? (swap.kind === 'b' ? `slot ${slotLabel(swap.i)}` : 'the relief pitcher spot') : ''
 
-  // This year's players first; players on file but marked inactive sit in their own group
+  // Written-in names first, then this year's players, then the rest
   const sortSquad = (list: Entry[]) => [...list].sort((a, b) =>
-    a.shown !== b.shown ? (a.shown ? -1 : 1) : a.name.localeCompare(b.name))
+    !a.player_id !== !b.player_id ? (a.player_id ? 1 : -1)
+      : a.shown !== b.shown ? (a.shown ? -1 : 1) : a.name.localeCompare(b.name))
   const mainSquad = sortSquad(squad.filter(e => e.active !== false))
   const otherSquad = sortSquad(squad.filter(e => e.active === false))
 
@@ -492,7 +489,7 @@ export default function CoachClient(props: Props) {
                 <button type="button" onClick={addWriteIn} style={{ ...btn, borderColor: accent, color: accent }}>Add</button>
               </div>
               <p className="text-[10px] text-white/40" style={{ marginTop: '6px' }}>
-                Goes into your batting order. If the name is already on your list it attaches to that player.
+                Adds them to your squad list so you can add or swap them in. A name already on your list attaches to that player.
               </p>
             </div>
           )}
