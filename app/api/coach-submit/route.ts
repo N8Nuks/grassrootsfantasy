@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getCoachRound } from '@/lib/coach'
+import { snapName, cleanTypedName } from '@/lib/nameMatch'
 
 const POS = ['P', 'C', 'IF', 'OF', 'DP', 'P2', 'DR']
 
@@ -38,17 +39,16 @@ export async function POST(req: Request) {
 
   // The coach names their real team from the club's full list. Who is visible
   // in GF (active, adult or consented) is decided on the way out, never here.
-  const [{ data: everyone }, { data: priorNames }, { data: existing }] = await Promise.all([
-    admin.from('players').select('id').eq('grade', grade).eq('club_id', clubId),
-    admin.from('club_lineups').select('player_name')
-      .eq('grade', grade).eq('club_id', clubId).not('player_name', 'is', null),
+  // A name typed in by hand is snapped to the closest player on the club's
+  // list; only a name that matches nobody is stored as text.
+  const [{ data: everyone }, { data: existing }] = await Promise.all([
+    admin.from('players').select('id, full_name').eq('grade', grade).eq('club_id', clubId),
     admin.from('club_lineups').select('id')
       .eq('grade', grade).eq('club_id', clubId).eq('round_number', rn),
   ])
-  const allIds = (everyone ?? []).map(p => p.id as string)
+  const clubPlayers = (everyone ?? []).map(p => ({ id: p.id as string, name: p.full_name as string }))
+  const allIds = clubPlayers.map(p => p.id)
   const clubIds = new Set(allIds)
-  const allowedNames = new Map(
-    (priorNames ?? []).map(r => [String(r.player_name).trim().toLowerCase(), String(r.player_name).trim()]))
 
   const lineup = Array.isArray(body.lineup) ? body.lineup : []
   const unavailable = Array.isArray(body.unavailable) ? body.unavailable : []
@@ -65,9 +65,17 @@ export async function POST(req: Request) {
       if (!clubIds.has(l.player_id)) return bad('One of the players isn\'t on this club\'s list.')
       key = l.player_id
     } else {
-      const canonical = allowedNames.get(String(l.player_name ?? '').trim().toLowerCase())
-      if (!canonical) return bad('One of the names isn\'t recognised for this club.')
-      key = 'name:' + canonical.toLowerCase()
+      const typed = cleanTypedName(String(l.player_name ?? ''))
+      if (typed.length < 3 || !/[a-z]/i.test(typed)) return bad('One of the written-in names is too short.')
+      const hit = snapName(typed, clubPlayers)
+      if (hit) {
+        l.player_id = hit.id
+        l.player_name = null
+        key = hit.id
+      } else {
+        l.player_name = typed
+        key = 'name:' + typed.toLowerCase()
+      }
     }
     if (seen.has(key)) return bad('A player is in the lineup twice.')
     seen.add(key)
@@ -82,7 +90,7 @@ export async function POST(req: Request) {
       orders.add(l.bat_order as number)
     }
     if (l.player_id) real.push({ player_id: l.player_id, bat_order: l.bat_order, pos: l.pos })
-    else named.push({ player_name: allowedNames.get(String(l.player_name).trim().toLowerCase()) as string, bat_order: l.bat_order, pos: l.pos })
+    else named.push({ player_name: l.player_name as string, bat_order: l.bat_order, pos: l.pos })
   }
   for (let i = 1; i <= 9; i++) {
     if (!orders.has(i)) return bad('Pick nine batters, in orders 1 to 9.')
@@ -157,5 +165,6 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     ok: true, round_number: rn, batters: orders.size, unavailable: flagged.size,
+    write_ins: named.map(n => n.player_name),
   })
 }

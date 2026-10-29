@@ -26,7 +26,7 @@ export async function GET() {
   const grades = []
   for (const grade of ['mens', 'womens'] as const) {
     const cr = await getCoachRound(admin, grade)
-    const [{ data: links }, { data: subs }, { data: fx }] = await Promise.all([
+    const [{ data: links }, { data: subs }, { data: fx }, { data: wi }] = await Promise.all([
       admin.from('coach_links').select('club_id, token').eq('grade', grade),
       cr
         ? admin.from('coach_submissions').select('club_id, submitted_at')
@@ -36,7 +36,19 @@ export async function GET() {
         ? admin.from('fixtures').select('club_a, club_b')
             .eq('grade', grade).eq('round_number', cr.round_number)
         : Promise.resolve({ data: [] as { club_a: string; club_b: string }[] }),
+      cr
+        ? admin.from('club_lineups').select('club_id, player_name')
+            .eq('grade', grade).eq('round_number', cr.round_number).is('player_id', null)
+        : Promise.resolve({ data: [] as { club_id: string; player_name: string | null }[] }),
     ])
+    // Names a coach wrote in that match nobody on the club's GF list
+    const writeIns = new Map<string, string[]>()
+    for (const r of wi ?? []) {
+      if (!r.player_name) continue
+      const list = writeIns.get(r.club_id as string) ?? []
+      if (!list.includes(r.player_name)) list.push(r.player_name)
+      writeIns.set(r.club_id as string, list)
+    }
     const submitted = new Map((subs ?? []).map(s => [s.club_id as string, s.submitted_at as string]))
     // A club with no fixture in the coach round is on a bye — no team to submit.
     const playing = new Set((fx ?? []).flatMap(f => [f.club_a, f.club_b]))
@@ -50,6 +62,7 @@ export async function GET() {
           token: l.token as string,
           submitted_at: submitted.get(l.club_id as string) ?? null,
           bye: hasFixtures && !playing.has(name),
+          write_ins: (writeIns.get(l.club_id as string) ?? []).sort(),
         }
       })
       .sort((a, b) => a.club.localeCompare(b.club))
@@ -68,19 +81,49 @@ export async function POST(req: Request) {
   if (denied) return denied
 
   const body = await req.json().catch(() => null) as
-    { action?: string; grade?: string; club_id?: string } | null
-  if (!body || body.action !== 'regenerate'
-      || (body.grade !== 'mens' && body.grade !== 'womens') || !body.club_id) {
+    { action?: string; grade?: string; club_id?: string; name?: string; under18?: boolean } | null
+  if (!body || (body.grade !== 'mens' && body.grade !== 'womens') || !body.club_id) {
     return NextResponse.json({ error: 'Bad request' }, { status: 400 })
   }
-
-  const token = randomUUID().replace(/-/g, '') + randomUUID().replace(/-/g, '')
   const admin = createAdminClient()
-  const { data, error } = await admin.from('coach_links')
-    .update({ token }).eq('grade', body.grade).eq('club_id', body.club_id)
-    .select('token').maybeSingle()
-  if (error || !data) {
-    return NextResponse.json({ error: error?.message ?? 'No link found for that club' }, { status: 500 })
+
+  if (body.action === 'regenerate') {
+    const token = randomUUID().replace(/-/g, '') + randomUUID().replace(/-/g, '')
+    const { data, error } = await admin.from('coach_links')
+      .update({ token }).eq('grade', body.grade).eq('club_id', body.club_id)
+      .select('token').maybeSingle()
+    if (error || !data) {
+      return NextResponse.json({ error: error?.message ?? 'No link found for that club' }, { status: 500 })
+    }
+    return NextResponse.json({ token })
   }
-  return NextResponse.json({ token })
+
+  // Create a player from a coach's write-in and point every lineup row that
+  // carries the written name at the new player. Positions are a placeholder
+  // set for the club to confirm; an under-18 is created without consent, so
+  // they stay out of every deal and public list until the form arrives.
+  if (body.action === 'create-player') {
+    const name = String(body.name ?? '').trim()
+    if (name.length < 3) return NextResponse.json({ error: 'Name is too short' }, { status: 400 })
+    const { data: clash } = await admin.from('players').select('id, full_name')
+      .eq('grade', body.grade).ilike('full_name', name).maybeSingle()
+    if (clash) return NextResponse.json({ error: `${clash.full_name} already exists in this grade` }, { status: 409 })
+    const under18 = !!body.under18
+    const { data: created, error } = await admin.from('players').insert({
+      full_name: name, grade: body.grade, club_id: body.club_id, tier: 'common',
+      positions: ['IF', 'OF'], reveal_pos: 'IF', badges: ['newcomer'],
+      career_games: 0, career_games_base: 0, active: true,
+      is_under18: under18, has_consent: false, deal_weight: 1,
+    }).select('id').single()
+    if (error || !created) {
+      return NextResponse.json({ error: error?.message ?? 'Could not create the player' }, { status: 500 })
+    }
+    const { data: moved } = await admin.from('club_lineups')
+      .update({ player_id: created.id, player_name: null })
+      .eq('grade', body.grade).eq('club_id', body.club_id).is('player_id', null).ilike('player_name', name)
+      .select('id')
+    return NextResponse.json({ ok: true, player_id: created.id, rows: (moved ?? []).length })
+  }
+
+  return NextResponse.json({ error: 'Bad request' }, { status: 400 })
 }

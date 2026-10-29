@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, type CSSProperties } from 'react'
+import { snapName, cleanTypedName } from '@/lib/nameMatch'
 
 export type Entry = {
   key: string
@@ -53,6 +54,7 @@ export default function CoachClient(props: Props) {
   const [canShare, setCanShare] = useState(false)
   const [showOther, setShowOther] = useState(false)
   const [confirmedSig, setConfirmedSig] = useState<string | null>(null)
+  const [typed, setTyped] = useState('')
 
   useEffect(() => {
     setCanShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function')
@@ -143,6 +145,33 @@ export default function CoachClient(props: Props) {
     }
     setSwap(null)
     setMsg(null)
+  }
+  /* A player the coach can't find on the list. The name is snapped to the
+     closest player on file first, so a short form or a typo attaches to the
+     real player rather than becoming a second copy. */
+  function addWriteIn() {
+    const name = cleanTypedName(typed)
+    if (name.length < 3) { setMsg({ ok: false, text: 'Type the player\'s full name.' }); return }
+    const everyone = [...batters, ...relievers, ...runners, ...squad].filter(e => e.player_id)
+    const hit = snapName(name, everyone.map(e => ({ id: e.player_id as string, name: e.name })))
+    if (hit) {
+      const inTeam = [...batters, ...relievers, ...runners].find(e => e.player_id === hit.id)
+      if (inTeam) { setMsg({ ok: false, text: `${hit.name} is already in your team.` }); return }
+      const entry = squad.find(e => e.player_id === hit.id)
+      if (!entry) return
+      if (batters.length >= 10) { setMsg({ ok: false, text: 'The batting order is full. Swap someone out instead.' }); return }
+      setBatters([...batters, { ...entry, pos: 'IF' }])
+      setSquad(squad.filter(e => e.key !== entry.key))
+      setTyped('')
+      setMsg({ ok: true, text: `Added ${hit.name} from your list.` })
+      return
+    }
+    const dup = [...batters, ...relievers, ...runners].find(e => !e.player_id && e.name.toLowerCase() === name.toLowerCase())
+    if (dup) { setMsg({ ok: false, text: `${name} is already in your team.` }); return }
+    if (batters.length >= 10) { setMsg({ ok: false, text: 'The batting order is full. Swap someone out instead.' }); return }
+    setBatters([...batters, { key: 'n:' + name.toLowerCase(), player_id: null, name, shown: false, pos: 'IF', number: null }])
+    setTyped('')
+    setMsg({ ok: true, text: `Added ${name}. They aren't in GF yet, so GF will fill that spot by its own rule.` })
   }
   function reset() {
     setBatters(props.batters)
@@ -246,7 +275,9 @@ export default function CoachClient(props: Props) {
   }
 
   const tag = (e: Entry) => !e.shown && (
-    <span className="block text-[10px] text-white/50" style={{ marginTop: '2px' }}>* Not shown in GF</span>
+    <span className="block text-[10px] text-white/50" style={{ marginTop: '2px' }}>
+      {e.player_id ? '* Not shown in GF' : '* Not in GF yet'}
+    </span>
   )
 
   const swapLabel = swap ? (swap.kind === 'b' ? `slot ${slotLabel(swap.i)}` : 'the relief pitcher spot') : ''
@@ -445,6 +476,26 @@ export default function CoachClient(props: Props) {
             Squad ({mainSquad.length})
           </p>
           {mainSquad.map(squadRow)}
+          {editable && !swap && (
+            <div style={{ padding: '14px 0 6px' }}>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45" style={{ paddingBottom: '6px' }}>Add a player not listed</p>
+              <div className="flex items-center gap-2">
+                <input
+                  value={typed}
+                  onChange={e => setTyped(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addWriteIn() } }}
+                  placeholder="Full name"
+                  autoComplete="off"
+                  className="flex-1 min-w-0 text-sm"
+                  style={{ padding: '9px 11px', borderRadius: '8px', border: '1px solid #ffffff30', background: '#ffffff0a', color: '#F5F1E8' }}
+                />
+                <button type="button" onClick={addWriteIn} style={{ ...btn, borderColor: accent, color: accent }}>Add</button>
+              </div>
+              <p className="text-[10px] text-white/40" style={{ marginTop: '6px' }}>
+                Goes into your batting order. If the name is already on your list it attaches to that player.
+              </p>
+            </div>
+          )}
         </section>
 
         {otherSquad.length > 0 && (
