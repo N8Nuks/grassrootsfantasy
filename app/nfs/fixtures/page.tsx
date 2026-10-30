@@ -380,7 +380,9 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
               const pa = projFor(clubKey(g.club_a), g.played_on)
               const pb = projFor(clubKey(g.club_b), g.played_on)
               // A later day of a two-day round shows its lineups from 8pm the night before
-              const revealed = g.played_on === dates[0] || laterDayRevealAt(g.played_on) <= new Date()
+              // ...or as soon as a club has named a team for that day
+              const namedForDay = projOf.get(clubKey(g.club_a))?.has(g.played_on) || projOf.get(clubKey(g.club_b))?.has(g.played_on)
+              const revealed = g.played_on === dates[0] || !!namedForDay || laterDayRevealAt(g.played_on) <= new Date()
               const hasProj = n === projRound && !bye && revealed
                 && !isPlaceholder(g.team_a) && !isPlaceholder(g.team_b)
                 && ((pa?.list.length ?? 0) > 0 || (pb?.list.length ?? 0) > 0)
