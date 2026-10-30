@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getCoachRound } from '@/lib/coach'
+import { clubKey } from '@/lib/clubMatch'
 
 export const dynamic = 'force-dynamic'
 
@@ -58,16 +59,17 @@ export async function GET() {
       if (f.team_a === 'BYE' || f.team_b === 'BYE') continue
       for (const c of [f.club_a, f.club_b]) {
         if (!c) continue
-        const set = playsOn.get(c) ?? new Set<string>()
+        const k = clubKey(c)
+        const set = playsOn.get(k) ?? new Set<string>()
         set.add(f.played_on)
-        playsOn.set(c, set)
+        playsOn.set(k, set)
       }
     }
     const hasFixtures = (fx ?? []).length > 0
     const clubs = (links ?? [])
       .map(l => {
         const name = clubName.get(l.club_id as string) ?? 'Unknown club'
-        const clubDays = roundDays.filter(d => playsOn.get(name)?.has(d))
+        const clubDays = roundDays.filter(d => playsOn.get(clubKey(name))?.has(d))
         const days = clubDays.map(d => ({ day: d, submitted_at: submitted.get(`${l.club_id}|${d}`) ?? null }))
         return {
           club_id: l.club_id as string,

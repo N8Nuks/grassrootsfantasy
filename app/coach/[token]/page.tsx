@@ -69,12 +69,14 @@ export default async function CoachPage({ params }: { params: Promise<{ token: s
   // This club's games this round: one per day it plays, with the opposition,
   // the time and the ground. A club with no game is on a bye and sees the
   // round's days anyway so it can still name a team.
-  const key = (club?.name ?? '').trim().toLowerCase()
+  // Fixtures carry club names as free text ("United-Marist"); clubKey makes
+  // word order, hyphens and case irrelevant.
+  const key = clubKey(club?.name)
   type Game = { opponent: string | null; when: string | null; where: string | null }
   const gameOn = new Map<string, Game>()
   for (const f of (fxRows ?? []) as FxRow[]) {
-    const a = (f.club_a ?? '').trim().toLowerCase() === key
-    const b = (f.club_b ?? '').trim().toLowerCase() === key
+    const a = !!f.club_a && clubKey(f.club_a) === key
+    const b = !!f.club_b && clubKey(f.club_b) === key
     if (!a && !b) continue
     const other = a ? { team: f.team_b, club: f.club_b } : { team: f.team_a, club: f.club_a }
     if (gameOn.has(f.played_on)) continue
