@@ -13,8 +13,12 @@ const P = {
   dim: '#F2EFFB80',
 }
 
-type ClubRow = { club_id: string; club: string; token: string; submitted_at: string | null; bye: boolean }
-type GradeBlock = { grade: 'mens' | 'womens'; round_number: number | null; closes_at: string | null; clubs: ClubRow[] }
+type DayStatus = { day: string; submitted_at: string | null }
+type ClubRow = { club_id: string; club: string; token: string; submitted_at: string | null; bye: boolean; days: DayStatus[]; write_ins: string[] }
+type GradeBlock = { grade: 'mens' | 'womens'; round_number: number | null; closes_at: string | null; days: { day: string; closes_at: string }[]; clubs: ClubRow[] }
+
+const DAYF = new Intl.DateTimeFormat('en-NZ', { weekday: 'short', day: 'numeric', timeZone: 'Pacific/Auckland' })
+const fmtDay = (day: string) => DAYF.format(new Date(day + 'T12:00:00+12:00'))
 
 const WHEN = new Intl.DateTimeFormat('en-NZ', {
   weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
@@ -77,6 +81,28 @@ export default function CoachLinksPanel() {
     setBusy(false)
   }
 
+  async function createPlayer(grade: 'mens' | 'womens', c: ClubRow, name: string) {
+    if (!window.confirm(`Create ${name} in GF at ${c.club} (${grade === 'mens' ? "Men's" : "Women's"})? Positions start as IF/OF for the club to confirm.`)) return
+    const under18 = window.confirm(`Is ${name} under 18? OK = yes (created without consent, hidden until the form arrives). Cancel = no, an adult.`)
+    setBusy(true)
+    try {
+      const res = await fetch('/api/coach-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create-player', grade, club_id: c.club_id, name, under18 }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setNote(data.error ?? 'Could not create the player'); setBusy(false); return }
+      setGrades(prev => (prev ?? []).map(g => g.grade !== grade ? g : {
+        ...g, clubs: g.clubs.map(x => x.club_id === c.club_id ? { ...x, write_ins: x.write_ins.filter(n => n !== name) } : x),
+      }))
+      setNote(`${name} created at ${c.club}${under18 ? ' (under 18, no consent yet)' : ''}. Set positions and playing number in Positions when the club confirms them.`)
+    } catch {
+      setNote('Could not create the player')
+    }
+    setBusy(false)
+  }
+
   return (
     <div className="rounded-2xl" style={{
       background: P.panel, border: `1px solid ${P.panelEdge}`,
@@ -94,8 +120,10 @@ export default function CoachLinksPanel() {
       {!grades && !err && <p className="text-xs" style={{ color: P.dim }}>Loading…</p>}
 
       {grades?.map(g => {
-        const sent = g.clubs.filter(c => c.submitted_at).length
+        // A club counts as submitted once every day it plays is in
+        const sent = g.clubs.filter(c => !c.bye && c.days.length > 0 && c.days.every(d => d.submitted_at)).length
         const expected = g.clubs.filter(c => !c.bye).length
+        const multiDay = g.days.length > 1
         const label = g.grade === 'mens' ? "Men's" : "Women's"
         return (
           <div key={g.grade} className="rounded-xl" style={{ marginTop: '14px', padding: '16px 20px', background: P.ink, border: `1px solid ${P.purple}30` }}>
@@ -104,8 +132,13 @@ export default function CoachLinksPanel() {
                 <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: P.blue }}>
                   {label}{g.round_number != null ? ` · Round ${g.round_number}` : ''}{g.round_number != null ? ` · ${sent} of ${expected} submitted` : ''}
                 </p>
-                {g.closes_at && (
+                {g.closes_at && !multiDay && (
                   <p className="text-xs" style={{ color: P.dim, marginTop: '4px' }}>Coaches close {WHEN.format(new Date(g.closes_at))}</p>
+                )}
+                {multiDay && (
+                  <p className="text-xs" style={{ color: P.dim, marginTop: '4px' }}>
+                    One team per day. {g.days.map(d => `${fmtDay(d.day)} closes ${WHEN.format(new Date(d.closes_at))}`).join(' · ')}
+                  </p>
                 )}
                 {g.round_number == null && (
                   <p className="text-xs" style={{ color: P.dim, marginTop: '4px' }}>No upcoming round in the fixtures</p>
@@ -119,15 +152,19 @@ export default function CoachLinksPanel() {
             </div>
 
             {g.clubs.map(c => (
-              <div key={c.club_id} className="flex items-center justify-between gap-3 flex-wrap"
-                style={{ padding: '10px 0', borderTop: `1px solid ${P.purple}20` }}>
+              <div key={c.club_id} style={{ padding: '10px 0', borderTop: `1px solid ${P.purple}20`,
+                background: c.write_ins.length ? `${P.red}10` : 'transparent', borderLeft: c.write_ins.length ? `3px solid ${P.red}` : 'none',
+                paddingLeft: c.write_ins.length ? '10px' : 0 }}>
+              <div className="flex items-center justify-between gap-3 flex-wrap">
                 <span className="text-sm font-bold" style={{ color: P.text }}>
                   {c.club}
                   <span style={{
                     marginLeft: '10px', fontSize: '11px', fontWeight: 400,
-                    color: c.submitted_at ? P.green : c.bye ? P.dim : P.dim,
+                    color: !c.bye && c.days.length > 0 && c.days.every(d => d.submitted_at) ? P.green : P.dim,
                   }}>
-                    {c.submitted_at ? `Submitted ${WHEN.format(new Date(c.submitted_at))}` : c.bye ? 'Bye round' : 'Not submitted'}
+                    {c.bye ? 'Bye round'
+                      : multiDay ? c.days.map(d => `${fmtDay(d.day)}: ${d.submitted_at ? WHEN.format(new Date(d.submitted_at)) : 'not yet'}`).join(' · ')
+                      : c.submitted_at ? `Submitted ${WHEN.format(new Date(c.submitted_at))}` : 'Not submitted'}
                   </span>
                 </span>
                 <span className="flex items-center gap-2">
@@ -140,6 +177,21 @@ export default function CoachLinksPanel() {
                     New link
                   </button>
                 </span>
+              </div>
+              {c.write_ins.length > 0 && (
+                <div style={{ marginTop: '8px' }}>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: P.red }}>Names not in GF this round</p>
+                  {c.write_ins.map(n => (
+                    <div key={n} className="flex items-center justify-between gap-3" style={{ padding: '6px 0' }}>
+                      <span className="text-sm" style={{ color: P.text }}>{n}</span>
+                      <button type="button" disabled={busy} onClick={() => createPlayer(g.grade, c, n)}
+                        style={{ ...small, color: P.green, border: `1px solid ${P.green}70` }}>
+                        Create in GF
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               </div>
             ))}
           </div>

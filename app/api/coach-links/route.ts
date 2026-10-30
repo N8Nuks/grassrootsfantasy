@@ -29,13 +29,13 @@ export async function GET() {
     const [{ data: links }, { data: subs }, { data: fx }, { data: wi }] = await Promise.all([
       admin.from('coach_links').select('club_id, token').eq('grade', grade),
       cr
-        ? admin.from('coach_submissions').select('club_id, submitted_at')
+        ? admin.from('coach_submissions').select('club_id, game_day, submitted_at')
             .eq('grade', grade).eq('round_number', cr.round_number)
-        : Promise.resolve({ data: [] as { club_id: string; submitted_at: string }[] }),
+        : Promise.resolve({ data: [] as { club_id: string; game_day: string; submitted_at: string }[] }),
       cr
-        ? admin.from('fixtures').select('club_a, club_b')
+        ? admin.from('fixtures').select('club_a, club_b, team_a, team_b, played_on')
             .eq('grade', grade).eq('round_number', cr.round_number)
-        : Promise.resolve({ data: [] as { club_a: string; club_b: string }[] }),
+        : Promise.resolve({ data: [] as { club_a: string; club_b: string; team_a: string; team_b: string; played_on: string }[] }),
       cr
         ? admin.from('club_lineups').select('club_id, player_name')
             .eq('grade', grade).eq('round_number', cr.round_number).is('player_id', null)
@@ -49,19 +49,34 @@ export async function GET() {
       if (!list.includes(r.player_name)) list.push(r.player_name)
       writeIns.set(r.club_id as string, list)
     }
-    const submitted = new Map((subs ?? []).map(s => [s.club_id as string, s.submitted_at as string]))
-    // A club with no fixture in the coach round is on a bye — no team to submit.
-    const playing = new Set((fx ?? []).flatMap(f => [f.club_a, f.club_b]))
+    const submitted = new Map<string, string>()
+    for (const s of subs ?? []) submitted.set(`${s.club_id}|${s.game_day}`, s.submitted_at as string)
+    // The days each club plays this round. A club with a game on no day is on a bye.
+    const roundDays = cr ? cr.days.map(d => d.day) : []
+    const playsOn = new Map<string, Set<string>>()
+    for (const f of fx ?? []) {
+      if (f.team_a === 'BYE' || f.team_b === 'BYE') continue
+      for (const c of [f.club_a, f.club_b]) {
+        if (!c) continue
+        const set = playsOn.get(c) ?? new Set<string>()
+        set.add(f.played_on)
+        playsOn.set(c, set)
+      }
+    }
     const hasFixtures = (fx ?? []).length > 0
     const clubs = (links ?? [])
       .map(l => {
         const name = clubName.get(l.club_id as string) ?? 'Unknown club'
+        const clubDays = roundDays.filter(d => playsOn.get(name)?.has(d))
+        const days = clubDays.map(d => ({ day: d, submitted_at: submitted.get(`${l.club_id}|${d}`) ?? null }))
         return {
           club_id: l.club_id as string,
           club: name,
           token: l.token as string,
-          submitted_at: submitted.get(l.club_id as string) ?? null,
-          bye: hasFixtures && !playing.has(name),
+          // Back-compat: the first game day's status
+          submitted_at: days[0]?.submitted_at ?? submitted.get(`${l.club_id}|${roundDays[0]}`) ?? null,
+          bye: hasFixtures && clubDays.length === 0,
+          days,
           write_ins: (writeIns.get(l.club_id as string) ?? []).sort(),
         }
       })
@@ -70,6 +85,7 @@ export async function GET() {
       grade,
       round_number: cr?.round_number ?? null,
       closes_at: cr ? cr.closes_at.toISOString() : null,
+      days: cr ? cr.days.map(d => ({ day: d.day, closes_at: d.closes_at.toISOString() })) : [],
       clubs,
     })
   }

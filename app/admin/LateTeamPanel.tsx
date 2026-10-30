@@ -23,6 +23,7 @@ export default function LateTeamPanel() {
   const [grade, setGrade] = useState<'mens' | 'womens'>('mens')
   const [clubId, setClubId] = useState('')
   const [round, setRound] = useState('')
+  const [gameDay, setGameDay] = useState('')
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const [log, setLog] = useState<string[]>([])
@@ -51,7 +52,7 @@ export default function LateTeamPanel() {
       const res = await fetch('/api/late-team', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ grade, club_id: clubId, round_number: Number(round), text }),
+        body: JSON.stringify({ grade, club_id: clubId, round_number: Number(round), game_day: gameDay || undefined, text }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -59,7 +60,7 @@ export default function LateTeamPanel() {
         setLog(String(data.error ?? 'That didn\'t load').split('\n'))
       } else {
         const lines = [
-          `Loaded ${data.club}, Round ${data.round_number}: ${data.batters} batters${data.relievers ? ` and ${data.relievers} relief` : ''}.`,
+          `Loaded ${data.club}, Round ${data.round_number} (${data.game_day}): ${data.batters} batters${data.relievers ? ` and ${data.relievers} relief` : ''}.`,
         ]
         if (data.not_in_gf?.length) {
           lines.push(`Stored by name, not in GF: ${data.not_in_gf.join(', ')}`)
@@ -100,7 +101,13 @@ export default function LateTeamPanel() {
         <input type="number" value={round} onChange={e => setRound(e.target.value)}
           onFocus={e => e.currentTarget.select()} onWheel={e => e.currentTarget.blur()}
           placeholder="Round #" className="rounded-xl px-4 py-3.5 text-sm w-32" style={field} />
+        <input type="date" value={gameDay} onChange={e => setGameDay(e.target.value)}
+          title="Game day — leave blank for the round's first day"
+          className="rounded-xl px-4 py-3.5 text-sm" style={field} />
       </div>
+      <p className="text-[11px]" style={{ color: P.dim, marginTop: '-8px', marginBottom: '14px' }}>
+        Game day is only needed for a round played over two days. Blank loads the first day.
+      </p>
 
       <textarea value={text} onChange={e => setText(e.target.value)}
         placeholder={"Brock Evans,1,IF\nRyan Earley,2,OF\nFloyd Nola,3,P\n…\nSam Thompson,,P2"}

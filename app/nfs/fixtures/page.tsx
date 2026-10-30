@@ -4,7 +4,7 @@ import ClubAvatar from '@/components/ClubAvatar'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { POOL_FILTER } from '@/lib/pool'
-import { nzToDate } from '@/lib/coach'
+import { nzToDate, laterDayRevealAt } from '@/lib/coach'
 
 const COBALT = '#2456E6'
 const GOLD = '#E8C15A'
@@ -33,10 +33,10 @@ type PlayerRow = {
   reveal_pos: string | null; club_id: string | null; career_games: number | null
 }
 type ClubRow = { id: string; name: string }
-type LineupRow = { round_number: number; player_id: string | null; club_id: string | null; bat_order: number | null; pos: string }
+type LineupRow = { round_number: number; game_day: string; player_id: string | null; club_id: string | null; bat_order: number | null; pos: string }
 type Proj = { id: string; name: string; slot: string; tag: string | null; strong: boolean; ord: number }
-/* named  = the club's own team for the coming round
-   lineup = its team from the last round on file
+/* named  = the club's own team for this game
+   lineup = its team from the last game on file
    played = no team on file, so everyone who took the field last round */
 type ClubProj = { kind: 'named' | 'lineup' | 'played'; round: number; list: Proj[] }
 
@@ -82,7 +82,7 @@ const tookField = (raw: Record<string, unknown> | null) =>
 const clubKey = (s: string | null) => (s ?? '').trim().toLowerCase()
 const surname = (n: string) => (n.trim().split(/\s+/).slice(-1)[0] ?? '').toLowerCase()
 const caption = (cp: ClubProj) =>
-  cp.kind === 'named' ? `Named for Round ${cp.round}`
+  cp.kind === 'named' ? `Named for this game`
     : cp.kind === 'lineup' ? `Round ${cp.round} starting lineup`
       : `Played Round ${cp.round}`
 
@@ -121,7 +121,15 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
          player's batting slot.
      A club with no team on file falls back to who played last round. */
   let projRound: number | null = null
-  const projOf = new Map<string, ClubProj>()
+  // Projections by club key, then by game day — a club named for two days in
+  // a super round has one list per day; `*` is the fallback for any day
+  const projOf = new Map<string, Map<string, ClubProj>>()
+  const projFor = (key: string, day: string) => projOf.get(key)?.get(day) ?? projOf.get(key)?.get('*')
+  const setProj = (key: string, day: string, cp: ClubProj) => {
+    const m = projOf.get(key) ?? new Map<string, ClubProj>()
+    m.set(day, cp)
+    projOf.set(key, m)
+  }
   const roundIds = roundList.filter(r => r.round_number > 0).map(r => r.id)
   if (roundIds.length > 0) {
     const { data: statRows } = await supabase.from('player_stats')
@@ -151,7 +159,7 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
             .or(POOL_FILTER),
           supabase.from('clubs').select('id, name'),
           supabase.from('club_lineups')
-            .select('round_number, player_id, club_id, bat_order, pos')
+            .select('round_number, game_day, player_id, club_id, bat_order, pos')
             .eq('grade', grade)
             .lte('round_number', next),
         ])
@@ -196,21 +204,17 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
           }])
         }
 
-        // Named teams: group the coach's rows by club, latest round on file.
-        const rowsOf = new Map<string, Map<number, LineupRow[]>>()
+        // Named teams: the coach's rows by club, then by (round, day)
+        const rowsOf = new Map<string, Map<string, LineupRow[]>>()
         for (const r of (luRows ?? []) as LineupRow[]) {
           if (!r.club_id) continue
-          const byR = rowsOf.get(r.club_id) ?? new Map<number, LineupRow[]>()
-          rowsOf.set(r.club_id, byR)
-          byR.set(r.round_number, [...(byR.get(r.round_number) ?? []), r])
+          const byK = rowsOf.get(r.club_id) ?? new Map<string, LineupRow[]>()
+          rowsOf.set(r.club_id, byK)
+          const k = `${String(r.round_number).padStart(3, '0')}|${r.game_day}`
+          byK.set(k, [...(byK.get(k) ?? []), r])
         }
 
-        for (const [clubId, byR] of rowsOf) {
-          const key = clubKey(clubName.get(clubId) ?? null)
-          if (!key) continue
-          const rn = [...byR.keys()].sort((a, b) => b - a)[0]
-          const rows = byR.get(rn) ?? []
-
+        const buildProj = (clubId: string, rows: LineupRow[], rn: number): ClubProj => {
           // Who GF will show: in GF, active, and adult or consented
           const visible = rows.filter(r => r.player_id && byId.has(r.player_id))
           const visibleSet = new Set(visible)
@@ -252,11 +256,27 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
           }
 
           list.sort((a, b) => a.ord - b.ord)
-          projOf.set(key, { kind: rn === next ? 'named' : 'lineup', round: rn, list })
+          return { kind: rn === next ? 'named' : 'lineup', round: rn, list }
+        }
+
+        for (const [clubId, byK] of rowsOf) {
+          const key = clubKey(clubName.get(clubId) ?? null)
+          if (!key) continue
+          const keys = [...byK.keys()].sort().reverse()
+          // Each day the club has named for the coming round gets its own list
+          for (const k of keys) {
+            const [rnS, day] = k.split('|')
+            if (Number(rnS) !== next) continue
+            setProj(key, day, buildProj(clubId, byK.get(k) ?? [], next))
+          }
+          // Any other day falls back to the latest team on file
+          const latest = keys[0]
+          const [rnS] = latest.split('|')
+          setProj(key, '*', buildProj(clubId, byK.get(latest) ?? [], Number(rnS)))
         }
 
         for (const [k, list] of playedOf) {
-          if (!projOf.has(k)) projOf.set(k, { kind: 'played', round: scored, list })
+          if (!projOf.has(k)) setProj(k, '*', { kind: 'played', round: scored, list })
         }
       }
     }
@@ -356,9 +376,11 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
               const bWon = hasScore && Number(g.score_b) > Number(g.score_a)
               const time = fmtTime(g.start_time)
               const where = [withGround ? g.location : null, g.venue].filter(v => v && v !== 'Unallocated').join(' · ')
-              const pa = projOf.get(clubKey(g.club_a))
-              const pb = projOf.get(clubKey(g.club_b))
-              const hasProj = n === projRound && !bye
+              const pa = projFor(clubKey(g.club_a), g.played_on)
+              const pb = projFor(clubKey(g.club_b), g.played_on)
+              // A later day of a two-day round shows its lineups from 8pm the night before
+              const revealed = g.played_on === dates[0] || laterDayRevealAt(g.played_on) <= new Date()
+              const hasProj = n === projRound && !bye && revealed
                 && !isPlaceholder(g.team_a) && !isPlaceholder(g.team_b)
                 && ((pa?.list.length ?? 0) > 0 || (pb?.list.length ?? 0) > 0)
               const allNamed = pa?.kind === 'named' && pb?.kind === 'named'

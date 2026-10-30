@@ -13,24 +13,35 @@ export type Entry = {
   active?: boolean
 }
 
+export type DayBlock = {
+  day: string
+  dayLabel: string
+  opponent: string | null
+  gameWhen: string | null
+  gameWhere: string | null
+  closesLabel: string
+  closed: boolean
+  sourceNote: string
+  submittedLabel: string | null
+  batters: Entry[]
+  relievers: Entry[]
+  squad: Entry[]
+}
+
 type Props = {
   token: string
   grade: 'mens' | 'womens'
   gradeLabel: string
   clubName: string
   roundNumber: number
-  dayLabel: string
-  closesLabel: string
-  closed: boolean
-  opponent: string | null
-  gameWhen: string | null
-  gameWhere: string | null
-  sourceNote: string
-  submittedLabel: string | null
-  batters: Entry[]
-  relievers: Entry[]
-  squad: Entry[]
+  days: DayBlock[]
   unavailable: string[]
+}
+
+type DayProps = Omit<Props, 'days' | 'unavailable'> & DayBlock & {
+  multiDay: boolean
+  out: Set<string>
+  setOut: (next: Set<string>) => void
 }
 
 const GOLD = '#E8C15A'
@@ -38,15 +49,56 @@ const SILVER = '#7FC4FF'
 const CYCLE = ['P', 'C', 'IF', 'OF', 'DP']
 const slotLabel = (i: number) => (i === 9 ? 'FL' : String(i + 1))
 
+/* One team per game day. A normal round has one day; a super round has a
+   Saturday team and a Sunday team, each sent on its own. Unavailable flags
+   are for the whole round and are shared across the days. */
 export default function CoachClient(props: Props) {
-  const { token, grade, gradeLabel, clubName, roundNumber, dayLabel, closesLabel, closed, sourceNote, opponent, gameWhen, gameWhere } = props
+  const { days } = props
+  const [active, setActive] = useState(days[0]?.day ?? '')
+  const [out, setOut] = useState<Set<string>>(new Set(props.unavailable))
+  const accent = props.grade === 'mens' ? GOLD : SILVER
+  const multiDay = days.length > 1
+
+  return (
+    <>
+      {multiDay && (
+        <div style={{ position: 'sticky', top: 0, zIndex: 5, background: '#0D0D0F', borderBottom: '1px solid #ffffff14' }}>
+          <div className="flex" style={{ maxWidth: '480px', marginLeft: 'auto', marginRight: 'auto' }}>
+            {days.map(d => (
+              <button key={d.day} type="button" onClick={() => setActive(d.day)}
+                className="flex-1 text-xs font-black uppercase tracking-widest"
+                style={{
+                  padding: '14px 8px', background: 'transparent', border: 'none',
+                  color: active === d.day ? accent : '#ffffff80',
+                  borderBottom: `2px solid ${active === d.day ? accent : 'transparent'}`,
+                }}>
+                {d.dayLabel}{d.submittedLabel ? ' ✓' : ''}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {days.map(d => (
+        <div key={d.day} style={{ display: d.day === active ? 'block' : 'none' }}>
+          <DayLineup
+            token={props.token} grade={props.grade} gradeLabel={props.gradeLabel}
+            clubName={props.clubName} roundNumber={props.roundNumber}
+            {...d} multiDay={multiDay} out={out} setOut={setOut}
+          />
+        </div>
+      ))}
+    </>
+  )
+}
+
+function DayLineup(props: DayProps) {
+  const { token, grade, gradeLabel, clubName, roundNumber, day, dayLabel, closesLabel, closed, sourceNote, opponent, gameWhen, gameWhere, multiDay, out, setOut } = props
   const accent = grade === 'mens' ? GOLD : SILVER
 
   const [batters, setBatters] = useState<Entry[]>(props.batters)
   const [relievers, setRelievers] = useState<Entry[]>(props.relievers.filter(e => e.pos !== 'DR'))
   const [runners, setRunners] = useState<Entry[]>(props.relievers.filter(e => e.pos === 'DR'))
   const [squad, setSquad] = useState<Entry[]>(props.squad)
-  const [out, setOut] = useState<Set<string>>(new Set(props.unavailable))
   const [swap, setSwap] = useState<{ kind: 'b' | 'r'; i: number } | null>(null)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
@@ -174,7 +226,6 @@ export default function CoachClient(props: Props) {
     setRelievers(props.relievers.filter(e => e.pos !== 'DR'))
     setRunners(props.relievers.filter(e => e.pos === 'DR'))
     setSquad(props.squad)
-    setOut(new Set(props.unavailable))
     setSwap(null)
     setMsg(null)
   }
@@ -253,7 +304,7 @@ export default function CoachClient(props: Props) {
       const res = await fetch('/api/coach-submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, lineup, unavailable }),
+        body: JSON.stringify({ token, game_day: day, lineup, unavailable }),
       })
       const data = await res.json()
       if (res.ok) {
@@ -336,13 +387,13 @@ export default function CoachClient(props: Props) {
             <p className="text-[11px] text-white/55" style={{ marginTop: '2px' }}>{gameWhere}</p>
           )}
           <p className="text-[11px] text-white/55" style={{ marginTop: '6px' }}>
-            {closed ? 'Lineups are closed for this round' : closesLabel ? `Lineup closes ${closesLabel}` : ''}
+            {closed ? 'Lineup is closed for this game' : closesLabel ? `Lineup closes ${closesLabel}` : ''}
           </p>
         </header>
 
         {showConfirm && (
           <div style={{ margin: '14px 18px 0', padding: '16px', borderRadius: '12px', border: `1px solid ${accent}`, background: `${accent}14` }}>
-            <p className="text-sm font-black uppercase tracking-widest" style={{ color: accent }}>Your team is in</p>
+            <p className="text-sm font-black uppercase tracking-widest" style={{ color: accent }}>Your {multiDay ? dayLabel + ' ' : ''}team is in</p>
             <p className="text-[11px] text-white/60" style={{ marginTop: '4px' }}>
               Sent {savedLabel ?? 'just now'}. You can keep changing it until the round closes.
             </p>
@@ -378,7 +429,7 @@ export default function CoachClient(props: Props) {
 
         <div className="flex items-center justify-between gap-3" style={{ padding: '10px 18px' }}>
           <span className="text-[11px] text-white/55">{sourceNote}</span>
-          {editable && <button type="button" onClick={reset} style={btn}>Same as last week</button>}
+          {editable && <button type="button" onClick={reset} style={btn}>Start again</button>}
         </div>
 
         {swap && (
@@ -526,12 +577,12 @@ export default function CoachClient(props: Props) {
             <p className="text-xs" style={{ color: msg.ok ? accent : '#F09595', marginBottom: '8px' }}>{msg.text}</p>
           )}
           {closed ? (
-            <p className="text-xs text-white/60 text-center">Lineups are closed for this round. Contact GF if your team needs to change.</p>
+            <p className="text-xs text-white/60 text-center">Lineup is closed for this game. Contact GF if your team needs to change.</p>
           ) : (
             <button type="button" onClick={submit} disabled={saving}
               className="w-full text-sm font-black uppercase tracking-widest rounded-full"
               style={{ color: '#0D0D0F', background: accent, padding: '14px', opacity: saving ? 0.6 : 1 }}>
-              {saving ? 'Saving…' : showConfirm ? 'Sent. Submit again to update' : 'Submit lineup'}
+              {saving ? 'Saving…' : showConfirm ? 'Sent. Submit again to update' : multiDay ? `Submit ${dayLabel} lineup` : 'Submit lineup'}
             </button>
           )}
           <div className="flex items-center justify-center gap-3" style={{ marginTop: '8px' }}>

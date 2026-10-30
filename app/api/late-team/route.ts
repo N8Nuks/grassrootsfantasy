@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   if (!profile?.is_admin) return bad('Admins only', 403)
 
   const body = await req.json().catch(() => null) as
-    { grade?: string; club_id?: string; round_number?: number; text?: string } | null
+    { grade?: string; club_id?: string; round_number?: number; game_day?: string; text?: string } | null
   if (!body || (body.grade !== 'mens' && body.grade !== 'womens') || !body.club_id
       || !Number.isInteger(body.round_number) || (body.round_number as number) < 1
       || typeof body.text !== 'string') {
@@ -44,6 +44,14 @@ export async function POST(req: Request) {
   const admin = createAdminClient()
   const { data: club } = await admin.from('clubs').select('name').eq('id', clubId).maybeSingle()
   if (!club) return bad('That club wasn\'t found.')
+
+  // Which game day: the one given, or the round's first day
+  const { data: fxDays } = await admin.from('fixtures').select('played_on')
+    .eq('grade', grade).eq('round_number', rn).neq('team_a', 'BYE').neq('team_b', 'BYE').order('played_on')
+  const roundDays = [...new Set((fxDays ?? []).map(f => String(f.played_on)))]
+  if (!roundDays.length) return bad(`No fixtures found for Round ${rn}.`)
+  const day = body.game_day ? String(body.game_day).slice(0, 10) : roundDays[0]
+  if (!roundDays.includes(day)) return bad(`Round ${rn} is played on ${roundDays.join(' and ')}, not ${day}.`)
 
   // 1. Parse the pasted lines
   const errors: string[] = []
@@ -110,13 +118,13 @@ export async function POST(req: Request) {
 
   // 3. Save: new rows first, then clear whatever is no longer in the team
   const { data: existing } = await admin.from('club_lineups').select('id')
-    .eq('grade', grade).eq('club_id', clubId).eq('round_number', rn)
+    .eq('grade', grade).eq('club_id', clubId).eq('round_number', rn).eq('game_day', day)
 
   let keepIds: string[] = []
   if (real.length) {
     const { data: saved, error: luErr } = await admin.from('club_lineups')
-      .upsert(real.map(r => ({ grade, round_number: rn, club_id: clubId, ...r })),
-        { onConflict: 'grade,round_number,player_id' })
+      .upsert(real.map(r => ({ grade, round_number: rn, game_day: day, club_id: clubId, ...r })),
+        { onConflict: 'grade,round_number,game_day,player_id' })
       .select('id')
     if (luErr) return bad('Couldn\'t save the team: ' + luErr.message, 500)
     keepIds = (saved ?? []).map(r => r.id as string)
@@ -128,20 +136,21 @@ export async function POST(req: Request) {
   }
   if (named.length) {
     const { error: nmErr } = await admin.from('club_lineups')
-      .insert(named.map(n => ({ grade, round_number: rn, club_id: clubId, player_id: null, ...n })))
+      .insert(named.map(n => ({ grade, round_number: rn, game_day: day, club_id: clubId, player_id: null, ...n })))
     if (nmErr) return bad('Couldn\'t save the team: ' + nmErr.message, 500)
   }
 
   // 4. Mark the club as sent so Coach Links shows it
   await admin.from('coach_submissions').upsert(
-    { grade, club_id: clubId, round_number: rn, submitted_at: new Date().toISOString() },
-    { onConflict: 'grade,club_id,round_number' })
+    { grade, club_id: clubId, round_number: rn, game_day: day, submitted_at: new Date().toISOString() },
+    { onConflict: 'grade,club_id,round_number,game_day' })
 
   void allIds
   return NextResponse.json({
     ok: true,
     club: club.name,
     round_number: rn,
+    game_day: day,
     loaded: parsed.length,
     batters: orders.size,
     relievers: parsed.filter(p => p.pos === 'P2').length,

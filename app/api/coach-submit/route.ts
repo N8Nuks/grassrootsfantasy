@@ -12,7 +12,7 @@ const bad = (error: string, status = 400) => NextResponse.json({ error }, { stat
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null) as
-    { token?: string; lineup?: LineupIn[]; unavailable?: UnavailIn[] } | null
+    { token?: string; game_day?: string; lineup?: LineupIn[]; unavailable?: UnavailIn[] } | null
   if (!body || typeof body.token !== 'string' || body.token.length !== 64) {
     return bad('That link isn\'t recognised. Ask for a new one.', 401)
   }
@@ -26,16 +26,23 @@ export async function POST(req: Request) {
 
   const cr = await getCoachRound(admin, grade)
   if (!cr) return bad('There is no upcoming round to submit for.')
+  const rn = cr.round_number
+
+  // Which game day this team is for. A round played over two days has a
+  // team per day; a one-day round has only the one.
+  const cd = body.game_day ? cr.days.find(d => d.day === body.game_day) : cr.days[0]
+  if (!cd) return bad('That game day isn\'t in this round.')
+  const day = cd.day
+
   const nowAt = new Date()
-  if (cr.closes_at <= nowAt) {
+  if (cd.closes_at <= nowAt) {
     // Soft close: a club that has not submitted yet can still send its team until hard_closes_at
     const { data: already } = await admin.from('coach_submissions').select('id')
-      .eq('grade', grade).eq('club_id', clubId).eq('round_number', cr.round_number).maybeSingle()
-    if (already || cr.hard_closes_at <= nowAt) {
-      return bad('Lineups are closed for this round. Contact GF if your team needs to change.')
+      .eq('grade', grade).eq('club_id', clubId).eq('round_number', rn).eq('game_day', day).maybeSingle()
+    if (already || cd.hard_closes_at <= nowAt) {
+      return bad('Lineups are closed for this game. Contact GF if your team needs to change.')
     }
   }
-  const rn = cr.round_number
 
   // The coach names their real team from the club's full list. Who is visible
   // in GF (active, adult or consented) is decided on the way out, never here.
@@ -44,7 +51,7 @@ export async function POST(req: Request) {
   const [{ data: everyone }, { data: existing }] = await Promise.all([
     admin.from('players').select('id, full_name').eq('grade', grade).eq('club_id', clubId),
     admin.from('club_lineups').select('id')
-      .eq('grade', grade).eq('club_id', clubId).eq('round_number', rn),
+      .eq('grade', grade).eq('club_id', clubId).eq('round_number', rn).eq('game_day', day),
   ])
   const clubPlayers = (everyone ?? []).map(p => ({ id: p.id as string, name: p.full_name as string }))
   const allIds = clubPlayers.map(p => p.id)
@@ -108,8 +115,8 @@ export async function POST(req: Request) {
   let keepIds: string[] = []
   if (real.length) {
     const { data: saved, error: luErr } = await admin.from('club_lineups')
-      .upsert(real.map(r => ({ grade, round_number: rn, club_id: clubId, ...r })),
-        { onConflict: 'grade,round_number,player_id' })
+      .upsert(real.map(r => ({ grade, round_number: rn, game_day: day, club_id: clubId, ...r })),
+        { onConflict: 'grade,round_number,game_day,player_id' })
       .select('id')
     if (luErr) return bad('Couldn\'t save the lineup: ' + luErr.message, 500)
     keepIds = (saved ?? []).map(r => r.id as string)
@@ -121,7 +128,7 @@ export async function POST(req: Request) {
   }
   if (named.length) {
     const { error: nmErr } = await admin.from('club_lineups')
-      .insert(named.map(n => ({ grade, round_number: rn, club_id: clubId, player_id: null, ...n })))
+      .insert(named.map(n => ({ grade, round_number: rn, game_day: day, club_id: clubId, player_id: null, ...n })))
     if (nmErr) return bad('Couldn\'t save the lineup: ' + nmErr.message, 500)
   }
 
@@ -160,11 +167,11 @@ export async function POST(req: Request) {
 
   // 4. Record the submission for the Admin panel
   await admin.from('coach_submissions').upsert(
-    { grade, club_id: clubId, round_number: rn, submitted_at: new Date().toISOString() },
-    { onConflict: 'grade,club_id,round_number' })
+    { grade, club_id: clubId, round_number: rn, game_day: day, submitted_at: new Date().toISOString() },
+    { onConflict: 'grade,club_id,round_number,game_day' })
 
   return NextResponse.json({
-    ok: true, round_number: rn, batters: orders.size, unavailable: flagged.size,
+    ok: true, round_number: rn, game_day: day, batters: orders.size, unavailable: flagged.size,
     write_ins: named.map(n => n.player_name),
   })
 }

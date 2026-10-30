@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getCoachRound } from '@/lib/coach'
-import CoachClient, { type Entry } from './CoachClient'
+import CoachClient, { type Entry, type DayBlock } from './CoachClient'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Coach lineup', robots: { index: false, follow: false } }
@@ -15,16 +15,18 @@ const fmtTime = (t: string | null) => {
   const ampm = h >= 12 ? 'pm' : 'am'
   return `${h % 12 || 12}${m ? ':' + String(m).padStart(2, '0') : ''}${ampm}`
 }
+const fmtDay = (day: string) => DAY.format(new Date(day + 'T12:00:00+12:00'))
 
 type PlayerRow = {
   id: string; full_name: string; active: boolean | null
   is_under18: boolean | null; has_consent: boolean | null; playing_number: number | string | null
 }
-type LuRow = { round_number: number; player_id: string | null; player_name: string | null; bat_order: number | null; pos: string }
+type LuRow = { round_number: number; game_day: string; player_id: string | null; player_name: string | null; bat_order: number | null; pos: string }
 type FxRow = {
   team_a: string; team_b: string; club_a: string | null; club_b: string | null
-  location: string | null; venue: string | null; start_time: string | null
+  played_on: string; location: string | null; venue: string | null; start_time: string | null
 }
+type SubRow = { game_day: string; submitted_at: string }
 
 function Notice({ text }: { text: string }) {
   return (
@@ -49,46 +51,45 @@ export default async function CoachPage({ params }: { params: Promise<{ token: s
   if (!cr) return <Notice text="There is no upcoming round to name a team for." />
   const rn = cr.round_number
 
-  const [{ data: club }, { data: plRows }, { data: luRows }, { data: sub }, { data: fxRows }] = await Promise.all([
+  const [{ data: club }, { data: plRows }, { data: luRows }, { data: subRows }, { data: fxRows }] = await Promise.all([
     admin.from('clubs').select('name').eq('id', clubId).single(),
     admin.from('players')
       .select('id, full_name, active, is_under18, has_consent, playing_number')
       .eq('grade', grade).eq('club_id', clubId).order('full_name'),
     admin.from('club_lineups')
-      .select('round_number, player_id, player_name, bat_order, pos')
+      .select('round_number, game_day, player_id, player_name, bat_order, pos')
       .eq('grade', grade).eq('club_id', clubId).lte('round_number', rn),
-    admin.from('coach_submissions').select('submitted_at')
-      .eq('grade', grade).eq('club_id', clubId).eq('round_number', rn).maybeSingle(),
+    admin.from('coach_submissions').select('game_day, submitted_at')
+      .eq('grade', grade).eq('club_id', clubId).eq('round_number', rn),
     admin.from('fixtures')
-      .select('team_a, team_b, club_a, club_b, location, venue, start_time')
+      .select('team_a, team_b, club_a, club_b, played_on, location, venue, start_time')
       .eq('grade', grade).eq('round_number', rn),
   ])
 
-  // This club's game this round: the opposition, the time and the ground
+  // This club's games this round: one per day it plays, with the opposition,
+  // the time and the ground. A club with no game is on a bye and sees the
+  // round's days anyway so it can still name a team.
   const key = (club?.name ?? '').trim().toLowerCase()
-  let opponent: string | null = null
-  let gameWhen: string | null = null
-  let gameWhere: string | null = null
+  type Game = { opponent: string | null; when: string | null; where: string | null }
+  const gameOn = new Map<string, Game>()
   for (const f of (fxRows ?? []) as FxRow[]) {
     const a = (f.club_a ?? '').trim().toLowerCase() === key
     const b = (f.club_b ?? '').trim().toLowerCase() === key
     if (!a && !b) continue
     const other = a ? { team: f.team_b, club: f.club_b } : { team: f.team_a, club: f.club_a }
-    opponent = other.team === 'BYE' ? 'Bye' : (other.club ?? other.team)
-    gameWhen = fmtTime(f.start_time)
-    gameWhere = [f.location, f.venue].filter(v => v && v !== 'Unallocated').join(' · ') || null
-    break
+    if (gameOn.has(f.played_on)) continue
+    gameOn.set(f.played_on, {
+      opponent: other.team === 'BYE' ? 'Bye' : (other.club ?? other.team),
+      when: fmtTime(f.start_time),
+      where: [f.location, f.venue].filter(v => v && v !== 'Unallocated').join(' · ') || null,
+    })
   }
+  const clubDays = cr.days.filter(d => gameOn.has(d.day) && gameOn.get(d.day)!.opponent !== 'Bye')
+  const days = clubDays.length ? clubDays : cr.days.slice(0, 1)
 
   const players = (plRows ?? []) as PlayerRow[]
   const byId = new Map(players.map(p => [p.id, p]))
   const shownOf = (p: PlayerRow) => !!p.active && (!p.is_under18 || !!p.has_consent)
-
-  // Start from the latest team on file (this round if already named, else the last round)
-  const all = (luRows ?? []) as LuRow[]
-  const latest = all.reduce((m, r) => Math.max(m, r.round_number), 0)
-  const rows = all.filter(r => r.round_number === latest)
-    .sort((a, b) => (a.bat_order ?? 99) - (b.bat_order ?? 99))
 
   const toEntry = (r: LuRow): Entry => {
     if (r.player_id) {
@@ -100,19 +101,55 @@ export default async function CoachPage({ params }: { params: Promise<{ token: s
     }
     return { key: 'n:' + r.player_name, player_id: null, name: r.player_name ?? '', shown: false, pos: r.pos, number: null }
   }
-  const batters = rows.filter(r => r.bat_order != null).map(toEntry)
-  const relievers = rows.filter(r => r.bat_order == null).map(toEntry)
-  const used = new Set(rows.map(r => r.player_id).filter(Boolean) as string[])
 
-  const squad: Entry[] = players.filter(p => !used.has(p.id)).map(p => ({
-    key: p.id, player_id: p.id, name: p.full_name, shown: shownOf(p), pos: '', number: p.playing_number, active: !!p.active,
-  }))
+  // Teams on file, newest first by round then day
+  const all = (luRows ?? []) as LuRow[]
+  const teamKeys = [...new Set(all.map(r => `${String(r.round_number).padStart(3, '0')}|${r.game_day}`))].sort().reverse()
+  const rowsFor = (k: string) => {
+    const [rnS, day] = k.split('|')
+    return all.filter(r => r.round_number === Number(rnS) && r.game_day === day)
+      .sort((a, b) => (a.bat_order ?? 99) - (b.bat_order ?? 99))
+  }
+  const submitted = new Map(((subRows ?? []) as SubRow[]).map(s => [s.game_day, s.submitted_at]))
 
   const { data: flagRows } = await admin.from('coach_unavailable').select('player_id')
     .eq('grade', grade).eq('round_number', rn).in('player_id', players.map(p => p.id))
   const unavailable = (flagRows ?? []).map(f => f.player_id as string)
 
-  const named = latest === rn
+  const now = new Date()
+  const blocks: DayBlock[] = days.map(d => {
+    const thisKey = `${String(rn).padStart(3, '0')}|${d.day}`
+    // Start from this day's team if named, else the latest team on file before it
+    const srcKey = teamKeys.includes(thisKey) ? thisKey : teamKeys.find(k => k < thisKey) ?? null
+    const rows = srcKey ? rowsFor(srcKey) : []
+    const named = srcKey === thisKey
+    const [srcRn, srcDay] = srcKey ? srcKey.split('|') : ['', '']
+    const srcLabel = srcKey
+      ? (Number(srcRn) === rn ? `${fmtDay(srcDay)} team` : `Round ${Number(srcRn)} lineup`)
+      : ''
+    const batters = rows.filter(r => r.bat_order != null).map(toEntry)
+    const relievers = rows.filter(r => r.bat_order == null).map(toEntry)
+    const used = new Set(rows.map(r => r.player_id).filter(Boolean) as string[])
+    const squad: Entry[] = players.filter(p => !used.has(p.id)).map(p => ({
+      key: p.id, player_id: p.id, name: p.full_name, shown: shownOf(p), pos: '', number: p.playing_number, active: !!p.active,
+    }))
+    const g = gameOn.get(d.day)
+    const sub = submitted.get(d.day)
+    return {
+      day: d.day,
+      dayLabel: fmtDay(d.day),
+      opponent: g?.opponent ?? null,
+      gameWhen: g?.when ?? null,
+      gameWhere: g?.where ?? null,
+      closesLabel: d.closes_at > now ? WHEN.format(d.closes_at) : '',
+      closed: d.hard_closes_at <= now || (d.closes_at <= now && !!sub),
+      sourceNote: named ? `Your team for ${fmtDay(d.day)}, as you last sent it`
+        : srcKey ? `Filled in from your ${srcLabel}` : 'No team on file yet. Build one below',
+      submittedLabel: sub ? WHEN.format(new Date(sub)) : null,
+      batters, relievers, squad,
+    }
+  })
+
   return (
     <CoachClient
       token={token}
@@ -120,20 +157,7 @@ export default async function CoachPage({ params }: { params: Promise<{ token: s
       gradeLabel={grade === 'mens' ? "Men's" : "Women's"}
       clubName={club?.name ?? 'Your club'}
       roundNumber={rn}
-      dayLabel={DAY.format(new Date(cr.opens_day + 'T12:00:00+12:00'))}
-      closesLabel={cr.closes_at > new Date() ? WHEN.format(cr.closes_at) : ''}
-      closed={cr.hard_closes_at <= new Date() || (cr.closes_at <= new Date() && !!sub)}
-      opponent={opponent}
-      gameWhen={gameWhen}
-      gameWhere={gameWhere}
-      sourceNote={
-        named ? `Your team for Round ${rn}, as you last sent it`
-          : latest > 0 ? `Filled in from your Round ${latest} lineup` : 'No team on file yet. Build one below'
-      }
-      submittedLabel={sub?.submitted_at ? WHEN.format(new Date(sub.submitted_at)) : null}
-      batters={batters}
-      relievers={relievers}
-      squad={squad}
+      days={blocks}
       unavailable={unavailable}
     />
   )

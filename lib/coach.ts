@@ -19,29 +19,62 @@ export function nzToDate(day: string, time: string | null): Date {
   return new Date(`${day}T${t}:00+12:00`)
 }
 
-/* Coaches are told the deadline is noon the day before a round's first game,
-   so GF managers have the named teams for the evening before the GF lock.
-   Behind that sits a quiet soft close: a club that has not submitted yet can
-   still send its team until 8pm that day. It is never shown to coaches. */
+/* Coaches are told the deadline is noon the day before a round's first game
+   day, so GF managers have the named teams for the evening before the GF
+   lock. Behind that sits a quiet soft close: a club that has not submitted
+   yet can still send its team until 8pm that day. It is never shown to
+   coaches.
+
+   A round played over two days (a super round) has one team per day. The
+   second day's team can be changed after the first day's games, up to 8pm
+   the night before; a club that has not sent one at all can still send it
+   until the first pitch. Projected Lineups reveal the second day's teams at
+   that 8pm mark. */
 const COACH_CLOSE_TIME = '12:00'
 const COACH_HARD_CLOSE_TIME = '20:00'
+const LATER_DAY_CLOSE_TIME = '20:00'
 
-function dayBefore(day: string): string {
+export function dayBefore(day: string): string {
   const d = new Date(`${day}T12:00:00Z`)
   d.setUTCDate(d.getUTCDate() - 1)
   return d.toISOString().slice(0, 10)
 }
 
-export type CoachRound = {
-  round_number: number
-  opens_day: string
-  starts_at: Date
+/* When a later game day's teams become public: 8pm the night before. */
+export function laterDayRevealAt(day: string): Date {
+  return nzToDate(dayBefore(day), LATER_DAY_CLOSE_TIME)
+}
+
+export type CoachDay = {
+  day: string            // YYYY-MM-DD, NZ date of the games
+  starts_at: Date        // first game that day
   closes_at: Date        // the published deadline
   hard_closes_at: Date   // last moment for a club that has not yet submitted
 }
 
-/* The round a coach is submitting for: the first round whose opening game has
-   not started yet. Null once every round has begun. */
+export type CoachRound = {
+  round_number: number
+  opens_day: string      // first game day of the round
+  starts_at: Date
+  closes_at: Date        // the first day's deadline (back-compat)
+  hard_closes_at: Date
+  days: CoachDay[]       // every game day in the round, in order
+}
+
+export function coachDay(day: string, starts_at: Date, laterDay = false): CoachDay {
+  const eve = dayBefore(day)
+  if (laterDay) {
+    return { day, starts_at, closes_at: laterDayRevealAt(day), hard_closes_at: starts_at }
+  }
+  return {
+    day, starts_at,
+    closes_at: nzToDate(eve, COACH_CLOSE_TIME),
+    hard_closes_at: nzToDate(eve, COACH_HARD_CLOSE_TIME),
+  }
+}
+
+/* The round a coach is submitting for: the first round with a game that has
+   not started yet. Null once every game of every round has begun. */
 export async function getCoachRound(
   admin: SupabaseClient,
   grade: 'mens' | 'womens',
@@ -51,26 +84,32 @@ export async function getCoachRound(
     .eq('grade', grade)
     .order('round_number')
 
-  const first = new Map<number, { day: string; at: Date }>()
+  // Per round, the first start time of each game day
+  const byRound = new Map<number, Map<string, Date>>()
   for (const f of data ?? []) {
     if (f.team_a === 'BYE' || f.team_b === 'BYE') continue
-    const at = nzToDate(String(f.played_on), f.start_time)
     const rn = Number(f.round_number)
-    const cur = first.get(rn)
-    if (!cur || at < cur.at) first.set(rn, { day: String(f.played_on), at })
+    const day = String(f.played_on)
+    const at = nzToDate(day, f.start_time)
+    const days = byRound.get(rn) ?? new Map<string, Date>()
+    byRound.set(rn, days)
+    const cur = days.get(day)
+    if (!cur || at < cur) days.set(day, at)
   }
 
   const now = new Date()
-  for (const n of [...first.keys()].sort((a, b) => a - b)) {
-    const r = first.get(n)!
-    if (r.at > now) {
-      const eve = dayBefore(r.day)
+  for (const n of [...byRound.keys()].sort((a, b) => a - b)) {
+    const days = [...byRound.get(n)!.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+    const last = days[days.length - 1][1]
+    if (last > now) {
+      const list = days.map(([day, at], i) => coachDay(day, at, i > 0))
       return {
         round_number: n,
-        opens_day: r.day,
-        starts_at: r.at,
-        closes_at: nzToDate(eve, COACH_CLOSE_TIME),
-        hard_closes_at: nzToDate(eve, COACH_HARD_CLOSE_TIME),
+        opens_day: list[0].day,
+        starts_at: list[0].starts_at,
+        closes_at: list[0].closes_at,
+        hard_closes_at: list[0].hard_closes_at,
+        days: list,
       }
     }
   }
