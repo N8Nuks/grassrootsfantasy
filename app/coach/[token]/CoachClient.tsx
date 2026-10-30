@@ -423,6 +423,9 @@ export default function CoachClient(props: Props) {
                     {e.player_id && (
                       <button type="button" onClick={() => toggleOut(e)} style={btn}>{flagged ? 'Available' : 'Unavailable'}</button>
                     )}
+                    {batters.length > 9 && (
+                      <button type="button" onClick={() => { setBatters(batters.filter((_, k) => k !== i)); setSquad([...squad, { ...e, pos: '' }]); setMsg(null) }} style={btn}>Remove</button>
+                    )}
                   </div>
                 )}
               </div>
