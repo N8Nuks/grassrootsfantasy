@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getCoachRound } from '@/lib/coach'
-import { clubKey } from '@/lib/clubMatch
+import { clubKey } from '@/lib/clubMatch'
 import CoachClient, { type Entry, type DayBlock } from './CoachClient'
 
 export const dynamic = 'force-dynamic'
