@@ -79,7 +79,8 @@ const label = (team: string, club: string | null) =>
 const num = (v: unknown) => { const x = Number(v); return Number.isFinite(x) ? x : 0 }
 const tookField = (raw: Record<string, unknown> | null) =>
   raw == null ? false : (raw.gp == null || raw.gp === '' ? true : num(raw.gp) > 0)
-const clubKey = (s: string | null) => (s ?? '').trim().toLowerCase()
+// Sorted words, so "United-Marist" on the fixture matches "Marist United" in clubs
+const clubKey = (s: string | null) => (s ?? '').toLowerCase().split(/[^a-z]+/).filter(Boolean).sort().join(' ')
 const surname = (n: string) => (n.trim().split(/\s+/).slice(-1)[0] ?? '').toLowerCase()
 const caption = (cp: ClubProj) =>
   cp.kind === 'named' ? `Named for this game`
