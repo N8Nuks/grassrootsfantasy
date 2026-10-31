@@ -460,7 +460,7 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
                   {!lock && n === roundNumbers.find(rn => !lockOf.has(rn)) && (<span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: accent }}>Opens Tuesday 5pm</span>)}
                   {lock && (lock.status === 'provisional' || lock.status === 'confirmed') && (
                     <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: lock.status === 'confirmed' ? '#4ADE80' : accent }}>
-                      {lock.status === 'confirmed' ? 'Confirmed' : 'Played'}
+                      {lock.status === 'confirmed' ? 'Confirmed' : games.some(g => g.club_b && g.score_a == null) ? 'Playing' : 'Played'}
                     </span>
                   )}
                   {lock?.lock_at && lock.status !== 'provisional' && lock.status !== 'confirmed' && (
