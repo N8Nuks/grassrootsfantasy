@@ -222,7 +222,7 @@ export type SiteTheme = ThemeKey | 'grade'
 // Switcher order — every theme selectable in both grades. Halloween leads the
 // list only while its window is open.
 export const THEME_ORDER: string[] = [
-  'padres', 'chevron', 'rwb', 'blackgold', 'cardinal', 'purple', 'greenyellow', 'neon', 'halloween',
+  'padres', 'chevron', 'rwb', 'blackgold', 'cardinal', 'purple', 'greenyellow', 'neon',
 ]
 
 // Back-compat: existing grade-keyed lookups
