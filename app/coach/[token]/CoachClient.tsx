@@ -44,8 +44,15 @@ type DayProps = Omit<Props, 'days' | 'unavailable'> & DayBlock & {
   setOut: (next: Set<string>) => void
 }
 
-const GOLD = '#E8C15A'
-const SILVER = '#7FC4FF'
+/* Daylight palette — cream page, navy and cobalt writing, green Submit.
+   Built for reading on a phone at the ground in full sun. Same for both grades. */
+const CREAM = '#F5F1E8'
+const BAR = '#EDE7DA'
+const INK = '#0B1A45'
+const BLUE = '#2B5BD7'
+const GREEN = '#23873F'
+const RED = '#B3261E'
+const LINE = '#0B1A451F'
 const CYCLE = ['P', 'C', 'IF', 'OF', 'DP']
 const slotLabel = (i: number) => (i === 9 ? 'FL' : String(i + 1))
 
@@ -56,20 +63,20 @@ export default function CoachClient(props: Props) {
   const { days } = props
   const [active, setActive] = useState(days[0]?.day ?? '')
   const [out, setOut] = useState<Set<string>>(new Set(props.unavailable))
-  const accent = props.grade === 'mens' ? GOLD : SILVER
+  const accent = BLUE
   const multiDay = days.length > 1
 
   return (
     <>
       {multiDay && (
-        <div style={{ position: 'sticky', top: 0, zIndex: 5, background: '#0D0D0F', borderBottom: '1px solid #ffffff14' }}>
+        <div style={{ position: 'sticky', top: 0, zIndex: 5, background: CREAM, borderBottom: `1px solid ${LINE}` }}>
           <div className="flex" style={{ maxWidth: '480px', marginLeft: 'auto', marginRight: 'auto' }}>
             {days.map(d => (
               <button key={d.day} type="button" onClick={() => setActive(d.day)}
                 className="flex-1 text-xs font-black uppercase tracking-widest"
                 style={{
                   padding: '14px 8px', background: 'transparent', border: 'none',
-                  color: active === d.day ? accent : '#ffffff80',
+                  color: active === d.day ? accent : `${INK}80`,
                   borderBottom: `2px solid ${active === d.day ? accent : 'transparent'}`,
                 }}>
                 {d.dayLabel}{d.submittedLabel ? ' ✓' : ''}
@@ -93,7 +100,7 @@ export default function CoachClient(props: Props) {
 
 function DayLineup(props: DayProps) {
   const { token, grade, gradeLabel, clubName, roundNumber, day, dayLabel, closesLabel, closed, sourceNote, opponent, gameWhen, gameWhere, multiDay, out, setOut } = props
-  const accent = grade === 'mens' ? GOLD : SILVER
+  const accent = BLUE
 
   const [batters, setBatters] = useState<Entry[]>(props.batters)
   const [relievers, setRelievers] = useState<Entry[]>(props.relievers.filter(e => e.pos !== 'DR'))
@@ -127,9 +134,9 @@ function DayLineup(props: DayProps) {
 
   const btn: CSSProperties = {
     fontSize: '11px', fontWeight: 800, letterSpacing: '0.04em', padding: '7px 11px',
-    borderRadius: '8px', border: '1px solid #ffffff30', color: '#F5F1E8', background: 'transparent',
+    borderRadius: '8px', border: `1px solid ${BLUE}66`, color: INK, background: '#FFFFFF',
   }
-  const chip: CSSProperties = { ...btn, minWidth: '46px', textAlign: 'center', borderColor: `${accent}80`, color: accent }
+  const chip: CSSProperties = { ...btn, minWidth: '46px', textAlign: 'center', borderColor: BLUE, background: BLUE, color: '#FFFFFF' }
 
   const gameLine = opponent
     ? (opponent === 'Bye' ? 'Bye this round' : `v ${opponent}`) + (gameWhen ? ` · ${gameWhen}` : '')
@@ -346,7 +353,7 @@ function DayLineup(props: DayProps) {
   }
 
   const tag = (e: Entry) => !e.shown && (
-    <span className="block text-[10px] text-white/50" style={{ marginTop: '2px' }}>
+    <span className="block text-[10px] text-[#0B1A45]/50" style={{ marginTop: '2px' }}>
       {e.player_id ? '* Not shown in GF' : '* Not in GF yet'}
     </span>
   )
@@ -363,14 +370,14 @@ function DayLineup(props: DayProps) {
   const squadRow = (e: Entry) => {
     const flagged = isOut(e)
     return (
-      <div key={e.key} style={{ padding: '10px 0', borderBottom: '1px solid #ffffff10' }}>
+      <div key={e.key} style={{ padding: '10px 0', borderBottom: `1px solid ${LINE}` }}>
         <div className="flex items-center gap-3">
-          <span className="w-6 shrink-0 text-[10px] text-white/40">{e.number ?? ''}</span>
+          <span className="w-6 shrink-0 text-[10px] text-[#0B1A45]/40">{e.number ?? ''}</span>
           <span className="flex-1 min-w-0">
-            <span className="block text-sm text-white/85 truncate">{e.name}</span>
+            <span className="block text-sm text-[#0B1A45]/85 truncate">{e.name}</span>
             {tag(e)}
           </span>
-          {flagged && <span className="text-[10px]" style={{ color: '#F09595' }}>Unavailable</span>}
+          {flagged && <span className="text-[10px]" style={{ color: RED }}>Unavailable</span>}
         </div>
         {editable && (
           <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: '8px', marginLeft: '36px' }}>
@@ -399,18 +406,18 @@ function DayLineup(props: DayProps) {
   }
 
   return (
-    <main className="min-h-screen" style={{ background: '#0D0D0F', paddingBottom: '150px' }}>
+    <main className="min-h-screen" style={{ background: CREAM, color: INK, paddingBottom: '150px' }}>
       <div style={{ maxWidth: '480px', marginLeft: 'auto', marginRight: 'auto' }}>
-        <header style={{ padding: '22px 18px 14px', borderBottom: '1px solid #ffffff14' }}>
-          <p className="text-[11px] text-white/55">{gradeLabel} · Round {roundNumber} · {dayLabel}</p>
-          <h1 className="text-xl font-black text-white" style={{ marginTop: '2px' }}>{clubName}</h1>
+        <header style={{ padding: '22px 18px 14px', borderBottom: `1px solid ${LINE}` }}>
+          <p className="text-[11px] text-[#0B1A45]/55">{gradeLabel} · Round {roundNumber} · {dayLabel}</p>
+          <h1 className="text-xl font-black text-[#0B1A45]" style={{ marginTop: '2px' }}>{clubName}</h1>
           {gameLine && (
             <p className="text-sm font-bold" style={{ color: accent, marginTop: '6px' }}>{gameLine}</p>
           )}
           {gameWhere && opponent !== 'Bye' && (
-            <p className="text-[11px] text-white/55" style={{ marginTop: '2px' }}>{gameWhere}</p>
+            <p className="text-[11px] text-[#0B1A45]/55" style={{ marginTop: '2px' }}>{gameWhere}</p>
           )}
-          <p className="text-[11px] text-white/55" style={{ marginTop: '6px' }}>
+          <p className="text-[11px] text-[#0B1A45]/55" style={{ marginTop: '6px' }}>
             {closed ? 'Lineup is closed for this game' : closesLabel ? `Lineup closes ${closesLabel}` : ''}
           </p>
         </header>
@@ -418,24 +425,24 @@ function DayLineup(props: DayProps) {
         {showConfirm && (
           <div style={{ margin: '14px 18px 0', padding: '16px', borderRadius: '12px', border: `1px solid ${accent}`, background: `${accent}14` }}>
             <p className="text-sm font-black uppercase tracking-widest" style={{ color: accent }}>Your {multiDay ? dayLabel + ' ' : ''}team is in</p>
-            <p className="text-[11px] text-white/60" style={{ marginTop: '4px' }}>
+            <p className="text-[11px] text-[#0B1A45]/60" style={{ marginTop: '4px' }}>
               Sent {savedLabel ?? 'just now'}. You can keep changing it until the round closes.
             </p>
             <div style={{ marginTop: '12px' }}>
               {batters.map((e, i) => (
-                <p key={e.key} className="text-xs text-white/85" style={{ padding: '3px 0' }}>
+                <p key={e.key} className="text-xs text-[#0B1A45]/85" style={{ padding: '3px 0' }}>
                   <span className="font-black" style={{ color: accent, display: 'inline-block', width: '26px' }}>{slotLabel(i)}</span>
-                  {e.name} <span className="text-white/45">({e.pos})</span>
+                  {e.name} <span className="text-[#0B1A45]/45">({e.pos})</span>
                 </p>
               ))}
               {relievers.length > 0 && (
-                <p className="text-xs text-white/70" style={{ marginTop: '8px' }}>Relief: {relievers.map(e => e.name).join(', ')}</p>
+                <p className="text-xs text-[#0B1A45]/70" style={{ marginTop: '8px' }}>Relief: {relievers.map(e => e.name).join(', ')}</p>
               )}
               {runners.length > 0 && (
-                <p className="text-xs text-white/70" style={{ marginTop: '4px' }}>DR: {runners.map(e => e.name).join(', ')}</p>
+                <p className="text-xs text-[#0B1A45]/70" style={{ marginTop: '4px' }}>DR: {runners.map(e => e.name).join(', ')}</p>
               )}
               {outNames.length > 0 && (
-                <p className="text-xs" style={{ marginTop: '4px', color: '#F09595' }}>Unavailable: {outNames.join(', ')}</p>
+                <p className="text-xs" style={{ marginTop: '4px', color: RED }}>Unavailable: {outNames.join(', ')}</p>
               )}
             </div>
             <div className="flex items-center gap-3 flex-wrap" style={{ marginTop: '14px' }}>
@@ -445,42 +452,42 @@ function DayLineup(props: DayProps) {
           </div>
         )}
 
-        <div style={{ padding: '12px 18px', background: `${accent}18`, marginTop: showConfirm ? '14px' : 0 }}>
-          <p className="text-xs leading-relaxed" style={{ color: accent }}>
+        <div style={{ padding: '12px 18px', background: `${BLUE}14`, marginTop: showConfirm ? '14px' : 0 }}>
+          <p className="text-xs leading-relaxed" style={{ color: '#1F47B0' }}>
             Name your real team. Players tagged &quot;Not shown in GF&quot; stay in your team but are never added to or displayed on Grassroots Fantasy.
           </p>
         </div>
 
         <div className="flex items-center justify-between gap-3" style={{ padding: '10px 18px' }}>
-          <span className="text-[11px] text-white/55">{sourceNote}</span>
+          <span className="text-[11px] text-[#0B1A45]/55">{sourceNote}</span>
           {editable && <button type="button" onClick={reset} style={btn}>Start again</button>}
         </div>
 
         {swap && (
-          <div style={{ padding: '10px 18px', background: '#ffffff0d' }}>
-            <p className="text-xs text-white/85">Pick who goes in {swapLabel} from the squad list below.</p>
+          <div style={{ padding: '10px 18px', background: `${BLUE}0F` }}>
+            <p className="text-xs text-[#0B1A45]/85">Pick who goes in {swapLabel} from the squad list below.</p>
             <button type="button" onClick={() => setSwap(null)} style={{ ...btn, marginTop: '8px' }}>Cancel swap</button>
           </div>
         )}
 
         <section style={{ padding: '4px 18px' }}>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45" style={{ padding: '10px 0 4px' }}>Batting order</p>
-          <p className="text-[10px] text-white/40" style={{ paddingBottom: '6px' }}>Use Change player to put anyone in a spot. Picking someone already batting swaps them. FL = Flex, the 10th batting spot. Optional: only use it if you play a DP.</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0B1A45]/45" style={{ padding: '10px 0 4px' }}>Batting order</p>
+          <p className="text-[10px] text-[#0B1A45]/40" style={{ paddingBottom: '6px' }}>Use Change player to put anyone in a spot. Picking someone already batting swaps them. FL = Flex, the 10th batting spot. Optional: only use it if you play a DP.</p>
           {batters.map((e, i) => {
             const flagged = isOut(e)
             return (
               <div key={e.key} style={{
-                padding: '10px 0', borderBottom: '1px solid #ffffff10',
+                padding: '10px 0', borderBottom: `1px solid ${LINE}`,
                 background: flagged ? '#E24B4A18' : 'transparent',
                 outline: swap && swap.kind === 'b' && swap.i === i ? `1px solid ${accent}` : 'none',
               }}>
                 <div className="flex items-center gap-3">
                   <span className="w-6 shrink-0 text-xs font-black" style={{ color: accent }}>{slotLabel(i)}</span>
                   <span className="flex-1 min-w-0">
-                    <span className="block text-sm text-white/90 truncate"
+                    <span className="block text-sm text-[#0B1A45]/90 truncate"
                       style={{ textDecoration: flagged ? 'line-through' : 'none' }}>{e.name}</span>
                     {flagged
-                      ? <span className="block text-[10px]" style={{ color: '#F09595' }}>Unavailable. Swap them out</span>
+                      ? <span className="block text-[10px]" style={{ color: RED }}>Unavailable. Swap them out</span>
                       : tag(e)}
                   </span>
                   {editable && (
@@ -490,13 +497,13 @@ function DayLineup(props: DayProps) {
                       <button type="button" onClick={() => move(i, 1)} style={btn} aria-label="Move down">▼</button>
                     </>
                   )}
-                  {!editable && <span className="text-[11px] font-black text-white/60">{e.pos}</span>}
+                  {!editable && <span className="text-[11px] font-black text-[#0B1A45]/60">{e.pos}</span>}
                 </div>
                 {editable && (
                   <div className="flex items-center gap-2" style={{ marginTop: '8px', marginLeft: '36px' }}>
                     <select value="" aria-label={`Change the player in slot ${slotLabel(i)}`}
                       onChange={ev => { if (ev.target.value) putInBatSlot(i, ev.target.value) }}
-                      style={{ ...btn, background: '#0D0D0F', appearance: 'none', WebkitAppearance: 'none', maxWidth: '150px' }}>
+                      style={{ ...btn, appearance: 'none', WebkitAppearance: 'none', maxWidth: '150px' }}>
                       <option value="">Change player ▾</option>
                       <optgroup label="Batting order (swap places)">
                         {batters.map((b, k) => k === i ? null : (
@@ -537,16 +544,16 @@ function DayLineup(props: DayProps) {
         </section>
 
         <section style={{ padding: '4px 18px' }}>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45" style={{ padding: '14px 0 4px' }}>Relief pitchers used last time</p>
-          {relievers.length === 0 && <p className="text-[11px] text-white/40" style={{ padding: '6px 0' }}>None named</p>}
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0B1A45]/45" style={{ padding: '14px 0 4px' }}>Relief pitchers used last time</p>
+          {relievers.length === 0 && <p className="text-[11px] text-[#0B1A45]/40" style={{ padding: '6px 0' }}>None named</p>}
           {relievers.map((e, i) => {
             const flagged = isOut(e)
             return (
-              <div key={e.key} className="flex items-center gap-3" style={{ padding: '10px 0', borderBottom: '1px solid #ffffff10' }}>
-                <span className="w-6 shrink-0 text-xs font-black text-white/50">P2</span>
+              <div key={e.key} className="flex items-center gap-3" style={{ padding: '10px 0', borderBottom: `1px solid ${LINE}` }}>
+                <span className="w-6 shrink-0 text-xs font-black text-[#0B1A45]/50">P2</span>
                 <span className="flex-1 min-w-0">
-                  <span className="block text-sm text-white/90 truncate" style={{ textDecoration: flagged ? 'line-through' : 'none' }}>{e.name}</span>
-                  {flagged ? <span className="block text-[10px]" style={{ color: '#F09595' }}>Unavailable. Swap them out</span> : tag(e)}
+                  <span className="block text-sm text-[#0B1A45]/90 truncate" style={{ textDecoration: flagged ? 'line-through' : 'none' }}>{e.name}</span>
+                  {flagged ? <span className="block text-[10px]" style={{ color: RED }}>Unavailable. Swap them out</span> : tag(e)}
                 </span>
                 {editable && (
                   <>
@@ -560,16 +567,16 @@ function DayLineup(props: DayProps) {
         </section>
 
         <section style={{ padding: '4px 18px' }}>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45" style={{ padding: '14px 0 4px' }}>Designated runners (optional, up to 2)</p>
-          {runners.length === 0 && <p className="text-[11px] text-white/40" style={{ padding: '6px 0' }}>None named. Add one from the squad list below.</p>}
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0B1A45]/45" style={{ padding: '14px 0 4px' }}>Designated runners (optional, up to 2)</p>
+          {runners.length === 0 && <p className="text-[11px] text-[#0B1A45]/40" style={{ padding: '6px 0' }}>None named. Add one from the squad list below.</p>}
           {runners.map((e, i) => {
             const flagged = isOut(e)
             return (
-              <div key={e.key} className="flex items-center gap-3" style={{ padding: '10px 0', borderBottom: '1px solid #ffffff10' }}>
-                <span className="w-6 shrink-0 text-xs font-black text-white/50">DR</span>
+              <div key={e.key} className="flex items-center gap-3" style={{ padding: '10px 0', borderBottom: `1px solid ${LINE}` }}>
+                <span className="w-6 shrink-0 text-xs font-black text-[#0B1A45]/50">DR</span>
                 <span className="flex-1 min-w-0">
-                  <span className="block text-sm text-white/90 truncate" style={{ textDecoration: flagged ? 'line-through' : 'none' }}>{e.name}</span>
-                  {flagged ? <span className="block text-[10px]" style={{ color: '#F09595' }}>Unavailable. Remove them</span> : tag(e)}
+                  <span className="block text-sm text-[#0B1A45]/90 truncate" style={{ textDecoration: flagged ? 'line-through' : 'none' }}>{e.name}</span>
+                  {flagged ? <span className="block text-[10px]" style={{ color: RED }}>Unavailable. Remove them</span> : tag(e)}
                 </span>
                 {editable && <button type="button" onClick={() => removeRunner(i)} style={btn}>Remove</button>}
               </div>
@@ -578,13 +585,13 @@ function DayLineup(props: DayProps) {
         </section>
 
         <section style={{ padding: '4px 18px' }}>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45" style={{ padding: '14px 0 4px' }}>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0B1A45]/45" style={{ padding: '14px 0 4px' }}>
             Squad ({mainSquad.length})
           </p>
           {mainSquad.map(squadRow)}
           {editable && !swap && (
             <div style={{ padding: '14px 0 6px' }}>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45" style={{ paddingBottom: '6px' }}>Add a player not listed</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0B1A45]/45" style={{ paddingBottom: '6px' }}>Add a player not listed</p>
               <div className="flex items-center gap-2">
                 <input
                   value={typed}
@@ -593,11 +600,11 @@ function DayLineup(props: DayProps) {
                   placeholder="Full name"
                   autoComplete="off"
                   className="flex-1 min-w-0 text-sm"
-                  style={{ padding: '9px 11px', borderRadius: '8px', border: '1px solid #ffffff30', background: '#ffffff0a', color: '#F5F1E8' }}
+                  style={{ padding: '9px 11px', borderRadius: '8px', border: `1px solid ${BLUE}66`, background: '#FFFFFF', color: INK }}
                 />
                 <button type="button" onClick={addWriteIn} style={{ ...btn, borderColor: accent, color: accent }}>Add</button>
               </div>
-              <p className="text-[10px] text-white/40" style={{ marginTop: '6px' }}>
+              <p className="text-[10px] text-[#0B1A45]/40" style={{ marginTop: '6px' }}>
                 Adds them to your squad list so you can add or swap them in. A name already on your list attaches to that player.
               </p>
             </div>
@@ -609,31 +616,31 @@ function DayLineup(props: DayProps) {
             <button type="button" onClick={() => setShowOther(!showOther)}
               className="w-full flex items-center justify-between"
               style={{ padding: '14px 0 8px', background: 'transparent', border: 'none' }}>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0B1A45]/45">
                 Other players on file ({otherSquad.length})
               </span>
-              <span className="text-[11px] text-white/45">{showOther ? 'Hide' : 'Show'}</span>
+              <span className="text-[11px] text-[#0B1A45]/45">{showOther ? 'Hide' : 'Show'}</span>
             </button>
             {showOther && otherSquad.map(squadRow)}
           </section>
         )}
 
-        <p className="text-[10px] text-white/35 text-center" style={{ padding: '18px 18px 0' }}>
+        <p className="text-[10px] text-[#0B1A45]/35 text-center" style={{ padding: '18px 18px 0' }}>
           This page shows your club only. Teams on Grassroots Fantasy are projected and not confirmed.
         </p>
       </div>
 
-      <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, background: '#0D0D0F', borderTop: '1px solid #ffffff14', padding: '12px 18px 16px' }}>
+      <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, background: BAR, borderTop: `1px solid ${LINE}`, padding: '12px 18px 16px' }}>
         <div style={{ maxWidth: '480px', marginLeft: 'auto', marginRight: 'auto' }}>
           {msg && (
-            <p className="text-xs" style={{ color: msg.ok ? accent : '#F09595', marginBottom: '8px' }}>{msg.text}</p>
+            <p className="text-xs font-bold" style={{ color: msg.ok ? GREEN : RED, marginBottom: '8px' }}>{msg.text}</p>
           )}
           {closed ? (
-            <p className="text-xs text-white/60 text-center">Lineup is closed for this game. Contact GF if your team needs to change.</p>
+            <p className="text-xs text-[#0B1A45]/60 text-center">Lineup is closed for this game. Contact GF if your team needs to change.</p>
           ) : (
             <button type="button" onClick={submit} disabled={saving}
               className="w-full text-sm font-black uppercase tracking-widest rounded-full"
-              style={{ color: '#0D0D0F', background: accent, padding: '14px', opacity: saving ? 0.6 : 1 }}>
+              style={{ color: '#FFFFFF', background: GREEN, padding: '14px', opacity: saving ? 0.6 : 1 }}>
               {saving ? 'Saving…' : showConfirm ? 'Sent. Submit again to update' : multiDay ? `Submit ${dayLabel} lineup` : 'Submit lineup'}
             </button>
           )}
@@ -642,7 +649,7 @@ function DayLineup(props: DayProps) {
             {canShare && <button type="button" onClick={shareText} style={btn}>Send to myself</button>}
           </div>
           {!closed && (
-            <p className="text-[10px] text-white/45 text-center" style={{ marginTop: '6px' }}>
+            <p className="text-[10px] text-[#0B1A45]/45 text-center" style={{ marginTop: '6px' }}>
               {savedLabel ? `Last sent ${savedLabel}. ` : ''}You can resubmit until it closes.
             </p>
           )}
