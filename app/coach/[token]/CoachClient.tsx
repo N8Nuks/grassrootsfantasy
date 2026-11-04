@@ -198,6 +198,30 @@ function DayLineup(props: DayProps) {
     setSwap(null)
     setMsg(null)
   }
+  /* Put any player into batting slot idx. A player already batting swaps
+     places with whoever is in the slot (each keeps their position). A relief
+     pitcher, DR or squad player comes in at the slot's position, and the
+     player they replace goes back to the squad list. */
+  function putInBatSlot(idx: number, key: string) {
+    const current = batters[idx]
+    if (!current || key === current.key) return
+    const j = batters.findIndex(b => b.key === key)
+    if (j >= 0) {
+      const next = [...batters]
+      ;[next[idx], next[j]] = [next[j], next[idx]]
+      setBatters(next)
+      setMsg(null)
+      return
+    }
+    const from = relievers.find(r => r.key === key) ?? runners.find(r => r.key === key) ?? squad.find(q => q.key === key)
+    if (!from) return
+    setBatters(batters.map((b, k) => (k === idx ? { ...from, pos: current.pos } : b)))
+    setRelievers(relievers.filter(r => r.key !== key))
+    setRunners(runners.filter(r => r.key !== key))
+    setSquad([...squad.filter(q => q.key !== key), { ...current, pos: '' }])
+    setSwap(null)
+    setMsg(null)
+  }
   /* A player the coach can't find on the list. The name is snapped to the
      closest player on file first, so a short form or a typo attaches to the
      real player rather than becoming a second copy. A new name joins the
@@ -441,7 +465,7 @@ function DayLineup(props: DayProps) {
 
         <section style={{ padding: '4px 18px' }}>
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45" style={{ padding: '10px 0 4px' }}>Batting order</p>
-          <p className="text-[10px] text-white/40" style={{ paddingBottom: '6px' }}>FL = Flex, the 10th batting spot. Optional: only use it if you play a DP.</p>
+          <p className="text-[10px] text-white/40" style={{ paddingBottom: '6px' }}>Use Change player to put anyone in a spot. Picking someone already batting swaps them. FL = Flex, the 10th batting spot. Optional: only use it if you play a DP.</p>
           {batters.map((e, i) => {
             const flagged = isOut(e)
             return (
@@ -470,7 +494,35 @@ function DayLineup(props: DayProps) {
                 </div>
                 {editable && (
                   <div className="flex items-center gap-2" style={{ marginTop: '8px', marginLeft: '36px' }}>
-                    <button type="button" onClick={() => { setSwap({ kind: 'b', i }); setMsg(null) }} style={btn}>Swap</button>
+                    <select value="" aria-label={`Change the player in slot ${slotLabel(i)}`}
+                      onChange={ev => { if (ev.target.value) putInBatSlot(i, ev.target.value) }}
+                      style={{ ...btn, background: '#0D0D0F', appearance: 'none', WebkitAppearance: 'none', maxWidth: '150px' }}>
+                      <option value="">Change player ▾</option>
+                      <optgroup label="Batting order (swap places)">
+                        {batters.map((b, k) => k === i ? null : (
+                          <option key={b.key} value={b.key}>{slotLabel(k)} · {b.name}</option>
+                        ))}
+                      </optgroup>
+                      {(relievers.length > 0 || runners.length > 0) && (
+                        <optgroup label="Relief pitchers and DRs">
+                          {[...relievers, ...runners].filter(r => !isOut(r)).map(r => (
+                            <option key={r.key} value={r.key}>{r.pos} · {r.name}</option>
+                          ))}
+                        </optgroup>
+                      )}
+                      <optgroup label="Squad">
+                        {mainSquad.filter(q => !isOut(q)).map(q => (
+                          <option key={q.key} value={q.key}>{q.name}</option>
+                        ))}
+                      </optgroup>
+                      {otherSquad.some(q => !isOut(q)) && (
+                        <optgroup label="Other players on file">
+                          {otherSquad.filter(q => !isOut(q)).map(q => (
+                            <option key={q.key} value={q.key}>{q.name}</option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </select>
                     {e.player_id && (
                       <button type="button" onClick={() => toggleOut(e)} style={btn}>{flagged ? 'Available' : 'Unavailable'}</button>
                     )}
