@@ -126,6 +126,10 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
   // a super round has one list per day; `*` is the fallback for any day
   const projOf = new Map<string, Map<string, ClubProj>>()
   const projFor = (key: string, day: string) => projOf.get(key)?.get(day) ?? projOf.get(key)?.get('*')
+  // Each club's dealable players and who is flagged out for the coming round,
+  // for the Unavailable and Rest of squad lines under each projected lineup
+  const squadOf = new Map<string, { id: string; name: string }[]>()
+  let outIds = new Set<string>()
   const setProj = (key: string, day: string, cp: ClubProj) => {
     const m = projOf.get(key) ?? new Map<string, ClubProj>()
     m.set(day, cp)
@@ -174,6 +178,13 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
         const { data: flagRows } = await createAdminClient().from('coach_unavailable')
           .select('player_id').eq('grade', grade).eq('round_number', next)
         const flagged = new Set((flagRows ?? []).map(f => f.player_id as string))
+        const nextRoundId = roundList.find(r => r.round_number === next)?.id ?? null
+        if (nextRoundId) {
+          const { data: avRows } = await createAdminClient().from('player_availability')
+            .select('player_id').eq('round_id', nextRoundId).eq('unavailable', true)
+          for (const a of avRows ?? []) flagged.add(a.player_id as string)
+        }
+        outIds = flagged
 
         const players = (plRows ?? []) as PlayerRow[]
         const clubName = new Map(((clubRows ?? []) as ClubRow[]).map(c => [c.id, c.name]))
@@ -182,6 +193,8 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
         for (const p of players) {
           if (!p.club_id) continue
           poolByClub.set(p.club_id, [...(poolByClub.get(p.club_id) ?? []), p])
+          const k = clubKey(clubName.get(p.club_id) ?? null)
+          if (k) squadOf.set(k, [...(squadOf.get(k) ?? []), { id: p.id, name: p.full_name }])
         }
 
         // Fallback list: who took the field last round, pitchers first.
@@ -283,7 +296,14 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
     }
   }
 
-  const lineupCol = (club: string, cp: ClubProj | undefined) => (
+  const REST_CAP = 8
+  const lineupCol = (club: string, key: string, cp: ClubProj | undefined) => {
+    const inList = new Set((cp?.list ?? []).map(p => p.id))
+    const bySurname = (a: { name: string }, b: { name: string }) => surname(a.name).localeCompare(surname(b.name))
+    const squad = squadOf.get(key) ?? []
+    const out = squad.filter(p => outIds.has(p.id)).sort(bySurname)
+    const rest = squad.filter(p => !outIds.has(p.id) && !inList.has(p.id)).sort(bySurname)
+    return (
     <div className="min-w-0">
       <div style={{ paddingBottom: '6px', borderBottom: `1px solid ${accent}40` }}>
         <p className="text-[11px] font-black text-white/90">{club}</p>
@@ -304,8 +324,20 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
             : <span className="text-[9px] font-black uppercase text-white/45">{p.tag}</span>)}
         </div>
       ))}
+      {out.length > 0 && (
+        <p className="text-[10px] leading-snug" style={{ color: '#F09595', marginTop: '8px' }}>
+          <span className="font-black">Unavailable:</span> {out.map(p => p.name).join(', ')}
+        </p>
+      )}
+      {rest.length > 0 && cp && cp.list.length > 0 && (
+        <p className="text-[10px] leading-snug text-white/45" style={{ marginTop: '4px' }}>
+          <span className="font-black">Rest of squad:</span> {rest.slice(0, REST_CAP).map(p => p.name).join(', ')}
+          {rest.length > REST_CAP ? ` +${rest.length - REST_CAP} more` : ''}
+        </p>
+      )}
     </div>
-  )
+    )
+  }
 
   const seg = (active: boolean) => ({
     color: active ? '#0D0D0F' : '#F5F1E8',
@@ -363,7 +395,22 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
             const split = grounds.length > 1
             const hostLabels = grounds.map(gr => hostOf(gr)?.label).filter(Boolean) as string[]
             const hostAvatars = grounds.map(gr => hostOf(gr)).filter(Boolean) as NonNullable<ReturnType<typeof hostOf>>[]
-            const byes = games.filter(g => !g.location || g.location === 'Unallocated')
+            const isBye = (g: Fixture) => g.team_a === 'BYE' || g.team_b === 'BYE'
+            const byeGames = games.filter(isBye)
+            const byes = games.filter(g => !isBye(g) && (!g.location || g.location === 'Unallocated'))
+            const byeClub = (g: Fixture) => g.team_a === 'BYE' ? label(g.team_b, g.club_b) : label(g.team_a, g.club_a)
+            const byeLine = byeGames.length > 0 && (
+              <div style={{ padding: '11px 20px', borderTop: '1px solid #ffffff0a', background: '#ffffff06' }}>
+                {byeGames.map(g => (
+                  <p key={g.id} className="text-[11px] text-white/70">
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: accent, marginRight: '8px' }}>
+                      Bye{dates.length > 1 ? ' · ' + fmtDate(g.played_on).split(' ')[0] : ''}
+                    </span>
+                    {byeClub(g)}. Their players won&apos;t score {dates.length > 1 ? 'that day' : 'this round'}.
+                  </p>
+                ))}
+              </div>
+            )
 
             /* Park and diamond sit under the matchup so they're readable on a
                phone — the old right-hand column was hidden below sm. When the
@@ -420,8 +467,8 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
                         Projected lineups ▾
                       </summary>
                       <div className="grid grid-cols-2 gap-4" style={{ marginTop: '12px' }}>
-                        {lineupCol(label(g.team_a, g.club_a), pa)}
-                        {lineupCol(label(g.team_b, g.club_b), pb)}
+                        {lineupCol(label(g.team_a, g.club_a), clubKey(g.club_a), pa)}
+                        {lineupCol(label(g.team_b, g.club_b), clubKey(g.club_b), pb)}
                       </div>
                       <p className="text-[10px] text-white/45" style={{ marginTop: '10px' }}>
                         {allNamed
@@ -486,14 +533,15 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
                             </span>
                           )}
                         </div>
-                        {games.filter(g => g.location === gr).map(g => gameRow(g, false))}
+                        {games.filter(g => g.location === gr && !isBye(g)).map(g => gameRow(g, false))}
                       </div>
                     ))}
                     {byes.map(g => gameRow(g, false))}
                   </>
                 ) : (
-                  games.map(g => gameRow(g, false))
+                  games.filter(g => !isBye(g)).map(g => gameRow(g, false))
                 )}
+                {byeLine}
               </div>
             )
           })}
