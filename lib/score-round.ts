@@ -42,7 +42,7 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
       breakdown: { bat: battingPoints(line, v), pit: pitchingPoints(line, v) },
     }
   })
-  if (!catchup) await admin.from('player_scores').upsert(playerScores, { onConflict: 'player_id,round_id' })
+  await admin.from('player_scores').upsert(playerScores, { onConflict: 'player_id,round_id' })
 
   // 1b. Cycles earned this round — the double lands NEXT round.
   // Perfect games are entered by hand in Admin; only the cycle is computable.
