@@ -550,7 +550,7 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
               <span className="w-9 shrink-0 text-[10px] font-black uppercase" style={{ color: T.textDim }}>Rd {r.round}</span>
               <span className="flex-1 min-w-0 text-[11px] font-bold" style={{ color: T.text }}>
                 {lineFor(r.raw)}
-                {r.catchup && <span className="block text-[9px] font-black uppercase tracking-widest" style={{ color: T.textDim }}>No fantasy points</span>}
+                {r.catchup && <span className="block text-[9px] font-black uppercase tracking-widest" style={{ color: T.textDim }}>Non-scoring round</span>}
               </span>
               <span className="w-11 shrink-0 text-right text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: meta.ink }}>
                 {r.points != null ? r.points : '—'}
