@@ -72,6 +72,10 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
     .in('status', ['provisional', 'confirmed'])
     .order('round_number', { ascending: true })
   const rounds = (roundRows ?? []) as { id: string; round_number: number; status: string }[]
+  // Catch-up games (postponed and replayed later) count in the season totals
+  const { data: catchupRows } = await supabase.from('rounds')
+    .select('id').eq('grade', grade).eq('status', 'catchup')
+  const catchupIds = (catchupRows ?? []).map(r => r.id as string)
   const latest = rounds.length ? rounds[rounds.length - 1] : null
   const seasonStarted = rounds.length > 0
 
@@ -111,7 +115,7 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
      the season boards total the round lines across every scored round. */
   if (view === 'season' && rounds.length) {
     const { data: lines } = await supabase.from('player_stats')
-      .select('player_id, raw').in('round_id', rounds.map(r => r.id))
+      .select('player_id, raw').in('round_id', [...rounds.map(r => r.id), ...catchupIds])
     const tot = new Map<string, { h: number; d: number; t: number }>()
     for (const l of lines ?? []) {
       const r = (l.raw ?? {}) as Record<string, unknown>

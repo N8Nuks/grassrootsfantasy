@@ -128,6 +128,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
       : Promise.resolve({ data: null }),
     supabase.from('rounds').select('id, round_number, lock_at, status')
       .eq('grade', grade).gt('round_number', 0).lte('lock_at', new Date().toISOString())
+      .neq('status', 'catchup')   // a stats-only round has no matchups
       .order('round_number', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('public_teams').select('id, team_name, avatar_image, avatar_frame, club:clubs!club_id(name), avatar_club:clubs!avatar_club_id(name)'),
     // The live round, locked or not — used to explain why an open round isn't shown yet
@@ -197,7 +198,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
           // Current round not scored/visible yet — fall back to the previous round
           const { data: prevRound } = await supabase
             .from('rounds').select('id, round_number')
-            .eq('grade', grade).lt('round_number', round.round_number)
+            .eq('grade', grade).lt('round_number', round.round_number).neq('status', 'catchup')
             .order('round_number', { ascending: false }).limit(1).maybeSingle()
           if (prevRound) {
             const { data: prevScores } = await supabase

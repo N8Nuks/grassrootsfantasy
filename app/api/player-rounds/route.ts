@@ -24,8 +24,11 @@ export async function GET(req: Request) {
   const pointsByRound = new Map((scores ?? []).map(s => [s.round_id, Number(s.points)]))
   type StatRow = { round_id: string; raw: Record<string, number>; rounds: { round_number: number; status: string } }
   const rounds = ((stats ?? []) as unknown as StatRow[])
+    // A stats-only round (status 'catchup', e.g. rained-out Round 5) counts
+    // for the player's games and career figures but gives no fantasy points.
     .map(s => ({
       round: s.rounds.round_number,
+      catchup: s.rounds.status === 'catchup',
       status: s.rounds.status,
       raw: s.raw ?? {},
       points: pointsByRound.get(s.round_id) ?? null,

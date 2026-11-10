@@ -3,7 +3,7 @@ import { slotPoints, applyBench, applyDouble, armbandMultiplier, isCycle, update
 import { moveArmbandsOffDoubled } from '@/lib/armbands'
 
 export type ScoreRoundResult =
-  | { ok: true; players_scored: number; teams_scored: number; matchups_resolved: number; cycles: number; doubled: number }
+  | { ok: true; players_scored: number; teams_scored: number; matchups_resolved: number; cycles: number; doubled: number; catchup?: boolean }
   | { ok: false; error: string; status: number }
 
 // Scores a round end-to-end: player scores, season totals, team scores
@@ -14,8 +14,15 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
     .select('id, grade, round_number, status').eq('id', round_id).single()
   if (!round) return { ok: false, error: 'Round not found', status: 404 }
 
+  /* A catch-up round holds the stats of games postponed from a fantasy round
+     (rained off and replayed later). Its stats count for the players — games,
+     career figures, milestones, badges — but it scores no fantasy points: no
+     player points, no team points, no doubles. Scoring it only rebuilds the
+     players' season and career figures. */
+  const catchup = round.status === 'catchup'
+
   // Scoring publishes: a scored round becomes provisional (unless already confirmed)
-  if (round.status !== 'confirmed') {
+  if (!catchup && round.status !== 'confirmed') {
     await admin.from('rounds').update({ status: 'provisional' }).eq('id', round_id)
   }
 
@@ -35,11 +42,11 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
       breakdown: { bat: battingPoints(line, v), pit: pitchingPoints(line, v) },
     }
   })
-  await admin.from('player_scores').upsert(playerScores, { onConflict: 'player_id,round_id' })
+  if (!catchup) await admin.from('player_scores').upsert(playerScores, { onConflict: 'player_id,round_id' })
 
   // 1b. Cycles earned this round — the double lands NEXT round.
   // Perfect games are entered by hand in Admin; only the cycle is computable.
-  const cycleRows = stats
+  const cycleRows = (catchup ? [] : stats)
     .filter(s => isCycle(s.raw as StatLine))
     .map(s => ({
       player_id: s.player_id,
@@ -230,6 +237,18 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
         }
       }
     }
+  }
+
+  // A catch-up round stops here: player records are rebuilt, nothing scores.
+  if (catchup) {
+    if (milestoneErrors.length) {
+      return {
+        ok: false,
+        error: `Catch-up stats added, but ${milestoneErrors.length} milestone(s) could not be recorded. First: ${milestoneErrors[0]}`,
+        status: 500,
+      }
+    }
+    return { ok: true, players_scored: 0, teams_scored: 0, matchups_resolved: 0, cycles: 0, doubled: 0, catchup: true }
   }
 
   // 3. Team scores with carry-forward + full substitution cascade

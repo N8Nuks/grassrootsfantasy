@@ -82,6 +82,7 @@ export async function getCoachRound(
   const { data, error } = await admin.from('fixtures')
     .select('round_number, played_on, start_time, team_a, team_b')
     .eq('grade', grade)
+    .eq('catchup', false)   // postponed games replayed later never hold a round open
     .order('round_number')
 
   // Per round, the first start time of each game day

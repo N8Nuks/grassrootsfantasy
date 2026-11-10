@@ -25,6 +25,7 @@ type Fixture = {
   section: string | null
   score_a: number | null
   score_b: number | null
+  catchup: boolean | null
 }
 type Round = { id: string; round_number: number; lock_at: string | null; status: string }
 type StatRow = { player_id: string; round_id: string; raw: Record<string, unknown> | null }
@@ -95,7 +96,7 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
   const supabase = await createClient()
   const [{ data: fixtures, error: fxError }, { data: rounds }] = await Promise.all([
     supabase.from('fixtures')
-      .select('id, grade, round_number, played_on, start_time, team_a, team_b, club_a, club_b, location, venue, section, score_a, score_b')
+      .select('id, grade, round_number, played_on, start_time, team_a, team_b, club_a, club_b, location, venue, section, score_a, score_b, catchup')
       .eq('grade', grade)
       .order('round_number').order('played_on').order('start_time'),
     supabase.from('rounds').select('id, round_number, lock_at, status').eq('grade', grade),
@@ -104,10 +105,18 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
   const roundList = (rounds ?? []) as Round[]
   const lockOf = new Map(roundList.map(r => [r.round_number, r]))
   const numberOf = new Map(roundList.map(r => [r.id, r.round_number]))
+  /* Catch-up games: postponed from their round and replayed later. They keep
+     their round number as a label but sit in their own card, out of the round
+     cards, lock times and projected lineups. Their stats count for the players
+     and score no fantasy points. */
   const byRound = new Map<number, Fixture[]>()
+  const catchups: Fixture[] = []
   for (const f of (fixtures ?? []) as Fixture[]) {
+    if (f.catchup) { catchups.push(f); continue }
     byRound.set(f.round_number, [...(byRound.get(f.round_number) ?? []), f])
   }
+  catchups.sort((a, b) => a.played_on.localeCompare(b.played_on) || (a.start_time ?? '').localeCompare(b.start_time ?? ''))
+  const todayNZ = new Date().toLocaleDateString('en-CA', { timeZone: 'Pacific/Auckland' })
   const roundNumbers = [...byRound.keys()].sort((a, b) => a - b)
 
   /* Projected lineups, shown on the next round to be played. Each club's team
@@ -379,6 +388,47 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
       {/* Rounds */}
       <section className="px-6 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: '36px', paddingBottom: '48px' }}>
         <div style={{ maxWidth: '760px', marginLeft: 'auto', marginRight: 'auto' }}>
+          {catchups.length > 0 && (
+            <div id="catch-up" className="rounded-xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${accent}30`, marginBottom: '20px' }}>
+              <div style={{ padding: '12px 20px', borderBottom: '1px solid #ffffff0a', background: `linear-gradient(90deg, ${accent}14 0%, transparent 60%)` }}>
+                <p className="text-sm font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>Catch-up games</p>
+                <p className="text-[10px] text-white/55" style={{ marginTop: '3px' }}>
+                  Postponed games replayed later. Stats count for the players. No fantasy points.
+                </p>
+              </div>
+              {catchups.map(g => {
+                const hasScore = g.score_a != null && g.score_b != null
+                const aWon = hasScore && Number(g.score_a) > Number(g.score_b)
+                const bWon = hasScore && Number(g.score_b) > Number(g.score_a)
+                const dateTbc = !hasScore && g.played_on < todayNZ
+                const time = fmtTime(g.start_time)
+                const where = [g.location, g.venue].filter(v => v && v !== 'Unallocated').join(' · ')
+                return (
+                  <div key={g.id} className="flex items-start gap-4" style={{ padding: '12px 20px', borderBottom: '1px solid #ffffff06' }}>
+                    <span className="w-16 shrink-0 text-[11px] font-black" style={{ color: accent, paddingTop: '2px' }}>
+                      {dateTbc ? 'TBC' : <>{fmtDate(g.played_on)}{time ? <><br />{time}</> : null}</>}
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm font-bold text-white/90">
+                        {hasScore ? (
+                          <>
+                            <span style={{ fontWeight: aWon ? 900 : 600, color: aWon ? '#ffffff' : '#ffffffA0' }}>{label(g.team_a, g.club_a)} {g.score_a}</span>
+                            <span className="text-white/35"> – </span>
+                            <span style={{ fontWeight: bWon ? 900 : 600, color: bWon ? '#ffffff' : '#ffffffA0' }}>{g.score_b} {label(g.team_b, g.club_b)}</span>
+                          </>
+                        ) : (
+                          <>{label(g.team_a, g.club_a)} <span className="text-white/35">v</span> {label(g.team_b, g.club_b)}</>
+                        )}
+                      </span>
+                      <span className="block text-[10px] text-white/45" style={{ marginTop: '3px' }}>
+                        Round {g.round_number} catch-up{dateTbc ? ' · new date to be confirmed' : where ? ` · ${where}` : ''}
+                      </span>
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
           {roundNumbers.length === 0 && (
             <p className="text-sm text-center text-white/55">No fixtures loaded for this grade yet.{fxError ? ` (${fxError.message})` : ''}</p>
           )}
@@ -510,7 +560,10 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
                       {lock.status === 'confirmed' ? 'Confirmed' : games.some(g => g.club_b && g.score_a == null) ? 'Playing' : 'Played'}
                     </span>
                   )}
-                  {lock?.lock_at && lock.status !== 'provisional' && lock.status !== 'confirmed' && (
+                  {lock?.status === 'catchup' && (
+                    <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: '#B4BEC9' }}>Stats only</span>
+                  )}
+                  {lock?.lock_at && lock.status !== 'provisional' && lock.status !== 'confirmed' && lock.status !== 'catchup' && (
                     <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: new Date(lock.lock_at).getTime() < Date.now() ? '#B4BEC9' : accent }}>
                       {new Date(lock.lock_at).getTime() < Date.now() ? 'Locked' : <>Lineups lock {LOCK.format(
                         new Date(lock.lock_at).getTime() - Date.now() > 60 * 24 * 3600 * 1000
@@ -542,6 +595,15 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
                   games.filter(g => !isBye(g)).map(g => gameRow(g, false))
                 )}
                 {byeLine}
+                {catchups.some(c => c.round_number === n) && (
+                  <a href="#catch-up" className="block" style={{ padding: '11px 20px', borderTop: '1px solid #ffffff0a', background: '#ffffff06' }}>
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: accent, marginRight: '8px' }}>Postponed</span>
+                    <span className="text-[11px] text-white/70">
+                      {catchups.filter(c => c.round_number === n).map(c => `${label(c.team_a, c.club_a)} v ${label(c.team_b, c.club_b)}`).join(', ')}
+                      {' '}· see Catch-up games
+                    </span>
+                  </a>
+                )}
               </div>
             )
           })}
