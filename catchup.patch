@@ -1,0 +1,291 @@
+diff --git a/app/admin/AdminClient.tsx b/app/admin/AdminClient.tsx
+index a99457b..e86df20 100644
+--- a/app/admin/AdminClient.tsx
++++ b/app/admin/AdminClient.tsx
+@@ -128,7 +128,8 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
+     })
+     const sdata = await score.json()
+     if (!score.ok) { addLog('SCORING ERROR: ' + sdata.error); setBusy(false); return }
+-    addLog(`Scored: ${sdata.players_scored} players, ${sdata.teams_scored} teams, ${sdata.matchups_resolved ?? 0} matchups. Done.`)
++    if (sdata.catchup) addLog('Stats-only round: stats added to the players\' games, career figures and milestones. No fantasy points. Done.')
++    else addLog(`Scored: ${sdata.players_scored} players, ${sdata.teams_scored} teams, ${sdata.matchups_resolved ?? 0} matchups. Done.`)
+     setBusy(false)
+   }
+ 
+diff --git a/app/api/player-rounds/route.ts b/app/api/player-rounds/route.ts
+index db002ed..2d00399 100644
+--- a/app/api/player-rounds/route.ts
++++ b/app/api/player-rounds/route.ts
+@@ -24,8 +24,11 @@ export async function GET(req: Request) {
+   const pointsByRound = new Map((scores ?? []).map(s => [s.round_id, Number(s.points)]))
+   type StatRow = { round_id: string; raw: Record<string, number>; rounds: { round_number: number; status: string } }
+   const rounds = ((stats ?? []) as unknown as StatRow[])
++    // A stats-only round (status 'catchup', e.g. rained-out Round 5) counts
++    // for the player's games and career figures but gives no fantasy points.
+     .map(s => ({
+       round: s.rounds.round_number,
++      catchup: s.rounds.status === 'catchup',
+       status: s.rounds.status,
+       raw: s.raw ?? {},
+       points: pointsByRound.get(s.round_id) ?? null,
+diff --git a/app/leaders/page.tsx b/app/leaders/page.tsx
+index abc381d..85c21ab 100644
+--- a/app/leaders/page.tsx
++++ b/app/leaders/page.tsx
+@@ -72,6 +72,10 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
+     .in('status', ['provisional', 'confirmed'])
+     .order('round_number', { ascending: true })
+   const rounds = (roundRows ?? []) as { id: string; round_number: number; status: string }[]
++  // Catch-up games (postponed and replayed later) count in the season totals
++  const { data: catchupRows } = await supabase.from('rounds')
++    .select('id').eq('grade', grade).eq('status', 'catchup')
++  const catchupIds = (catchupRows ?? []).map(r => r.id as string)
+   const latest = rounds.length ? rounds[rounds.length - 1] : null
+   const seasonStarted = rounds.length > 0
+ 
+@@ -111,7 +115,7 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
+      the season boards total the round lines across every scored round. */
+   if (view === 'season' && rounds.length) {
+     const { data: lines } = await supabase.from('player_stats')
+-      .select('player_id, raw').in('round_id', rounds.map(r => r.id))
++      .select('player_id, raw').in('round_id', [...rounds.map(r => r.id), ...catchupIds])
+     const tot = new Map<string, { h: number; d: number; t: number }>()
+     for (const l of lines ?? []) {
+       const r = (l.raw ?? {}) as Record<string, unknown>
+diff --git a/app/matchups/page.tsx b/app/matchups/page.tsx
+index 4e70f00..c51b45f 100644
+--- a/app/matchups/page.tsx
++++ b/app/matchups/page.tsx
+@@ -128,6 +128,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
+       : Promise.resolve({ data: null }),
+     supabase.from('rounds').select('id, round_number, lock_at, status')
+       .eq('grade', grade).gt('round_number', 0).lte('lock_at', new Date().toISOString())
++      .neq('status', 'catchup')   // a stats-only round has no matchups
+       .order('round_number', { ascending: false }).limit(1).maybeSingle(),
+     supabase.from('public_teams').select('id, team_name, avatar_image, avatar_frame, club:clubs!club_id(name), avatar_club:clubs!avatar_club_id(name)'),
+     // The live round, locked or not — used to explain why an open round isn't shown yet
+@@ -197,7 +198,7 @@ export default async function Matchups({ searchParams }: { searchParams: Promise
+           // Current round not scored/visible yet — fall back to the previous round
+           const { data: prevRound } = await supabase
+             .from('rounds').select('id, round_number')
+-            .eq('grade', grade).lt('round_number', round.round_number)
++            .eq('grade', grade).lt('round_number', round.round_number).neq('status', 'catchup')
+             .order('round_number', { ascending: false }).limit(1).maybeSingle()
+           if (prevRound) {
+             const { data: prevScores } = await supabase
+diff --git a/app/nfs/fixtures/page.tsx b/app/nfs/fixtures/page.tsx
+index 400cf10..0df6fc7 100644
+--- a/app/nfs/fixtures/page.tsx
++++ b/app/nfs/fixtures/page.tsx
+@@ -25,6 +25,7 @@ type Fixture = {
+   section: string | null
+   score_a: number | null
+   score_b: number | null
++  catchup: boolean | null
+ }
+ type Round = { id: string; round_number: number; lock_at: string | null; status: string }
+ type StatRow = { player_id: string; round_id: string; raw: Record<string, unknown> | null }
+@@ -95,7 +96,7 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
+   const supabase = await createClient()
+   const [{ data: fixtures, error: fxError }, { data: rounds }] = await Promise.all([
+     supabase.from('fixtures')
+-      .select('id, grade, round_number, played_on, start_time, team_a, team_b, club_a, club_b, location, venue, section, score_a, score_b')
++      .select('id, grade, round_number, played_on, start_time, team_a, team_b, club_a, club_b, location, venue, section, score_a, score_b, catchup')
+       .eq('grade', grade)
+       .order('round_number').order('played_on').order('start_time'),
+     supabase.from('rounds').select('id, round_number, lock_at, status').eq('grade', grade),
+@@ -104,10 +105,18 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
+   const roundList = (rounds ?? []) as Round[]
+   const lockOf = new Map(roundList.map(r => [r.round_number, r]))
+   const numberOf = new Map(roundList.map(r => [r.id, r.round_number]))
++  /* Catch-up games: postponed from their round and replayed later. They keep
++     their round number as a label but sit in their own card, out of the round
++     cards, lock times and projected lineups. Their stats count for the players
++     and score no fantasy points. */
+   const byRound = new Map<number, Fixture[]>()
++  const catchups: Fixture[] = []
+   for (const f of (fixtures ?? []) as Fixture[]) {
++    if (f.catchup) { catchups.push(f); continue }
+     byRound.set(f.round_number, [...(byRound.get(f.round_number) ?? []), f])
+   }
++  catchups.sort((a, b) => a.played_on.localeCompare(b.played_on) || (a.start_time ?? '').localeCompare(b.start_time ?? ''))
++  const todayNZ = new Date().toLocaleDateString('en-CA', { timeZone: 'Pacific/Auckland' })
+   const roundNumbers = [...byRound.keys()].sort((a, b) => a - b)
+ 
+   /* Projected lineups, shown on the next round to be played. Each club's team
+@@ -379,6 +388,47 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
+       {/* Rounds */}
+       <section className="px-6 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: '36px', paddingBottom: '48px' }}>
+         <div style={{ maxWidth: '760px', marginLeft: 'auto', marginRight: 'auto' }}>
++          {catchups.length > 0 && (
++            <div id="catch-up" className="rounded-xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${accent}30`, marginBottom: '20px' }}>
++              <div style={{ padding: '12px 20px', borderBottom: '1px solid #ffffff0a', background: `linear-gradient(90deg, ${accent}14 0%, transparent 60%)` }}>
++                <p className="text-sm font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>Catch-up games</p>
++                <p className="text-[10px] text-white/55" style={{ marginTop: '3px' }}>
++                  Postponed games replayed later. Stats count for the players. No fantasy points.
++                </p>
++              </div>
++              {catchups.map(g => {
++                const hasScore = g.score_a != null && g.score_b != null
++                const aWon = hasScore && Number(g.score_a) > Number(g.score_b)
++                const bWon = hasScore && Number(g.score_b) > Number(g.score_a)
++                const dateTbc = !hasScore && g.played_on < todayNZ
++                const time = fmtTime(g.start_time)
++                const where = [g.location, g.venue].filter(v => v && v !== 'Unallocated').join(' · ')
++                return (
++                  <div key={g.id} className="flex items-start gap-4" style={{ padding: '12px 20px', borderBottom: '1px solid #ffffff06' }}>
++                    <span className="w-16 shrink-0 text-[11px] font-black" style={{ color: accent, paddingTop: '2px' }}>
++                      {dateTbc ? 'TBC' : <>{fmtDate(g.played_on)}{time ? <><br />{time}</> : null}</>}
++                    </span>
++                    <span className="flex-1 min-w-0">
++                      <span className="block text-sm font-bold text-white/90">
++                        {hasScore ? (
++                          <>
++                            <span style={{ fontWeight: aWon ? 900 : 600, color: aWon ? '#ffffff' : '#ffffffA0' }}>{label(g.team_a, g.club_a)} {g.score_a}</span>
++                            <span className="text-white/35"> – </span>
++                            <span style={{ fontWeight: bWon ? 900 : 600, color: bWon ? '#ffffff' : '#ffffffA0' }}>{g.score_b} {label(g.team_b, g.club_b)}</span>
++                          </>
++                        ) : (
++                          <>{label(g.team_a, g.club_a)} <span className="text-white/35">v</span> {label(g.team_b, g.club_b)}</>
++                        )}
++                      </span>
++                      <span className="block text-[10px] text-white/45" style={{ marginTop: '3px' }}>
++                        Round {g.round_number} catch-up{dateTbc ? ' · new date to be confirmed' : where ? ` · ${where}` : ''}
++                      </span>
++                    </span>
++                  </div>
++                )
++              })}
++            </div>
++          )}
+           {roundNumbers.length === 0 && (
+             <p className="text-sm text-center text-white/55">No fixtures loaded for this grade yet.{fxError ? ` (${fxError.message})` : ''}</p>
+           )}
+@@ -510,7 +560,10 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
+                       {lock.status === 'confirmed' ? 'Confirmed' : games.some(g => g.club_b && g.score_a == null) ? 'Playing' : 'Played'}
+                     </span>
+                   )}
+-                  {lock?.lock_at && lock.status !== 'provisional' && lock.status !== 'confirmed' && (
++                  {lock?.status === 'catchup' && (
++                    <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: '#B4BEC9' }}>Stats only</span>
++                  )}
++                  {lock?.lock_at && lock.status !== 'provisional' && lock.status !== 'confirmed' && lock.status !== 'catchup' && (
+                     <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: new Date(lock.lock_at).getTime() < Date.now() ? '#B4BEC9' : accent }}>
+                       {new Date(lock.lock_at).getTime() < Date.now() ? 'Locked' : <>Lineups lock {LOCK.format(
+                         new Date(lock.lock_at).getTime() - Date.now() > 60 * 24 * 3600 * 1000
+@@ -542,6 +595,15 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
+                   games.filter(g => !isBye(g)).map(g => gameRow(g, false))
+                 )}
+                 {byeLine}
++                {catchups.some(c => c.round_number === n) && (
++                  <a href="#catch-up" className="block" style={{ padding: '11px 20px', borderTop: '1px solid #ffffff0a', background: '#ffffff06' }}>
++                    <span className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: accent, marginRight: '8px' }}>Postponed</span>
++                    <span className="text-[11px] text-white/70">
++                      {catchups.filter(c => c.round_number === n).map(c => `${label(c.team_a, c.club_a)} v ${label(c.team_b, c.club_b)}`).join(', ')}
++                      {' '}· see Catch-up games
++                    </span>
++                  </a>
++                )}
+               </div>
+             )
+           })}
+diff --git a/components/PlayerCardFull.tsx b/components/PlayerCardFull.tsx
+index 8f54b8b..e2265f9 100644
+--- a/components/PlayerCardFull.tsx
++++ b/components/PlayerCardFull.tsx
+@@ -81,7 +81,7 @@ export type FullCardPlayer = {
+   revealPos?: string | null
+ }
+ 
+-type RoundLine = { round: number; status: string; raw: Record<string, number>; points: number | null }
++type RoundLine = { round: number; catchup?: boolean; status: string; raw: Record<string, number>; points: number | null }
+ type Face = 'front' | 'career' | 'rounds'
+ const ORDER: Face[] = ['front', 'career', 'rounds']
+ 
+@@ -548,7 +548,10 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
+           {(log ?? []).map(r => (
+             <div key={r.round} className="flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff08', padding: '9px 16px' }}>
+               <span className="w-9 shrink-0 text-[10px] font-black uppercase" style={{ color: T.textDim }}>Rd {r.round}</span>
+-              <span className="flex-1 min-w-0 text-[11px] font-bold" style={{ color: T.text }}>{lineFor(r.raw)}</span>
++              <span className="flex-1 min-w-0 text-[11px] font-bold" style={{ color: T.text }}>
++                {lineFor(r.raw)}
++                {r.catchup && <span className="block text-[9px] font-black uppercase tracking-widest" style={{ color: T.textDim }}>No fantasy points</span>}
++              </span>
+               <span className="w-11 shrink-0 text-right text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: meta.ink }}>
+                 {r.points != null ? r.points : '—'}
+               </span>
+diff --git a/lib/coach.ts b/lib/coach.ts
+index f9cc748..cbcfb41 100644
+--- a/lib/coach.ts
++++ b/lib/coach.ts
+@@ -82,6 +82,7 @@ export async function getCoachRound(
+   const { data, error } = await admin.from('fixtures')
+     .select('round_number, played_on, start_time, team_a, team_b')
+     .eq('grade', grade)
++    .eq('catchup', false)   // postponed games replayed later never hold a round open
+     .order('round_number')
+ 
+   // Per round, the first start time of each game day
+diff --git a/lib/score-round.ts b/lib/score-round.ts
+index 53f5874..4ecc2a1 100644
+--- a/lib/score-round.ts
++++ b/lib/score-round.ts
+@@ -3,7 +3,7 @@ import { slotPoints, applyBench, applyDouble, armbandMultiplier, isCycle, update
+ import { moveArmbandsOffDoubled } from '@/lib/armbands'
+ 
+ export type ScoreRoundResult =
+-  | { ok: true; players_scored: number; teams_scored: number; matchups_resolved: number; cycles: number; doubled: number }
++  | { ok: true; players_scored: number; teams_scored: number; matchups_resolved: number; cycles: number; doubled: number; catchup?: boolean }
+   | { ok: false; error: string; status: number }
+ 
+ // Scores a round end-to-end: player scores, season totals, team scores
+@@ -14,8 +14,15 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
+     .select('id, grade, round_number, status').eq('id', round_id).single()
+   if (!round) return { ok: false, error: 'Round not found', status: 404 }
+ 
++  /* A catch-up round holds the stats of games postponed from a fantasy round
++     (rained off and replayed later). Its stats count for the players — games,
++     career figures, milestones, badges — but it scores no fantasy points: no
++     player points, no team points, no doubles. Scoring it only rebuilds the
++     players' season and career figures. */
++  const catchup = round.status === 'catchup'
++
+   // Scoring publishes: a scored round becomes provisional (unless already confirmed)
+-  if (round.status !== 'confirmed') {
++  if (!catchup && round.status !== 'confirmed') {
+     await admin.from('rounds').update({ status: 'provisional' }).eq('id', round_id)
+   }
+ 
+@@ -35,11 +42,11 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
+       breakdown: { bat: battingPoints(line, v), pit: pitchingPoints(line, v) },
+     }
+   })
+-  await admin.from('player_scores').upsert(playerScores, { onConflict: 'player_id,round_id' })
++  if (!catchup) await admin.from('player_scores').upsert(playerScores, { onConflict: 'player_id,round_id' })
+ 
+   // 1b. Cycles earned this round — the double lands NEXT round.
+   // Perfect games are entered by hand in Admin; only the cycle is computable.
+-  const cycleRows = stats
++  const cycleRows = (catchup ? [] : stats)
+     .filter(s => isCycle(s.raw as StatLine))
+     .map(s => ({
+       player_id: s.player_id,
+@@ -232,6 +239,18 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
+     }
+   }
+ 
++  // A catch-up round stops here: player records are rebuilt, nothing scores.
++  if (catchup) {
++    if (milestoneErrors.length) {
++      return {
++        ok: false,
++        error: `Catch-up stats added, but ${milestoneErrors.length} milestone(s) could not be recorded. First: ${milestoneErrors[0]}`,
++        status: 500,
++      }
++    }
++    return { ok: true, players_scored: 0, teams_scored: 0, matchups_resolved: 0, cycles: 0, doubled: 0, catchup: true }
++  }
++
+   // 3. Team scores with carry-forward + full substitution cascade
+   const statByPlayer = new Map(stats.map(s => [s.player_id, s.raw as StatLine]))
+ 
