@@ -128,7 +128,7 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
     })
     const sdata = await score.json()
     if (!score.ok) { addLog('SCORING ERROR: ' + sdata.error); setBusy(false); return }
-    if (sdata.catchup) addLog('Stats-only round: stats added to the players\' games, career figures and milestones. No fantasy points. Done.')
+    if (sdata.catchup) addLog('Non-scoring round: stats and points added to the players\' cards, games, career figures and milestones. User teams get no points. Done.')
     else addLog(`Scored: ${sdata.players_scored} players, ${sdata.teams_scored} teams, ${sdata.matchups_resolved ?? 0} matchups. Done.`)
     setBusy(false)
   }

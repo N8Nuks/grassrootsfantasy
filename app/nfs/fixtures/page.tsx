@@ -393,7 +393,7 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
               <div style={{ padding: '12px 20px', borderBottom: '1px solid #ffffff0a', background: `linear-gradient(90deg, ${accent}14 0%, transparent 60%)` }}>
                 <p className="text-sm font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>Catch-up games</p>
                 <p className="text-[10px] text-white/55" style={{ marginTop: '3px' }}>
-                  Postponed games replayed later. Stats count for the players. No fantasy points.
+                  Postponed games replayed later. Non-scoring round: player stats and points count, user teams get no points.
                 </p>
               </div>
               {catchups.map(g => {
