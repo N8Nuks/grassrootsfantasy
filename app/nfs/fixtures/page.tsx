@@ -157,7 +157,8 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
     }
     if (lastScored != null) {
       const scored: number = lastScored
-      const next = roundNumbers.find(rn => rn > scored) ?? null
+      // A stats-only (catch-up) round has no fantasy lineups, so skip it
+      const next = roundNumbers.find(rn => rn > scored && lockOf.get(rn)?.status !== 'catchup') ?? null
       projRound = next
       if (next != null) {
         const last = played.filter(s => numberOf.get(s.round_id) === scored)
