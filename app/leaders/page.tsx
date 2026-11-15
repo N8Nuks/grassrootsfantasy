@@ -113,21 +113,34 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
 
   /* Hits, doubles and triples aren't kept as season keys on the player, so
      the season boards total the round lines across every scored round. */
+  let teamGames = 0
   if (view === 'season' && rounds.length) {
     const { data: lines } = await supabase.from('player_stats')
       .select('player_id, raw').in('round_id', [...rounds.map(r => r.id), ...catchupIds])
-    const tot = new Map<string, { h: number; d: number; t: number }>()
+    const tot = new Map<string, { h: number; d: number; t: number; ab: number; g: number }>()
     for (const l of lines ?? []) {
       const r = (l.raw ?? {}) as Record<string, unknown>
-      const cur = tot.get(l.player_id) ?? { h: 0, d: 0, t: 0 }
+      const cur = tot.get(l.player_id) ?? { h: 0, d: 0, t: 0, ab: 0, g: 0 }
       const d = num(r.doubles), t = num(r.triples)
-      tot.set(l.player_id, { h: cur.h + num(r.singles) + d + t + num(r.hr), d: cur.d + d, t: cur.t + t })
+      // A row is a game; gp overrides when the scorer gives it (2 for a double-header)
+      const g = r.gp != null && r.gp !== '' ? num(r.gp) : 1
+      tot.set(l.player_id, {
+        h: cur.h + num(r.singles) + d + t + num(r.hr), d: cur.d + d, t: cur.t + t,
+        ab: cur.ab + num(r.ab), g: cur.g + g,
+      })
     }
     for (const p of all) {
       const x = tot.get(p.id)
-      if (x) p.stats = { ...p.stats, season_hits: x.h, season_2b: x.d, season_3b: x.t }
+      if (x) p.stats = { ...p.stats, season_hits: x.h, season_2b: x.d, season_3b: x.t, season_ab: x.ab }
     }
+    /* Batting average qualifier: 1 at-bat per team game. Team games is the most
+       games any player in the grade has played, so the bar rises with the season. */
+    for (const x of tot.values()) teamGames = Math.max(teamGames, x.g)
   }
+  const minAb = teamGames
+  const seasonCats: LeaderCat[] = SEASON_CATS.map(c => c.key === 'season_ba' && minAb > 0
+    ? { ...c, min: { key: 'season_ab', value: minAb }, note: `Min. ${minAb} AB` }
+    : c)
 
   /* Round view: merge the round's line and points into each player's stats
      under r_* keys. Season keys are untouched, so an opened card still reads
@@ -227,7 +240,7 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
           </div>
 
           <LeadersClient
-            cats={roundRow ? roundCats(roundRow.round_number) : SEASON_CATS}
+            cats={roundRow ? roundCats(roundRow.round_number) : seasonCats}
             players={all}
             grade={grade}
             siteTheme={siteTheme}

@@ -5,7 +5,12 @@ import PlayerCardFull, { type FullCardPlayer } from '@/components/PlayerCardFull
 import { type CardMilestone, silhouetteFor } from '@/components/PlayerCard'
 import { splitName } from '@/lib/names'
 
-export type LeaderCat = { key: string; label: string; format?: 'ba'; kind?: 'pitching'; empty: [string, string] }
+export type LeaderCat = {
+  key: string; label: string; format?: 'ba'; kind?: 'pitching'; empty: [string, string]
+  // Qualifier: only players with at least `value` of stat `key` (e.g. min. at-bats)
+  min?: { key: string; value: number }
+  note?: string
+}
 export type LeaderPlayer = FullCardPlayer & { photoUrl: string | null }
 
 // Pitching boards wear steel rather than the grade colour — the defensive pair
@@ -25,22 +30,25 @@ export default function LeadersClient({ cats, players, grade, siteTheme, seasonS
   const owned = new Set(ownedPlayerIds)
   const [detail, setDetail] = useState<LeaderPlayer | null>(null)
 
-  const leadersFor = (key: string) =>
-    players.filter(p => (p.stats[key] ?? 0) > 0)
-      .sort((a, b) => (b.stats[key] ?? 0) - (a.stats[key] ?? 0))
+  const leadersFor = (cat: LeaderCat) =>
+    players.filter(p => (p.stats[cat.key] ?? 0) > 0 && (!cat.min || (p.stats[cat.min.key] ?? 0) >= cat.min.value))
+      .sort((a, b) => (b.stats[cat.key] ?? 0) - (a.stats[cat.key] ?? 0))
       .slice(0, 5)
 
   return (
     <>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {cats.map(cat => {
-          const rows = leadersFor(cat.key)
+          const rows = leadersFor(cat)
           const pitching = cat.kind === 'pitching'
           const accent = pitching ? STEEL : T.accent
           return (
             <div key={cat.key} className="rounded-2xl overflow-hidden pinstripe" style={{ background: T.surface, border: `1px solid ${pitching ? STEEL + '30' : '#ffffff12'}` }}>
               <div className="flex items-center justify-between gap-3" style={{ background: T.headerBg, borderBottom: `1px solid ${accent}30`, padding: '14px 22px' }}>
-                <p className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: accent }}>{cat.label}</p>
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: accent }}>{cat.label}</p>
+                  {cat.note && <p className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: T.textDim, marginTop: '3px' }}>{cat.note}</p>}
+                </div>
                 {pitching && (
                   <span className="text-[9px] font-black uppercase tracking-[0.25em] shrink-0 rounded-full"
                     style={{ color: STEEL, border: `1px solid ${STEEL}60`, padding: '3px 9px' }}>
