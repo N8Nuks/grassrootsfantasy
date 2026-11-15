@@ -5,6 +5,9 @@ import { theme, type Grade } from '@/lib/clubhouse'
 import GradeSwitch from '@/components/GradeSwitch'
 import PageGuide from '@/components/PageGuide'
 import { managerAnalytics } from '@/lib/analytics'
+import { selectionRoom } from '@/lib/selection'
+import { createAdminClient } from '@/lib/supabase/admin'
+import SelectionRoom, { TECH } from './SelectionRoom'
 import { splitName } from '@/lib/names'
 
 const fmt = (n: number) => (Number.isInteger(n) ? String(n) : String(Number(n.toFixed(1))))
@@ -29,18 +32,30 @@ export default async function Analytics({ searchParams }: { searchParams: Promis
   ])
   const siteTheme = (prof as unknown as { site_theme?: string })?.site_theme ?? 'grade'
   const teamName = (prof as unknown as { team_name?: string })?.team_name ?? 'Your team'
-  const T = theme(grade, siteTheme)
-  const accentBright = T.electric ?? T.accent
+  const base = theme(grade, siteTheme)
+  /* The whole report wears the Selection Room look: a dark instrument panel in
+     cyan, with the manager's own theme colour as the secondary. */
+  const second = base.electric ?? base.accent
+  const T = {
+    ...base,
+    field: TECH.bg, surface: TECH.panel, surfaceRaised: TECH.panelUp,
+    text: TECH.text, textDim: TECH.dim,
+    accent: TECH.cyan, button: TECH.cyan, buttonText: TECH.on,
+    glow: `0 0 18px ${TECH.glow}`, shimmer: false,
+  }
+  const accentBright = TECH.cyan
 
   const gateRound = Number(config?.analytics_from_round ?? 0)
   const currentRound = latestRound?.round_number ?? 0
   const locked = currentRound < gateRound
 
   const a = user && !locked ? await managerAnalytics(supabase, user.id, grade) : null
+  // The Selection Room needs no scored lineup — only cards — so it is not gated
+  const room = user ? await selectionRoom(supabase, createAdminClient(), user.id, grade) : null
 
   function Metric({ label, value, note, tone }: { label: string; value: string; note: string; tone?: string }) {
     return (
-      <div className="rounded-2xl" style={{ background: T.surface, border: '1px solid #ffffff12', padding: '20px 22px' }}>
+      <div className="rounded-2xl" style={{ background: T.surface, border: `1px solid ${TECH.line}`, padding: '20px 22px' }}>
         <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim }}>{label}</p>
         <p className="text-3xl font-black" style={{ fontFamily: 'var(--font-heading)', color: tone ?? accentBright, margin: '8px 0 6px' }}>{value}</p>
         <p className="text-[11px] leading-relaxed" style={{ color: T.textDim }}>{note}</p>
@@ -49,7 +64,9 @@ export default async function Analytics({ searchParams }: { searchParams: Promis
   }
 
   return (
-    <main className="min-h-screen flex flex-col" style={{ background: T.field }}>
+    <main className="min-h-screen flex flex-col" style={{
+      background: `linear-gradient(${TECH.grid} 1px, transparent 1px) 0 0 / 100% 28px, linear-gradient(90deg, ${TECH.grid} 1px, transparent 1px) 0 0 / 28px 100%, radial-gradient(120% 50% at 50% 0%, ${TECH.cyan}1F, transparent 60%), ${TECH.bg}`,
+    }}>
       <Nav />
       <section className="flex-1 px-6" style={{ paddingTop: '80px', paddingBottom: '100px' }}>
         <div style={{ maxWidth: '820px', marginLeft: 'auto', marginRight: 'auto' }}>
@@ -64,12 +81,33 @@ export default async function Analytics({ searchParams }: { searchParams: Promis
             <p className="text-xs font-black uppercase tracking-[0.3em] mb-3" style={{ color: T.accent }}>Manager Report</p>
             <h1 className="text-3xl sm:text-4xl font-black mb-2" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>{teamName}</h1>
             <p className="text-sm mb-5" style={{ color: T.textDim }}>
-              {a ? `${a.roundsScored} round${a.roundsScored === 1 ? '' : 's'} scored` : 'How you have used your squad'}
+              {a ? a.rounds.map(r => `Round ${r.round}`).join(' and ') : 'How you have used your squad'}
             </p>
             <div className="flex justify-center">
-              <GradeSwitch grade={grade} mensHref="/analytics?grade=mens" womensHref="/analytics?grade=womens" palette={siteTheme !== 'grade' ? T : undefined} />
+              <GradeSwitch grade={grade} mensHref="/analytics?grade=mens" womensHref="/analytics?grade=womens" palette={T} />
             </div>
           </div>
+
+          {room && room.roundsOnFile > 0 && (
+            <div style={{ marginBottom: '56px' }}>
+              <div className="text-center" style={{ marginBottom: '18px' }}>
+                <p className="text-2xl sm:text-3xl font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text, letterSpacing: '0.03em' }}>SELECTION ROOM</p>
+                <p style={{ fontFamily: 'ui-monospace, Menlo, monospace', fontSize: '10.5px', letterSpacing: '0.12em', color: T.textDim, marginTop: '6px' }}>
+                  {room.nextRound != null ? `WHO TO PICK FOR ROUND ${room.nextRound}` : 'YOUR SQUAD THIS SEASON'}
+                </p>
+              </div>
+              <SelectionRoom room={room} second={second} />
+            </div>
+          )}
+
+          {(locked || a) && room && room.roundsOnFile > 0 && (
+            <div className="text-center" style={{ marginBottom: '22px' }}>
+              <p className="text-2xl sm:text-3xl font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text, letterSpacing: '0.03em' }}>ROUND REVIEW</p>
+              <p style={{ fontFamily: 'ui-monospace, Menlo, monospace', fontSize: '10.5px', letterSpacing: '0.12em', color: T.textDim, marginTop: '6px' }}>
+                HOW YOUR LINEUP CHOICES PAID OFF
+              </p>
+            </div>
+          )}
 
           {locked && (
             <div className="rounded-2xl text-center" style={{ background: T.surface, border: `1px solid ${T.accent}40`, padding: '48px 28px' }}>
@@ -84,7 +122,7 @@ export default async function Analytics({ searchParams }: { searchParams: Promis
           )}
 
           {!locked && !a && (
-            <div className="rounded-2xl text-center" style={{ background: T.surface, border: '1px solid #ffffff12', padding: '48px 28px' }}>
+            <div className="rounded-2xl text-center" style={{ background: T.surface, border: `1px solid ${TECH.line}`, padding: '48px 28px' }}>
               <p className="text-2xl font-black mb-3" style={{ fontFamily: 'var(--font-heading)', color: T.accent }}>
                 Nothing to report yet.
               </p>
@@ -97,64 +135,77 @@ export default async function Analytics({ searchParams }: { searchParams: Promis
 
           {a && (
             <>
-              {/* The headline */}
-              <div className="rounded-2xl overflow-hidden pinstripe-fine text-center"
-                style={{ background: `linear-gradient(180deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`, border: `3px solid ${T.button}`, marginBottom: '28px' }}>
-                <div style={{ padding: '40px 28px 36px' }}>
-                  <p className="text-[10px] font-black uppercase tracking-[0.4em]" style={{ color: T.accent, marginBottom: '14px' }}>Points captured</p>
-                  <p className="text-6xl font-black leading-none" style={{ fontFamily: 'var(--font-heading)', color: accentBright, textShadow: T.glow }}>
-                    {Math.round(a.capturedPct * 100)}%
-                  </p>
-                  <p className="text-sm leading-relaxed" style={{ color: T.textDim, maxWidth: '420px', margin: '18px auto 0' }}>
-                    Your cards produced <b style={{ color: T.text }}>{fmt(a.squadRawTotal)}</b> points between them.
-                    You banked <b style={{ color: T.text }}>{fmt(a.earnedTotal)}</b>. The gap is what your lineup choices cost you.
-                  </p>
+              {a.rounds.map((r, i) => (
+                <div key={r.round} style={{ marginBottom: '44px' }}>
+                  {/* Round heading */}
+                  <div className="flex items-center gap-4" style={{ marginBottom: '18px' }}>
+                    <p className="text-lg font-black shrink-0" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>Round {r.round}</p>
+                    <span className="text-[10px] font-black uppercase tracking-[0.25em] shrink-0" style={{ color: second }}>
+                      {i === 0 ? 'Latest round' : 'The round before'}
+                    </span>
+                    <span className="flex-1" style={{ height: '1px', background: `${T.accent}40` }} />
+                  </div>
+
+                  {/* The headline */}
+                  <div className="rounded-2xl overflow-hidden pinstripe-fine text-center"
+                    style={{ background: `linear-gradient(180deg, ${T.surfaceRaised} 0%, ${T.surface} 100%)`, border: `${i === 0 ? 3 : 1}px solid ${T.button}`, marginBottom: '28px' }}>
+                    <div style={{ padding: i === 0 ? '40px 28px 36px' : '28px 28px 26px' }}>
+                      <p className="text-[10px] font-black uppercase tracking-[0.4em]" style={{ color: T.accent, marginBottom: '14px' }}>Points captured</p>
+                      <p className={`${i === 0 ? 'text-6xl' : 'text-5xl'} font-black leading-none`} style={{ fontFamily: 'var(--font-heading)', color: accentBright, textShadow: T.glow }}>
+                        {Math.round(r.capturedPct * 100)}%
+                      </p>
+                      <p className="text-sm leading-relaxed" style={{ color: T.textDim, maxWidth: '420px', margin: '18px auto 0' }}>
+                        Your cards produced <b style={{ color: T.text }}>{fmt(r.squadRawTotal)}</b> points between them in Round {r.round}.
+                        You banked <b style={{ color: T.text }}>{fmt(r.earnedTotal)}</b>. The gap is what your lineup choices cost you.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Where the rest went */}
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: T.textDim, marginBottom: '14px' }}>Where the rest went</p>
+                  <div className="grid gap-4 sm:grid-cols-3" style={{ marginBottom: '28px' }}>
+                    <Metric label="Left on the bench" value={fmt(r.benchLoss)} tone="#FF9B6B"
+                      note="Shaved off by the 0.75× bench multiplier. Unavoidable in part — but a big number means your best cards were sitting down." />
+                    <Metric label="Lost to slot rules" value={fmt(r.slotLoss)} tone="#FF9B6B"
+                      note="A P(B) who didn't pitch, a DR who didn't run. Points that existed on the sheet and never counted for you." />
+                    <Metric label="Stranded in reserves" value={fmt(r.reserveWaste)} tone="#FF9B6B"
+                      note="Cards you owned that scored while parked at #17 or below. Every one of these was a selection you could have made." />
+                  </div>
+
+                  {/* What you got right */}
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: T.textDim, marginBottom: '14px' }}>What the armbands earned</p>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <Metric label="Armband bonus" value={`+${fmt(r.armbandGain)}`}
+                      note="Extra points from your Captain and Vice Captain this round, over and above what those players would have scored unmarked." />
+                    {r.bestCall && (
+                      <div className="rounded-2xl" style={{ background: T.surface, border: `1px solid ${TECH.line}`, padding: '20px 22px' }}>
+                        <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim }}>Best call</p>
+                        <p className="text-lg font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text, margin: '8px 0 2px' }}>
+                          {caps(r.bestCall.name)}
+                        </p>
+                        <p className="text-2xl font-black" style={{ fontFamily: 'var(--font-heading)', color: accentBright, marginBottom: '6px' }}>
+                          {fmt(r.bestCall.earned)}
+                        </p>
+                        <p className="text-[11px]" style={{ color: T.textDim }}>Your biggest return of Round {r.round}.</p>
+                      </div>
+                    )}
+                    {r.worstCall && (
+                      <div className="rounded-2xl" style={{ background: T.surface, border: `1px solid ${TECH.line}`, padding: '20px 22px' }}>
+                        <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim }}>The one that got away</p>
+                        <p className="text-lg font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text, margin: '8px 0 2px' }}>
+                          {caps(r.worstCall.name)}
+                        </p>
+                        <p className="text-2xl font-black" style={{ fontFamily: 'var(--font-heading)', color: '#FF9B6B', marginBottom: '6px' }}>
+                          {fmt(r.worstCall.raw)}
+                        </p>
+                        <p className="text-[11px]" style={{ color: T.textDim }}>Scored in Round {r.round} and earned you nothing.</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              ))}
 
-              {/* Where the rest went */}
-              <p className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: T.textDim, marginBottom: '14px' }}>Where the rest went</p>
-              <div className="grid gap-4 sm:grid-cols-3" style={{ marginBottom: '28px' }}>
-                <Metric label="Left on the bench" value={fmt(a.benchLoss)} tone="#FF9B6B"
-                  note="Shaved off by the 0.75× bench multiplier. Unavoidable in part — but a big number means your best cards were sitting down." />
-                <Metric label="Lost to slot rules" value={fmt(a.slotLoss)} tone="#FF9B6B"
-                  note="A P(B) who didn't pitch, a DR who didn't run. Points that existed on the sheet and never counted for you." />
-                <Metric label="Stranded in reserves" value={fmt(a.reserveWaste)} tone="#FF9B6B"
-                  note="Cards you owned that scored while parked at #17 or below. Every one of these was a selection you could have made." />
-              </div>
-
-              {/* What you got right */}
-              <p className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: T.textDim, marginBottom: '14px' }}>What the armbands earned</p>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <Metric label="Armband bonus" value={`+${fmt(a.armbandGain)}`}
-                  note="Extra points from your Captain and Vice Captain across the season, over and above what those players would have scored unmarked." />
-                {a.bestCall && (
-                  <div className="rounded-2xl" style={{ background: T.surface, border: '1px solid #ffffff12', padding: '20px 22px' }}>
-                    <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim }}>Best call</p>
-                    <p className="text-lg font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text, margin: '8px 0 2px' }}>
-                      {caps(a.bestCall.name)}
-                    </p>
-                    <p className="text-2xl font-black" style={{ fontFamily: 'var(--font-heading)', color: accentBright, marginBottom: '6px' }}>
-                      {fmt(a.bestCall.earned)}
-                    </p>
-                    <p className="text-[11px]" style={{ color: T.textDim }}>Your biggest single-round return, in Round {a.bestCall.round}.</p>
-                  </div>
-                )}
-                {a.worstCall && (
-                  <div className="rounded-2xl" style={{ background: T.surface, border: '1px solid #ffffff12', padding: '20px 22px' }}>
-                    <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim }}>The one that got away</p>
-                    <p className="text-lg font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text, margin: '8px 0 2px' }}>
-                      {caps(a.worstCall.name)}
-                    </p>
-                    <p className="text-2xl font-black" style={{ fontFamily: 'var(--font-heading)', color: '#FF9B6B', marginBottom: '6px' }}>
-                      {fmt(a.worstCall.raw)}
-                    </p>
-                    <p className="text-[11px]" style={{ color: T.textDim }}>Scored in Round {a.worstCall.round} and earned you nothing.</p>
-                  </div>
-                )}
-              </div>
-
-              <p className="text-[11px] text-center" style={{ color: T.textDim, marginTop: '28px' }}>
+              <p className="text-[11px] text-center" style={{ color: T.textDim, marginTop: '0px' }}>
                 Every figure here is your own — the same player is worth a different amount to every manager,
                 depending on where they sat and whether they wore an armband.
               </p>
@@ -176,8 +227,12 @@ export default async function Analytics({ searchParams }: { searchParams: Promis
           body: "Everything here measures your decisions, not your players. Two managers holding the same card can bank wildly different points from it depending on where they played them.",
         },
         {
+          title: 'Selection Room',
+          body: "Every card you own, ranked for the next round. Par is what a starter in your team scores in a typical round. Tap a player to see how often they play, how often they beat par, and whether their coach has named them.",
+        },
+        {
           title: 'Points captured',
-          body: "The headline number: what your whole squad produced against what you actually banked. Nobody reaches 100% — five reserves can't score — but the gap tells you how much was within reach.",
+          body: "The headline number for each round: what your whole squad produced against what you actually banked. The report covers the latest scored round and the one before it. Nobody reaches 100% — five reserves can't score — but the gap tells you how much was within reach.",
         },
       ]} />
       <Footer />

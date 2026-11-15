@@ -1,17 +1,23 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 
-export type ManagerAnalytics = {
-  roundsScored: number
-  earnedTotal: number       // what your lineups actually produced
+export type RoundReport = {
+  round: number
+  earnedTotal: number       // what your lineup actually produced
   squadRawTotal: number     // what every card you own produced, in total
   capturedPct: number       // earnedTotal / squadRawTotal
   benchLoss: number         // points shaved by the 0.75x multiplier
   slotLoss: number          // points lost to slot rules (P(B) not pitching, DR, etc)
   reserveWaste: number      // raw points scored by cards sitting in reserves
   armbandGain: number       // extra points from Captain and Vice Captain
-  bestCall: { name: string; earned: number; round: number } | null
-  worstCall: { name: string; raw: number; round: number } | null
+  bestCall: { name: string; earned: number } | null
+  worstCall: { name: string; raw: number } | null
 }
+
+/* The report covers the latest scored round and the one before it, latest
+   first. Older rounds are left out: a manager wants this week and last week,
+   not a miss from Round 1. A round with no fantasy points (a stats-only round)
+   has no earnings, so it never appears. */
+export type ManagerAnalytics = { rounds: RoundReport[] }
 
 /* Everything here is derived, not stored — lineup_earnings holds what each card
    was worth to this manager, player_scores holds what it scored on its own.
@@ -68,56 +74,64 @@ export async function managerAnalytics(
   const nameOf = new Map((players ?? []).map(p => [p.id, p.full_name as string]))
   const roundNoOf = new Map((rounds ?? []).map(r => [r.id, r.round_number as number]))
 
-  let earnedTotal = 0, squadRawTotal = 0, benchLoss = 0, slotLoss = 0
-  let reserveWaste = 0, armbandGain = 0
-  let bestCall: ManagerAnalytics['bestCall'] = null
-  let worstCall: ManagerAnalytics['worstCall'] = null
+  const reportFor = (roundId: string): RoundReport => {
+    let earnedTotal = 0, squadRawTotal = 0, benchLoss = 0, slotLoss = 0
+    let reserveWaste = 0, armbandGain = 0
+    let bestCall: RoundReport['bestCall'] = null
+    let worstCall: RoundReport['worstCall'] = null
 
-  for (const r of earnRows) {
-    const earned = Number(r.earned)
-    const raw = rawOf.get(`${r.round_id}:${r.player_id}`) ?? 0
-    const reason = r.reason ?? ''
-    const key = `${r.round_id}:${r.player_id}`
-    const isCaptain = captainOfRound.has(key)
-    const isVice = viceOfRound.has(key)
-    earnedTotal += earned
-    squadRawTotal += raw
+    for (const r of earnRows) {
+      if (r.round_id !== roundId) continue
+      const earned = Number(r.earned)
+      const raw = rawOf.get(`${r.round_id}:${r.player_id}`) ?? 0
+      const reason = r.reason ?? ''
+      const key = `${r.round_id}:${r.player_id}`
+      const isCaptain = captainOfRound.has(key)
+      const isVice = viceOfRound.has(key)
+      earnedTotal += earned
+      squadRawTotal += raw
 
-    if (r.slot.startsWith('RES')) {
-      // A card that scored while parked in the reserves — points you owned but never used
-      reserveWaste += raw
-    } else if (reason.includes('Bench')) {
-      // The 0.75x shave, measured against what they'd have scored as a starter.
-      // An armband on the bench is multiplied first, so measure off that.
-      const mult = isCaptain ? 2 : isVice ? 1.5 : 1
-      benchLoss += (raw * mult) - earned
-    } else if (raw > 0 && earned < raw && !isCaptain && !isVice && !reason.includes('2×')) {
-      // Slot rules ate it: a P(B) who didn't pitch, a DR with no steals
-      slotLoss += raw - earned
+      if (r.slot.startsWith('RES')) {
+        // A card that scored while parked in the reserves — points you owned but never used
+        reserveWaste += raw
+      } else if (reason.includes('Bench')) {
+        // The 0.75x shave, measured against what they'd have scored as a starter.
+        // An armband on the bench is multiplied first, so measure off that.
+        const mult = isCaptain ? 2 : isVice ? 1.5 : 1
+        benchLoss += (raw * mult) - earned
+      } else if (raw > 0 && earned < raw && !isCaptain && !isVice && !reason.includes('2×')) {
+        // Slot rules ate it: a P(B) who didn't pitch, a DR with no steals
+        slotLoss += raw - earned
+      }
+
+      // What the armbands actually added on top of the base
+      if (isCaptain) armbandGain += earned / 2
+      else if (isVice) armbandGain += earned / 3
+
+      if (earned > 0 && (!bestCall || earned > bestCall.earned)) {
+        bestCall = { name: nameOf.get(r.player_id) ?? '', earned }
+      }
+      if (earned === 0 && raw > 0 && (!worstCall || raw > worstCall.raw)) {
+        worstCall = { name: nameOf.get(r.player_id) ?? '', raw }
+      }
     }
 
-    // What the armbands actually added on top of the base
-    if (isCaptain) armbandGain += earned / 2
-    else if (isVice) armbandGain += earned / 3
-
-    if (earned > 0 && (!bestCall || earned > bestCall.earned)) {
-      bestCall = { name: nameOf.get(r.player_id) ?? '', earned, round: roundNoOf.get(r.round_id) ?? 0 }
-    }
-    if (earned === 0 && raw > 0 && (!worstCall || raw > worstCall.raw)) {
-      worstCall = { name: nameOf.get(r.player_id) ?? '', raw, round: roundNoOf.get(r.round_id) ?? 0 }
+    return {
+      round: roundNoOf.get(roundId) ?? 0,
+      earnedTotal,
+      squadRawTotal,
+      capturedPct: squadRawTotal > 0 ? earnedTotal / squadRawTotal : 0,
+      benchLoss,
+      slotLoss,
+      reserveWaste,
+      armbandGain,
+      bestCall,
+      worstCall,
     }
   }
 
-  return {
-    roundsScored: roundIds.length,
-    earnedTotal,
-    squadRawTotal,
-    capturedPct: squadRawTotal > 0 ? earnedTotal / squadRawTotal : 0,
-    benchLoss,
-    slotLoss,
-    reserveWaste,
-    armbandGain,
-    bestCall,
-    worstCall,
-  }
+  const latestTwo = [...roundIds]
+    .sort((x, y) => (roundNoOf.get(y) ?? 0) - (roundNoOf.get(x) ?? 0))
+    .slice(0, 2)
+  return { rounds: latestTwo.map(reportFor) }
 }
