@@ -6,6 +6,7 @@ import type { AdminStats } from './page'
 import CoachLinksPanel from './CoachLinksPanel'
 import LateTeamPanel from './LateTeamPanel'
 import RainPanel from './RainPanel'
+import ActivityPanel from './ActivityPanel'
 
 // ── Command palette — matches the Photo Studio ──
 const P = {
@@ -629,6 +630,8 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
             </div>
             {styleLog && <LogBox lines={[styleLog]} error={styleLog.startsWith('ERROR')} />}
           </Panel>
+
+          <ActivityPanel />
         </div>
       </section>
       <Footer />
