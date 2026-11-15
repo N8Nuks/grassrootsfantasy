@@ -39,7 +39,36 @@ export async function POST(request: Request) {
   const { data: profile } = await admin.from('profiles').select('is_admin').eq('id', user.id).single()
   if (!profile?.is_admin) return NextResponse.json({ error: 'Admin only' }, { status: 403 })
 
-  const { csv, grade, round_number } = await request.json() as { csv: string; grade: 'mens'|'womens'; round_number: number }
+  const body = await request.json() as { csv: string; grade: 'mens'|'womens'; round_number: number; catchup?: boolean }
+  const { csv, grade } = body
+  let round_number = Number(body.round_number)
+  if (!Number.isInteger(round_number) || round_number < 0) {
+    return NextResponse.json({ error: 'Round number must be 0 or more' }, { status: 400 })
+  }
+
+  /* A catch-up game is one postponed from its round and played later. Its
+     stats count for the players and never for GF teams. Where they are stored:
+       - the whole round is non-scoring (status 'catchup'): in that round
+       - otherwise: in the round's catch-up twin, stored as the negative of the
+         round number (-8 holds Round 8's postponed games) and created on the
+         first upload. The round itself stays untouched, so a confirmed round
+         can still take its late game. */
+  if (body.catchup) {
+    const { data: base } = await admin.from('rounds').select('status')
+      .eq('grade', grade).eq('round_number', round_number).maybeSingle()
+    if (!base) return NextResponse.json({ error: `Round ${round_number} does not exist for this grade` }, { status: 400 })
+    if (base.status !== 'catchup') {
+      const twin = -round_number
+      const { data: existing } = await admin.from('rounds').select('id')
+        .eq('grade', grade).eq('round_number', twin).maybeSingle()
+      if (!existing) {
+        const { error: twinErr } = await admin.from('rounds')
+          .insert({ grade, round_number: twin, lock_at: new Date().toISOString(), status: 'catchup' })
+        if (twinErr) return NextResponse.json({ error: 'Could not create the catch-up round: ' + twinErr.message }, { status: 500 })
+      }
+      round_number = twin
+    }
+  }
 
   // Round: find or create — confirmed rounds are immutable
   let { data: round } = await admin.from('rounds').select('id, status').eq('grade', grade).eq('round_number', round_number).maybeSingle()
@@ -164,5 +193,5 @@ export async function POST(request: Request) {
     if (error) return NextResponse.json({ error: 'Stats insert failed: ' + error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ loaded: rows.length, unmatched, round_id: round!.id, overwriting, warnings })
+  return NextResponse.json({ loaded: rows.length, unmatched, round_id: round!.id, overwriting, warnings, catchup_round: round_number < 0 })
 }

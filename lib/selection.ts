@@ -98,7 +98,7 @@ export async function selectionRoom(
       .eq('owner_id', ownerId).eq('grade', grade)
       .eq('players.active', true)
       .or('is_under18.eq.false,has_consent.eq.true', { referencedTable: 'players' }),
-    supabase.from('rounds').select('id, round_number, status, lock_at').eq('grade', grade).gt('round_number', 0),
+    supabase.from('rounds').select('id, round_number, status, lock_at').eq('grade', grade).neq('round_number', 0),
     supabase.from('scoring_config').select('values').eq('grade', grade).single(),
     supabase.from('clubs').select('id, name'),
   ])
@@ -109,10 +109,12 @@ export async function selectionRoom(
   if (owned.size === 0) return null
 
   type RoundRow = { id: string; round_number: number; status: string; lock_at: string | null }
-  const rounds = ((roundRows ?? []) as RoundRow[]).sort((a, b) => a.round_number - b.round_number)
+  // A catch-up twin (-8 holds Round 8's postponed games) sorts with its round
+  const rounds = ((roundRows ?? []) as RoundRow[])
+    .sort((a, b) => Math.abs(a.round_number) - Math.abs(b.round_number) || b.round_number - a.round_number)
   const withStats = rounds.filter(r => ['provisional', 'confirmed', 'catchup'].includes(r.status))
   // The round to pick for: the first one that has not been scored yet
-  const nextRow = rounds.find(r => !['provisional', 'confirmed', 'catchup'].includes(r.status)) ?? null
+  const nextRow = rounds.find(r => r.round_number > 0 && !['provisional', 'confirmed', 'catchup'].includes(r.status)) ?? null
   const clubName = new Map(((clubRows ?? []) as { id: string; name: string }[]).map(c => [c.id, c.name]))
   const statIds = withStats.map(r => r.id)
   const catchupIds = new Set(withStats.filter(r => r.status === 'catchup').map(r => r.id))
@@ -220,11 +222,18 @@ export async function selectionRoom(
 
   const players: SelectionPlayer[] = []
   for (const p of owned.values()) {
-    const line = withStats.map(r => {
+    // One entry per round number: a catch-up twin fills in its round's entry
+    const line: SelectionPlayer['rounds'] = []
+    for (const r of withStats) {
       const clubPlayed = p.club_id ? clubsIn.get(r.id)?.has(p.club_id) ?? false : false
       const pts = pointsOf.get(`${r.id}:${p.id}`)
-      return { round: r.round_number, points: pts != null ? round1(pts) : clubPlayed ? null : undefined }
-    })
+      const points = pts != null ? round1(pts) : clubPlayed ? null : undefined
+      const no = Math.abs(r.round_number)
+      const prev = line.find(x => x.round === no)
+      if (!prev) line.push({ round: no, points })
+      else if (typeof points === 'number' && typeof prev.points === 'number') prev.points = round1(prev.points + points)
+      else if (typeof prev.points !== 'number' && points !== undefined) prev.points = points
+    }
     const scores = line.filter(x => typeof x.points === 'number').map(x => x.points as number)
     const played = scores.length
     const clubRounds = Math.max(played, line.filter(x => x.points !== undefined).length)
@@ -302,7 +311,7 @@ export async function selectionRoom(
     nextRound: nextNo,
     lockAt: nextRow?.lock_at ?? null,
     par,
-    roundsOnFile: withStats.length,
+    roundsOnFile: new Set(withStats.map(r => Math.abs(r.round_number))).size,
     players,
     scan: {
       everPresent: players.filter(p => p.clubRounds >= 2 && p.played === p.clubRounds).length,

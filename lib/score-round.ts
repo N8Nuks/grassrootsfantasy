@@ -230,7 +230,7 @@ export async function scoreRound(admin: SupabaseClient, round_id: string): Promi
         if (before < m && now >= m) {
           const { error: msErr } = await admin.from('milestones').upsert({
             player_id: playerId, grade: base?.grade ?? round.grade, stat, milestone: m,
-            round_id, round_number: round.round_number,
+            round_id, round_number: Math.abs(round.round_number),
             reached_on: reachedOn,
           }, { onConflict: 'player_id,stat,milestone', ignoreDuplicates: true })
           if (msErr) milestoneErrors.push(`${stat} ${m}: ${msErr.message}`)

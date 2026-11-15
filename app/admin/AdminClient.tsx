@@ -5,6 +5,7 @@ import Footer from '@/components/Footer'
 import type { AdminStats } from './page'
 import CoachLinksPanel from './CoachLinksPanel'
 import LateTeamPanel from './LateTeamPanel'
+import RainPanel from './RainPanel'
 
 // ── Command palette — matches the Photo Studio ──
 const P = {
@@ -65,6 +66,7 @@ function LogBox({ lines, error }: { lines: string[]; error?: boolean }) {
 export default function AdminClient({ stats, cardStyle: initialStyle }: { stats: AdminStats; cardStyle: string }) {
   const [csv, setCsv] = useState('')
   const [roundNumber, setRoundNumber] = useState('0')
+  const [catchupGame, setCatchupGame] = useState(false)
   const [grade, setGrade] = useState<'mens' | 'womens'>('mens')
   const [log, setLog] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
@@ -109,7 +111,7 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
     const res = await fetch('/api/upload-stats', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ csv, grade, round_number: Number(roundNumber) }),
+      body: JSON.stringify({ csv, grade, round_number: Number(roundNumber), catchup: catchupGame }),
     })
     const data = await res.json()
     if (!res.ok) { addLog('ERROR: ' + data.error); setBusy(false); return }
@@ -353,6 +355,14 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
                 onFocus={e => e.currentTarget.select()} onWheel={e => e.currentTarget.blur()}
                 placeholder="Round #" className="rounded-xl px-4 py-3.5 text-sm w-32" style={field} />
             </div>
+            <label className="flex items-start gap-3 text-xs cursor-pointer" style={{ color: P.dim, marginBottom: '16px', minHeight: '44px' }}>
+              <input type="checkbox" checked={catchupGame} onChange={e => setCatchupGame(e.target.checked)}
+                style={{ width: '18px', height: '18px', marginTop: '1px', accentColor: P.purple }} />
+              <span>
+                <b style={{ color: P.text }}>Catch-up game.</b> Tick for a game postponed from this round and played later.
+                Its stats and points go on the players&apos; cards. User teams get no points.
+              </span>
+            </label>
             <textarea value={csv} onChange={e => setCsv(e.target.value)}
               placeholder={"Paste iScore CSV here. Expected header:\nplayer,ab,singles,doubles,triples,hr,rbi,runs,bb,hbp,sb,cs,k_bat,ip,k_pit,win,er"}
               rows={12} className="w-full rounded-xl px-4 py-3.5 text-xs font-mono" style={field} />
@@ -454,6 +464,8 @@ export default function AdminClient({ stats, cardStyle: initialStyle }: { stats:
             </div>
             <LogBox lines={rcLog} error={rcLog[rcLog.length - 1]?.startsWith('ERROR')} />
           </Panel>
+
+          <RainPanel />
 
           {/* 4 · Pre-Season Packs */}
           <Panel number="4" title="Pre-Season Packs" accent={P.orange}

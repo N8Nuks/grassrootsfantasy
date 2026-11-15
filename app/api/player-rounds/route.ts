@@ -27,13 +27,14 @@ export async function GET(req: Request) {
     // A stats-only round (status 'catchup', e.g. rained-out Round 5) counts
     // for the player's games and career figures but gives no fantasy points.
     .map(s => ({
-      round: s.rounds.round_number,
+      // A catch-up twin (-8) shows as the round it belongs to (Rd 8)
+      round: Math.abs(s.rounds.round_number),
       catchup: s.rounds.status === 'catchup',
       status: s.rounds.status,
       raw: s.raw ?? {},
       points: pointsByRound.get(s.round_id) ?? null,
     }))
-    .sort((a, b) => b.round - a.round)
+    .sort((a, b) => b.round - a.round || Number(a.catchup) - Number(b.catchup))
 
   return NextResponse.json({ rounds })
 }

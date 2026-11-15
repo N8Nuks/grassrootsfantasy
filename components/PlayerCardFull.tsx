@@ -546,7 +546,7 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
             <p className="text-xs text-center" style={{ color: T.textDim, padding: '32px 16px' }}>No rounds scored yet — check back after the first round.</p>
           )}
           {(log ?? []).map(r => (
-            <div key={r.round} className="flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff08', padding: '9px 16px' }}>
+            <div key={`${r.round}${r.catchup ? 'c' : ''}`} className="flex items-center gap-3" style={{ borderBottom: '1px solid #ffffff08', padding: '9px 16px' }}>
               <span className="w-9 shrink-0 text-[10px] font-black uppercase" style={{ color: T.textDim }}>Rd {r.round}</span>
               <span className="flex-1 min-w-0 text-[11px] font-bold" style={{ color: T.text }}>
                 {lineFor(r.raw)}
