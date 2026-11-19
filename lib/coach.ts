@@ -34,6 +34,18 @@ const COACH_CLOSE_TIME = '12:00'
 const COACH_HARD_CLOSE_TIME = '20:00'
 const LATER_DAY_CLOSE_TIME = '20:00'
 
+/* A round that opens with an evening game (a Friday-night or midweek start)
+   would otherwise close at noon the day before, a day and a half ahead of the
+   first pitch. For a first game at 5pm or later the deadline is noon on game
+   day instead, and a club that has not sent a team can still do so until an
+   hour before the first pitch. */
+const EVENING_START_HOUR = 17
+const EVENING_HARD_CLOSE_MS = 60 * 60 * 1000
+
+function nzHour(d: Date): number {
+  return Number(new Intl.DateTimeFormat('en-NZ', { timeZone: NZ, hour: '2-digit', hourCycle: 'h23' }).format(d))
+}
+
 export function dayBefore(day: string): string {
   const d = new Date(`${day}T12:00:00Z`)
   d.setUTCDate(d.getUTCDate() - 1)
@@ -65,6 +77,13 @@ export function coachDay(day: string, starts_at: Date, laterDay = false): CoachD
   const eve = dayBefore(day)
   if (laterDay) {
     return { day, starts_at, closes_at: laterDayRevealAt(day), hard_closes_at: starts_at }
+  }
+  if (nzHour(starts_at) >= EVENING_START_HOUR) {
+    return {
+      day, starts_at,
+      closes_at: nzToDate(day, COACH_CLOSE_TIME),
+      hard_closes_at: new Date(starts_at.getTime() - EVENING_HARD_CLOSE_MS),
+    }
   }
   return {
     day, starts_at,
