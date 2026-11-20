@@ -9,6 +9,7 @@ import { nzToDate, laterDayRevealAt } from '@/lib/coach'
 const COBALT = '#2456E6'
 const GOLD = '#E8C15A'
 const SILVER = '#7FC4FF'
+const CYAN = '#22D3EE'
 
 type Fixture = {
   id: string
@@ -108,8 +109,8 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
   /* Catch-up games: postponed from their round and replayed later. Until one
      is played it sits in its own card, out of the round cards, lock times and
      projected lineups. Once it has a score it goes back into its round's card
-     as a result, tagged Catch-up, and the catch-up card disappears when none
-     are left to play. Their stats count for the players and score no fantasy
+     as an ordinary result, and the catch-up card disappears when none are
+     left to play. Their stats count for the players and score no fantasy
      points. */
   const byRound = new Map<number, Fixture[]>()
   const catchups: Fixture[] = []
@@ -358,6 +359,216 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
     textShadow: active ? 'none' : '0 1px 3px #000000',
   })
 
+
+  /* Order of the round cards: the round being played (or next to be played)
+     first, then later rounds in date order, then results from Round 1 down. "This week" is the first round with a game still to come; it moves
+     on by itself once a round's last game day has passed. */
+  const lastDayOf = (n: number) => (byRound.get(n) ?? [])
+    .filter(g => g.team_a !== 'BYE' && g.team_b !== 'BYE')
+    .reduce((d, g) => (g.played_on > d ? g.played_on : d), '')
+  const firstDayOf = (n: number) => (byRound.get(n) ?? [])
+    .filter(g => g.team_a !== 'BYE' && g.team_b !== 'BYE')
+    .reduce((d, g) => (d === '' || g.played_on < d ? g.played_on : d), '')
+  const currentRound = roundNumbers.find(n => lockOf.get(n)?.status !== 'catchup' && lastDayOf(n) >= todayNZ) ?? null
+  const upcomingRounds = currentRound == null ? [] : roundNumbers.filter(n => n > currentRound)
+  const pastRounds = currentRound == null ? roundNumbers : roundNumbers.filter(n => n < currentRound)
+  // "This week" runs to the coming Sunday; a round further out is "Next up"
+  const todayNoon = new Date(`${todayNZ}T12:00:00Z`)
+  const weekEnd = new Date(todayNoon.getTime() + ((7 - todayNoon.getUTCDay()) % 7) * 86400000).toISOString().slice(0, 10)
+  const nowLabel = currentRound != null && firstDayOf(currentRound) <= weekEnd ? 'This week' : 'Next up'
+
+  const renderRound = (n: number) => {
+            const games = byRound.get(n)!
+            const isNow = n === currentRound
+            const isPast = currentRound == null || n < currentRound
+            // This week's card wears cyan; every other round keeps the grade colour
+            const tone = isNow ? CYAN : accent
+            const dates = [...new Set(games.map(g => g.played_on))]
+            const lock = lockOf.get(n)
+            /* A round can run across more than one park. Each ground's club is
+               named in the header, and the games group under their ground. */
+            const grounds: string[] = []
+            for (const g of games) {
+              if (g.location && g.location !== 'Unallocated' && !grounds.includes(g.location)) grounds.push(g.location)
+            }
+            const split = grounds.length > 1
+            const hostLabels = grounds.map(gr => hostOf(gr)?.label).filter(Boolean) as string[]
+            const hostAvatars = grounds.map(gr => hostOf(gr)).filter(Boolean) as NonNullable<ReturnType<typeof hostOf>>[]
+            const isBye = (g: Fixture) => g.team_a === 'BYE' || g.team_b === 'BYE'
+            const byeGames = games.filter(isBye)
+            const byes = games.filter(g => !isBye(g) && (!g.location || g.location === 'Unallocated'))
+            const byeClub = (g: Fixture) => g.team_a === 'BYE' ? label(g.team_b, g.club_b) : label(g.team_a, g.club_a)
+            const byeLine = byeGames.length > 0 && (
+              <div style={{ padding: '11px 20px', borderTop: '1px solid #ffffff0a', background: '#ffffff06' }}>
+                {byeGames.map(g => (
+                  <p key={g.id} className="text-[11px] text-white/70">
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: tone, marginRight: '8px' }}>
+                      Bye{dates.length > 1 ? ' · ' + fmtDate(g.played_on).split(' ')[0] : ''}
+                    </span>
+                    {byeClub(g)}. Their players won&apos;t score {dates.length > 1 ? 'that day' : 'this round'}.
+                  </p>
+                ))}
+              </div>
+            )
+
+            /* Park and diamond sit under the matchup so they're readable on a
+               phone — the old right-hand column was hidden below sm. When the
+               games are already grouped by park, the line shows the diamond.
+               On the next round to be played, each game also carries a
+               closed-by-default Projected lineups panel. */
+            const gameRow = (g: Fixture, withGround: boolean) => {
+              const bye = g.team_a === 'BYE' || g.team_b === 'BYE'
+              const hasScore = g.score_a != null && g.score_b != null
+              const aWon = hasScore && Number(g.score_a) > Number(g.score_b)
+              const bWon = hasScore && Number(g.score_b) > Number(g.score_a)
+              const time = fmtTime(g.start_time)
+              const where = [withGround ? g.location : null, g.venue].filter(v => v && v !== 'Unallocated').join(' · ')
+              const pa = projFor(clubKey(g.club_a), g.played_on)
+              const pb = projFor(clubKey(g.club_b), g.played_on)
+              // A later day of a two-day round shows its lineups from 8pm the night before
+              // ...or as soon as a club has named a team for that day
+              const namedForDay = projOf.get(clubKey(g.club_a))?.has(g.played_on) || projOf.get(clubKey(g.club_b))?.has(g.played_on)
+              const revealed = g.played_on === dates[0] || !!namedForDay || laterDayRevealAt(g.played_on) <= new Date()
+              const hasProj = n === projRound && !bye && revealed
+                && !isPlaceholder(g.team_a) && !isPlaceholder(g.team_b)
+                && ((pa?.list.length ?? 0) > 0 || (pb?.list.length ?? 0) > 0)
+              const allNamed = pa?.kind === 'named' && pb?.kind === 'named'
+              return (
+                <div key={g.id} style={{ borderBottom: '1px solid #ffffff06', opacity: bye ? 0.55 : 1 }}>
+                  <div className="flex items-start gap-4" style={{ padding: '12px 20px' }}>
+                    <span className="w-16 shrink-0 text-[11px] font-black" style={{ color: tone, paddingTop: '2px' }}>
+                      {dates.length > 1 ? fmtDate(g.played_on).split(' ')[0].replace(',', time || !(bye || hasScore) ? ',' : '') + ' ' : ''}{time ?? (bye || hasScore ? '' : 'TBC')}
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm font-bold text-white/90">
+                        {hasScore ? (
+                          <>
+                            <span style={{ fontWeight: aWon ? 900 : 600, color: aWon ? '#ffffff' : '#ffffffA0' }}>{label(g.team_a, g.club_a)} {g.score_a}</span>
+                            <span className="text-white/35"> – </span>
+                            <span style={{ fontWeight: bWon ? 900 : 600, color: bWon ? '#ffffff' : '#ffffffA0' }}>{g.score_b} {label(g.team_b, g.club_b)}</span>
+                          </>
+                        ) : (
+                          <>{label(g.team_a, g.club_a)} <span className="text-white/35">v</span> {label(g.team_b, g.club_b)}</>
+                        )}
+                        {g.section && g.section !== 'Section A' && (
+                          <span className="text-[9px] uppercase tracking-widest ml-2" style={{ color: '#ffffff40' }}>{g.section}</span>
+                        )}
+                      </span>
+                      {where && (
+                        <span className="block text-[10px] text-white/45" style={{ marginTop: '3px' }}>{where}</span>
+                      )}
+                    </span>
+                  </div>
+                  {hasProj && (
+                    <details style={{ padding: '0 20px 14px' }}>
+                      <summary className="cursor-pointer select-none text-[10px] font-black uppercase tracking-[0.18em] [&::-webkit-details-marker]:hidden"
+                        style={{ color: tone, marginLeft: '80px', listStyle: 'none' }}>
+                        Projected lineups ▾
+                      </summary>
+                      <div className="grid grid-cols-2 gap-4" style={{ marginTop: '12px' }}>
+                        {lineupCol(label(g.team_a, g.club_a), clubKey(g.club_a), pa)}
+                        {lineupCol(label(g.team_b, g.club_b), clubKey(g.club_b), pb)}
+                      </div>
+                      <p className="text-[10px] text-white/45" style={{ marginTop: '10px' }}>
+                        {allNamed
+                          ? 'Teams as named by the clubs. Projected, not yet confirmed.'
+                          : "Projected from each club's last lineup. Not confirmed by the clubs."}
+                      </p>
+                    </details>
+                  )}
+                </div>
+              )
+            }
+
+            return (
+              <div key={n} id={isNow ? 'this-week' : undefined} className="rounded-xl overflow-hidden" style={{
+                background: isNow ? '#0D1422' : '#121215',
+                border: isNow ? `2px solid ${CYAN}` : `1px solid ${tone}30`,
+                boxShadow: isNow ? `0 0 28px ${CYAN}40` : 'none',
+                opacity: isPast ? 0.68 : 1,
+                marginBottom: '20px',
+              }}>
+                <div className="flex items-center justify-between gap-4 flex-wrap"
+                  style={{ padding: '12px 20px', borderBottom: '1px solid #ffffff0a', background: `linear-gradient(90deg, ${tone}${isNow ? '30' : '14'} 0%, transparent ${isNow ? 75 : 60}%)` }}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    {hostAvatars.slice(0, 3).map((h, i) => (
+                      h.club === 'NHSA'
+                        ? <ClubAvatar key={i} club="Generic" frame="diamond" size={36} />
+                        : <ClubAvatar key={i} club={h.club} frame="gold" size={36} />
+                    ))}
+                    <div className="min-w-0">
+                      <p className="text-sm font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+                        {isNow && (
+                          <span className="text-[9px] font-black uppercase tracking-[0.16em] rounded-full"
+                            style={{ background: CYAN, color: '#03121A', padding: '4px 9px', marginRight: '8px', verticalAlign: 'middle', fontFamily: 'inherit' }}>
+                            {nowLabel}
+                          </span>
+                        )}
+                        Round {n} <span className="text-white/45">· {dates.map(fmtDate).join(' · ')}</span>
+                      </p>
+                      {hostLabels.length > 0 && (
+                        <p className="text-[10px] font-black uppercase tracking-[0.22em]" style={{ color: tone, marginTop: '2px' }}>
+                          Hosted by {hostLabels.length > 1
+                            ? hostLabels.slice(0, -1).join(', ') + ' & ' + hostLabels[hostLabels.length - 1]
+                            : hostLabels[0]}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {!lock && n === roundNumbers.find(rn => !lockOf.has(rn)) && (<span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: tone }}>Opens Tuesday 5pm</span>)}
+                  {lock && (lock.status === 'provisional' || lock.status === 'confirmed') && (
+                    <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: lock.status === 'confirmed' ? '#4ADE80' : tone }}>
+                      {lock.status === 'confirmed' ? 'Confirmed' : games.some(g => g.club_b && g.score_a == null) ? 'Playing' : 'Played'}
+                    </span>
+                  )}
+                  {lock?.status === 'catchup' && (
+                    <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: '#B4BEC9' }}>Stats only</span>
+                  )}
+                  {lock?.lock_at && lock.status !== 'provisional' && lock.status !== 'confirmed' && lock.status !== 'catchup' && (
+                    <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: new Date(lock.lock_at).getTime() < Date.now() ? '#B4BEC9' : tone }}>
+                      {new Date(lock.lock_at).getTime() < Date.now() ? 'Locked' : <>Lineups lock {LOCK.format(
+                        new Date(lock.lock_at).getTime() - Date.now() > 60 * 24 * 3600 * 1000
+                          ? nzToDate(new Date(new Date(dates[0] + 'T12:00:00Z').getTime() - 86400000).toISOString().slice(0, 10), '23:00')
+                          : new Date(lock.lock_at))}</>}
+                    </span>
+                  )}
+                </div>
+
+                {split ? (
+                  <>
+                    {grounds.map(gr => (
+                      <div key={gr}>
+                        <div className="flex items-center gap-2"
+                          style={{ padding: '9px 20px', background: '#ffffff06', borderBottom: '1px solid #ffffff0a' }}>
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70">{gr}</span>
+                          {hostOf(gr)?.label && (
+                            <span className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: tone }}>
+                              · {hostOf(gr)!.label}
+                            </span>
+                          )}
+                        </div>
+                        {games.filter(g => g.location === gr && !isBye(g)).map(g => gameRow(g, false))}
+                      </div>
+                    ))}
+                    {byes.map(g => gameRow(g, false))}
+                  </>
+                ) : (
+                  games.filter(g => !isBye(g)).map(g => gameRow(g, false))
+                )}
+                {byeLine}
+                {catchups.some(c => c.round_number === n) && (
+                  <a href="#catch-up" className="block" style={{ padding: '11px 20px', borderTop: '1px solid #ffffff0a', background: '#ffffff06' }}>
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: tone, marginRight: '8px' }}>Postponed</span>
+                    <span className="text-[11px] text-white/70">
+                      {catchups.filter(c => c.round_number === n).map(c => `${label(c.team_a, c.club_a)} v ${label(c.team_b, c.club_b)}`).join(', ')}
+                      {' '}· see Catch-up games
+                    </span>
+                  </a>
+                )}
+              </div>
+            )
+  }
+
   return (
     <main className="min-h-screen flex flex-col" style={{ background: '#0D0D0F' }}>
       <Nav />
@@ -391,6 +602,10 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
       {/* Rounds */}
       <section className="px-6 sm:px-12" style={{ background: '#14141A', borderTop: '1px solid #ffffff0a', paddingTop: '36px', paddingBottom: '48px' }}>
         <div style={{ maxWidth: '760px', marginLeft: 'auto', marginRight: 'auto' }}>
+          {roundNumbers.length === 0 && (
+            <p className="text-sm text-center text-white/55">No fixtures loaded for this grade yet.{fxError ? ` (${fxError.message})` : ''}</p>
+          )}
+          {currentRound != null && renderRound(currentRound)}
           {catchups.length > 0 && (
             <div id="catch-up" className="rounded-xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${accent}30`, marginBottom: '20px' }}>
               <div style={{ padding: '12px 20px', borderBottom: '1px solid #ffffff0a', background: `linear-gradient(90deg, ${accent}14 0%, transparent 60%)` }}>
@@ -432,187 +647,10 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
               })}
             </div>
           )}
-          {roundNumbers.length === 0 && (
-            <p className="text-sm text-center text-white/55">No fixtures loaded for this grade yet.{fxError ? ` (${fxError.message})` : ''}</p>
-          )}
-          {roundNumbers.map(n => {
-            const games = byRound.get(n)!
-            const dates = [...new Set(games.map(g => g.played_on))]
-            const lock = lockOf.get(n)
-            /* A round can run across more than one park. Each ground's club is
-               named in the header, and the games group under their ground. */
-            const grounds: string[] = []
-            for (const g of games) {
-              if (g.location && g.location !== 'Unallocated' && !grounds.includes(g.location)) grounds.push(g.location)
-            }
-            const split = grounds.length > 1
-            const hostLabels = grounds.map(gr => hostOf(gr)?.label).filter(Boolean) as string[]
-            const hostAvatars = grounds.map(gr => hostOf(gr)).filter(Boolean) as NonNullable<ReturnType<typeof hostOf>>[]
-            const isBye = (g: Fixture) => g.team_a === 'BYE' || g.team_b === 'BYE'
-            const byeGames = games.filter(isBye)
-            const byes = games.filter(g => !isBye(g) && (!g.location || g.location === 'Unallocated'))
-            const byeClub = (g: Fixture) => g.team_a === 'BYE' ? label(g.team_b, g.club_b) : label(g.team_a, g.club_a)
-            const byeLine = byeGames.length > 0 && (
-              <div style={{ padding: '11px 20px', borderTop: '1px solid #ffffff0a', background: '#ffffff06' }}>
-                {byeGames.map(g => (
-                  <p key={g.id} className="text-[11px] text-white/70">
-                    <span className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: accent, marginRight: '8px' }}>
-                      Bye{dates.length > 1 ? ' · ' + fmtDate(g.played_on).split(' ')[0] : ''}
-                    </span>
-                    {byeClub(g)}. Their players won&apos;t score {dates.length > 1 ? 'that day' : 'this round'}.
-                  </p>
-                ))}
-              </div>
-            )
-
-            /* Park and diamond sit under the matchup so they're readable on a
-               phone — the old right-hand column was hidden below sm. When the
-               games are already grouped by park, the line shows the diamond.
-               On the next round to be played, each game also carries a
-               closed-by-default Projected lineups panel. */
-            const gameRow = (g: Fixture, withGround: boolean) => {
-              const bye = g.team_a === 'BYE' || g.team_b === 'BYE'
-              const hasScore = g.score_a != null && g.score_b != null
-              const aWon = hasScore && Number(g.score_a) > Number(g.score_b)
-              const bWon = hasScore && Number(g.score_b) > Number(g.score_a)
-              const time = fmtTime(g.start_time)
-              const where = [withGround ? g.location : null, g.venue].filter(v => v && v !== 'Unallocated').join(' · ')
-              const pa = projFor(clubKey(g.club_a), g.played_on)
-              const pb = projFor(clubKey(g.club_b), g.played_on)
-              // A later day of a two-day round shows its lineups from 8pm the night before
-              // ...or as soon as a club has named a team for that day
-              const namedForDay = projOf.get(clubKey(g.club_a))?.has(g.played_on) || projOf.get(clubKey(g.club_b))?.has(g.played_on)
-              const revealed = g.played_on === dates[0] || !!namedForDay || laterDayRevealAt(g.played_on) <= new Date()
-              const hasProj = n === projRound && !bye && revealed
-                && !isPlaceholder(g.team_a) && !isPlaceholder(g.team_b)
-                && ((pa?.list.length ?? 0) > 0 || (pb?.list.length ?? 0) > 0)
-              const allNamed = pa?.kind === 'named' && pb?.kind === 'named'
-              return (
-                <div key={g.id} style={{ borderBottom: '1px solid #ffffff06', opacity: bye ? 0.55 : 1 }}>
-                  <div className="flex items-start gap-4" style={{ padding: '12px 20px' }}>
-                    <span className="w-16 shrink-0 text-[11px] font-black" style={{ color: accent, paddingTop: '2px' }}>
-                      {dates.length > 1 ? fmtDate(g.played_on).split(' ')[0] + ' ' : ''}{time ?? (bye ? '' : 'TBC')}
-                    </span>
-                    <span className="flex-1 min-w-0">
-                      <span className="block text-sm font-bold text-white/90">
-                        {hasScore ? (
-                          <>
-                            <span style={{ fontWeight: aWon ? 900 : 600, color: aWon ? '#ffffff' : '#ffffffA0' }}>{label(g.team_a, g.club_a)} {g.score_a}</span>
-                            <span className="text-white/35"> – </span>
-                            <span style={{ fontWeight: bWon ? 900 : 600, color: bWon ? '#ffffff' : '#ffffffA0' }}>{g.score_b} {label(g.team_b, g.club_b)}</span>
-                          </>
-                        ) : (
-                          <>{label(g.team_a, g.club_a)} <span className="text-white/35">v</span> {label(g.team_b, g.club_b)}</>
-                        )}
-                        {g.catchup && (
-                          <span className="text-[9px] font-black uppercase tracking-widest ml-2" style={{ color: accent }}>Catch-up</span>
-                        )}
-                        {g.section && g.section !== 'Section A' && (
-                          <span className="text-[9px] uppercase tracking-widest ml-2" style={{ color: '#ffffff40' }}>{g.section}</span>
-                        )}
-                      </span>
-                      {where && (
-                        <span className="block text-[10px] text-white/45" style={{ marginTop: '3px' }}>{where}</span>
-                      )}
-                    </span>
-                  </div>
-                  {hasProj && (
-                    <details style={{ padding: '0 20px 14px' }}>
-                      <summary className="cursor-pointer select-none text-[10px] font-black uppercase tracking-[0.18em] [&::-webkit-details-marker]:hidden"
-                        style={{ color: accent, marginLeft: '80px', listStyle: 'none' }}>
-                        Projected lineups ▾
-                      </summary>
-                      <div className="grid grid-cols-2 gap-4" style={{ marginTop: '12px' }}>
-                        {lineupCol(label(g.team_a, g.club_a), clubKey(g.club_a), pa)}
-                        {lineupCol(label(g.team_b, g.club_b), clubKey(g.club_b), pb)}
-                      </div>
-                      <p className="text-[10px] text-white/45" style={{ marginTop: '10px' }}>
-                        {allNamed
-                          ? 'Teams as named by the clubs. Projected, not yet confirmed.'
-                          : "Projected from each club's last lineup. Not confirmed by the clubs."}
-                      </p>
-                    </details>
-                  )}
-                </div>
-              )
-            }
-
-            return (
-              <div key={n} className="rounded-xl overflow-hidden" style={{ background: '#121215', border: `1px solid ${accent}30`, marginBottom: '20px' }}>
-                <div className="flex items-center justify-between gap-4 flex-wrap"
-                  style={{ padding: '12px 20px', borderBottom: '1px solid #ffffff0a', background: `linear-gradient(90deg, ${accent}14 0%, transparent 60%)` }}>
-                  <div className="flex items-center gap-3 min-w-0">
-                    {hostAvatars.slice(0, 3).map((h, i) => (
-                      h.club === 'NHSA'
-                        ? <ClubAvatar key={i} club="Generic" frame="diamond" size={36} />
-                        : <ClubAvatar key={i} club={h.club} frame="gold" size={36} />
-                    ))}
-                    <div className="min-w-0">
-                      <p className="text-sm font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>
-                        Round {n} <span className="text-white/45">· {dates.map(fmtDate).join(' · ')}</span>
-                      </p>
-                      {hostLabels.length > 0 && (
-                        <p className="text-[10px] font-black uppercase tracking-[0.22em]" style={{ color: accent, marginTop: '2px' }}>
-                          Hosted by {hostLabels.length > 1
-                            ? hostLabels.slice(0, -1).join(', ') + ' & ' + hostLabels[hostLabels.length - 1]
-                            : hostLabels[0]}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  {!lock && n === roundNumbers.find(rn => !lockOf.has(rn)) && (<span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: accent }}>Opens Tuesday 5pm</span>)}
-                  {lock && (lock.status === 'provisional' || lock.status === 'confirmed') && (
-                    <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: lock.status === 'confirmed' ? '#4ADE80' : accent }}>
-                      {lock.status === 'confirmed' ? 'Confirmed' : games.some(g => g.club_b && g.score_a == null) ? 'Playing' : 'Played'}
-                    </span>
-                  )}
-                  {lock?.status === 'catchup' && (
-                    <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: '#B4BEC9' }}>Stats only</span>
-                  )}
-                  {lock?.lock_at && lock.status !== 'provisional' && lock.status !== 'confirmed' && lock.status !== 'catchup' && (
-                    <span className="text-[10px] font-black uppercase tracking-widest shrink-0" style={{ color: new Date(lock.lock_at).getTime() < Date.now() ? '#B4BEC9' : accent }}>
-                      {new Date(lock.lock_at).getTime() < Date.now() ? 'Locked' : <>Lineups lock {LOCK.format(
-                        new Date(lock.lock_at).getTime() - Date.now() > 60 * 24 * 3600 * 1000
-                          ? nzToDate(new Date(new Date(dates[0] + 'T12:00:00Z').getTime() - 86400000).toISOString().slice(0, 10), '23:00')
-                          : new Date(lock.lock_at))}</>}
-                    </span>
-                  )}
-                </div>
-
-                {split ? (
-                  <>
-                    {grounds.map(gr => (
-                      <div key={gr}>
-                        <div className="flex items-center gap-2"
-                          style={{ padding: '9px 20px', background: '#ffffff06', borderBottom: '1px solid #ffffff0a' }}>
-                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70">{gr}</span>
-                          {hostOf(gr)?.label && (
-                            <span className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: accent }}>
-                              · {hostOf(gr)!.label}
-                            </span>
-                          )}
-                        </div>
-                        {games.filter(g => g.location === gr && !isBye(g)).map(g => gameRow(g, false))}
-                      </div>
-                    ))}
-                    {byes.map(g => gameRow(g, false))}
-                  </>
-                ) : (
-                  games.filter(g => !isBye(g)).map(g => gameRow(g, false))
-                )}
-                {byeLine}
-                {catchups.some(c => c.round_number === n) && (
-                  <a href="#catch-up" className="block" style={{ padding: '11px 20px', borderTop: '1px solid #ffffff0a', background: '#ffffff06' }}>
-                    <span className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: accent, marginRight: '8px' }}>Postponed</span>
-                    <span className="text-[11px] text-white/70">
-                      {catchups.filter(c => c.round_number === n).map(c => `${label(c.team_a, c.club_a)} v ${label(c.team_b, c.club_b)}`).join(', ')}
-                      {' '}· see Catch-up games
-                    </span>
-                  </a>
-                )}
-              </div>
-            )
-          })}
+          {upcomingRounds.length > 0 && <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/45" style={{ margin: '26px 4px 12px' }}>Coming up</p>}
+          {upcomingRounds.map(renderRound)}
+          {pastRounds.length > 0 && currentRound != null && <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/45" style={{ margin: '26px 4px 12px' }}>Results</p>}
+          {pastRounds.map(renderRound)}
           <p className="text-[11px] text-center text-white/40" style={{ marginTop: '8px' }}>
             Seeds are playoff places not yet decided. Fixtures are as published by Auckland Softball and may change.
           </p>
