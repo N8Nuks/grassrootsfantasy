@@ -105,14 +105,16 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
   const roundList = (rounds ?? []) as Round[]
   const lockOf = new Map(roundList.map(r => [r.round_number, r]))
   const numberOf = new Map(roundList.map(r => [r.id, r.round_number]))
-  /* Catch-up games: postponed from their round and replayed later. They keep
-     their round number as a label but sit in their own card, out of the round
-     cards, lock times and projected lineups. Their stats count for the players
-     and score no fantasy points. */
+  /* Catch-up games: postponed from their round and replayed later. Until one
+     is played it sits in its own card, out of the round cards, lock times and
+     projected lineups. Once it has a score it goes back into its round's card
+     as a result, tagged Catch-up, and the catch-up card disappears when none
+     are left to play. Their stats count for the players and score no fantasy
+     points. */
   const byRound = new Map<number, Fixture[]>()
   const catchups: Fixture[] = []
   for (const f of (fixtures ?? []) as Fixture[]) {
-    if (f.catchup) { catchups.push(f); continue }
+    if (f.catchup && (f.score_a == null || f.score_b == null)) { catchups.push(f); continue }
     byRound.set(f.round_number, [...(byRound.get(f.round_number) ?? []), f])
   }
   catchups.sort((a, b) => a.played_on.localeCompare(b.played_on) || (a.start_time ?? '').localeCompare(b.start_time ?? ''))
@@ -501,6 +503,9 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
                           </>
                         ) : (
                           <>{label(g.team_a, g.club_a)} <span className="text-white/35">v</span> {label(g.team_b, g.club_b)}</>
+                        )}
+                        {g.catchup && (
+                          <span className="text-[9px] font-black uppercase tracking-widest ml-2" style={{ color: accent }}>Catch-up</span>
                         )}
                         {g.section && g.section !== 'Section A' && (
                           <span className="text-[9px] uppercase tracking-widest ml-2" style={{ color: '#ffffff40' }}>{g.section}</span>
