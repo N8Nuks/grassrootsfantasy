@@ -153,10 +153,18 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
       .select('player_id, round_id, raw')
       .in('round_id', roundIds)
     const played = ((statRows ?? []) as StatRow[]).filter(s => tookField(s.raw))
+    /* The last round that is finished. A round still being played does not
+       count, even once some of its games have stats loaded: in a round spread
+       over several days the projected lineups stay on that round until its
+       last game day has passed, and only then move to the next one. */
+    const lastGameDay = (rn: number) => (byRound.get(rn) ?? [])
+      .filter(g => g.team_a !== 'BYE' && g.team_b !== 'BYE')
+      .reduce((d, g) => (g.played_on > d ? g.played_on : d), '')
     let lastScored: number | null = null
     for (const s of played) {
       const rn = numberOf.get(s.round_id)
-      if (rn != null && (lastScored == null || rn > lastScored)) lastScored = rn
+      if (rn == null || lastGameDay(rn) >= todayNZ) continue
+      if (lastScored == null || rn > lastScored) lastScored = rn
     }
     if (lastScored != null) {
       const scored: number = lastScored
@@ -442,11 +450,18 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
                     <span className="flex-1 min-w-0">
                       <span className="block text-sm font-bold text-white/90">
                         {hasScore ? (
-                          <>
-                            <span style={{ fontWeight: aWon ? 900 : 600, color: aWon ? '#ffffff' : '#ffffffA0' }}>{label(g.team_a, g.club_a)} {g.score_a}</span>
-                            <span className="text-white/35"> – </span>
-                            <span style={{ fontWeight: bWon ? 900 : 600, color: bWon ? '#ffffff' : '#ffffffA0' }}>{g.score_b} {label(g.team_b, g.club_b)}</span>
-                          </>
+                          /* A result: one team per line, scores lined up down
+                             the right, the winner's score in the round's colour */
+                          <span className="flex items-start gap-3">
+                            <span className="flex-1 min-w-0">
+                              <span className="block truncate" style={{ fontWeight: aWon ? 900 : 600, color: aWon || !bWon ? '#ffffff' : '#ffffffA0' }}>{label(g.team_a, g.club_a)}</span>
+                              <span className="block truncate" style={{ fontWeight: bWon ? 900 : 600, color: bWon || !aWon ? '#ffffff' : '#ffffffA0', marginTop: '3px' }}>{label(g.team_b, g.club_b)}</span>
+                            </span>
+                            <span className="shrink-0 text-right" style={{ fontSize: '15px', fontVariantNumeric: 'tabular-nums', minWidth: '22px' }}>
+                              <span className="block" style={{ fontWeight: 900, color: aWon ? tone : bWon ? '#ffffffA0' : '#ffffff' }}>{g.score_a}</span>
+                              <span className="block" style={{ fontWeight: 900, color: bWon ? tone : aWon ? '#ffffffA0' : '#ffffff', marginTop: '1px' }}>{g.score_b}</span>
+                            </span>
+                          </span>
                         ) : (
                           <>{label(g.team_a, g.club_a)} <span className="text-white/35">v</span> {label(g.team_b, g.club_b)}</>
                         )}
@@ -629,11 +644,18 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
                     <span className="flex-1 min-w-0">
                       <span className="block text-sm font-bold text-white/90">
                         {hasScore ? (
-                          <>
-                            <span style={{ fontWeight: aWon ? 900 : 600, color: aWon ? '#ffffff' : '#ffffffA0' }}>{label(g.team_a, g.club_a)} {g.score_a}</span>
-                            <span className="text-white/35"> – </span>
-                            <span style={{ fontWeight: bWon ? 900 : 600, color: bWon ? '#ffffff' : '#ffffffA0' }}>{g.score_b} {label(g.team_b, g.club_b)}</span>
-                          </>
+                          /* A result: one team per line, scores lined up down
+                             the right, the winner's score in the round's colour */
+                          <span className="flex items-start gap-3">
+                            <span className="flex-1 min-w-0">
+                              <span className="block truncate" style={{ fontWeight: aWon ? 900 : 600, color: aWon || !bWon ? '#ffffff' : '#ffffffA0' }}>{label(g.team_a, g.club_a)}</span>
+                              <span className="block truncate" style={{ fontWeight: bWon ? 900 : 600, color: bWon || !aWon ? '#ffffff' : '#ffffffA0', marginTop: '3px' }}>{label(g.team_b, g.club_b)}</span>
+                            </span>
+                            <span className="shrink-0 text-right" style={{ fontSize: '15px', fontVariantNumeric: 'tabular-nums', minWidth: '22px' }}>
+                              <span className="block" style={{ fontWeight: 900, color: aWon ? accent : bWon ? '#ffffffA0' : '#ffffff' }}>{g.score_a}</span>
+                              <span className="block" style={{ fontWeight: 900, color: bWon ? accent : aWon ? '#ffffffA0' : '#ffffff', marginTop: '1px' }}>{g.score_b}</span>
+                            </span>
+                          </span>
                         ) : (
                           <>{label(g.team_a, g.club_a)} <span className="text-white/35">v</span> {label(g.team_b, g.club_b)}</>
                         )}
