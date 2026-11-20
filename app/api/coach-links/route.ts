@@ -129,7 +129,7 @@ export async function POST(req: Request) {
     const under18 = !!body.under18
     const { data: created, error } = await admin.from('players').insert({
       full_name: name, grade: body.grade, club_id: body.club_id, tier: 'common',
-      positions: ['IF', 'OF'], reveal_pos: 'IF', badges: ['newcomer'],
+      positions: ['B1', 'B2', 'B3', 'SS', 'LF', 'CF', 'RF'], reveal_pos: 'IF', badges: ['newcomer'],
       career_games: 0, career_games_base: 0, active: true,
       is_under18: under18, has_consent: false, deal_weight: 1,
     }).select('id').single()
