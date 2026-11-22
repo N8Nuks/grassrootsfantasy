@@ -69,15 +69,23 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
      the season has started once there is at least one. */
   const { data: roundRows } = await supabase.from('rounds')
     .select('id, round_number, status').eq('grade', grade)
-    .in('status', ['provisional', 'confirmed'])
+    .in('status', ['provisional', 'confirmed', 'catchup'])
     .order('round_number', { ascending: true })
-  const rounds = (roundRows ?? []) as { id: string; round_number: number; status: string }[]
+  type RoundRow = { id: string; round_number: number; status: string }
+  const allRounds = (roundRows ?? []) as RoundRow[]
+  /* A non-scoring round (rained off for GF, e.g. Round 5) still has player
+     scores and stats, so it is in the round picker like any other. It just
+     gave user teams nothing. A catch-up twin (stored as the negative of its
+     round number) holds a scored round's late game: it is not a round of its
+     own, and its lines are added to its round's board and the season totals. */
+  const rounds = allRounds.filter(r => r.round_number > 0)
+  const twinOf = (n: number) => allRounds.find(r => r.round_number === -n) ?? null
   // Catch-up games (postponed and replayed later) count in the season totals
-  const { data: catchupRows } = await supabase.from('rounds')
-    .select('id').eq('grade', grade).eq('status', 'catchup')
-  const catchupIds = (catchupRows ?? []).map(r => r.id as string)
-  const latest = rounds.length ? rounds[rounds.length - 1] : null
-  const seasonStarted = rounds.length > 0
+  const catchupIds = allRounds.filter(r => r.status === 'catchup').map(r => r.id)
+  // The latest round that counted for user teams: the default round view
+  const scoredRounds = rounds.filter(r => r.status !== 'catchup')
+  const latest = scoredRounds.length ? scoredRounds[scoredRounds.length - 1] : null
+  const seasonStarted = scoredRounds.length > 0
 
   const view: View = params.view === 'round' && latest ? 'round' : 'season'
   const wanted = Number(params.round)
@@ -116,7 +124,7 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
   let teamGames = 0
   if (view === 'season' && rounds.length) {
     const { data: lines } = await supabase.from('player_stats')
-      .select('player_id, raw').in('round_id', [...rounds.map(r => r.id), ...catchupIds])
+      .select('player_id, raw').in('round_id', [...new Set([...rounds.map(r => r.id), ...catchupIds])])
     const tot = new Map<string, { h: number; d: number; t: number; ab: number; g: number }>()
     for (const l of lines ?? []) {
       const r = (l.raw ?? {}) as Record<string, unknown>
@@ -146,22 +154,27 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
      under r_* keys. Season keys are untouched, so an opened card still reads
      its season figures. */
   if (roundRow) {
+    const twin = twinOf(roundRow.round_number)
+    const ids = twin ? [roundRow.id, twin.id] : [roundRow.id]
     const [{ data: lines }, { data: scores }] = await Promise.all([
-      supabase.from('player_stats').select('player_id, raw').eq('round_id', roundRow.id),
-      supabase.from('player_scores').select('player_id, points').eq('round_id', roundRow.id),
+      supabase.from('player_stats').select('player_id, raw').in('round_id', ids),
+      supabase.from('player_scores').select('player_id, points').in('round_id', ids),
     ])
     const byId = new Map<string, Record<string, number>>()
+    const add = (id: string, line: Record<string, number>) => {
+      const cur = byId.get(id) ?? {}
+      for (const k of Object.keys(line)) cur[k] = (cur[k] ?? 0) + line[k]
+      byId.set(id, cur)
+    }
     for (const l of lines ?? []) {
       const r = (l.raw ?? {}) as Record<string, unknown>
-      byId.set(l.player_id, {
+      add(l.player_id, {
         r_hr: num(r.hr), r_rbi: num(r.rbi), r_sb: num(r.sb), r_runs: num(r.runs), r_k_pit: num(r.k_pit),
         r_2b: num(r.doubles), r_3b: num(r.triples), r_wins: num(r.win),
         r_hits: num(r.singles) + num(r.doubles) + num(r.triples) + num(r.hr),
       })
     }
-    for (const s of scores ?? []) {
-      byId.set(s.player_id, { ...(byId.get(s.player_id) ?? {}), r_points: num(s.points) })
-    }
+    for (const s of scores ?? []) add(s.player_id, { r_points: num(s.points) })
     for (const p of all) {
       const r = byId.get(p.id)
       if (r) p.stats = { ...p.stats, ...r }
@@ -196,7 +209,7 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
   })
 
   const eyebrow = roundRow
-    ? `Round ${roundRow.round_number} · ${roundRow.status === 'confirmed' ? 'Confirmed' : 'Provisional'}`
+    ? `Round ${roundRow.round_number} · ${roundRow.status === 'catchup' ? 'Player scores only' : roundRow.status === 'confirmed' ? 'Confirmed' : 'Provisional'}`
     : '2026/27 Season'
 
   return (
@@ -212,6 +225,11 @@ export default async function Leaders({ searchParams }: { searchParams: Promise<
             {(roundRow ?? latest)?.status === 'provisional' && (
               <p className="text-[11px]" style={{ color: T.textDim, marginBottom: '14px' }}>
                 Provisional scores. May change if official stats are corrected. Confirmed scores Tuesday 5pm.
+              </p>
+            )}
+            {roundRow?.status === 'catchup' && (
+              <p className="text-[11px]" style={{ color: T.textDim, marginBottom: '14px' }}>
+                Round {roundRow.round_number} did not count for user teams. These are the players&apos; own scores and stats.
               </p>
             )}
             <div className="flex justify-center">
