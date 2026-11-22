@@ -56,6 +56,27 @@ const HOSTS: { match: string; club: string; label: string }[] = [
   { match: 'meadowlands',   club: 'Howick',    label: 'Howick' },
   { match: 'colin law',     club: 'Pukekohe',  label: 'Pukekohe' },
 ]
+/* The host club's colours, worn by this week's round card.
+     double = two neon lines: `inner` hugs the card, `outer` glows around it,
+              with `gap` as the band between them
+     saber  = for clubs whose main colour is black, which cannot glow: a thick
+              black border with a white-hot edge and the club colour as a halo */
+type HostLook =
+  | { kind: 'double'; inner: string; outer: string; glow: string; gap?: string; ink: string }
+  | { kind: 'saber'; halo: string }
+const PAGE_BG = '#14141A'
+const HOST_LOOK: Record<string, HostLook> = {
+  Howick:    { kind: 'double', inner: '#FFE600', outer: '#C026D3', glow: '#A21CAF', ink: '#2A0A2E' },  // red-purple and yellow
+  Ramblers:  { kind: 'double', inner: '#FFC425', outer: '#A30F24', glow: '#7A0C1E', ink: '#2A0A10' },  // dark red (maroon) and gold
+  Marist:    { kind: 'double', inner: '#F0202C', outer: '#2F5BFF', glow: '#1D3FD6', ink: '#FFFFFF' },  // royal blue and red
+  United:    { kind: 'double', inner: '#FFFFFF', outer: '#E11D2E', glow: '#B8101F', gap: '#0B1F4B', ink: '#0B1F4B' },  // red and white, navy between
+  Otahuhu:   { kind: 'double', inner: '#7DD3FC', outer: '#2447C8', glow: '#1E3A8A', ink: '#07173A' },  // dark blue and light blue
+  Pukekohe:  { kind: 'double', inner: '#FFE600', outer: '#16A34A', glow: '#0F7A36', ink: '#06280F' },  // green and yellow
+  Waitakere: { kind: 'saber', halo: '#FFE600' },  // Bears: black and yellow
+  Patriots:  { kind: 'saber', halo: '#D2B48C' },  // tan and black
+  NHSA:      { kind: 'saber', halo: '#C026D3' },  // North Harbour: black and red-purple
+}
+
 const hostOf = (location: string | null) => {
   const l = (location ?? '').toLowerCase()
   return HOSTS.find(h => l.includes(h.match)) ?? null
@@ -389,8 +410,37 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
             const games = byRound.get(n)!
             const isNow = n === currentRound
             const isPast = currentRound == null || n < currentRound
-            // This week's card wears cyan; every other round keeps the grade colour
-            const tone = isNow ? CYAN : accent
+            /* This week's card wears the host club's colours when the whole
+               round is at one club's ground. A round split across grounds, or
+               at a ground with no host on file, wears cyan. Every other round
+               keeps the grade colour. */
+            const hostClubs = [...new Set(games
+              .filter(g => g.team_a !== 'BYE' && g.team_b !== 'BYE')
+              .map(g => hostOf(g.location)?.club ?? ''))]
+            const look: HostLook | null = isNow && hostClubs.length === 1 ? HOST_LOOK[hostClubs[0]] ?? null : null
+            const tone = !isNow ? accent : look ? (look.kind === 'saber' ? look.halo : look.inner) : CYAN
+            const nowCard = !isNow ? null
+              : look?.kind === 'double' ? {
+                  background: '#0f0f14',
+                  border: `2px solid ${look.inner}`,
+                  boxShadow: `0 0 10px ${look.inner}AA, inset 0 0 12px ${look.inner}28, 0 0 0 4px ${look.gap ?? PAGE_BG}, 0 0 0 6px ${look.outer}, 0 0 18px 6px ${look.glow}CC, 0 0 46px 10px ${look.glow}66`,
+                  header: `linear-gradient(90deg, ${look.outer}40 0%, ${look.inner}12 70%, transparent)`,
+                  badge: { background: look.inner, color: look.ink },
+                }
+              : look?.kind === 'saber' ? {
+                  background: '#0a0a0c',
+                  border: '5px solid #000000',
+                  boxShadow: `0 0 0 1px #FFFFFFEE, inset 0 0 0 1px #FFFFFFCC, 0 0 8px 2px #FFFFFFAA, inset 0 0 10px ${look.halo}55, 0 0 22px 6px ${look.halo}CC, 0 0 54px 12px ${look.halo}55`,
+                  header: `linear-gradient(90deg, #00000090 0%, ${look.halo}1A 70%, transparent)`,
+                  badge: { background: '#000000', color: look.halo, boxShadow: `0 0 0 1px #FFFFFF, 0 0 10px ${look.halo}` },
+                }
+              : {
+                  background: '#0D1422',
+                  border: `2px solid ${CYAN}`,
+                  boxShadow: `0 0 28px ${CYAN}40`,
+                  header: `linear-gradient(90deg, ${CYAN}30 0%, transparent 75%)`,
+                  badge: { background: CYAN, color: '#03121A' },
+                }
             const dates = [...new Set(games.map(g => g.played_on))]
             const lock = lockOf.get(n)
             /* A round can run across more than one park. Each ground's club is
@@ -497,14 +547,15 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
 
             return (
               <div key={n} id={isNow ? 'this-week' : undefined} className="rounded-xl overflow-hidden" style={{
-                background: isNow ? '#0D1422' : '#121215',
-                border: isNow ? `2px solid ${CYAN}` : `1px solid ${tone}30`,
-                boxShadow: isNow ? `0 0 28px ${CYAN}40` : 'none',
+                background: nowCard ? nowCard.background : '#121215',
+                border: nowCard ? nowCard.border : `1px solid ${tone}30`,
+                boxShadow: nowCard ? nowCard.boxShadow : 'none',
                 opacity: isPast ? 0.68 : 1,
-                marginBottom: '20px',
+                // The host colours sit outside the card, so it needs room on every side
+                margin: nowCard && look ? '12px 8px 34px' : '0 0 20px',
               }}>
                 <div className="flex items-center justify-between gap-4 flex-wrap"
-                  style={{ padding: '12px 20px', borderBottom: '1px solid #ffffff0a', background: `linear-gradient(90deg, ${tone}${isNow ? '30' : '14'} 0%, transparent ${isNow ? 75 : 60}%)` }}>
+                  style={{ padding: '12px 20px', borderBottom: '1px solid #ffffff0a', background: nowCard ? nowCard.header : `linear-gradient(90deg, ${tone}14 0%, transparent 60%)` }}>
                   <div className="flex items-center gap-3 min-w-0">
                     {hostAvatars.slice(0, 3).map((h, i) => (
                       h.club === 'NHSA'
@@ -513,9 +564,9 @@ export default async function Fixtures({ searchParams }: { searchParams: Promise
                     ))}
                     <div className="min-w-0">
                       <p className="text-sm font-black text-white" style={{ fontFamily: 'var(--font-heading)' }}>
-                        {isNow && (
+                        {nowCard && (
                           <span className="text-[9px] font-black uppercase tracking-[0.16em] rounded-full"
-                            style={{ background: CYAN, color: '#03121A', padding: '4px 9px', marginRight: '8px', verticalAlign: 'middle', fontFamily: 'inherit' }}>
+                            style={{ ...nowCard.badge, padding: '4px 9px', marginRight: '8px', verticalAlign: 'middle', fontFamily: 'inherit' }}>
                             {nowLabel}
                           </span>
                         )}
