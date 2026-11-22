@@ -2,6 +2,7 @@ import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/server'
 import { theme, type Grade } from '@/lib/clubhouse'
+import ShareRound from '@/components/ShareRound'
 import TeamClient, { TeamCard } from './TeamClient'
 import ManagerNotices from '@/components/ManagerNotices'
 
@@ -187,6 +188,9 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ g
       <Nav />
       <section className="flex-1 px-4 sm:px-6" style={{ paddingTop: "70px", paddingBottom: "100px" }}>
         <ManagerNotices notices={mgrNotices} T={{ surface: T.surface, surfaceRaised: T.surfaceRaised, text: T.text, textDim: T.textDim, accent: T.accent }} />
+        {earnedLabel && (
+          <ShareRound grade={grade} roundLabel={earnedLabel} accent={T.accent} text={T.text} textDim={T.textDim} surface={T.surface} />
+        )}
         <TeamClient
           teamName={prof?.team_name ?? 'Your team'}
           clubName={prof?.club?.name ?? ''}
