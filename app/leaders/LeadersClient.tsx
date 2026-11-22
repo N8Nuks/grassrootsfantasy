@@ -30,9 +30,13 @@ export default function LeadersClient({ cats, players, grade, siteTheme, seasonS
   const owned = new Set(ownedPlayerIds)
   const [detail, setDetail] = useState<LeaderPlayer | null>(null)
 
-  // The Fantasy Points board can open out to everyone who has scored
-  const [everyone, setEveryone] = useState(false)
-  const isPoints = (cat: LeaderCat) => cat.key === 'season_points' || cat.key === 'r_points'
+  /* Fantasy Points, Home Runs and Batting Average can each open out to
+     everyone on the board. Each opens on its own. Batting Average keeps its
+     minimum at-bats, so "everyone" there means everyone who qualifies. */
+  const EXPANDABLE = ['season_points', 'r_points', 'season_hr', 'r_hr', 'season_ba']
+  const [openKeys, setOpenKeys] = useState<string[]>([])
+  const canExpand = (cat: LeaderCat) => EXPANDABLE.includes(cat.key)
+  const toggle = (key: string) => setOpenKeys(k => (k.includes(key) ? k.filter(x => x !== key) : [...k, key]))
 
   // Everyone on a board, best first. Nobody on zero.
   const rankedFor = (cat: LeaderCat) =>
@@ -44,7 +48,7 @@ export default function LeadersClient({ cats, players, grade, siteTheme, seasonS
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {cats.map(cat => {
           const ranked = rankedFor(cat)
-          const open = everyone && isPoints(cat)
+          const open = canExpand(cat) && openKeys.includes(cat.key)
           const rows = open ? ranked : ranked.slice(0, 5)
           const pitching = cat.kind === 'pitching'
           const accent = pitching ? STEEL : T.accent
@@ -89,8 +93,8 @@ export default function LeadersClient({ cats, players, grade, siteTheme, seasonS
                 </button>
               ))}
               </div>
-              {isPoints(cat) && ranked.length > 5 && (
-                <button type="button" onClick={() => setEveryone(!everyone)} aria-expanded={open}
+              {canExpand(cat) && ranked.length > 5 && (
+                <button type="button" onClick={() => toggle(cat.key)} aria-expanded={open}
                   className="w-full text-center text-[10px] font-black uppercase tracking-[0.2em] transition-colors hover:bg-white/5"
                   style={{ color: accent, padding: '0 22px', minHeight: '44px', borderTop: `1px solid ${accent}30` }}>
                   {open ? 'Show top 5' : `See everyone · ${ranked.length} players`}
