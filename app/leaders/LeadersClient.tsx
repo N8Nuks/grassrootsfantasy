@@ -30,16 +30,22 @@ export default function LeadersClient({ cats, players, grade, siteTheme, seasonS
   const owned = new Set(ownedPlayerIds)
   const [detail, setDetail] = useState<LeaderPlayer | null>(null)
 
-  const leadersFor = (cat: LeaderCat) =>
+  // The Fantasy Points board can open out to everyone who has scored
+  const [everyone, setEveryone] = useState(false)
+  const isPoints = (cat: LeaderCat) => cat.key === 'season_points' || cat.key === 'r_points'
+
+  // Everyone on a board, best first. Nobody on zero.
+  const rankedFor = (cat: LeaderCat) =>
     players.filter(p => (p.stats[cat.key] ?? 0) > 0 && (!cat.min || (p.stats[cat.min.key] ?? 0) >= cat.min.value))
       .sort((a, b) => (b.stats[cat.key] ?? 0) - (a.stats[cat.key] ?? 0))
-      .slice(0, 5)
 
   return (
     <>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {cats.map(cat => {
-          const rows = leadersFor(cat)
+          const ranked = rankedFor(cat)
+          const open = everyone && isPoints(cat)
+          const rows = open ? ranked : ranked.slice(0, 5)
           const pitching = cat.kind === 'pitching'
           const accent = pitching ? STEEL : T.accent
           return (
@@ -56,6 +62,7 @@ export default function LeadersClient({ cats, players, grade, siteTheme, seasonS
                   </span>
                 )}
               </div>
+              <div style={open ? { maxHeight: '560px', overflowY: 'auto' } : undefined}>
               {rows.map((p, i) => (
                 <button
                   key={p.id}
@@ -81,6 +88,14 @@ export default function LeadersClient({ cats, players, grade, siteTheme, seasonS
                   </span>
                 </button>
               ))}
+              </div>
+              {isPoints(cat) && ranked.length > 5 && (
+                <button type="button" onClick={() => setEveryone(!everyone)} aria-expanded={open}
+                  className="w-full text-center text-[10px] font-black uppercase tracking-[0.2em] transition-colors hover:bg-white/5"
+                  style={{ color: accent, padding: '0 22px', minHeight: '44px', borderTop: `1px solid ${accent}30` }}>
+                  {open ? 'Show top 5' : `See everyone · ${ranked.length} players`}
+                </button>
+              )}
               {rows.length === 0 && (
                 seasonStarted ? (
                   <div className="text-center" style={{ padding: '26px 22px' }}>
