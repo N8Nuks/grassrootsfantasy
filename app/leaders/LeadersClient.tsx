@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { theme, type Grade } from '@/lib/clubhouse'
 import PlayerCardFull, { type FullCardPlayer } from '@/components/PlayerCardFull'
 import { type CardMilestone, silhouetteFor } from '@/components/PlayerCard'
@@ -50,6 +50,18 @@ export default function LeadersClient({ cats, players, grade, siteTheme, seasonS
           const ranked = rankedFor(cat)
           const open = canExpand(cat) && openKeys.includes(cat.key)
           const rows = open ? ranked : ranked.slice(0, 5)
+          /* A board with a qualifier (Batting Average's minimum at-bats) also
+             lists, when opened, the players who have not reached it yet. They
+             sit under their own heading, unranked, with their at-bats shown. */
+          const min = cat.min
+          const below = min && open
+            ? players.filter(p => (p.stats[cat.key] ?? 0) > 0 && (p.stats[min.key] ?? 0) < min.value)
+                .sort((a, b) => (b.stats[cat.key] ?? 0) - (a.stats[cat.key] ?? 0) || (b.stats[min.key] ?? 0) - (a.stats[min.key] ?? 0))
+            : []
+          const belowCount = min
+            ? players.filter(p => (p.stats[cat.key] ?? 0) > 0 && (p.stats[min.key] ?? 0) < min.value).length
+            : 0
+          const list = [...rows.map(p => ({ p, qualifies: true })), ...below.map(p => ({ p, qualifies: false }))]
           const pitching = cat.kind === 'pitching'
           const accent = pitching ? STEEL : T.accent
           return (
@@ -67,16 +79,24 @@ export default function LeadersClient({ cats, players, grade, siteTheme, seasonS
                 )}
               </div>
               <div style={open ? { maxHeight: '560px', overflowY: 'auto' } : undefined}>
-              {rows.map((p, i) => (
+              {list.map(({ p, qualifies }, i) => (
+                <Fragment key={p.id}>
+                {!qualifies && i === rows.length && min && (
+                  <div style={{ padding: '12px 22px 10px', background: '#00000030', borderBottom: '1px solid #ffffff08', borderTop: `1px solid ${accent}30` }}>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: accent }}>Yet to qualify</p>
+                    <p className="text-[10px]" style={{ color: T.textDim, marginTop: '3px' }}>
+                      Fewer than {min.value} at-bats. Not ranked until they reach the minimum.
+                    </p>
+                  </div>
+                )}
                 <button
-                  key={p.id}
                   type="button"
                   onClick={() => setDetail(p)}
                   className="w-full flex items-center gap-3 text-left transition-colors hover:bg-white/5 active:bg-white/10"
-                  style={{ borderBottom: '1px solid #ffffff08', padding: '10px 22px' }}
+                  style={{ borderBottom: '1px solid #ffffff08', padding: '10px 22px', opacity: qualifies ? 1 : 0.72 }}
                   aria-label={`Open ${p.name}'s player card`}
                 >
-                  <span className="w-6 text-sm font-black shrink-0" style={{ color: i === 0 ? '#FFD700' : T.textDim }}>{i + 1}</span>
+                  <span className="w-6 text-sm font-black shrink-0" style={{ color: qualifies && i === 0 ? '#FFD700' : T.textDim }}>{qualifies ? i + 1 : '–'}</span>
                   <div className="w-9 h-9 rounded-full overflow-hidden flex items-end justify-center shrink-0" style={{ background: `${accent}18` }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={p.photoUrl ?? silhouetteFor(p.revealPos, grade)} alt={p.name} className="h-full w-auto object-contain" style={p.photoUrl ? undefined : { opacity: 0.6 }} />
@@ -85,19 +105,22 @@ export default function LeadersClient({ cats, players, grade, siteTheme, seasonS
                     <p className="text-sm font-bold truncate" style={{ color: T.text }}>
                       {splitName(p.name).first} <span className="uppercase">{splitName(p.name).last}</span>
                     </p>
-                    <p className="text-[10px] truncate" style={{ color: T.textDim }}>{p.club}</p>
+                    <p className="text-[10px] truncate" style={{ color: T.textDim }}>
+                      {p.club}{!qualifies && min ? ` · ${p.stats[min.key] ?? 0} AB` : ''}
+                    </p>
                   </div>
-                  <span className="text-base font-black shrink-0" style={{ fontFamily: 'var(--font-heading)', color: i === 0 ? '#FFD700' : T.text }}>
+                  <span className="text-base font-black shrink-0" style={{ fontFamily: 'var(--font-heading)', color: qualifies && i === 0 ? '#FFD700' : T.text }}>
                     {cat.format === 'ba' ? Number(p.stats[cat.key]).toFixed(3) : p.stats[cat.key]}
                   </span>
                 </button>
+                </Fragment>
               ))}
               </div>
-              {canExpand(cat) && ranked.length > 5 && (
+              {canExpand(cat) && (ranked.length > 5 || belowCount > 0) && (
                 <button type="button" onClick={() => toggle(cat.key)} aria-expanded={open}
                   className="w-full text-center text-[10px] font-black uppercase tracking-[0.2em] transition-colors hover:bg-white/5"
                   style={{ color: accent, padding: '0 22px', minHeight: '44px', borderTop: `1px solid ${accent}30` }}>
-                  {open ? 'Show top 5' : `See everyone · ${ranked.length} players`}
+                  {open ? 'Show top 5' : `See everyone · ${ranked.length + belowCount} players`}
                 </button>
               )}
               {rows.length === 0 && (
