@@ -99,8 +99,13 @@ export async function POST(req: Request) {
        fixtures for this round exist, so missing data is never read as a bye. */
     let byeMarked = 0
     const { data: fx } = await admin.from('fixtures')
-      .select('club_a, club_b').eq('grade', grade).eq('round_number', nextNumber)
-    if (fx?.length) {
+      .select('team_a, team_b, club_a, club_b').eq('grade', grade).eq('round_number', nextNumber)
+    /* A game whose side has no club and is not a "BYE" row is a seed that has
+       not been drawn yet (A1 v A4). Until every game has its clubs, nobody can
+       be said to have a bye, so the step is skipped. */
+    const undrawn = (fx ?? []).some(f =>
+      (!f.club_a && f.team_a !== 'BYE') || (!f.club_b && f.team_b !== 'BYE'))
+    if (fx?.length && !undrawn) {
       const playing = playingKeys(fx)
       const { data: clubs } = await admin.from('clubs').select('id, name')
       const byeClubIds = (clubs ?? []).filter(c => !playing.has(clubKey(c.name))).map(c => c.id)
