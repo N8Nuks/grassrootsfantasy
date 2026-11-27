@@ -7,6 +7,7 @@ import PlayerCard from '@/components/PlayerCard'
 import LeadersStrip from '@/components/LeadersStrip'
 import PlayerCardFull from '@/components/PlayerCardFull'
 import FieldPicker from '@/components/FieldPicker'
+import FieldSelector from '@/components/FieldSelector'
 import PackReveal, { RevealCard } from '@/components/PackReveal'
 import PageGuide, { GuideStep } from '@/components/PageGuide'
 
@@ -221,7 +222,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
   const unavailable = new Set(unavailableIds)
   // Cycle or perfect game last round — this player scores 2x this round
   const doubled = new Set(doubledIds)
-  const [view, setView] = useState<'lineup' | 'collection'>('lineup')
+  const [view, setView] = useState<'lineup' | 'field' | 'collection'>('lineup')
   const [slots, setSlots] = useState<SlotState[]>(() => normaliseOrders(initialSlots))
   const [captainId, setCaptainId] = useState<string | null>(initialCaptainId)
   const [viceCaptainId, setViceCaptainId] = useState<string | null>(initialViceCaptainId)
@@ -446,6 +447,40 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
     setDetailCard(null)
   }
 
+  // Field Selector placement. The incoming player takes the slot. Whoever held it
+  // swaps into the incoming player's old slot when they can legally play there;
+  // otherwise they drop back to the squad list with no slot.
+  function placeFromField(slot: string, cardId: string) {
+    const card = cardById.get(cardId)
+    if (!card || !isEligible(card, slot)) return
+    const from = slots.find(s => s.card_id === cardId)
+    if (from?.slot === slot) return
+    const target = slots.find(s => s.slot === slot)
+    const displaced = target ? cardById.get(target.card_id) : undefined
+    const swap = !!from && !!target && !!displaced && isEligible(displaced, from.slot)
+    // a displaced player with nowhere to go leaves the lineup and loses any armband
+    if (target && !swap) {
+      if (captainId === target.card_id) setCaptainId(null)
+      if (viceCaptainId === target.card_id) setViceCaptainId(null)
+    }
+    setDirty(true)
+    setSlots(prev => {
+      let next = prev.map(s => ({ ...s }))
+      const t = next.find(s => s.slot === slot)
+      const f = next.find(s => s.card_id === cardId)
+      if (t && f && swap) {
+        f.card_id = t.card_id
+        t.card_id = cardId
+      } else {
+        if (f) next = next.filter(s => s !== f)
+        const t2 = next.find(s => s.slot === slot)
+        if (t2) t2.card_id = cardId
+        else next.push({ slot, card_id: cardId, batting_order: null })
+      }
+      return normaliseOrders(next)
+    })
+  }
+
   function clearSlot(slot: string) {
     setDirty(true)
     // a card leaving the lineup loses its armband
@@ -520,6 +555,20 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
     const order = ['rare_2wp_a','rare_2wp_b','elite','common']
     return order.indexOf(a.tier) - order.indexOf(b.tier)
   })
+
+  // Cards not in any lineup slot — listed on the Lineup Card under the reserves,
+  // once each, in order of their main (first listed) position
+  const mainPosition = (c: TeamCard) => c.positions.find(p => p !== 'DP' && BATTING_SLOTS.includes(p))
+  const mainIndex = (c: TeamCard) => {
+    const p = mainPosition(c)
+    return p ? BATTING_SLOTS.indexOf(p) : 99
+  }
+  const restCards = cards
+    .filter(c => !assignedIds.has(c.id))
+    .sort((a, b) => {
+      const d = mainIndex(a) - mainIndex(b)
+      return d !== 0 ? d : surname(a.name).localeCompare(surname(b.name))
+    })
 
   const pickerCandidates = pickerSlot ? cards.filter(c => isEligible(c, pickerSlot)) : []
 
@@ -684,6 +733,68 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
             style={{ color: e && e.earned > 0 ? accentBright : T.textDim }}>
             {e ? fmt(e.earned) : '—'}
           </span>
+        )}
+        <span className="hidden sm:block landscape:block w-14 text-right text-[11px] font-black shrink-0" style={{ color: T.text }}>
+          {c.stats.season_points ?? 0}
+        </span>
+      </div>
+    )
+  }
+
+  // A card outside the lineup — same columns as a lineup row, no number, no armband
+  function RestRow({ c }: { c: TeamCard }) {
+    const meta = TIER_META[c.tier] ?? TIER_META.common
+    const isOut = unavailable.has(c.playerId)
+    const isDoubled = doubled.has(c.playerId)
+    const main = mainPosition(c)
+    return (
+      <div className="flex items-center gap-3"
+        style={{ borderBottom: '1px solid #ffffff08', opacity: isOut ? 0.4 : 1, padding: '14px 28px' }}>
+        <span className="w-9 shrink-0" />
+        <span className="w-11 shrink-0 text-xs font-black text-center px-2 py-1 rounded"
+          style={{ color: T.textDim, border: '1px solid #ffffff25' }}>
+          {main ? SLOT_LABELS[main] : '—'}
+        </span>
+        <button onClick={() => setDetailCard(c)} className="flex-1 min-w-0 text-left">
+          <p className="text-sm font-black" style={{ fontFamily: 'var(--font-heading)', color: T.text }}>
+            <span className="block sm:inline landscape:inline">{c.name.split(' ')[0]}</span>
+            <span className="block sm:inline landscape:inline uppercase sm:before:content-['_'] landscape:before:content-['_']">{c.name.split(' ').slice(1).join(' ')}</span>
+            {isOut && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1" style={{ background: '#FF6B6B', color: '#141210' }}>OUT</span>}
+            {isDoubled && <span className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1 gf-pulse" style={{ background: '#FF8C42', color: '#141210', boxShadow: '0 0 10px #FF8C42' }}>2×</span>}
+          </p>
+          <p className="text-[10px]" style={{ color: T.textDim }}>{c.club}</p>
+        </button>
+        {/* Keeps the columns in line with the armband buttons on the rows above */}
+        <span className={hasRoundPoints ? 'hidden sm:block landscape:block w-[62px] shrink-0' : 'block w-[62px] shrink-0'} />
+        {hasRoundPoints && (
+          <span className="flex sm:hidden landscape:hidden items-center shrink-0">
+            <span className="w-9 text-right text-[12px]" style={{ color: T.text }}>
+              {thisRoundPoints[c.playerId] ?? '—'}
+            </span>
+            {hasEarned && (
+              <span className="w-12 text-right text-[12px] font-black" style={{ color: T.textDim }}>—</span>
+            )}
+          </span>
+        )}
+        <span className="hidden sm:flex landscape:flex w-20 justify-center shrink-0">
+          <span className="text-[9px] font-black tracking-widest px-2 py-1 rounded-full" style={{ color: meta.accent, background: meta.accent + '15' }}>
+            {meta.label}
+          </span>
+        </span>
+        <span className="hidden sm:block landscape:block w-20 text-center text-[11px] shrink-0" style={{ color: T.textDim }}>
+          {c.stats.season_ba != null ? Number(c.stats.season_ba).toFixed(3) : '—'}
+        </span>
+        <span className="hidden sm:block landscape:block w-12 text-right text-[11px] shrink-0" style={{ color: T.textDim }}>
+          {c.stats.season_sb ?? 0}
+        </span>
+        <span className="hidden sm:block landscape:block w-14 text-right text-[11px] shrink-0" style={{ color: T.textDim }}>
+          {lastRoundPoints[c.playerId] ?? '—'}
+        </span>
+        <span className="hidden sm:block landscape:block w-14 text-right text-[11px] shrink-0" style={{ color: T.text }}>
+          {thisRoundPoints[c.playerId] ?? '—'}
+        </span>
+        {hasEarned && (
+          <span className="hidden sm:block landscape:block w-16 text-right text-[11px] font-black shrink-0" style={{ color: T.textDim }}>—</span>
         )}
         <span className="hidden sm:block landscape:block w-14 text-right text-[11px] font-black shrink-0" style={{ color: T.text }}>
           {c.stats.season_points ?? 0}
@@ -880,13 +991,13 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
         </div>
       )}
 
-      {!roundOpen && view === 'lineup' && (
+      {!roundOpen && view !== 'collection' && (
         <div className="rounded-xl px-5 py-5 mb-6 text-base font-bold text-center" style={{ background: '#FF6B6B18', border: '2px solid #FF6B6B', color: '#FF9B9B' }}>
           🔒 Lineups are locked. Changes can&apos;t be saved until the next round opens{roundNumber != null ? ` — this is Round ${roundNumber}` : ''}.
         </div>
       )}
 
-      {unavailableRostered.length > 0 && view === 'lineup' && (
+      {unavailableRostered.length > 0 && view !== 'collection' && (
         <div className="rounded-xl px-5 py-4 mb-6 text-sm" style={{ background: '#FF6B6B15', border: '1px solid #FF6B6B50', color: '#FF9B9B' }}>
           <b>Unavailable this round:</b> {unavailableRostered.map(c => c.name).join(', ')} — swap them out before lock or the auto-sub will fill the gap from your bench.
         </div>
@@ -894,17 +1005,17 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
 
       <div className="flex justify-center" style={{ margin: '40px 0' }}>
         <div className="inline-flex rounded-full overflow-hidden" style={{ border: '1px solid #ffffff25' }}>
-          {(['lineup','collection'] as const).map((v, i) => (
+          {(['lineup','field','collection'] as const).map((v, i) => (
             <button key={v} onClick={() => setView(v)}
               className={"text-xs font-black uppercase tracking-widest transition-all flex items-center" + (view === v ? shimmer : '')}
               style={{
                 color: view === v ? T.buttonText : T.textDim,
                 background: view === v ? T.button : 'transparent',
-                padding: '14px 32px',
+                padding: '14px 18px',
                 minHeight: '44px',
                 ...(i > 0 ? { borderLeft: '1px solid #ffffff15' } : {}),
               }}>
-              {v === 'lineup' ? 'Lineup Card' : 'Collection'}
+              {v === 'lineup' ? 'Lineup Card' : v === 'field' ? 'Field' : 'Collection'}
             </button>
           ))}
         </div>
@@ -1004,6 +1115,13 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
               })}
             </div>
 
+            {restCards.length > 0 && (
+              <div style={{ background: '#00000055' }}>
+                {bandLabel('Rest of squad · not in your lineup · by position')}
+                {restCards.map(c => <RestRow key={c.id} c={c} />)}
+              </div>
+            )}
+
             {hasEarned && (
               <div className="flex items-center justify-between" style={{ background: '#00000055', borderTop: `1px solid ${accentBright}30`, padding: '16px 28px' }}>
                 <span className="text-[11px] font-black uppercase tracking-[0.25em]" style={{ color: T.textDim }}>
@@ -1063,27 +1181,47 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
             {message && <p className="text-sm mt-4" style={{ color: message.includes('saved') ? T.accent : '#FF6B6B' }}>{message}</p>}
           </div>
 
-          {dirty && (
-            <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center"
-              style={{
-                background: roundOpen ? `${T.field}F0` : '#3A1215F0',
-                borderTop: roundOpen ? `1px solid ${T.accent}40` : '2px solid #FF6B6B',
-                padding: '14px 24px', backdropFilter: 'blur(8px)',
-              }}>
-              <div className="flex items-center gap-4">
-                <span className="text-xs font-bold uppercase tracking-widest" style={{ color: roundOpen ? T.textDim : '#FF9B9B' }}>
-                  {roundOpen ? 'Unsaved changes' : '🔒 Lineups locked — changes won\'t save'}
-                </span>
-                <button onClick={save} disabled={saving || !roundOpen}
-                  className={"text-sm font-black uppercase tracking-widest px-8 py-3 rounded-full transition-all hover:scale-[1.02] disabled:opacity-50" + (roundOpen ? shimmer : '')}
-                  style={roundOpen
-                    ? { color: T.buttonText, background: T.button, boxShadow: T.glow }
-                    : { color: '#FF9B9B', background: 'transparent', border: '1px solid #FF6B6B' }}>
-                  {saving ? 'Saving…' : 'Save Lineup Card'}
-                </button>
-              </div>
-            </div>
-          )}
+        </div>
+      )}
+
+      {view === 'field' && (
+        <div>
+          <FieldSelector
+            grade={grade}
+            siteTheme={siteTheme}
+            cards={cards}
+            slots={slots}
+            unavailable={unavailable}
+            captainId={captainId}
+            viceCaptainId={viceCaptainId}
+            eligible={(cardId, slot) => { const c = cardById.get(cardId); return !!c && isEligible(c, slot) }}
+            onAssign={placeFromField}
+            onClear={clearSlot}
+          />
+          {message && <p className="text-sm text-center mt-4" style={{ color: message.includes('saved') ? T.accent : '#FF6B6B' }}>{message}</p>}
+        </div>
+      )}
+
+      {/* Unsaved-changes bar — Lineup Card and Field share it */}
+      {dirty && view !== 'collection' && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center"
+          style={{
+            background: roundOpen ? `${T.field}F0` : '#3A1215F0',
+            borderTop: roundOpen ? `1px solid ${T.accent}40` : '2px solid #FF6B6B',
+            padding: '14px 24px', backdropFilter: 'blur(8px)',
+          }}>
+          <div className="flex items-center gap-4">
+            <span className="text-xs font-bold uppercase tracking-widest" style={{ color: roundOpen ? T.textDim : '#FF9B9B' }}>
+              {roundOpen ? 'Unsaved changes' : '🔒 Lineups locked — changes won\'t save'}
+            </span>
+            <button onClick={save} disabled={saving || !roundOpen}
+              className={"text-sm font-black uppercase tracking-widest px-8 py-3 rounded-full transition-all hover:scale-[1.02] disabled:opacity-50" + (roundOpen ? shimmer : '')}
+              style={roundOpen
+                ? { color: T.buttonText, background: T.button, boxShadow: T.glow }
+                : { color: '#FF9B9B', background: 'transparent', border: '1px solid #FF6B6B' }}>
+              {saving ? 'Saving…' : 'Save Lineup Card'}
+            </button>
+          </div>
         </div>
       )}
 
