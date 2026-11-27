@@ -49,7 +49,7 @@ function mainIndex(positions: string[]): number {
 const CAPTAIN_GOLD = '#FFD700'
 const VICE_SILVER = '#C9D2DE'
 
-export default function FieldSelector({ grade, siteTheme, cards, slots, unavailable, captainId, viceCaptainId, eligible, onAssign, onClear }: {
+export default function FieldSelector({ grade, siteTheme, cards, slots, unavailable, captainId, viceCaptainId, eligible, onAssign, onClear, onOpenCard }: {
   grade: Grade
   siteTheme: string
   cards: FieldSelectorCard[]
@@ -60,6 +60,7 @@ export default function FieldSelector({ grade, siteTheme, cards, slots, unavaila
   eligible: (cardId: string, slot: string) => boolean
   onAssign: (slot: string, cardId: string) => void
   onClear: (slot: string) => void
+  onOpenCard: (cardId: string) => void
 }) {
   const T = theme(grade, siteTheme)
   const dirt = grade === 'mens' ? '#8A6A3B' : '#33507F'
@@ -104,7 +105,7 @@ export default function FieldSelector({ grade, siteTheme, cards, slots, unavaila
 
   function tapName(cardId: string) {
     if (justDragged.current) { justDragged.current = false; return }
-    if (!sel) { setNote('Tap a position first, or drag this name onto the field.'); return }
+    if (!sel) { setNote(''); onOpenCard(cardId); return }
     place(sel, cardId)
   }
 
@@ -196,7 +197,7 @@ export default function FieldSelector({ grade, siteTheme, cards, slots, unavaila
     ? note
     : sel
       ? `${LABELS[sel] ?? sel} selected · tap or drag a lit name`
-      : 'Tap a position, then tap or drag a name onto it'
+      : 'Tap a position to fill it · tap a name for their card'
 
   const groupLabel = (text: string) => (
     <p className="font-black uppercase" style={{ fontSize: '9px', letterSpacing: '0.25em', color: T.textDim, margin: '10px 0 5px' }}>{text}</p>

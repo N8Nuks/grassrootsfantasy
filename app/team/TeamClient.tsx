@@ -231,6 +231,9 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
   const [swapTarget, setSwapTarget] = useState<number | null>(null)
   const [pickerSlot, setPickerSlot] = useState<string | null>(null)
   const [detailCard, setDetailCard] = useState<TeamCard | null>(null)
+  // The Field view opens a card on its round-by-round face; everywhere else opens the front
+  const [detailFace, setDetailFace] = useState<'front' | 'rounds'>('front')
+  useEffect(() => { if (!detailCard) setDetailFace('front') }, [detailCard])
   const [dragOrder, setDragOrder] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -1197,6 +1200,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
             eligible={(cardId, slot) => { const c = cardById.get(cardId); return !!c && isEligible(c, slot) }}
             onAssign={placeFromField}
             onClear={clearSlot}
+            onOpenCard={cardId => { const c = cardById.get(cardId); if (c) { setDetailFace('rounds'); setDetailCard(c) } }}
           />
           {message && <p className="text-sm text-center mt-4" style={{ color: message.includes('saved') ? T.accent : '#FF6B6B' }}>{message}</p>}
         </div>
@@ -1342,6 +1346,7 @@ export default function TeamClient({ teamName, clubName, avatar, clubs, cards, i
                     siteTheme={siteTheme}
                     cardStyle={cardStyle}
                     flippable={true}
+                    startFace={detailFace}
                     milestones={(c as TeamCard & { milestones?: { stat: string; milestone: number }[] }).milestones}
                     doubled={doubled.has(c.playerId)}
                   />

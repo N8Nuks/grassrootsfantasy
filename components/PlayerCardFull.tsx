@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { theme, type Grade } from '@/lib/clubhouse'
 import { splitName } from '@/lib/names'
 import { silhouetteFor, MILESTONE_ACCENT, type CardMilestone } from '@/components/PlayerCard'
@@ -111,13 +111,14 @@ function lineFor(raw: Record<string, number>): string {
   return parts.join(' · ')
 }
 
-export default function PlayerCardFull({ player, grade, owned, siteTheme, cardStyle = 'premium', flippable = false, doubled = false, milestones }: {
+export default function PlayerCardFull({ player, grade, owned, siteTheme, cardStyle = 'premium', flippable = false, doubled = false, milestones, startFace = 'front' }: {
   player: FullCardPlayer
   grade: Grade
   owned: boolean
   siteTheme?: string
   cardStyle?: 'standard' | 'premium'
   flippable?: boolean
+  startFace?: 'front' | 'career' | 'rounds'   // the face showing when the card opens
   doubled?: boolean       // cycle or perfect game last round — scores 2x this round
   milestones?: CardMilestone[] | null   // reached in the latest scored round
 }) {
@@ -136,8 +137,8 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
      side turning away is edge-on (invisible) at the halfway point — that's when
      its content is swapped, which is why nothing ever flashes mid-turn. */
   const [rot, setRot] = useState(0)
-  const [slotA, setSlotA] = useState<Face>('front')   // shows at 0°, 360°, …
-  const [slotB, setSlotB] = useState<Face>('career')  // shows at 180°, 540°, …
+  const [slotA, setSlotA] = useState<Face>(startFace)   // shows at 0°, 360°, …
+  const [slotB, setSlotB] = useState<Face>(startFace === 'front' ? 'career' : startFace === 'career' ? 'rounds' : 'front')  // shows at 180°, 540°, …
   const showing: Face = rot % 360 === 0 ? slotA : slotB
 
   const [log, setLog] = useState<RoundLine[] | null>(null)
@@ -154,6 +155,12 @@ export default function PlayerCardFull({ player, grade, owned, siteTheme, cardSt
       setLogError(true)
     }
   }
+
+  // Opened straight onto the round-by-round face — fetch its lines now
+  useEffect(() => {
+    if (startFace === 'rounds') loadRounds()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function advance() {
     if (!flippable) return
