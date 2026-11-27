@@ -63,7 +63,7 @@ export default function FieldSelector({ grade, siteTheme, cards, slots, unavaila
 }) {
   const T = theme(grade, siteTheme)
   const dirt = grade === 'mens' ? '#8A6A3B' : '#33507F'
-  const grass = grade === 'mens' ? '#241C13' : '#0F1B36'
+  const grass = '#1F5132'
   const line = '#F5F1E850'
 
   const [sel, setSel] = useState<string | null>(null)
